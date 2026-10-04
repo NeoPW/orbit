@@ -1,0 +1,89 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
+import 'package:flutter_test/flutter_test.dart';
+import 'package:orbit/core/db/app_database.dart';
+import 'package:orbit/features/plan/data/plan_providers.dart';
+import 'package:orbit/features/plan/domain/plan_overview.dart';
+
+import '../../../helpers/provider_container.dart';
+import '../../../helpers/repos.dart';
+
+/// Waits until [provider] has a value matching [test].
+Future<T> valueWhere<T>(
+  ProviderContainer container,
+  ProviderListenable<AsyncValue<T>> provider,
+  bool Function(T value) test,
+) {
+  final completer = Completer<T>();
+  final sub = container.listen(provider, (_, next) {
+    final value = next.value;
+    if (next.hasValue && test(value as T) && !completer.isCompleted) {
+      completer.complete(value);
+    }
+  }, fireImmediately: true);
+  return completer.future
+      .timeout(const Duration(seconds: 5))
+      .whenComplete(sub.close);
+}
+
+void main() {
+  late Repos r;
+  late ProviderContainer container;
+  setUp(() {
+    r = Repos();
+    container = containerWith(r.db);
+  });
+  tearDown(() async {
+    container.dispose();
+    await r.close();
+  });
+
+  List<String> underKr(PlanOverview o) => [
+    for (final objective in o.objectives)
+      for (final kr in objective.keyResults)
+        for (final p in kr.projects) p.project.title,
+  ];
+
+  test('planOverview emits again after a project status change', () async {
+    final o = await r.objective();
+    final kr = await r.numericKr(o.id);
+    final p = await r.projects.create(title: 'Thesis', keyResultId: kr.id);
+
+    await valueWhere(
+      container,
+      planOverviewProvider,
+      (o) => underKr(o).contains('Thesis'),
+    );
+
+    await r.projects.setStatus(p.id, ProjectStatus.backlog);
+
+    final after = await valueWhere(
+      container,
+      planOverviewProvider,
+      (o) => underKr(o).isEmpty,
+    );
+    expect(after.objectives.single.keyResults.single.projects, isEmpty);
+  });
+
+  test(
+    'archive lists completed objectives and projects, newest first',
+    () async {
+      final o = await r.objective(title: 'Old goal');
+      final p = await r.projects.create(title: 'Done project');
+      await r.objective(title: 'Still active');
+      await r.projects.setStatus(p.id, ProjectStatus.completed);
+      await r.objectives.update(o.copyWith(status: ObjectiveStatus.archived));
+
+      final items = await valueWhere(
+        container,
+        archiveProvider,
+        (items) => items.length == 2,
+      );
+      expect(items.first, isA<ArchivedObjective>());
+      expect((items.first as ArchivedObjective).objective.title, 'Old goal');
+      expect((items.last as ArchivedProject).project.title, 'Done project');
+    },
+  );
+}

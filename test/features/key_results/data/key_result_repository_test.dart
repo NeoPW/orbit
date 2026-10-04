@@ -1,0 +1,101 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:orbit/core/db/app_database.dart';
+
+import '../../../helpers/repos.dart';
+
+void main() {
+  late Repos r;
+  late Objective o;
+  setUp(() async {
+    r = Repos();
+    o = await r.objective();
+  });
+  tearDown(() => r.close());
+
+  test('sort order is per objective', () async {
+    final other = await r.objective(title: 'Other');
+    expect((await r.numericKr(o.id)).sortOrder, 0);
+    expect((await r.numericKr(o.id)).sortOrder, 1);
+    expect((await r.numericKr(other.id)).sortOrder, 0);
+  });
+
+  test('watchForObjectives returns KRs of those objectives in order', () async {
+    final other = await r.objective(title: 'Other');
+    await r.numericKr(o.id, title: 'A');
+    await r.numericKr(o.id, title: 'B');
+    await r.numericKr(other.id, title: 'C');
+    final krs = await r.keyResults.watchForObjectives([o.id]).first;
+    expect(krs.map((k) => k.title), ['A', 'B']);
+  });
+
+  test('numeric KR keeps values and trims an empty unit to null', () async {
+    final kr = await r.keyResults.create(
+      objectiveId: o.id,
+      title: 'Run',
+      measureType: MeasureType.numeric,
+      startValue: 0,
+      targetValue: 100,
+      currentValue: 20,
+      unit: ' ',
+      habitId: 'h1',
+    );
+    expect(kr.currentValue, 20);
+    expect(kr.unit, isNull);
+    expect(kr.habitId, isNull);
+  });
+
+  test('boolean KR stores achieved as 0/1 with start 0 and target 1', () async {
+    final kr = await r.keyResults.create(
+      objectiveId: o.id,
+      title: 'Sign up',
+      measureType: MeasureType.boolean,
+      currentValue: 1,
+      unit: 'km',
+    );
+    expect([kr.startValue, kr.targetValue, kr.currentValue], [0, 1, 1]);
+    expect(kr.unit, isNull);
+  });
+
+  test('habit KR keeps target and habit only', () async {
+    final kr = await r.keyResults.create(
+      objectiveId: o.id,
+      title: 'Stretch 40 times',
+      measureType: MeasureType.habit,
+      startValue: 3,
+      targetValue: 40,
+      currentValue: 5,
+      habitId: 'h1',
+    );
+    expect(kr.targetValue, 40);
+    expect(kr.habitId, 'h1');
+    expect(kr.startValue, isNull);
+    expect(kr.currentValue, isNull);
+  });
+
+  test('update changes the current value and bumps updated_at', () async {
+    final kr = await r.numericKr(o.id);
+    await r.keyResults.update(kr.copyWith(currentValue: const Value(50)));
+    final stored = await r.keyResults.get(kr.id);
+    expect(stored!.currentValue, 50);
+    expect(stored.updatedAt.isAfter(kr.updatedAt), isTrue);
+  });
+
+  test('delete unlinks projects and habits', () async {
+    final kr = await r.numericKr(o.id);
+    final p = await r.projects.create(title: 'Plan runs', keyResultId: kr.id);
+    final h = await r.habits.create(
+      title: 'Run',
+      keyResultId: kr.id,
+      projectId: p.id,
+      scheduleType: ScheduleType.daily,
+    );
+
+    await r.keyResults.delete(kr.id);
+
+    expect(await r.keyResults.get(kr.id), isNull);
+    expect((await r.rawProject(p.id)).keyResultId, isNull);
+    final habit = await r.rawHabit(h.id);
+    expect(habit.keyResultId, isNull);
+    expect(habit.projectId, p.id);
+  });
+}
