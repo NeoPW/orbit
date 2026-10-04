@@ -39,7 +39,7 @@ Notifications are Android only. The web version is used for planning, logging an
 - **Key Result (KR):** a measurable outcome belonging to an objective.
 - **Project:** a body of work, optionally linked to a KR. Has an importance, an optional deadline, a status and a *next step*.
 - **Task:** a concrete to-do, usually belonging to a project. One task per project can be marked as its next step.
-- **Habit:** a recurring task belonging to a project or KR, with a schedule. Checking it off logs work automatically. A KR can be measured by a habit.
+- **Habit:** a recurring task belonging to a project or KR or none, with a schedule. Checking it off logs work automatically. A KR can be measured by a habit.
 - **Log entry:** a record of work done (when, optionally how long, what, for which project/KR).
 - **Weekly review:** a per-week record with a score, a reflection and a plan for next week.
 
@@ -90,7 +90,7 @@ Server-side, every table also has `user_id` (Supabase auth user), protected by R
 
 ### Habit
 - `title`
-- `project_id` nullable, `key_result_id` nullable (at least one should be set)
+- `project_id` nullable, `key_result_id` nullable
 - `schedule_type`: `daily | weekdays | times_per_week`
 - `weekdays`: set of weekdays (for `weekdays`)
 - `times_per_week`: integer (for `times_per_week`)
@@ -160,7 +160,7 @@ Server-side, every table also has `user_id` (Supabase auth user), protected by R
 
 ## 6. Screens
 
-Bottom navigation with three tabs: **Home**, **Plan**, **Review**.
+Bottom navigation with three tabs: **Plan**, **Home**, **Review**.
 
 ### 6.1 Home (today)
 Order from top to bottom:

@@ -36,6 +36,8 @@ Versions are the latest compatible at implementation time (`flutter pub add`). A
 | `drift_dev` | dev | Generates drift table and query code; also creates schema snapshots for migration tests. |
 | `riverpod_generator` | dev | Generates providers from `@riverpod` functions and classes. |
 
+**Code generation setup.** drift runs in its own build target with its `not_shared` builder, writing `app_database.drift.dart`. Without that, riverpod_generator runs before drift's classes (`Area`, `Project`, …) exist and fails on providers that return them. `build.yaml` holds this setup and the `make-migrations` options.
+
 Not added: `intl` (the only date format is a fixed `dd-mm-yyyy`, a few lines of Dart), `flutter_localizations` (a European locale would give `dd/mm/yyyy`, not the wanted dashes), `freezed` (drift data classes are enough), `riverpod_lint`/`custom_lint` (extra analyzer plugin, not needed), a color picker (fixed palette).
 
 ### 2. Folder structure
@@ -57,7 +59,7 @@ lib/
     projects/     data/ domain/ ui/      domain: effective project deadline
     tasks/        data/                  next-step support only
     habits/       data/ domain/ ui/      domain: schedule validation + summary
-    plan/         domain/ ui/            domain: buildPlanOverview (grouping/sorting)
+    plan/         data/ domain/ ui/      data: plan/archive providers; domain: buildPlanOverview
     home/         ui/                    placeholder
     review/       ui/                    placeholder
 ```
@@ -107,7 +109,7 @@ Value encoding:
 
 **Unique constraints and soft delete:** `habit_checks(habit_id, date)` and `weekly_reviews(week_start)` are unique across soft-deleted rows too. Milestone 2/4 must therefore revive a soft-deleted row (clear `deleted_at`) instead of inserting a new one. This is noted here so those milestones don't have to rediscover it.
 
-**Migrations.** `schemaVersion = 1`. `MigrationStrategy.onCreate` runs `createAll()` and then seeds the default areas: Job, Personal, Sport, Uni with sort order 0–3 and distinct palette colors. Because seeding happens only in `onCreate`, it never runs again (spec scenario "Deleted default area stays deleted"). `onUpgrade` uses drift's step-by-step migration helper (`stepByStep`) once version 2 exists. `drift_dev schema dump` exports `drift_schemas/drift_schema_v1.json` now, so future migrations can be tested against the v1 snapshot.
+**Migrations.** `schemaVersion = 1`. `MigrationStrategy.onCreate` runs `createAll()` and then seeds the default areas: Job, Personal, Sport, Uni with sort order 0–3 and distinct palette colors. Because seeding happens only in `onCreate`, it never runs again (spec scenario "Deleted default area stays deleted"). `onUpgrade` uses drift's step-by-step migration helper (`stepByStep`) once version 2 exists. `dart run drift_dev make-migrations` (configured in `build.yaml`) exports `drift_schemas/orbit/drift_schema_v1.json` now; for version 2 the same command generates the step-by-step helpers and migration tests against the v1 snapshot.
 
 ### 5. Repositories
 
@@ -129,7 +131,7 @@ One class per entity in `features/<x>/data/`: `AreaRepository`, `ObjectiveReposi
 
 Riverpod with code generation (`@riverpod`). `appDatabaseProvider` is keep-alive and closes the database on dispose; tests override it with `AppDatabase(NativeDatabase.memory())`. Repository providers are keep-alive. UI reads `StreamProvider`s such as `activeObjectivesProvider`, `backlogProjectsProvider(areaFilter)` and `archiveProvider`.
 
-The Plan overview is one provider that combines four streams (active objectives, their KRs, active projects, areas) and passes them to the pure function `buildPlanOverview(...)` in `features/plan/domain/`. This function groups projects under KRs, sends active projects whose KR is missing or belongs to a non-active objective to the "without KR" section, computes effective deadlines and applies the ordering rule. It has unit tests for every ordering and grouping scenario in the plan-overview spec. Drift re-emits these streams after every write to the watched tables, so the "live updates" requirement needs no manual refresh.
+The Plan overview is one provider that combines four streams (all non-deleted objectives and KRs, active projects, areas; non-active objectives are needed for the KR title of projects whose objective is no longer active) and passes them to the pure function `buildPlanOverview(...)` in `features/plan/domain/`. This function groups projects under KRs, sends active projects whose KR is missing or belongs to a non-active objective to the "without KR" section, computes effective deadlines and applies the ordering rule. It has unit tests for every ordering and grouping scenario in the plan-overview spec. Drift re-emits these streams after every write to the watched tables, so the "live updates" requirement needs no manual refresh.
 
 ### 7. Domain functions (pure Dart, unit tested)
 
@@ -141,7 +143,7 @@ The Plan overview is one provider that combines four streams (active objectives,
 
 ### 8. Navigation and UI
 
-- **Router:** `StatefulShellRoute.indexedStack` with branches in destination order `/plan`, `/home`, `/review` (each tab keeps its state). `/` and unknown paths still redirect to `/home`, so the app starts on Home even though Plan is the first destination. Plan sub-routes: `/plan/archive`, `/plan/habits`, `/plan/areas`, `/plan/objectives/new`, `/plan/objectives/:id`, `/plan/objectives/:id/key-results/new`, `/plan/key-results/:id`, `/plan/projects/new`, `/plan/projects/:id`, `/plan/habits/new`, `/plan/habits/:id`. Forms are full pages on every width. They are simple and keep URLs reloadable on web.
+- **Router:** `StatefulShellRoute.indexedStack` with branches in destination order `/plan`, `/home`, `/review` (each tab keeps its state). `/` and unknown paths still redirect to `/home`, so the app starts on Home even though Plan is the first destination. Plan sub-routes: `/plan/archive`, `/plan/habits`, `/plan/areas`, `/plan/objectives/new`, `/plan/objectives/:id`, `/plan/objectives/:id/key-results/new`, `/plan/key-results/:id`, `/plan/projects/new`, `/plan/projects/:id`, `/plan/habits/new`, `/plan/habits/:id`. Forms are full pages on every width. They are simple and keep URLs reloadable on web. Screens are opened with `context.push`, so back returns to where the user came from (e.g. Archive). `GoRouter.optionURLReflectsImperativeAPIs` is enabled so that pushed screens still update the browser URL.
 - **Shell:** a `LayoutBuilder` uses a `NavigationBar` when the width is under 600 and a `NavigationRail` otherwise (Material 3 compact-width breakpoint). Both are driven by `StatefulNavigationShell.currentIndex`, so resizing keeps the tab.
 - **Plan screen:** an app bar with an overflow menu (Archive, Habits, Areas) and a `TabBar` with **Overview** (objectives section, then "Projects without a KR") and **Backlog** (area filter chips: All, each area, No area; each entry has an "Activate" action). A FAB opens a menu: New objective / New project / New habit. "Add key result" sits inside each objective card. Body content is wrapped in a `ConstrainedBox(maxWidth: 840)` and centered.
 - **Project entries** show title, area (color dot and name), importance, and the effective deadline with an "inherited" hint. The brief also lists *status*, but with the chosen visibility rule (only active projects in Overview) status would always read "active". Status is therefore shown only in Backlog (backlog/paused) and Archive.
@@ -175,3 +177,8 @@ Greenfield: the counter template is replaced; there is no user data to migrate. 
 ## Open Questions
 
 - Exact palette colors and the seed color for the theme. These can be chosen during implementation without affecting specs or tasks.
+
+## Follow-ups for archiving
+
+`docs/SPEC.md` already reflects the navigation order (Plan, Home, Review) and optional habit links. Still open before archiving:
+- §6.3: the Overview lists only **active** projects, under their KR or in "Projects without a KR". Backlog and paused projects appear only in the Backlog. Active projects whose KR belongs to a non-active objective are listed under "Projects without a KR" with the KR's title.
