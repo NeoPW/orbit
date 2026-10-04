@@ -1,0 +1,56 @@
+schema: spec-driven
+
+context: |
+  Project: personal, local-first app for tracking objectives, key results,
+  projects, tasks, habits and work done, with a guided weekly review.
+  Single user. The full product spec is in docs/SPEC.md; read the relevant
+  sections before writing any artifact.
+
+  Tech stack:
+  - Flutter (Dart), targets: Android (phone) and web (PC, in the browser).
+    Every feature must work on both, except notifications (Android only).
+  - State management: Riverpod
+  - Local database: SQLite via drift (source of truth for the UI), set up
+    with drift_flutter so the same database code runs on Android (native
+    SQLite) and web (sqlite3 WASM, browser storage). Required web assets
+    (sqlite3.wasm, drift worker) live in web/.
+  - Avoid dart:io and other platform-specific APIs outside lib/core/;
+    use conditional imports where unavoidable.
+  - Navigation: go_router with a bottom navigation shell (Home, Plan, Review)
+  - Notifications (later): flutter_local_notifications, scheduled locally
+  - Backend (later): Supabase, custom last-write-wins sync
+
+  Architecture conventions:
+  - Feature-first folders: lib/core/ (db, router, theme, shared widgets),
+    lib/features/<feature>/ (data/, domain/, ui/)
+  - UI never talks to drift directly; it goes through repositories exposed
+    as Riverpod providers
+  - Every synced table has: id (UUID v4, generated on client),
+    created_at, updated_at (UTC), deleted_at (nullable, soft delete).
+    Queries exclude soft-deleted rows by default.
+  - Pure business logic (scores, deadlines, habit due rules) lives in
+    domain/ as plain Dart functions with unit tests, no Flutter imports
+  - Dates: store timestamps in UTC; habit and review dates are local
+    calendar dates; weeks start on Monday
+  - Material 3, light and dark theme
+  - Responsive layout: bottom navigation on narrow screens (phone),
+    navigation rail on wide screens (browser on PC)
+
+  Quality:
+  - flutter analyze must pass with no warnings
+  - Unit tests for all domain logic and repositories (in-memory drift DB)
+  - Keep dependencies minimal; justify each new package in design.md
+
+rules:
+  proposal:
+    - Reference the relevant sections of docs/SPEC.md
+    - State explicitly what is out of scope for this change
+  specs:
+    - Use WHEN/THEN scenarios that can be turned into tests
+  design:
+    - List new packages with a one-line justification
+    - Describe database schema changes and migrations explicitly
+  tasks:
+    - Keep tasks small enough to verify individually
+    - Include tasks for tests and for running flutter analyze
+    - Include a task to verify the change on Android and in Chrome
