@@ -1,0 +1,23 @@
+# drift runs in its own target so its generated classes (Area, Project, …)
+# exist before riverpod_generator analyzes providers that return them.
+targets:
+  drift:
+    auto_apply_builders: false
+    builders:
+      drift_dev:preparing_builder:
+        enabled: true
+      drift_dev:not_shared:
+        enabled: true
+        options: &drift_options
+          store_date_time_values_as_text: true
+          databases:
+            orbit: lib/core/db/app_database.dart
+          schema_dir: drift_schemas/
+          test_dir: test/core/db/migrations/
+
+  $default:
+    dependencies:
+      - ":drift"
+    builders:
+      drift_dev:
+        enabled: false
