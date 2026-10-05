@@ -1,8 +1,11 @@
 import 'package:orbit/core/db/app_database.dart';
+import 'package:orbit/features/habits/data/habit_check_repository.dart';
 import 'package:orbit/features/habits/data/habit_repository.dart';
 import 'package:orbit/features/key_results/data/key_result_repository.dart';
+import 'package:orbit/features/log/data/log_repository.dart';
 import 'package:orbit/features/objectives/data/objective_repository.dart';
 import 'package:orbit/features/projects/data/project_repository.dart';
+import 'package:orbit/features/tasks/data/task_repository.dart';
 import 'package:orbit/core/db/ids.dart';
 
 /// Writes test data straight through the repositories (real clock and IDs).
@@ -11,7 +14,10 @@ class Seed {
     : objectives = ObjectiveRepository(db, _now, uuidV4),
       keyResults = KeyResultRepository(db, _now, uuidV4),
       projects = ProjectRepository(db, _now, uuidV4),
-      habits = HabitRepository(db, _now, uuidV4);
+      habits = HabitRepository(db, _now, uuidV4),
+      tasks = TaskRepository(db, _now, uuidV4),
+      logs = LogRepository(db, _now, uuidV4),
+      habitChecks = HabitCheckRepository(db, _now, uuidV4);
 
   static DateTime _now() => DateTime.now().toUtc();
 
@@ -19,6 +25,9 @@ class Seed {
   final KeyResultRepository keyResults;
   final ProjectRepository projects;
   final HabitRepository habits;
+  final TaskRepository tasks;
+  final LogRepository logs;
+  final HabitCheckRepository habitChecks;
 
   Future<Objective> objective({
     String title = 'Get fit',

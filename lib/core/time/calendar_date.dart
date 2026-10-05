@@ -53,6 +53,9 @@ class CalendarDate implements Comparable<CalendarDate> {
 
   CalendarDate addDays(int days) => CalendarDate(year, month, day + days);
 
+  /// The Monday of this date's week (weeks start on Monday).
+  CalendarDate get weekStart => addDays(1 - weekday);
+
   /// Number of days from this date to [other] (negative if [other] is earlier).
   int daysUntil(CalendarDate other) => other._utc.difference(_utc).inDays;
 

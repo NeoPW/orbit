@@ -17,4 +17,14 @@ void main() {
       '01-10-2026 – 31-12-2026',
     );
   });
+
+  test('formats a local time as HH:mm with leading zeros', () {
+    expect(formatTime(DateTime(2026, 10, 5, 7, 5)), '07:05');
+    expect(formatTime(DateTime(2026, 10, 5, 23, 59)), '23:59');
+  });
+
+  test('formats a UTC timestamp in local time', () {
+    final local = DateTime(2026, 10, 5, 7, 5);
+    expect(formatTime(local.toUtc()), '07:05');
+  });
 }

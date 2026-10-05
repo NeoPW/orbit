@@ -6,6 +6,7 @@ import '../../../core/db/ids.dart' show idGeneratorProvider;
 import '../../../core/db/repository_support.dart';
 import '../../../core/time/clock.dart' show clockProvider;
 import '../../tasks/data/task_repository.dart';
+import '../../tasks/domain/next_step_choice.dart';
 import 'area_filter.dart';
 
 part 'project_repository.g.dart';
@@ -136,6 +137,46 @@ class ProjectRepository extends Repository {
     await db.update(db.projects).replace(updated);
     return updated;
   }
+
+  /// Makes the open task [taskId] the project's next step, or clears the
+  /// next step when null. A previous next-step task stays open.
+  Future<void> setNextStep(String projectId, String? taskId) =>
+      (db.update(
+        db.projects,
+      )..where((p) => p.id.equals(projectId) & alive(p))).write(
+        ProjectsCompanion(
+          nextStepTaskId: Value(taskId),
+          updatedAt: Value(clock()),
+        ),
+      );
+
+  /// Creates an open task [title] and makes it the project's next step.
+  Future<Task> setNextStepFromTitle(String projectId, String title) =>
+      db.transaction(() async {
+        final task = await _tasks.create(projectId: projectId, title: title);
+        await setNextStep(projectId, task.id);
+        return task;
+      });
+
+  /// Completes the project's next-step task (logging it) and applies
+  /// [choice]. Returns the log entry's ID for undo.
+  Future<String> completeNextStep(String projectId, NextStepChoice choice) =>
+      db.transaction(() async {
+        final taskId = (await get(projectId))?.nextStepTaskId;
+        if (taskId == null) {
+          throw StateError('Project $projectId has no next step');
+        }
+        final logEntryId = await _tasks.complete(taskId);
+        switch (choice) {
+          case NewNextStep(:final title):
+            await setNextStepFromTitle(projectId, title);
+          case ExistingNextStep(:final taskId):
+            await setNextStep(projectId, taskId);
+          case NoNextStep():
+            await setNextStep(projectId, null);
+        }
+        return logEntryId;
+      });
 
   /// Changes only the status, e.g. "Activate" in the Backlog.
   Future<void> setStatus(String id, ProjectStatus status) =>

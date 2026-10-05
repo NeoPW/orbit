@@ -6,7 +6,11 @@ import 'package:orbit/features/key_results/ui/key_result_tile.dart';
 
 import '../../../helpers/fixtures.dart';
 
-Future<void> pumpTile(WidgetTester tester, KeyResult kr) {
+Future<void> pumpTile(
+  WidgetTester tester,
+  KeyResult kr, {
+  int habitCheckIns = 0,
+}) {
   return tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
@@ -17,7 +21,9 @@ Future<void> pumpTile(WidgetTester tester, KeyResult kr) {
             start: kr.startValue,
             target: kr.targetValue,
             current: kr.currentValue,
+            habitCheckIns: habitCheckIns,
           ),
+          habitCheckIns: habitCheckIns,
           effectiveDeadline: CalendarDate(2026, 12, 31),
         ),
       ),
@@ -63,19 +69,32 @@ void main() {
     expect(find.text('Not done'), findsOneWidget);
   });
 
-  testWidgets('habit shows the milestone 2 note instead of a bar', (
-    tester,
-  ) async {
+  testWidgets('habit shows check-ins against the target', (tester) async {
     final kr = keyResult(
       'kr',
       objectiveId: 'o',
       measureType: MeasureType.habit,
       start: null,
       current: null,
-      target: 40,
+      target: 20,
+      habitId: 'h1',
+    );
+    await pumpTile(tester, kr, habitCheckIns: 10);
+    expect(barValue(tester), 0.5);
+    expect(find.text('10 / 20 check-ins · 50%'), findsOneWidget);
+  });
+
+  testWidgets('habit KR without a habit says so', (tester) async {
+    final kr = keyResult(
+      'kr',
+      objectiveId: 'o',
+      measureType: MeasureType.habit,
+      start: null,
+      current: null,
+      target: 20,
     );
     await pumpTile(tester, kr);
-    expect(find.byType(LinearProgressIndicator), findsNothing);
-    expect(find.text('Progress available from milestone 2'), findsOneWidget);
+    expect(barValue(tester), 0);
+    expect(find.text('No habit linked'), findsOneWidget);
   });
 }

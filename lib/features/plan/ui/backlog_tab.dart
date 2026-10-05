@@ -96,7 +96,7 @@ class _BacklogTabState extends ConsumerState<BacklogTab> {
                             deadline: deadlineOf(project),
                             showStatus: true,
                             onTap: () =>
-                                context.push(Routes.project(project.id)),
+                                context.push(Routes.projectDetail(project.id)),
                             trailing: TextButton(
                               onPressed: () => ref
                                   .read(projectRepositoryProvider)

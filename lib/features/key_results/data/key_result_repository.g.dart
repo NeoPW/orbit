@@ -174,3 +174,47 @@ final class KeyResultFamily extends $Family
   @override
   String toString() => r'keyResultProvider';
 }
+
+/// Check-ins counted towards each habit KR, by KR ID.
+
+@ProviderFor(habitCheckIns)
+final habitCheckInsProvider = HabitCheckInsProvider._();
+
+/// Check-ins counted towards each habit KR, by KR ID.
+
+final class HabitCheckInsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<String, int>>,
+          Map<String, int>,
+          Stream<Map<String, int>>
+        >
+    with $FutureModifier<Map<String, int>>, $StreamProvider<Map<String, int>> {
+  /// Check-ins counted towards each habit KR, by KR ID.
+  HabitCheckInsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'habitCheckInsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$habitCheckInsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<Map<String, int>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<Map<String, int>> create(Ref ref) {
+    return habitCheckIns(ref);
+  }
+}
+
+String _$habitCheckInsHash() => r'7968174157ae5261e53caa1cfd2160adca6d199d';

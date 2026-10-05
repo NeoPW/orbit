@@ -83,4 +83,22 @@ void main() {
     final now = DateTime(2026, 10, 5, 23, 30);
     expect(CalendarDate.today(() => now.toUtc()), CalendarDate(2026, 10, 5));
   });
+
+  group('weekStart', () {
+    test('a Monday is its own week start', () {
+      expect(CalendarDate(2026, 10, 5).weekStart, CalendarDate(2026, 10, 5));
+    });
+
+    test('a Sunday belongs to the week starting the Monday before', () {
+      expect(CalendarDate(2026, 10, 11).weekStart, CalendarDate(2026, 10, 5));
+    });
+
+    test('crosses a month boundary', () {
+      expect(CalendarDate(2026, 10, 2).weekStart, CalendarDate(2026, 9, 28));
+    });
+
+    test('crosses a year boundary', () {
+      expect(CalendarDate(2027, 1, 1).weekStart, CalendarDate(2026, 12, 28));
+    });
+  });
 }

@@ -17,13 +17,15 @@ AsyncValue<PlanOverview> planOverview(Ref ref) {
   final keyResults = ref.watch(keyResultsProvider);
   final projects = ref.watch(activeProjectsProvider);
   final areas = ref.watch(areasProvider);
+  final checkIns = ref.watch(habitCheckInsProvider);
   return combineAsync(
-    [objectives, keyResults, projects, areas],
+    [objectives, keyResults, projects, areas, checkIns],
     () => buildPlanOverview(
       objectives: objectives.requireValue,
       keyResults: keyResults.requireValue,
       projects: projects.requireValue,
       areas: areas.requireValue,
+      habitCheckIns: checkIns.requireValue,
     ),
   );
 }

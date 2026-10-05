@@ -87,6 +87,7 @@ class _ObjectiveCard extends StatelessWidget {
               KeyResultTile(
                 keyResult: kr.keyResult,
                 progress: kr.progress,
+                habitCheckIns: kr.habitCheckIns,
                 effectiveDeadline: kr.effectiveDeadline,
                 onTap: () => context.push(Routes.keyResult(kr.keyResult.id)),
               ),
@@ -126,7 +127,7 @@ class _ProjectEntryTile extends StatelessWidget {
       area: entry.area,
       deadline: entry.deadline,
       keyResultTitle: entry.keyResult?.title,
-      onTap: () => context.push(Routes.project(entry.project.id)),
+      onTap: () => context.push(Routes.projectDetail(entry.project.id)),
     );
   }
 }

@@ -98,10 +98,11 @@ void main() {
     expect(find.textContaining('not saved'), findsOneWidget);
   });
 
-  group('placeholders', () {
-    testApp('Home says it comes in a later milestone', (tester) async {
+  group('destinations', () {
+    testApp('Home shows its sections, not a placeholder', (tester) async {
       await pumpApp(tester);
-      expect(find.textContaining('later milestone'), findsOneWidget);
+      expect(find.text('Habits due today'), findsOneWidget);
+      expect(find.textContaining('later milestone'), findsNothing);
     });
 
     testApp('Review says it comes in a later milestone', (tester) async {

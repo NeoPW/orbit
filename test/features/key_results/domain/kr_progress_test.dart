@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/db/enums.dart';
 import 'package:orbit/features/key_results/domain/kr_progress.dart';
 
-double? numeric(double start, double target, double current) => krProgress(
+double numeric(double start, double target, double current) => krProgress(
   MeasureType.numeric,
   start: start,
   target: target,
@@ -42,10 +42,16 @@ void main() {
     });
   });
 
-  test('habit progress is not available yet', () {
-    expect(
-      krProgress(MeasureType.habit, start: 0, target: 20, current: 5),
-      isNull,
-    );
+  group('habit', () {
+    double habit(double? target, int checkIns) =>
+        krProgress(MeasureType.habit, target: target, habitCheckIns: checkIns);
+
+    test('halfway', () => expect(habit(20, 10), 0.5));
+    test('beyond target is clamped to 1', () => expect(habit(5, 7), 1));
+    test('no linked habit has no check-ins', () => expect(habit(20, 0), 0));
+    test('without a positive target there is no progress', () {
+      expect(habit(null, 3), 0);
+      expect(habit(0, 3), 0);
+    });
   });
 }

@@ -58,7 +58,7 @@ final class PlanOverviewProvider
   }
 }
 
-String _$planOverviewHash() => r'8b2cefaae763c73aeb17fe06eb0823e058415a91';
+String _$planOverviewHash() => r'39dc3e68bbcec95ff3e93a7e5c44f14d37ec7c02';
 
 /// Completed/archived objectives and completed projects, most recently
 /// updated first.

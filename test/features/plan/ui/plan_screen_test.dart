@@ -113,6 +113,20 @@ void main() {
       expect(find.text('Edit key result'), findsOneWidget);
     });
 
+    testApp('tapping a project opens its detail', (tester) async {
+      final o = await seed.objective();
+      final kr = await seed.kr(o.id);
+      final p = await seed.projects.create(
+        title: 'Marathon plan',
+        keyResultId: kr.id,
+      );
+      final app = await pumpApp(tester, db: db, location: Routes.plan);
+      await tester.tap(find.text('Marathon plan'));
+      await tester.pumpAndSettle();
+      expect(location(tester, app), Routes.projectDetail(p.id));
+      expect(find.text('Status: Active'), findsOneWidget);
+    });
+
     testApp('saving a form updates the Overview without reload', (
       tester,
     ) async {
@@ -122,8 +136,8 @@ void main() {
         title: 'Marathon plan',
         keyResultId: kr.id,
       );
-      await pumpApp(tester, db: db, location: Routes.plan);
-      await tester.tap(find.text('Marathon plan'));
+      final app = await pumpApp(tester, db: db, location: Routes.plan);
+      app.router.push(Routes.project(p.id));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Backlog').last);
       await tester.tap(find.text('Save'));
@@ -139,6 +153,20 @@ void main() {
   });
 
   group('Backlog', () {
+    testApp('tapping a project opens its detail', (tester) async {
+      final p = await seed.projects.create(
+        title: 'Garden',
+        status: ProjectStatus.backlog,
+      );
+      final app = await pumpApp(tester, db: db, location: Routes.plan);
+      await tester.tap(find.widgetWithText(Tab, 'Backlog'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Garden'));
+      await tester.pumpAndSettle();
+      expect(location(tester, app), Routes.projectDetail(p.id));
+      expect(find.text('Status: Backlog'), findsOneWidget);
+    });
+
     testApp('activating moves the project to Overview', (tester) async {
       final o = await seed.objective();
       final kr = await seed.kr(o.id, title: 'Run 100 km');

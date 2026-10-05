@@ -27,14 +27,18 @@ class KeyResultPlan {
     required this.keyResult,
     required this.effectiveDeadline,
     required this.progress,
+    this.habitCheckIns = 0,
     required this.projects,
   });
 
   final KeyResult keyResult;
   final CalendarDate effectiveDeadline;
 
-  /// 0–1, or null for habit KRs.
-  final double? progress;
+  /// 0–1.
+  final double progress;
+
+  /// Check-ins counted towards a habit KR; 0 for other KRs.
+  final int habitCheckIns;
   final List<ProjectEntry> projects;
 }
 
@@ -85,12 +89,14 @@ int compareProjectsForPlan(ProjectEntry a, ProjectEntry b) {
 /// [objectives] and [keyResults] may include non-active objectives and their
 /// KRs: they are needed for active projects linked to a KR of a non-active
 /// objective, which are listed under "without KR" with their KR. Only
-/// projects with status active are used from [projects].
+/// projects with status active are used from [projects]. [habitCheckIns]
+/// holds the check-ins counted towards each habit KR, by KR ID.
 PlanOverview buildPlanOverview({
   required List<Objective> objectives,
   required List<KeyResult> keyResults,
   required List<Project> projects,
   required List<Area> areas,
+  Map<String, int> habitCheckIns = const {},
 }) {
   final objectivesById = {for (final o in objectives) o.id: o};
   final areasById = {for (final a in areas) a.id: a};
@@ -155,7 +161,9 @@ PlanOverview buildPlanOverview({
                 start: kr.startValue,
                 target: kr.targetValue,
                 current: kr.currentValue,
+                habitCheckIns: habitCheckIns[kr.id] ?? 0,
               ),
+              habitCheckIns: habitCheckIns[kr.id] ?? 0,
               projects: (projectsByKr[kr.id] ?? [])
                 ..sort(compareProjectsForPlan),
             ),

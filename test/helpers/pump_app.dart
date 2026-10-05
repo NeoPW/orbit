@@ -42,6 +42,36 @@ Future<({AppDatabase db, GoRouter router})> pumpApp(
   return (db: database, router: router);
 }
 
+/// Pumps [child] in a scaffold with the app theme, on an in-memory database
+/// (or [db]), without the router. For widgets and dialogs on their own.
+Future<AppDatabase> pumpInScaffold(
+  WidgetTester tester,
+  Widget child, {
+  AppDatabase? db,
+  List overrides = const [],
+  double width = 400,
+  double height = 800,
+}) async {
+  setWindowSize(tester, width, height);
+  final database = db ?? newTestDatabase();
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(database),
+        ...overrides,
+      ],
+      child: MaterialApp(home: Scaffold(body: child)),
+    ),
+  );
+  await tester.pumpAndSettle();
+  _cleanups.add(() async {
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(Duration.zero);
+    await database.close();
+  });
+  return database;
+}
+
 final _cleanups = <Future<void> Function()>[];
 
 /// A widget test that uses [pumpApp]; cleans up the app and database at the

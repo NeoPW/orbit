@@ -98,4 +98,52 @@ void main() {
     expect(habit.keyResultId, isNull);
     expect(habit.projectId, p.id);
   });
+
+  group('watchHabitCheckIns', () {
+    // The objective from setUp starts 2026-10-01.
+    Future<(Habit, KeyResult)> habitKr() async {
+      final habit = await r.habits.create(
+        title: 'Run',
+        scheduleType: ScheduleType.daily,
+      );
+      final kr = await r.keyResults.create(
+        objectiveId: o.id,
+        title: 'Run 20 times',
+        measureType: MeasureType.habit,
+        targetValue: 20,
+        habitId: habit.id,
+      );
+      return (habit, kr);
+    }
+
+    test('counts checks from the objective start date on', () async {
+      final (habit, kr) = await habitKr();
+      await r.habitChecks.check(habit, CalendarDate(2026, 9, 30));
+      await r.habitChecks.check(habit, CalendarDate(2026, 10, 1));
+      await r.habitChecks.check(habit, CalendarDate(2026, 10, 2));
+
+      expect(await r.keyResults.watchHabitCheckIns().first, {kr.id: 2});
+    });
+
+    test('ignores removed checks', () async {
+      final (habit, kr) = await habitKr();
+      await r.habitChecks.check(habit, CalendarDate(2026, 10, 2));
+      await r.habitChecks.check(habit, CalendarDate(2026, 10, 3));
+      await r.habitChecks.uncheck(habit.id, CalendarDate(2026, 10, 3));
+
+      expect(await r.keyResults.watchHabitCheckIns().first, {kr.id: 1});
+    });
+
+    test('a habit KR without habit counts 0; other KRs are left out', () async {
+      final kr = await r.keyResults.create(
+        objectiveId: o.id,
+        title: 'Meditate',
+        measureType: MeasureType.habit,
+        targetValue: 10,
+      );
+      await r.numericKr(o.id);
+
+      expect(await r.keyResults.watchHabitCheckIns().first, {kr.id: 0});
+    });
+  });
 }

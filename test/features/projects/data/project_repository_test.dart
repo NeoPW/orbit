@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/db/app_database.dart';
 import 'package:orbit/features/projects/data/area_filter.dart';
+import 'package:orbit/features/tasks/domain/next_step_choice.dart';
 
 import '../../../helpers/repos.dart';
 
@@ -171,4 +172,63 @@ void main() {
       expect(habit.deletedAt, isNull);
     },
   );
+
+  group('choosing and completing the next step', () {
+    Future<Project> reload(String id) async => (await r.projects.get(id))!;
+
+    test(
+      'setNextStep links an existing task; the old one stays open',
+      () async {
+        final p = await r.projects.create(title: 'Thesis', nextStep: 'Draft');
+        final other = await r.tasks.create(
+          projectId: p.id,
+          title: 'Book venue',
+        );
+        await r.projects.setNextStep(p.id, other.id);
+
+        expect((await reload(p.id)).nextStepTaskId, other.id);
+        final old = await r.tasks.get(p.nextStepTaskId!);
+        expect(old!.status, TaskStatus.open);
+      },
+    );
+
+    test('setNextStepFromTitle creates and links a task', () async {
+      final p = await r.projects.create(title: 'Thesis');
+      final task = await r.projects.setNextStepFromTitle(p.id, 'Write intro');
+
+      expect(task.projectId, p.id);
+      expect((await reload(p.id)).nextStepTaskId, task.id);
+    });
+
+    test('complete with a new next step', () async {
+      final p = await r.projects.create(title: 'Thesis', nextStep: 'Draft');
+      final logEntryId = await r.projects.completeNextStep(
+        p.id,
+        const NewNextStep('Write intro'),
+      );
+
+      expect((await r.rawTask(p.nextStepTaskId!)).status, TaskStatus.done);
+      final next = await r.projects.nextStep(await reload(p.id));
+      expect(next!.title, 'Write intro');
+      expect(next.status, TaskStatus.open);
+      expect((await r.rawLogEntry(logEntryId)).note, 'Draft');
+    });
+
+    test('complete and pick an existing open task', () async {
+      final p = await r.projects.create(title: 'Thesis', nextStep: 'Draft');
+      final venue = await r.tasks.create(projectId: p.id, title: 'Book venue');
+      await r.projects.completeNextStep(p.id, ExistingNextStep(venue.id));
+
+      expect((await r.rawTask(p.nextStepTaskId!)).status, TaskStatus.done);
+      expect((await reload(p.id)).nextStepTaskId, venue.id);
+    });
+
+    test('complete and skip leaves no next step', () async {
+      final p = await r.projects.create(title: 'Thesis', nextStep: 'Draft');
+      await r.projects.completeNextStep(p.id, const NoNextStep());
+
+      expect((await r.rawTask(p.nextStepTaskId!)).status, TaskStatus.done);
+      expect((await reload(p.id)).nextStepTaskId, isNull);
+    });
+  });
 }

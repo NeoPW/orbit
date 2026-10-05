@@ -40,6 +40,7 @@ KeyResult keyResult(
   double? target = 100,
   double? current = 0,
   CalendarDate? deadline,
+  String? habitId,
   int sortOrder = 0,
 }) => KeyResult(
   id: id,
@@ -52,6 +53,7 @@ KeyResult keyResult(
   startValue: start,
   targetValue: target,
   currentValue: current,
+  habitId: habitId,
   deadline: deadline,
   sortOrder: sortOrder,
 );
@@ -75,4 +77,43 @@ Project project(
   keyResultId: keyResultId,
   areaId: areaId,
   deadline: deadline,
+);
+
+Habit habit(
+  String id, {
+  String? title,
+  ScheduleType scheduleType = ScheduleType.daily,
+  Set<int>? weekdays,
+  int? timesPerWeek,
+  bool active = true,
+  String? projectId,
+  String? keyResultId,
+}) => Habit(
+  id: id,
+  createdAt: _t0,
+  updatedAt: _t0,
+  title: title ?? id,
+  projectId: projectId,
+  keyResultId: keyResultId,
+  scheduleType: scheduleType,
+  weekdays: weekdays,
+  timesPerWeek: timesPerWeek,
+  active: active,
+);
+
+Task task(
+  String id, {
+  String? title,
+  String? projectId,
+  CalendarDate? dueDate,
+  TaskStatus status = TaskStatus.open,
+}) => Task(
+  id: id,
+  createdAt: _t0,
+  updatedAt: _t0,
+  projectId: projectId,
+  title: title ?? id,
+  notes: '',
+  dueDate: dueDate,
+  status: status,
 );

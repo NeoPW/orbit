@@ -18,4 +18,7 @@ abstract final class Routes {
   static String project(String id) => '/plan/projects/$id';
   static const newHabit = '/plan/habits/new';
   static String habit(String id) => '/plan/habits/$id';
+
+  /// Project detail, reachable from Home and Plan.
+  static String projectDetail(String id) => '/projects/$id';
 }

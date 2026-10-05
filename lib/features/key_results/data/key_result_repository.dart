@@ -92,6 +92,38 @@ class KeyResultRepository extends Repository {
     await softDeleteWhere(db.keyResults, (k) => k.id.equals(id));
   });
 
+  /// For every habit KR, the number of live check-ins of its linked habit
+  /// on or after its objective's start date (key-results spec, "Habit KR
+  /// progress"). Habit KRs without a linked habit count 0.
+  Stream<Map<String, int>> watchHabitCheckIns() {
+    final kr = db.keyResults;
+    final objective = db.objectives;
+    final checks = db.habitChecks;
+    final count = checks.id.count();
+    final query =
+        db.selectOnly(kr).join([
+            innerJoin(
+              objective,
+              objective.id.equalsExp(kr.objectiveId),
+              useColumns: false,
+            ),
+            leftOuterJoin(
+              checks,
+              checks.habitId.equalsExp(kr.habitId) &
+                  checks.deletedAt.isNull() &
+                  // ISO dates compare as text.
+                  checks.date.isBiggerOrEqual(objective.startDate),
+              useColumns: false,
+            ),
+          ])
+          ..addColumns([kr.id, count])
+          ..where(alive(kr) & kr.measureType.equalsValue(MeasureType.habit))
+          ..groupBy([kr.id]);
+    return query.watch().map(
+      (rows) => {for (final row in rows) row.read(kr.id)!: row.read(count)!},
+    );
+  }
+
   /// Trims text and keeps only the measure fields of the KR's type:
   /// numeric uses start/target/current/unit; boolean stores achieved as
   /// current 1/0 with start 0 and target 1; habit uses target and habit.
@@ -137,3 +169,8 @@ Stream<List<KeyResult>> keyResults(Ref ref) =>
 @riverpod
 Stream<KeyResult?> keyResult(Ref ref, String id) =>
     ref.watch(keyResultRepositoryProvider).watch(id);
+
+/// Check-ins counted towards each habit KR, by KR ID.
+@riverpod
+Stream<Map<String, int>> habitCheckIns(Ref ref) =>
+    ref.watch(keyResultRepositoryProvider).watchHabitCheckIns();

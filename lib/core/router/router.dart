@@ -9,6 +9,7 @@ import '../../features/key_results/ui/key_result_form_screen.dart';
 import '../../features/objectives/ui/objective_form_screen.dart';
 import '../../features/plan/ui/archive_screen.dart';
 import '../../features/plan/ui/plan_screen.dart';
+import '../../features/projects/ui/project_detail_screen.dart';
 import '../../features/projects/ui/project_form_screen.dart';
 import '../../features/review/ui/review_screen.dart';
 import 'app_shell.dart';
@@ -35,6 +36,13 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
     redirect: (context, state) => state.uri.path == '/' ? Routes.home : null,
     onException: (context, state, router) => router.go(Routes.home),
     routes: [
+      // On the root navigator like the forms, so it can be pushed from any
+      // tab and its URL survives a reload.
+      GoRoute(
+        path: '/projects/:id',
+        builder: (context, state) =>
+            ProjectDetailScreen(projectId: state.pathParameters['id']!),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(shell: shell),
         branches: [

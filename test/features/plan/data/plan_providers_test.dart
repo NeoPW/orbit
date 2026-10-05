@@ -1,7 +1,4 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/db/app_database.dart';
 import 'package:orbit/features/plan/data/plan_providers.dart';
@@ -9,24 +6,6 @@ import 'package:orbit/features/plan/domain/plan_overview.dart';
 
 import '../../../helpers/provider_container.dart';
 import '../../../helpers/repos.dart';
-
-/// Waits until [provider] has a value matching [test].
-Future<T> valueWhere<T>(
-  ProviderContainer container,
-  ProviderListenable<AsyncValue<T>> provider,
-  bool Function(T value) test,
-) {
-  final completer = Completer<T>();
-  final sub = container.listen(provider, (_, next) {
-    final value = next.value;
-    if (next.hasValue && test(value as T) && !completer.isCompleted) {
-      completer.complete(value);
-    }
-  }, fireImmediately: true);
-  return completer.future
-      .timeout(const Duration(seconds: 5))
-      .whenComplete(sub.close);
-}
 
 void main() {
   late Repos r;
@@ -86,4 +65,31 @@ void main() {
       expect((items.last as ArchivedProject).project.title, 'Done project');
     },
   );
+
+  test('checking the linked habit raises the habit KR progress', () async {
+    final o = await r.objective();
+    final habit = await r.habits.create(
+      title: 'Run',
+      scheduleType: ScheduleType.daily,
+    );
+    await r.keyResults.create(
+      objectiveId: o.id,
+      title: 'Run 20 times',
+      measureType: MeasureType.habit,
+      targetValue: 20,
+      habitId: habit.id,
+    );
+
+    double progress(PlanOverview o) =>
+        o.objectives.single.keyResults.single.progress;
+
+    await valueWhere(container, planOverviewProvider, (o) => progress(o) == 0);
+    await r.habitChecks.check(habit, CalendarDate(2026, 10, 5));
+    final after = await valueWhere(
+      container,
+      planOverviewProvider,
+      (o) => progress(o) > 0,
+    );
+    expect(progress(after), 0.05);
+  });
 }

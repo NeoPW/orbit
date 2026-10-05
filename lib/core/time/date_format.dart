@@ -8,4 +8,10 @@ String formatDate(CalendarDate date) =>
 String formatDateRange(CalendarDate start, CalendarDate end) =>
     '${formatDate(start)} – ${formatDate(end)}';
 
+/// Formats the local time of day of [dateTime] as `HH:mm`.
+String formatTime(DateTime dateTime) {
+  final local = dateTime.toLocal();
+  return '${_two(local.hour)}:${_two(local.minute)}';
+}
+
 String _two(int value) => value.toString().padLeft(2, '0');

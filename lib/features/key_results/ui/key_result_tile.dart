@@ -10,36 +10,42 @@ class KeyResultTile extends StatelessWidget {
     super.key,
     required this.keyResult,
     required this.progress,
+    this.habitCheckIns = 0,
     required this.effectiveDeadline,
     this.onTap,
   });
 
   final KeyResult keyResult;
 
-  /// 0–1, or null for habit KRs.
-  final double? progress;
+  /// 0–1.
+  final double progress;
+
+  /// Check-ins counted towards a habit KR.
+  final int habitCheckIns;
   final CalendarDate effectiveDeadline;
   final VoidCallback? onTap;
 
   String _valueText() {
     final kr = keyResult;
+    final percent = '${(progress * 100).round()}%';
     switch (kr.measureType) {
       case MeasureType.numeric:
         final unit = kr.unit == null ? '' : ' ${kr.unit}';
         final current = formatNumber(kr.currentValue ?? 0);
         final target = formatNumber(kr.targetValue ?? 0);
-        return '$current / $target$unit · ${((progress ?? 0) * 100).round()}%';
+        return '$current / $target$unit · $percent';
       case MeasureType.boolean:
         return progress == 1 ? 'Done' : 'Not done';
       case MeasureType.habit:
-        return 'Progress available from milestone 2';
+        if (kr.habitId == null) return 'No habit linked';
+        final target = formatNumber(kr.targetValue ?? 0);
+        return '$habitCheckIns / $target check-ins · $percent';
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final progress = this.progress;
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -62,19 +68,16 @@ class KeyResultTile extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 6),
-            if (progress != null) ...[
-              LinearProgressIndicator(
-                value: progress,
-                minHeight: 6,
-                borderRadius: BorderRadius.circular(3),
-              ),
-              const SizedBox(height: 4),
-            ],
+            LinearProgressIndicator(
+              value: progress,
+              minHeight: 6,
+              borderRadius: BorderRadius.circular(3),
+            ),
+            const SizedBox(height: 4),
             Text(
               _valueText(),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
-                fontStyle: progress == null ? FontStyle.italic : null,
               ),
             ),
           ],

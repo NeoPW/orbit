@@ -10,11 +10,13 @@ PlanOverview build({
   List<KeyResult> keyResults = const [],
   List<Project> projects = const [],
   List<Area> areas = const [],
+  Map<String, int> habitCheckIns = const {},
 }) => buildPlanOverview(
   objectives: objectives,
   keyResults: keyResults,
   projects: projects,
   areas: areas,
+  habitCheckIns: habitCheckIns,
 );
 
 List<String> titles(List<ProjectEntry> entries) =>
@@ -106,8 +108,11 @@ void main() {
             'inherit',
             objectiveId: 'o1',
             measureType: MeasureType.habit,
+            target: 20,
+            habitId: 'h1',
           ),
         ],
+        habitCheckIns: {'inherit': 5},
       );
       final krs = {
         for (final k in overview.objectives.single.keyResults)
@@ -115,7 +120,8 @@ void main() {
       };
       expect(krs['own']!.effectiveDeadline, CalendarDate(2026, 11, 15));
       expect(krs['inherit']!.effectiveDeadline, CalendarDate(2026, 12, 31));
-      expect(krs['inherit']!.progress, isNull);
+      expect(krs['inherit']!.progress, 0.25);
+      expect(krs['inherit']!.habitCheckIns, 5);
     });
   });
 
