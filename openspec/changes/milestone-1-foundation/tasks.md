@@ -88,8 +88,8 @@
 ## 13. Integration and verification
 
 - [x] 13.1 Run `dart run build_runner build --delete-conflicting-outputs`, `flutter analyze` and `flutter test`; verify analyze reports no issues and all tests pass
-- [ ] 13.2 Verify on an Android phone with `flutter run`: create, edit and delete an area, objective, KR (each measure type), project and habit; move a project between active, backlog and paused; restart the app and confirm all data is still there
-- [ ] 13.3 Verify in Chrome with `flutter run -d chrome`: repeat the 13.2 flow, reload the page and confirm data persists and the current tab is kept; check no storage warning banner is shown and the browser console has no worker/WASM errors
-- [ ] 13.4 Verify that every date shown on Android and in Chrome (objective ranges, deadlines, effective deadlines, date fields) uses `dd-mm-yyyy`, with the browser set to US English
+- [x] 13.2 Verify on an Android phone with `flutter run`: create, edit and delete an area, objective, KR (each measure type), project and habit; move a project between active, backlog and paused; restart the app and confirm all data is still there
+- [x] 13.3 Verify in Chrome with `flutter run -d chrome`: repeat the 13.2 flow, reload the page and confirm data persists and the current tab is kept; check no storage warning banner is shown and the browser console has no worker/WASM errors
+- [x] 13.4 Verify that every date shown on Android and in Chrome (objective ranges, deadlines, effective deadlines, date fields) uses `dd-mm-yyyy`, with the browser set to US English
 - [x] 13.5 Verify layout in Chrome at phone width (bottom navigation, forms usable) and at desktop width (navigation rail, content limited to a readable width)
 - [x] 13.6 Note in the change that `docs/SPEC.md` needs updating: §6 for the navigation order (Plan, Home, Review) and the Plan visibility rule (only active projects in Overview), and §3/§4 for habits whose project/KR link is optional; verify the note is present for the archive step

@@ -178,8 +178,9 @@ A floating action button opens **quick log**: pick a project (recently used firs
 - Actions: activate / pause / move to backlog / complete.
 
 ### 6.3 Plan
-- **Objectives list:** for each active objective, its key results (with progress bars), and under each KR the projects linked to it. Shown one after another.
-- Projects with no KR are listed in a separate section.
+- **Objectives list:** for each active objective, its key results (with progress bars), and under each KR the **active** projects linked to it. Shown one after another.
+- Active projects with no KR are listed in a separate "Projects without a KR" section. Active projects whose KR belongs to a non-active objective are also listed there, with the KR's title.
+- Only active projects appear in the objectives list; backlog and paused projects appear only in the Backlog.
 - Create and edit objectives, KRs, projects, habits and areas.
 - **Backlog:** all projects with status `backlog` or `paused`, filterable by area. Activating one makes it appear on Home.
 - Archive of completed objectives and projects.

@@ -180,5 +180,4 @@ Greenfield: the counter template is replaced; there is no user data to migrate. 
 
 ## Follow-ups for archiving
 
-`docs/SPEC.md` already reflects the navigation order (Plan, Home, Review) and optional habit links. Still open before archiving:
-- §6.3: the Overview lists only **active** projects, under their KR or in "Projects without a KR". Backlog and paused projects appear only in the Backlog. Active projects whose KR belongs to a non-active objective are listed under "Projects without a KR" with the KR's title.
+`docs/SPEC.md` reflects the navigation order (Plan, Home, Review), optional habit links and the §6.3 Overview visibility rule (only **active** projects, under their KR or in "Projects without a KR"; backlog and paused projects only in the Backlog; active projects whose KR belongs to a non-active objective under "Projects without a KR" with the KR's title). Nothing is open before archiving.
