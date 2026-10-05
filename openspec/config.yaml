@@ -16,7 +16,7 @@ context: |
     (sqlite3.wasm, drift worker) live in web/.
   - Avoid dart:io and other platform-specific APIs outside lib/core/;
     use conditional imports where unavoidable.
-  - Navigation: go_router with a bottom navigation shell (Home, Plan, Review)
+  - Navigation: go_router with a bottom navigation shell (Plan, Home, Review)
   - Notifications (later): flutter_local_notifications, scheduled locally
   - Backend (later): Supabase, custom last-write-wins sync
 
