@@ -114,12 +114,16 @@ Server-side, every table also has `user_id` (Supabase auth user), protected by R
 - `score`: integer 1–10
 - `reflection` (text)
 - `plan_next_week` (text)
-- `completed_at` nullable
+- `completed_at` nullable (a review without it is a draft)
+
+### ReviewKrSnapshot
+- `weekly_review_id`, `key_result_id`
+- `progress` (0–1, the KR's progress when the review was saved)
 
 ### Settings (local only, not synced)
-- Reminders on/off (default on), default reminder time (default 08:00; used by habits without own time and by deadline reminders), deadline warning lead time (default 7 days, 1–30).
-- Later: weekly review day and time (milestone 4), sync credentials (milestone 5).
-- Stored in a local-only `settings` key-value table (schema version 2), never synced.
+- Reminders on/off (default on), default reminder time (default 08:00; used by habits without own time and by deadline reminders), deadline warning lead time (default 7 days, 1–30), weekly review day and time (default Sunday 18:00).
+- Later: sync credentials (milestone 5).
+- Stored in a local-only `settings` key-value table, never synced.
 
 ## 5. Derived logic
 
@@ -189,19 +193,22 @@ A floating action button opens **quick log**: an optional duration and note on t
 - Archive of completed objectives and projects.
 
 ### 6.4 Review
-- **Default view:** last week at a glance:
-  - work logged per project (count and total duration)
-  - habit adherence per habit
-  - tasks completed
-  - KR progress changes
-- **"Start weekly review"** button opens the guided flow:
-  1. Look back: last week's summary (auto-filled from the logs).
-  2. Projects: go through each active project; update status and next step.
-  3. Key results: update values of numeric/boolean KRs.
+- **Review week:** on Sunday the Monday–Sunday week ending today, on any other day the previous Monday–Sunday week. One review per week.
+- **Default view**, top to bottom:
+  - this week's plan, from the most recently completed review
+  - a "Start / Continue / Edit weekly review" button
+  - the review week at a glance: work logged per project (count and total duration), habit adherence per habit (done of expected), tasks completed, KR progress with the change since the previous completed review
+  - the history.
+- **Guided flow:**
+  1. Look back: the week summary.
+  2. Projects: go through each active project; update status and next step (applied immediately).
+  3. Key results: update values of numeric/boolean KRs (applied immediately).
   4. Score the week (1–10) and write a reflection.
   5. Write the plan for next week.
-  6. Save (sets `completed_at`).
-- **History:** list of past reviews with score and plan.
+  6. Save: sets `completed_at` and stores a progress snapshot of each KR of an active objective.
+
+  Score, reflection and plan are kept as a draft when changing steps or leaving, so a review can be continued later. A completed review can be edited and saved again.
+- **History:** list of past reviews with score and plan; each opens in full.
 - Later: longer-term stats (score trends, time per area/project, habit streaks).
 
 ## 7. Sync
@@ -222,7 +229,7 @@ A floating action button opens **quick log**: an optional duration and note on t
 Android only. All scheduled locally with `flutter_local_notifications` as exact alarms, for the next 14 days, and rescheduled whenever relevant data or settings change and when the app starts or returns to the foreground:
 - **Habits:** a reminder at each habit's `reminder_time` (or the default reminder time) on every day it is due and not yet checked.
 - **Deadlines:** for the same items Home lists as upcoming deadlines (own deadlines only), a reminder at the default reminder time when the deadline enters the lead time, and one on the day itself.
-- **Weekly review:** at the configured day and time (e.g. Sunday evening), opening the review flow. Comes with milestone 4.
+- **Weekly review:** at the configured review day and time (default Sunday 18:00), opening the review flow; skipped when that week's review is already completed.
 
 Tapping a reminder opens its screen: Home for habits, the project detail for tasks and projects, the KR form for KRs.
 

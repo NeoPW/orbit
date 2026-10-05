@@ -30,7 +30,7 @@ The app SHALL provide exactly three top-level destinations, in this order: Plan,
 
 #### Scenario: Placeholder destinations
 - **WHEN** the user selects Review
-- **THEN** a placeholder is shown stating that the screen comes in a later milestone
+- **THEN** the Review screen is shown (see weekly-review) and no destination is a placeholder
 
 ### Requirement: Responsive navigation
 The app SHALL show a bottom navigation bar when the window is narrower than 600 logical pixels, and a navigation rail on the left otherwise. Resizing SHALL switch between them without losing the selected destination.

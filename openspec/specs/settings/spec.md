@@ -7,11 +7,11 @@ Lets the user adjust how the app reminds and warns them: whether reminders are o
 ## Requirements
 
 ### Requirement: Settings screen
-The app SHALL provide a Settings screen, reachable from the Plan tab menu, showing the reminders switch, the default reminder time and the deadline lead time with their current values.
+The app SHALL provide a Settings screen, reachable from the Plan tab menu, showing the reminders switch, the default reminder time, the review day and time, and the deadline lead time with their current values.
 
 #### Scenario: Open settings
 - **WHEN** the user opens Settings from the Plan tab menu
-- **THEN** the reminders switch, the default reminder time and the deadline lead time are shown
+- **THEN** the reminders switch, the default reminder time, the review day and time and the deadline lead time are shown
 
 ### Requirement: Default values
 Before the user changes anything, reminders SHALL be on, the default reminder time SHALL be 08:00 and the deadline lead time SHALL be 7 days.
@@ -51,3 +51,14 @@ In the browser the Settings screen SHALL show that reminders are only available 
 #### Scenario: Settings in Chrome
 - **WHEN** the user opens Settings in Chrome
 - **THEN** a note says that reminders are only available on Android and the lead time can be changed
+
+### Requirement: Review day and time
+The user SHALL be able to choose the weekday (Monday to Sunday) and the time of day of the weekly review reminder. The defaults SHALL be Sunday and 18:00. The time SHALL be shown as `HH:mm`.
+
+#### Scenario: Defaults
+- **WHEN** the user opens Settings on a new installation
+- **THEN** the review day is Sunday and the review time is 18:00
+
+#### Scenario: Change review day
+- **WHEN** the user chooses Saturday and 10:00
+- **THEN** Settings shows Saturday and 10:00 and the review reminders move to Saturdays at 10:00
