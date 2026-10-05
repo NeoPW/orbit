@@ -9,6 +9,7 @@ import 'generated/schema.dart';
 
 import 'generated/schema_v1.dart' as v1;
 import 'generated/schema_v2.dart' as v2;
+import 'generated/schema_v3.dart' as v3;
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -37,99 +38,151 @@ void main() {
     }
   });
 
-  test('migration from v1 to v2 keeps existing rows', () async {
-    const t = '2026-10-01T10:00:00.000Z';
+  test(
+    'migration from v1 to the current version keeps existing rows',
+    () async {
+      const t = '2026-10-01T10:00:00.000Z';
+      await verifier.testWithDataIntegrity(
+        oldVersion: 1,
+        newVersion: 3,
+        createOld: v1.DatabaseAtV1.new,
+        createNew: v3.DatabaseAtV3.new,
+        openTestedDatabase: AppDatabase.new,
+        createItems: (batch, oldDb) {
+          batch.insert(
+            oldDb.projects,
+            const v1.ProjectsData(
+              id: 'p1',
+              createdAt: t,
+              updatedAt: t,
+              title: 'Thesis',
+              description: '',
+              status: 'active',
+              importance: 4,
+              deadline: '2026-12-31',
+            ),
+          );
+          batch.insert(
+            oldDb.habits,
+            const v1.HabitsData(
+              id: 'h1',
+              createdAt: t,
+              updatedAt: t,
+              title: 'Run',
+              projectId: 'p1',
+              scheduleType: 'weekdays',
+              weekdays: '1,3,5',
+              reminderTime: '07:30',
+              active: 1,
+            ),
+          );
+          batch.insert(
+            oldDb.logEntries,
+            const v1.LogEntriesData(
+              id: 'l1',
+              createdAt: t,
+              updatedAt: t,
+              projectId: 'p1',
+              occurredAt: t,
+              durationMinutes: 45,
+              note: 'Chapter 2',
+              source: 'manual',
+            ),
+          );
+        },
+        validateItems: (newDb) async {
+          expect(await newDb.select(newDb.projects).get(), [
+            const v3.ProjectsData(
+              id: 'p1',
+              createdAt: t,
+              updatedAt: t,
+              title: 'Thesis',
+              description: '',
+              status: 'active',
+              importance: 4,
+              deadline: '2026-12-31',
+            ),
+          ]);
+
+          expect(await newDb.select(newDb.habits).get(), [
+            const v3.HabitsData(
+              id: 'h1',
+              createdAt: t,
+              updatedAt: t,
+              title: 'Run',
+              projectId: 'p1',
+              scheduleType: 'weekdays',
+              weekdays: '1,3,5',
+              reminderTime: '07:30',
+              active: 1,
+            ),
+          ]);
+
+          expect(await newDb.select(newDb.logEntries).get(), [
+            const v3.LogEntriesData(
+              id: 'l1',
+              createdAt: t,
+              updatedAt: t,
+              projectId: 'p1',
+              occurredAt: t,
+              durationMinutes: 45,
+              note: 'Chapter 2',
+              source: 'manual',
+            ),
+          ]);
+
+          // The new tables exist and start empty.
+          expect(await newDb.select(newDb.settings).get(), isEmpty);
+          expect(await newDb.select(newDb.reviewKrSnapshots).get(), isEmpty);
+        },
+      );
+    },
+  );
+
+  test('migration from v2 to v3 keeps settings and reviews', () async {
+    const t = '2026-10-04T18:00:00.000Z';
     await verifier.testWithDataIntegrity(
-      oldVersion: 1,
-      newVersion: 2,
-      createOld: v1.DatabaseAtV1.new,
-      createNew: v2.DatabaseAtV2.new,
+      oldVersion: 2,
+      newVersion: 3,
+      createOld: v2.DatabaseAtV2.new,
+      createNew: v3.DatabaseAtV3.new,
       openTestedDatabase: AppDatabase.new,
       createItems: (batch, oldDb) {
         batch.insert(
-          oldDb.projects,
-          const v1.ProjectsData(
-            id: 'p1',
-            createdAt: t,
-            updatedAt: t,
-            title: 'Thesis',
-            description: '',
-            status: 'active',
-            importance: 4,
-            deadline: '2026-12-31',
-          ),
+          oldDb.settings,
+          const v2.SettingsData(key: 'deadline_lead_days', value: '3'),
         );
         batch.insert(
-          oldDb.habits,
-          const v1.HabitsData(
-            id: 'h1',
+          oldDb.weeklyReviews,
+          const v2.WeeklyReviewsData(
+            id: 'r1',
             createdAt: t,
             updatedAt: t,
-            title: 'Run',
-            projectId: 'p1',
-            scheduleType: 'weekdays',
-            weekdays: '1,3,5',
-            reminderTime: '07:30',
-            active: 1,
-          ),
-        );
-        batch.insert(
-          oldDb.logEntries,
-          const v1.LogEntriesData(
-            id: 'l1',
-            createdAt: t,
-            updatedAt: t,
-            projectId: 'p1',
-            occurredAt: t,
-            durationMinutes: 45,
-            note: 'Chapter 2',
-            source: 'manual',
+            weekStart: '2026-09-28',
+            score: 7,
+            reflection: 'Good week',
+            planNextWeek: 'Chapter 3',
+            completedAt: t,
           ),
         );
       },
       validateItems: (newDb) async {
-        expect(await newDb.select(newDb.projects).get(), [
-          const v2.ProjectsData(
-            id: 'p1',
+        expect(await newDb.select(newDb.settings).get(), [
+          const v3.SettingsData(key: 'deadline_lead_days', value: '3'),
+        ]);
+        expect(await newDb.select(newDb.weeklyReviews).get(), [
+          const v3.WeeklyReviewsData(
+            id: 'r1',
             createdAt: t,
             updatedAt: t,
-            title: 'Thesis',
-            description: '',
-            status: 'active',
-            importance: 4,
-            deadline: '2026-12-31',
+            weekStart: '2026-09-28',
+            score: 7,
+            reflection: 'Good week',
+            planNextWeek: 'Chapter 3',
+            completedAt: t,
           ),
         ]);
-
-        expect(await newDb.select(newDb.habits).get(), [
-          const v2.HabitsData(
-            id: 'h1',
-            createdAt: t,
-            updatedAt: t,
-            title: 'Run',
-            projectId: 'p1',
-            scheduleType: 'weekdays',
-            weekdays: '1,3,5',
-            reminderTime: '07:30',
-            active: 1,
-          ),
-        ]);
-
-        expect(await newDb.select(newDb.logEntries).get(), [
-          const v2.LogEntriesData(
-            id: 'l1',
-            createdAt: t,
-            updatedAt: t,
-            projectId: 'p1',
-            occurredAt: t,
-            durationMinutes: 45,
-            note: 'Chapter 2',
-            source: 'manual',
-          ),
-        ]);
-
-        // The new table exists and starts empty: every setting is default.
-        expect(await newDb.select(newDb.settings).get(), isEmpty);
+        expect(await newDb.select(newDb.reviewKrSnapshots).get(), isEmpty);
       },
     );
   });

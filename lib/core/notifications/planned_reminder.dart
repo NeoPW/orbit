@@ -1,5 +1,5 @@
 /// What a reminder is about; each kind has its own Android channel.
-enum ReminderKind { habit, deadline }
+enum ReminderKind { habit, deadline, review }
 
 /// A notification to show at a local wall-clock time.
 class PlannedReminder {

@@ -11,7 +11,9 @@ import '../../features/plan/ui/archive_screen.dart';
 import '../../features/plan/ui/plan_screen.dart';
 import '../../features/projects/ui/project_detail_screen.dart';
 import '../../features/projects/ui/project_form_screen.dart';
+import '../../features/review/ui/review_history_screen.dart';
 import '../../features/review/ui/review_screen.dart';
+import '../../features/review/ui/weekly_review_screen.dart';
 import '../../features/settings/ui/settings_screen.dart';
 import 'app_shell.dart';
 import 'routes.dart';
@@ -39,6 +41,12 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
     routes: [
       // On the root navigator like the forms, so it can be pushed from any
       // tab and its URL survives a reload.
+      // Root level like project detail, so the review reminder can open it
+      // from any tab. Listed before the shell so it wins over /review.
+      GoRoute(
+        path: Routes.weeklyReview,
+        builder: (context, state) => const WeeklyReviewScreen(),
+      ),
       GoRoute(
         path: '/projects/:id',
         builder: (context, state) =>
@@ -117,6 +125,20 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
               GoRoute(
                 path: Routes.review,
                 builder: (context, state) => const ReviewScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'history',
+                    builder: (context, state) => const ReviewHistoryScreen(),
+                    routes: [
+                      GoRoute(
+                        path: ':id',
+                        builder: (context, state) => PastReviewScreen(
+                          reviewId: state.pathParameters['id']!,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),

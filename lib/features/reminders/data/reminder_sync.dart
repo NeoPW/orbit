@@ -16,6 +16,7 @@ import '../../home/domain/upcoming_deadlines.dart';
 import '../../key_results/data/key_result_repository.dart';
 import '../../objectives/data/objective_repository.dart';
 import '../../projects/data/project_repository.dart';
+import '../../review/data/review_repository.dart';
 import '../../settings/data/settings_repository.dart';
 import '../../settings/domain/app_settings.dart';
 import '../../tasks/data/task_repository.dart';
@@ -32,6 +33,7 @@ class ReminderInputs {
     required this.projects,
     required this.keyResults,
     required this.deadlines,
+    required this.completedReviewWeeks,
   });
 
   final AppSettings settings;
@@ -40,6 +42,9 @@ class ReminderInputs {
   final Map<String, Project> projects;
   final Map<String, KeyResult> keyResults;
   final List<UpcomingDeadline> deadlines;
+
+  /// Weeks (Monday) whose review is completed.
+  final Set<CalendarDate> completedReviewWeeks;
 }
 
 /// The current [ReminderInputs], updated after every relevant write.
@@ -54,6 +59,7 @@ AsyncValue<ReminderInputs> reminderInputs(Ref ref) {
   final objectives = ref.watch(objectivesProvider);
   final tasks = ref.watch(dueTasksProvider);
   final checkIns = ref.watch(habitCheckInsProvider);
+  final reviews = ref.watch(completedReviewsProvider);
   return combineAsync(
     [
       settings,
@@ -64,6 +70,7 @@ AsyncValue<ReminderInputs> reminderInputs(Ref ref) {
       objectives,
       tasks,
       checkIns,
+      reviews,
     ],
     () {
       final allProjects = projects.requireValue;
@@ -81,6 +88,9 @@ AsyncValue<ReminderInputs> reminderInputs(Ref ref) {
           habitCheckIns: checkIns.requireValue,
           today: today,
         ),
+        completedReviewWeeks: {
+          for (final review in reviews.requireValue) review.weekStart,
+        },
       );
     },
   );
@@ -127,6 +137,7 @@ class ReminderSync extends _$ReminderSync {
       projects: value.projects,
       keyResults: value.keyResults,
       deadlines: value.deadlines,
+      completedReviewWeeks: value.completedReviewWeeks,
       now: ref.read(clockProvider)().toLocal(),
     );
     if (listEquals(plan, _lastSent)) return;

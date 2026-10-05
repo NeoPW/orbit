@@ -62,6 +62,16 @@ class LogRepository extends Repository {
             ]))
           .watch();
 
+  /// All entries with `occurred_at` in [from, to).
+  Stream<List<LogEntry>> watchBetween(DateTime from, DateTime to) =>
+      (db.select(db.logEntries)..where(
+            (e) =>
+                alive(e) &
+                e.occurredAt.isBiggerOrEqualValue(from.toUtc()) &
+                e.occurredAt.isSmallerThanValue(to.toUtc()),
+          ))
+          .watch();
+
   /// The time of each project's most recent entry, by project ID. Projects
   /// without entries are missing from the map.
   Stream<Map<String, DateTime>> watchLastLoggedAt() {

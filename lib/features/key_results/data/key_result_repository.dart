@@ -77,6 +77,18 @@ class KeyResultRepository extends Repository {
       .update(db.keyResults)
       .replace(_normalized(kr.copyWith(updatedAt: clock())));
 
+  /// Sets only the current value (1 or 0 for an achieved/not achieved
+  /// boolean KR), e.g. from the weekly review.
+  Future<void> setProgressValue(String id, double current) =>
+      (db.update(
+        db.keyResults,
+      )..where((k) => k.id.equals(id) & alive(k))).write(
+        KeyResultsCompanion(
+          currentValue: Value(current),
+          updatedAt: Value(clock()),
+        ),
+      );
+
   /// Soft-deletes the KR; its projects and habits keep existing without it.
   Future<void> delete(String id) => db.transaction(() async {
     await clearReference(

@@ -26,6 +26,7 @@ part 'app_database.drift.dart';
     HabitChecks,
     LogEntries,
     WeeklyReviews,
+    ReviewKrSnapshots,
     Settings,
   ],
 )
@@ -33,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -46,6 +47,11 @@ class AppDatabase extends _$AppDatabase {
     onUpgrade: stepByStep(
       // v2: local settings.
       from1To2: (m, schema) => m.createTable(schema.settings),
+      // v3: KR progress snapshots of weekly reviews.
+      from2To3: (m, schema) async {
+        await m.createTable(schema.reviewKrSnapshots);
+        await m.createIndex(schema.reviewKrSnapshotsWeeklyReviewId);
+      },
     ),
   );
 

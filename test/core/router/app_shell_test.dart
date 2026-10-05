@@ -105,10 +105,13 @@ void main() {
       expect(find.textContaining('later milestone'), findsNothing);
     });
 
-    testApp('Review says it comes in a later milestone', (tester) async {
+    testApp('Review shows the weekly review, not a placeholder', (
+      tester,
+    ) async {
       await pumpApp(tester, location: '/review');
       expect(find.widgetWithText(AppBar, 'Review'), findsOneWidget);
-      expect(find.textContaining('later milestone'), findsOneWidget);
+      expect(find.text("This week's plan"), findsOneWidget);
+      expect(find.textContaining('later milestone'), findsNothing);
     });
   });
 }

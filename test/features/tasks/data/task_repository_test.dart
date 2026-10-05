@@ -1,7 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/db/app_database.dart';
 
+import 'package:orbit/features/tasks/data/task_repository.dart';
+
 import '../../../helpers/repos.dart';
+import '../../../helpers/test_db.dart';
 
 void main() {
   late Repos r;
@@ -155,5 +158,27 @@ void main() {
 
       expect((await r.projects.get(b.id))!.nextStepTaskId, b.nextStepTaskId);
     });
+  });
+
+  test('watchCompletedBetween: done tasks completed in the range', () async {
+    final from = DateTime.utc(2026, 10, 4, 22);
+    final to = DateTime.utc(2026, 10, 11, 22);
+    Future<void> completeAt(String title, DateTime time) async {
+      final tasks = TaskRepository(
+        r.db,
+        TestClock(time).call,
+        () => 'log-$title',
+      );
+      final task = await r.tasks.create(projectId: 'p1', title: title);
+      await tasks.complete(task.id);
+    }
+
+    await completeAt('before', from.subtract(const Duration(seconds: 1)));
+    await completeAt('start', from);
+    await completeAt('end', to);
+    await r.tasks.create(projectId: 'p1', title: 'open');
+
+    final tasks = await r.tasks.watchCompletedBetween(from, to).first;
+    expect(tasks.map((t) => t.title), ['start']);
   });
 }

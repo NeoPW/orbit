@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/db/app_database.dart';
 import 'package:orbit/core/notifications/notification_scheduler.dart';
+import 'package:orbit/core/notifications/planned_reminder.dart';
 import 'package:orbit/core/time/clock.dart';
 import 'package:orbit/features/reminders/data/reminder_sync.dart';
 import 'package:orbit/features/settings/data/settings_repository.dart';
@@ -83,5 +84,22 @@ void main() {
     await r.projects.save(p.copyWith(description: 'Chapters'), nextStep: '');
     await settle();
     expect(scheduler.calls.length, before);
+  });
+
+  test('completing the week\'s review removes its reminder', () async {
+    await settle();
+    bool hasReview() => scheduler.scheduled!.any(
+      (x) =>
+          x.kind == ReminderKind.review && x.at == DateTime(2026, 10, 11, 18),
+    );
+    expect(hasReview(), isTrue);
+
+    await r.reviews.complete(
+      CalendarDate(2026, 10, 5),
+      score: 7,
+      snapshots: const {},
+    );
+    await settle();
+    expect(hasReview(), isFalse);
   });
 }

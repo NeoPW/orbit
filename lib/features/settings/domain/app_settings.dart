@@ -37,6 +37,8 @@ abstract final class SettingKeys {
   static const remindersEnabled = 'reminders_enabled';
   static const defaultReminderTime = 'default_reminder_time';
   static const deadlineLeadDays = 'deadline_lead_days';
+  static const reviewDay = 'review_day';
+  static const reviewTime = 'review_time';
 }
 
 /// All settings with their values; missing or unreadable stored values are
@@ -46,6 +48,8 @@ class AppSettings {
     this.remindersEnabled = true,
     this.defaultReminderTime = (hour: 8, minute: 0),
     this.deadlineLeadDays = 7,
+    this.reviewDay = DateTime.sunday,
+    this.reviewTime = (hour: 18, minute: 0),
   });
 
   /// Reads the stored key-value pairs.
@@ -54,6 +58,8 @@ class AppSettings {
     final enabled = stored[SettingKeys.remindersEnabled];
     final time = stored[SettingKeys.defaultReminderTime];
     final leadDays = int.tryParse(stored[SettingKeys.deadlineLeadDays] ?? '');
+    final reviewDay = int.tryParse(stored[SettingKeys.reviewDay] ?? '');
+    final reviewTime = stored[SettingKeys.reviewTime];
     return AppSettings(
       remindersEnabled: switch (enabled) {
         'true' => true,
@@ -67,6 +73,12 @@ class AppSettings {
           leadDays != null && leadDays >= minLeadDays && leadDays <= maxLeadDays
           ? leadDays
           : defaults.deadlineLeadDays,
+      reviewDay: reviewDay != null && reviewDay >= 1 && reviewDay <= 7
+          ? reviewDay
+          : defaults.reviewDay,
+      reviewTime:
+          (reviewTime == null ? null : parseTimeOfDay(reviewTime)) ??
+          defaults.reviewTime,
     );
   }
 
@@ -74,14 +86,25 @@ class AppSettings {
   final TimeOfDayValue defaultReminderTime;
   final int deadlineLeadDays;
 
+  /// ISO weekday of the weekly review reminder (Monday = 1).
+  final int reviewDay;
+  final TimeOfDayValue reviewTime;
+
   @override
   bool operator ==(Object other) =>
       other is AppSettings &&
       other.remindersEnabled == remindersEnabled &&
       other.defaultReminderTime == defaultReminderTime &&
-      other.deadlineLeadDays == deadlineLeadDays;
+      other.deadlineLeadDays == deadlineLeadDays &&
+      other.reviewDay == reviewDay &&
+      other.reviewTime == reviewTime;
 
   @override
-  int get hashCode =>
-      Object.hash(remindersEnabled, defaultReminderTime, deadlineLeadDays);
+  int get hashCode => Object.hash(
+    remindersEnabled,
+    defaultReminderTime,
+    deadlineLeadDays,
+    reviewDay,
+    reviewTime,
+  );
 }

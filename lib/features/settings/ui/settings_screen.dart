@@ -24,7 +24,20 @@ class SettingsScreen extends ConsumerWidget {
             children: [
               const SectionHeading('Reminders'),
               _RemindersSwitch(enabled: settings.remindersEnabled),
-              _DefaultReminderTime(time: settings.defaultReminderTime),
+              _TimeTile(
+                title: 'Default reminder time',
+                subtitle: 'For habits without own time and for deadlines',
+                time: settings.defaultReminderTime,
+                onPicked: (repo, time) => repo.setDefaultReminderTime(time),
+              ),
+              const SectionHeading('Weekly review'),
+              _ReviewDay(day: settings.reviewDay),
+              _TimeTile(
+                title: 'Review time',
+                subtitle: 'When the weekly review reminder comes',
+                time: settings.reviewTime,
+                onPicked: (repo, time) => repo.setReviewTime(time),
+              ),
               const SectionHeading('Deadlines'),
               _LeadDaysField(days: settings.deadlineLeadDays),
             ],
@@ -70,10 +83,20 @@ class _RemindersSwitch extends ConsumerWidget {
   }
 }
 
-class _DefaultReminderTime extends ConsumerWidget {
-  const _DefaultReminderTime({required this.time});
+/// A time setting shown as `HH:mm`, changed with a 24-hour time picker.
+class _TimeTile extends ConsumerWidget {
+  const _TimeTile({
+    required this.title,
+    required this.subtitle,
+    required this.time,
+    required this.onPicked,
+  });
 
+  final String title;
+  final String subtitle;
   final TimeOfDayValue time;
+  final Future<void> Function(SettingsRepository repo, TimeOfDayValue time)
+  onPicked;
 
   Future<void> _pick(BuildContext context, WidgetRef ref) async {
     final repo = ref.read(settingsRepositoryProvider);
@@ -86,10 +109,7 @@ class _DefaultReminderTime extends ConsumerWidget {
       ),
     );
     if (picked != null) {
-      await repo.setDefaultReminderTime((
-        hour: picked.hour,
-        minute: picked.minute,
-      ));
+      await onPicked(repo, (hour: picked.hour, minute: picked.minute));
     }
   }
 
@@ -97,13 +117,54 @@ class _DefaultReminderTime extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return ListTile(
       leading: const Icon(Icons.schedule),
-      title: const Text('Default reminder time'),
-      subtitle: const Text('For habits without own time and for deadlines'),
+      title: Text(title),
+      subtitle: Text(subtitle),
       trailing: Text(
         formatTimeOfDay(time),
         style: Theme.of(context).textTheme.titleMedium,
       ),
       onTap: () => _pick(context, ref),
+    );
+  }
+}
+
+const _weekdayNames = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
+
+class _ReviewDay extends ConsumerWidget {
+  const _ReviewDay({required this.day});
+
+  /// ISO weekday.
+  final int day;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ListTile(
+      leading: const Icon(Icons.event_repeat_outlined),
+      title: const Text('Review day'),
+      trailing: DropdownButton<int>(
+        value: day,
+        underline: const SizedBox(),
+        items: [
+          for (var weekday = 1; weekday <= 7; weekday++)
+            DropdownMenuItem(
+              value: weekday,
+              child: Text(_weekdayNames[weekday - 1]),
+            ),
+        ],
+        onChanged: (weekday) {
+          if (weekday != null) {
+            ref.read(settingsRepositoryProvider).setReviewDay(weekday);
+          }
+        },
+      ),
     );
   }
 }

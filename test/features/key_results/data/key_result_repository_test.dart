@@ -146,4 +146,17 @@ void main() {
       expect(await r.keyResults.watchHabitCheckIns().first, {kr.id: 0});
     });
   });
+
+  test('setProgressValue changes only the value and updated_at', () async {
+    final kr = await r.numericKr(o.id);
+    await r.keyResults.setProgressValue(kr.id, 55);
+
+    final stored = await r.rawKeyResult(kr.id);
+    expect(stored.currentValue, 55);
+    expect(stored.updatedAt.isAfter(kr.updatedAt), isTrue);
+    expect(
+      stored.copyWith(currentValue: const Value(0), updatedAt: kr.updatedAt),
+      kr,
+    );
+  });
 }

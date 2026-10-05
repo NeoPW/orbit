@@ -10,6 +10,7 @@ import '../../../helpers/fixtures.dart';
 /// Monday 2026-10-05, 06:00 local.
 final monday = DateTime(2026, 10, 5, 6);
 
+/// Plans reminders; review reminders are left out unless [withReviews].
 List<PlannedReminder> plan({
   AppSettings settings = const AppSettings(),
   List<Habit> habits = const [],
@@ -17,16 +18,22 @@ List<PlannedReminder> plan({
   List<Project> projects = const [],
   List<KeyResult> keyResults = const [],
   List<UpcomingDeadline> deadlines = const [],
+  Set<CalendarDate> completedReviewWeeks = const {},
   DateTime? now,
-}) => planReminders(
-  settings: settings,
-  habits: habits,
-  checks: checks,
-  projects: {for (final p in projects) p.id: p},
-  keyResults: {for (final k in keyResults) k.id: k},
-  deadlines: deadlines,
-  now: now ?? monday,
-);
+  bool withReviews = false,
+}) => [
+  for (final reminder in planReminders(
+    settings: settings,
+    habits: habits,
+    checks: checks,
+    projects: {for (final p in projects) p.id: p},
+    keyResults: {for (final k in keyResults) k.id: k},
+    deadlines: deadlines,
+    completedReviewWeeks: completedReviewWeeks,
+    now: now ?? monday,
+  ))
+    if (withReviews || reminder.kind != ReminderKind.review) reminder,
+];
 
 List<DateTime> times(List<PlannedReminder> reminders) =>
     reminders.map((r) => r.at).toList();
@@ -249,12 +256,14 @@ void main() {
   test('capped at the 400 earliest reminders', () {
     final reminders = plan(
       habits: [for (var i = 0; i < 30; i++) habit('h$i', title: 'Habit $i')],
+      withReviews: true,
     );
     expect(reminders, hasLength(maxScheduledReminders));
-    // 30 habits × 14 days = 420: the last day keeps only 10 reminders.
+    // 30 habits × 13 days + the review on Sunday 10-11 = 391: the last day
+    // keeps only 9 habit reminders, and its review reminder is cut.
     final lastDay = reminders.where((r) => r.at == DateTime(2026, 10, 18, 8));
-    expect(lastDay, hasLength(10));
-    expect(reminders.first.at, DateTime(2026, 10, 5, 8));
+    expect(lastDay, hasLength(9));
+    expect(reminders.last.at, DateTime(2026, 10, 18, 8));
   });
 
   test('no reminders when they are switched off', () {
@@ -265,5 +274,58 @@ void main() {
       ),
       isEmpty,
     );
+  });
+
+  group('weekly review reminder', () {
+    List<PlannedReminder> reviews({
+      AppSettings settings = const AppSettings(),
+      Set<CalendarDate> completed = const {},
+      DateTime? now,
+    }) => plan(
+      settings: settings,
+      completedReviewWeeks: completed,
+      now: now,
+      withReviews: true,
+    );
+
+    test('Sunday evening for each unreviewed week', () {
+      final reminders = reviews();
+      expect(times(reminders), [
+        DateTime(2026, 10, 11, 18),
+        DateTime(2026, 10, 18, 18),
+      ]);
+      expect(reminders.first.title, 'Weekly review');
+      expect(reminders.first.body, 'Week 05-10-2026 – 11-10-2026');
+      expect(reminders.first.route, '/review/weekly');
+      expect(reminders.first.kind, ReminderKind.review);
+    });
+
+    test('skipped once that week is reviewed', () {
+      final reminders = reviews(completed: {CalendarDate(2026, 10, 5)});
+      expect(times(reminders), [DateTime(2026, 10, 18, 18)]);
+    });
+
+    test('a changed review day moves the reminders', () {
+      final reminders = reviews(
+        settings: const AppSettings(
+          reviewDay: DateTime.monday,
+          reviewTime: (hour: 9, minute: 0),
+        ),
+      );
+      // Monday 2026-10-05 09:00 is after 06:00: still today. Monday
+      // reviews cover the previous week.
+      expect(times(reminders), [
+        DateTime(2026, 10, 5, 9),
+        DateTime(2026, 10, 12, 9),
+      ]);
+      expect(reminders.first.body, 'Week 28-09-2026 – 04-10-2026');
+    });
+
+    test('none when reminders are off', () {
+      expect(
+        reviews(settings: const AppSettings(remindersEnabled: false)),
+        isEmpty,
+      );
+    });
   });
 }

@@ -125,3 +125,21 @@ HabitCheck habitCheck(String habitId, CalendarDate date) => HabitCheck(
   habitId: habitId,
   date: date,
 );
+
+/// A log entry at [at] (local time).
+LogEntry logEntry(
+  String id, {
+  String? projectId,
+  required DateTime at,
+  int? minutes,
+  LogSource source = LogSource.manual,
+}) => LogEntry(
+  id: id,
+  createdAt: _t0,
+  updatedAt: _t0,
+  projectId: projectId,
+  occurredAt: at.toUtc(),
+  durationMinutes: minutes,
+  note: '',
+  source: source,
+);

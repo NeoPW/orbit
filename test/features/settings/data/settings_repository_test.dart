@@ -22,6 +22,8 @@ void main() {
     await repo.setRemindersEnabled(false);
     await repo.setDefaultReminderTime((hour: 7, minute: 15));
     await repo.setDeadlineLeadDays(3);
+    await repo.setReviewDay(DateTime.saturday);
+    await repo.setReviewTime((hour: 10, minute: 0));
 
     expect(
       await repo.watch().first,
@@ -29,6 +31,8 @@ void main() {
         remindersEnabled: false,
         defaultReminderTime: (hour: 7, minute: 15),
         deadlineLeadDays: 3,
+        reviewDay: DateTime.saturday,
+        reviewTime: (hour: 10, minute: 0),
       ),
     );
   });

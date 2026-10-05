@@ -58,7 +58,7 @@ final class ReminderInputsProvider
   }
 }
 
-String _$reminderInputsHash() => r'1551e511c4ff011fc2f9ce3b7c9c1bac54d27e79';
+String _$reminderInputsHash() => r'dc07df6ce3fa0f40a35e8781f664a58e2f88a0aa';
 
 /// Keeps the scheduled reminders equal to the current plan (notifications
 /// spec, "Reminders stay up to date"): re-plans after changes (debounced),
@@ -104,7 +104,7 @@ final class ReminderSyncProvider extends $NotifierProvider<ReminderSync, void> {
   }
 }
 
-String _$reminderSyncHash() => r'e2639c5529432bdbc3ae26cb6894ab2982e63d7e';
+String _$reminderSyncHash() => r'3f749a65038ebeca7cc188f3b720deac420f4799';
 
 /// Keeps the scheduled reminders equal to the current plan (notifications
 /// spec, "Reminders stay up to date"): re-plans after changes (debounced),

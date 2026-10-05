@@ -5756,6 +5756,491 @@ class WeeklyReviewsCompanion extends UpdateCompanion<WeeklyReview> {
   }
 }
 
+class $ReviewKrSnapshotsTable extends ReviewKrSnapshots
+    with TableInfo<$ReviewKrSnapshotsTable, ReviewKrSnapshot> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReviewKrSnapshotsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _weeklyReviewIdMeta = const VerificationMeta(
+    'weeklyReviewId',
+  );
+  @override
+  late final GeneratedColumn<String> weeklyReviewId = GeneratedColumn<String>(
+    'weekly_review_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _keyResultIdMeta = const VerificationMeta(
+    'keyResultId',
+  );
+  @override
+  late final GeneratedColumn<String> keyResultId = GeneratedColumn<String>(
+    'key_result_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _progressMeta = const VerificationMeta(
+    'progress',
+  );
+  @override
+  late final GeneratedColumn<double> progress = GeneratedColumn<double>(
+    'progress',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    createdAt,
+    updatedAt,
+    deletedAt,
+    weeklyReviewId,
+    keyResultId,
+    progress,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'review_kr_snapshots';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ReviewKrSnapshot> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('weekly_review_id')) {
+      context.handle(
+        _weeklyReviewIdMeta,
+        weeklyReviewId.isAcceptableOrUnknown(
+          data['weekly_review_id']!,
+          _weeklyReviewIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_weeklyReviewIdMeta);
+    }
+    if (data.containsKey('key_result_id')) {
+      context.handle(
+        _keyResultIdMeta,
+        keyResultId.isAcceptableOrUnknown(
+          data['key_result_id']!,
+          _keyResultIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_keyResultIdMeta);
+    }
+    if (data.containsKey('progress')) {
+      context.handle(
+        _progressMeta,
+        progress.isAcceptableOrUnknown(data['progress']!, _progressMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_progressMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ReviewKrSnapshot map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ReviewKrSnapshot(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      weeklyReviewId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}weekly_review_id'],
+      )!,
+      keyResultId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}key_result_id'],
+      )!,
+      progress: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}progress'],
+      )!,
+    );
+  }
+
+  @override
+  $ReviewKrSnapshotsTable createAlias(String alias) {
+    return $ReviewKrSnapshotsTable(attachedDatabase, alias);
+  }
+}
+
+class ReviewKrSnapshot extends DataClass
+    implements Insertable<ReviewKrSnapshot> {
+  /// UUID v4, generated on the client.
+  final String id;
+
+  /// UTC.
+  final DateTime createdAt;
+
+  /// UTC, set on every write.
+  final DateTime updatedAt;
+
+  /// UTC, set when the row is soft-deleted.
+  final DateTime? deletedAt;
+  final String weeklyReviewId;
+  final String keyResultId;
+
+  /// 0–1.
+  final double progress;
+  const ReviewKrSnapshot({
+    required this.id,
+    required this.createdAt,
+    required this.updatedAt,
+    this.deletedAt,
+    required this.weeklyReviewId,
+    required this.keyResultId,
+    required this.progress,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['weekly_review_id'] = Variable<String>(weeklyReviewId);
+    map['key_result_id'] = Variable<String>(keyResultId);
+    map['progress'] = Variable<double>(progress);
+    return map;
+  }
+
+  ReviewKrSnapshotsCompanion toCompanion(bool nullToAbsent) {
+    return ReviewKrSnapshotsCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      weeklyReviewId: Value(weeklyReviewId),
+      keyResultId: Value(keyResultId),
+      progress: Value(progress),
+    );
+  }
+
+  factory ReviewKrSnapshot.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ReviewKrSnapshot(
+      id: serializer.fromJson<String>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      weeklyReviewId: serializer.fromJson<String>(json['weeklyReviewId']),
+      keyResultId: serializer.fromJson<String>(json['keyResultId']),
+      progress: serializer.fromJson<double>(json['progress']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'weeklyReviewId': serializer.toJson<String>(weeklyReviewId),
+      'keyResultId': serializer.toJson<String>(keyResultId),
+      'progress': serializer.toJson<double>(progress),
+    };
+  }
+
+  ReviewKrSnapshot copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? weeklyReviewId,
+    String? keyResultId,
+    double? progress,
+  }) => ReviewKrSnapshot(
+    id: id ?? this.id,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    weeklyReviewId: weeklyReviewId ?? this.weeklyReviewId,
+    keyResultId: keyResultId ?? this.keyResultId,
+    progress: progress ?? this.progress,
+  );
+  ReviewKrSnapshot copyWithCompanion(ReviewKrSnapshotsCompanion data) {
+    return ReviewKrSnapshot(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      weeklyReviewId: data.weeklyReviewId.present
+          ? data.weeklyReviewId.value
+          : this.weeklyReviewId,
+      keyResultId: data.keyResultId.present
+          ? data.keyResultId.value
+          : this.keyResultId,
+      progress: data.progress.present ? data.progress.value : this.progress,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReviewKrSnapshot(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('weeklyReviewId: $weeklyReviewId, ')
+          ..write('keyResultId: $keyResultId, ')
+          ..write('progress: $progress')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    createdAt,
+    updatedAt,
+    deletedAt,
+    weeklyReviewId,
+    keyResultId,
+    progress,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReviewKrSnapshot &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.deletedAt == this.deletedAt &&
+          other.weeklyReviewId == this.weeklyReviewId &&
+          other.keyResultId == this.keyResultId &&
+          other.progress == this.progress);
+}
+
+class ReviewKrSnapshotsCompanion extends UpdateCompanion<ReviewKrSnapshot> {
+  final Value<String> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> deletedAt;
+  final Value<String> weeklyReviewId;
+  final Value<String> keyResultId;
+  final Value<double> progress;
+  final Value<int> rowid;
+  const ReviewKrSnapshotsCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.weeklyReviewId = const Value.absent(),
+    this.keyResultId = const Value.absent(),
+    this.progress = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ReviewKrSnapshotsCompanion.insert({
+    required String id,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.deletedAt = const Value.absent(),
+    required String weeklyReviewId,
+    required String keyResultId,
+    required double progress,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt),
+       weeklyReviewId = Value(weeklyReviewId),
+       keyResultId = Value(keyResultId),
+       progress = Value(progress);
+  static Insertable<ReviewKrSnapshot> custom({
+    Expression<String>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? weeklyReviewId,
+    Expression<String>? keyResultId,
+    Expression<double>? progress,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (weeklyReviewId != null) 'weekly_review_id': weeklyReviewId,
+      if (keyResultId != null) 'key_result_id': keyResultId,
+      if (progress != null) 'progress': progress,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ReviewKrSnapshotsCompanion copyWith({
+    Value<String>? id,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<DateTime?>? deletedAt,
+    Value<String>? weeklyReviewId,
+    Value<String>? keyResultId,
+    Value<double>? progress,
+    Value<int>? rowid,
+  }) {
+    return ReviewKrSnapshotsCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      weeklyReviewId: weeklyReviewId ?? this.weeklyReviewId,
+      keyResultId: keyResultId ?? this.keyResultId,
+      progress: progress ?? this.progress,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (weeklyReviewId.present) {
+      map['weekly_review_id'] = Variable<String>(weeklyReviewId.value);
+    }
+    if (keyResultId.present) {
+      map['key_result_id'] = Variable<String>(keyResultId.value);
+    }
+    if (progress.present) {
+      map['progress'] = Variable<double>(progress.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReviewKrSnapshotsCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('weeklyReviewId: $weeklyReviewId, ')
+          ..write('keyResultId: $keyResultId, ')
+          ..write('progress: $progress, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SettingsTable extends Settings
     with TableInfo<$SettingsTable, SettingRow> {
   @override
@@ -5976,6 +6461,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $HabitChecksTable habitChecks = $HabitChecksTable(this);
   late final $LogEntriesTable logEntries = $LogEntriesTable(this);
   late final $WeeklyReviewsTable weeklyReviews = $WeeklyReviewsTable(this);
+  late final $ReviewKrSnapshotsTable reviewKrSnapshots =
+      $ReviewKrSnapshotsTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
   late final Index objectivesStatus = Index(
     'objectives_status',
@@ -6005,6 +6492,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'log_entries_occurred_at',
     'CREATE INDEX log_entries_occurred_at ON log_entries (occurred_at)',
   );
+  late final Index reviewKrSnapshotsWeeklyReviewId = Index(
+    'review_kr_snapshots_weekly_review_id',
+    'CREATE INDEX review_kr_snapshots_weekly_review_id ON review_kr_snapshots (weekly_review_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -6019,6 +6510,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     habitChecks,
     logEntries,
     weeklyReviews,
+    reviewKrSnapshots,
     settings,
     objectivesStatus,
     keyResultsObjectiveId,
@@ -6027,6 +6519,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     projectsAreaId,
     tasksProjectId,
     logEntriesOccurredAt,
+    reviewKrSnapshotsWeeklyReviewId,
   ];
   @override
   DriftDatabaseOptions get options =>
@@ -8817,6 +9310,270 @@ typedef $$WeeklyReviewsTableProcessedTableManager =
       WeeklyReview,
       PrefetchHooks Function()
     >;
+typedef $$ReviewKrSnapshotsTableCreateCompanionBuilder =
+    ReviewKrSnapshotsCompanion Function({
+      required String id,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<DateTime?> deletedAt,
+      required String weeklyReviewId,
+      required String keyResultId,
+      required double progress,
+      Value<int> rowid,
+    });
+typedef $$ReviewKrSnapshotsTableUpdateCompanionBuilder =
+    ReviewKrSnapshotsCompanion Function({
+      Value<String> id,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<DateTime?> deletedAt,
+      Value<String> weeklyReviewId,
+      Value<String> keyResultId,
+      Value<double> progress,
+      Value<int> rowid,
+    });
+
+class $$ReviewKrSnapshotsTableFilterComposer
+    extends Composer<_$AppDatabase, $ReviewKrSnapshotsTable> {
+  $$ReviewKrSnapshotsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get weeklyReviewId => $composableBuilder(
+    column: $table.weeklyReviewId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get keyResultId => $composableBuilder(
+    column: $table.keyResultId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get progress => $composableBuilder(
+    column: $table.progress,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ReviewKrSnapshotsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ReviewKrSnapshotsTable> {
+  $$ReviewKrSnapshotsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get weeklyReviewId => $composableBuilder(
+    column: $table.weeklyReviewId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get keyResultId => $composableBuilder(
+    column: $table.keyResultId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get progress => $composableBuilder(
+    column: $table.progress,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ReviewKrSnapshotsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ReviewKrSnapshotsTable> {
+  $$ReviewKrSnapshotsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get weeklyReviewId => $composableBuilder(
+    column: $table.weeklyReviewId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get keyResultId => $composableBuilder(
+    column: $table.keyResultId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get progress =>
+      $composableBuilder(column: $table.progress, builder: (column) => column);
+}
+
+class $$ReviewKrSnapshotsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ReviewKrSnapshotsTable,
+          ReviewKrSnapshot,
+          $$ReviewKrSnapshotsTableFilterComposer,
+          $$ReviewKrSnapshotsTableOrderingComposer,
+          $$ReviewKrSnapshotsTableAnnotationComposer,
+          $$ReviewKrSnapshotsTableCreateCompanionBuilder,
+          $$ReviewKrSnapshotsTableUpdateCompanionBuilder,
+          (
+            ReviewKrSnapshot,
+            BaseReferences<
+              _$AppDatabase,
+              $ReviewKrSnapshotsTable,
+              ReviewKrSnapshot
+            >,
+          ),
+          ReviewKrSnapshot,
+          PrefetchHooks Function()
+        > {
+  $$ReviewKrSnapshotsTableTableManager(
+    _$AppDatabase db,
+    $ReviewKrSnapshotsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ReviewKrSnapshotsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ReviewKrSnapshotsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ReviewKrSnapshotsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> weeklyReviewId = const Value.absent(),
+                Value<String> keyResultId = const Value.absent(),
+                Value<double> progress = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ReviewKrSnapshotsCompanion(
+                id: id,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                weeklyReviewId: weeklyReviewId,
+                keyResultId: keyResultId,
+                progress: progress,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String weeklyReviewId,
+                required String keyResultId,
+                required double progress,
+                Value<int> rowid = const Value.absent(),
+              }) => ReviewKrSnapshotsCompanion.insert(
+                id: id,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                weeklyReviewId: weeklyReviewId,
+                keyResultId: keyResultId,
+                progress: progress,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ReviewKrSnapshotsTable, ReviewKrSnapshot>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $ReviewKrSnapshotsTable,
+                    ReviewKrSnapshot
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ReviewKrSnapshotsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ReviewKrSnapshotsTable,
+      ReviewKrSnapshot,
+      $$ReviewKrSnapshotsTableFilterComposer,
+      $$ReviewKrSnapshotsTableOrderingComposer,
+      $$ReviewKrSnapshotsTableAnnotationComposer,
+      $$ReviewKrSnapshotsTableCreateCompanionBuilder,
+      $$ReviewKrSnapshotsTableUpdateCompanionBuilder,
+      (
+        ReviewKrSnapshot,
+        BaseReferences<
+          _$AppDatabase,
+          $ReviewKrSnapshotsTable,
+          ReviewKrSnapshot
+        >,
+      ),
+      ReviewKrSnapshot,
+      PrefetchHooks Function()
+    >;
 typedef $$SettingsTableCreateCompanionBuilder = SettingsCompanion Function({
   required String key,
   required String value,
@@ -8976,6 +9733,8 @@ class $AppDatabaseManager {
       $$LogEntriesTableTableManager(_db, _db.logEntries);
   $$WeeklyReviewsTableTableManager get weeklyReviews =>
       $$WeeklyReviewsTableTableManager(_db, _db.weeklyReviews);
+  $$ReviewKrSnapshotsTableTableManager get reviewKrSnapshots =>
+      $$ReviewKrSnapshotsTableTableManager(_db, _db.reviewKrSnapshots);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
 }

@@ -152,6 +152,20 @@ class WeeklyReviews extends Table with SyncColumns {
   DateTimeColumn get completedAt => dateTime().nullable()();
 }
 
+/// A KR's progress when a weekly review was saved, so the next review can
+/// show the change (week-summary spec).
+@TableIndex(
+  name: 'review_kr_snapshots_weekly_review_id',
+  columns: {#weeklyReviewId},
+)
+class ReviewKrSnapshots extends Table with SyncColumns {
+  TextColumn get weeklyReviewId => text()();
+  TextColumn get keyResultId => text()();
+
+  /// 0–1.
+  RealColumn get progress => real()();
+}
+
 /// Local settings as key-value pairs (docs/SPEC.md §4 "Settings").
 ///
 /// Local-only: no sync columns, and sync (milestone 5) must skip this

@@ -113,4 +113,37 @@ void main() {
     );
     expect(find.text('Blocked in Android settings'), findsOneWidget);
   });
+
+  testApp('review day and time default to Sunday 18:00', (tester) async {
+    await pumpSettings(tester);
+    expect(find.text('Sunday'), findsOneWidget);
+    expect(find.text('18:00'), findsOneWidget);
+  });
+
+  testApp('choosing Saturday 10:00 for the review', (tester) async {
+    await pumpSettings(tester);
+    await tester.tap(find.text('Sunday'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Saturday').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Review time'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.keyboard_outlined));
+    await tester.pumpAndSettle();
+    final fields = find.descendant(
+      of: find.byType(Dialog),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(fields.at(0), '10');
+    await tester.enterText(fields.at(1), '00');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Saturday'), findsOneWidget);
+    expect(find.text('10:00'), findsOneWidget);
+    final settings = await stored();
+    expect(settings.reviewDay, DateTime.saturday);
+    expect(settings.reviewTime, (hour: 10, minute: 0));
+  });
 }

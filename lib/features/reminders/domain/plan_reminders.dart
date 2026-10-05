@@ -1,8 +1,10 @@
 import '../../../core/db/app_database.dart';
 import '../../../core/notifications/planned_reminder.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/time/date_format.dart';
 import '../../habits/domain/habit_due.dart';
 import '../../home/domain/upcoming_deadlines.dart';
+import '../../review/domain/week_summary.dart';
 import '../../settings/domain/app_settings.dart';
 
 /// How many days ahead reminders are scheduled, today included.
@@ -12,8 +14,9 @@ const reminderHorizonDays = 14;
 const maxScheduledReminders = 400;
 
 /// All reminders to schedule from [now] (local time) on (notifications
-/// spec): habit reminders for due, unchecked days and deadline reminders
-/// on the lead date and the due date. Sorted by time and capped at
+/// spec): habit reminders for due, unchecked days, deadline reminders on
+/// the lead date and the due date, and the weekly review reminder on review
+/// days whose review week is not yet reviewed ([completedReviewWeeks]). Sorted by time and capped at
 /// [maxScheduledReminders]. Empty when reminders are switched off.
 ///
 /// [checks] must contain at least the checks since the start of the
@@ -26,6 +29,7 @@ List<PlannedReminder> planReminders({
   required Map<String, KeyResult> keyResults,
   required List<UpcomingDeadline> deadlines,
   required DateTime now,
+  Set<CalendarDate> completedReviewWeeks = const {},
   int horizonDays = reminderHorizonDays,
 }) {
   if (!settings.remindersEnabled) return const [];
@@ -107,6 +111,22 @@ List<PlannedReminder> planReminders({
         ),
       );
     }
+  }
+
+  for (var day = today; !day.isAfter(lastDay); day = day.addDays(1)) {
+    if (day.weekday != settings.reviewDay) continue;
+    final week = reviewWeekStart(day);
+    final when = at(day, settings.reviewTime);
+    if (!when.isAfter(now) || completedReviewWeeks.contains(week)) continue;
+    reminders.add(
+      PlannedReminder(
+        at: when,
+        kind: ReminderKind.review,
+        title: 'Weekly review',
+        body: 'Week ${formatDateRange(week, week.addDays(6))}',
+        route: Routes.weeklyReview,
+      ),
+    );
   }
 
   reminders.sort((a, b) {

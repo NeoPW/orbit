@@ -25,6 +25,13 @@ class LocalNotificationScheduler implements NotificationScheduler {
       importance: Importance.high,
       priority: Priority.high,
     ),
+    ReminderKind.review: AndroidNotificationDetails(
+      'review_reminders',
+      'Weekly review',
+      channelDescription: 'The reminder to review the week',
+      importance: Importance.high,
+      priority: Priority.high,
+    ),
     ReminderKind.deadline: AndroidNotificationDetails(
       'deadline_reminders',
       'Deadline reminders',

@@ -63,6 +63,17 @@ class TaskRepository extends Repository {
     );
   }
 
+  /// Done tasks with `completed_at` in [from, to).
+  Stream<List<Task>> watchCompletedBetween(DateTime from, DateTime to) =>
+      (db.select(db.tasks)..where(
+            (t) =>
+                alive(t) &
+                t.status.equalsValue(TaskStatus.done) &
+                t.completedAt.isBiggerOrEqualValue(from.toUtc()) &
+                t.completedAt.isSmallerThanValue(to.toUtc()),
+          ))
+          .watch();
+
   /// Adds an open task.
   Future<Task> create({
     required String? projectId,

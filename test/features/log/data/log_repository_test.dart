@@ -1,7 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/db/app_database.dart';
 
+import 'package:orbit/features/log/data/log_repository.dart';
+
 import '../../../helpers/repos.dart';
+import '../../../helpers/test_db.dart';
 
 void main() {
   late Repos r;
@@ -51,5 +54,24 @@ void main() {
     expect(entries.map((e) => e.id), [kept.id]);
     expect((await r.rawLogEntry(deleted.id)).deletedAt, isNotNull);
     expect(await r.logs.watchLastLoggedAt().first, {'p1': kept.occurredAt});
+  });
+
+  test('watchBetween includes the start and excludes the end', () async {
+    final from = DateTime.utc(2026, 10, 4, 22);
+    final to = DateTime.utc(2026, 10, 11, 22);
+    final ids = TestIds();
+    Future<LogEntry> at(DateTime time) => LogRepository(
+      r.db,
+      TestClock(time).call,
+      () => 'log-${ids()}',
+    ).createManual(projectId: 'p1', note: time.toIso8601String());
+
+    await at(from.subtract(const Duration(seconds: 1)));
+    final first = await at(from);
+    final last = await at(to.subtract(const Duration(seconds: 1)));
+    await at(to);
+
+    final entries = await r.logs.watchBetween(from, to).first;
+    expect(entries.map((e) => e.note).toSet(), {first.note, last.note});
   });
 }

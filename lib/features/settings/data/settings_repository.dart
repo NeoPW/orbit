@@ -31,6 +31,13 @@ class SettingsRepository {
   Future<void> setDeadlineLeadDays(int days) =>
       _set(SettingKeys.deadlineLeadDays, days.toString());
 
+  /// [weekday] is an ISO weekday (Monday = 1).
+  Future<void> setReviewDay(int weekday) =>
+      _set(SettingKeys.reviewDay, weekday.toString());
+
+  Future<void> setReviewTime(TimeOfDayValue time) =>
+      _set(SettingKeys.reviewTime, formatTimeOfDay(time));
+
   Future<void> _set(String key, String value) => db
       .into(db.settings)
       .insertOnConflictUpdate(SettingsCompanion.insert(key: key, value: value));

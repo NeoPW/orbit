@@ -4,6 +4,9 @@ abstract final class Routes {
   static const home = '/home';
   static const plan = '/plan';
   static const review = '/review';
+  static const weeklyReview = '/review/weekly';
+  static const reviewHistory = '/review/history';
+  static String pastReview(String id) => '/review/history/$id';
 
   static const archive = '/plan/archive';
   static const areas = '/plan/areas';

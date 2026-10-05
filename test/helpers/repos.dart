@@ -6,6 +6,7 @@ import 'package:orbit/features/key_results/data/key_result_repository.dart';
 import 'package:orbit/features/log/data/log_repository.dart';
 import 'package:orbit/features/objectives/data/objective_repository.dart';
 import 'package:orbit/features/projects/data/project_repository.dart';
+import 'package:orbit/features/review/data/review_repository.dart';
 import 'package:orbit/features/tasks/data/task_repository.dart';
 
 import 'test_db.dart';
@@ -23,6 +24,7 @@ class Repos {
     habits = HabitRepository(db, clock.call, ids.call);
     logs = LogRepository(db, clock.call, ids.call);
     habitChecks = HabitCheckRepository(db, clock.call, ids.call);
+    reviews = ReviewRepository(db, clock.call, ids.call);
   }
 
   final AppDatabase db;
@@ -35,6 +37,7 @@ class Repos {
   late final HabitRepository habits;
   late final LogRepository logs;
   late final HabitCheckRepository habitChecks;
+  late final ReviewRepository reviews;
 
   Future<void> close() => db.close();
 
