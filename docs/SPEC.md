@@ -11,6 +11,7 @@ A personal, local-first app for tracking objectives, key results, projects, task
 - Get back into any project quickly via its "next step".
 - Weekly review: see last week's work, score the week, plan the next.
 - Notifications for habits, deadlines and the weekly review.
+- Pleasant to use: a clear visual hierarchy, little text noise, and few taps for daily actions (see §6.7).
 
 **Non-goals (for now)**
 - Multi-user, sharing, collaboration.
@@ -38,9 +39,9 @@ Notifications are Android only. The web version is used for planning, logging an
 - **Objective:** what you are working toward, time-boxed (e.g. a quarter).
 - **Key Result (KR):** a measurable outcome belonging to an objective.
 - **Project:** a body of work, optionally linked to a KR. Has an importance, an optional deadline, a status and a *next step*.
-- **Task:** a concrete to-do, usually belonging to a project. One task per project can be marked as its next step.
+- **Task:** a concrete to-do with its own page, a small project of its own. It can stand alone or be assigned to exactly one project, key result or objective, has an optional deadline and notes, and work can be logged on it. A task of a project can be that project's next step, but tasks are not only next steps.
 - **Habit:** a recurring task belonging to a project or KR or none, with a schedule. Checking it off logs work automatically. A KR can be measured by a habit.
-- **Log entry:** a record of work done (when, optionally how long, what, for which project/KR).
+- **Log entry:** a record of work done (when, optionally how long, what, for which project, KR or task).
 - **Weekly review:** a per-week record with a score, a reflection and a plan for next week.
 
 Projects belong to an **area** (e.g. Job, Personal, Sport, Uni), a user-defined list.
@@ -82,9 +83,9 @@ Server-side, every table also has `user_id` (Supabase auth user), protected by R
 - `next_step_task_id` nullable
 
 ### Task
-- `project_id` nullable
+- `project_id` nullable, `key_result_id` nullable, `objective_id` nullable: at most one of them is set (a task without any is standalone)
 - `title`, `notes`
-- `due_date` nullable
+- `due_date` nullable (the task's deadline)
 - `status`: `open | done`
 - `completed_at` nullable
 
@@ -103,7 +104,7 @@ Server-side, every table also has `user_id` (Supabase auth user), protected by R
 - Unique per (`habit_id`, `date`)
 
 ### LogEntry
-- `project_id` nullable, `key_result_id` nullable
+- `project_id` nullable, `key_result_id` nullable, `task_id` nullable
 - `occurred_at`
 - `duration_minutes` nullable
 - `note`
@@ -130,6 +131,7 @@ Server-side, every table also has `user_id` (Supabase auth user), protected by R
 ### Effective deadline
 - KR: `kr.deadline ?? objective.end_date`
 - Project: `project.deadline ?? effective deadline of its KR ?? none`
+- Task: its own `due_date` only; a task does not inherit deadlines from its project, KR or objective.
 
 ### Project score (home screen ordering)
 - `score = importance × urgency`
@@ -163,43 +165,56 @@ Server-side, every table also has `user_id` (Supabase auth user), protected by R
 - Marking a project's next-step task as done prompts: "What's the next step?" (create a new task, pick an existing open task, or skip). Cancelling the prompt leaves the task open.
 
 ### Completing tasks
-- Marking a task done always creates a `LogEntry` (`source = task`, the task title as note). An Undo right after completing reopens the task and removes the entry.
+- Marking a task done always creates a `LogEntry` (`source = task`, the task title as note, linked to the task and to its project or KR). An Undo right after completing reopens the task and removes the entry.
+- A done task can be reopened from its task page; its log entries stay.
 
 ## 6. Screens
 
-Bottom navigation with three tabs: **Plan**, **Home**, **Review**.
+Bottom navigation with three tabs: **Plan**, **Home**, **Review**. Each of them has a **Settings** button in its top bar.
 
 ### 6.1 Home (today)
-Order from top to bottom:
-1. **Habits due today:** checkboxes, grouped or labeled by project.
-2. **Upcoming deadlines:** tasks, projects and KRs whose *own* deadline is overdue or within the warning lead time (default 7 days), sorted by date. Inherited deadlines are not listed separately here, to avoid duplicates.
-3. **Active projects:** sorted by score (§5). Each card shows title, area, deadline badge and the next step. Tapping the next step opens the next-step prompt and marks it done unless the prompt is cancelled. Tapping the card opens the project detail.
+A dashboard for the day, top to bottom:
+1. **Header:** today's date and today's progress (habits done of due, tasks due today).
+2. **Habits due today:** compact chips, labeled with their project or KR; tapping a chip checks or unchecks it.
+3. **Upcoming deadlines:** KRs and tasks inside projects whose *own* deadline is overdue or within the warning lead time (default 7 days), sorted by date. Active projects and tasks outside projects are not listed here: their deadline is shown as a badge on their own card below, so nothing appears twice.
+4. **Active projects:** sorted by score (§5). Each card shows title, area, deadline badge and the next step as a checkbox. Ticking the next step opens the next-step prompt and marks it done unless the prompt is cancelled. Tapping the card opens the project detail.
+5. **Tasks:** open tasks that are not part of a project (standalone, or assigned to a KR or objective), sorted by deadline (overdue first, none last), then by creation. Each shows a checkbox, title, what it is assigned to and a deadline badge; tapping it opens the task page.
 
-A floating action button opens **quick log**: an optional duration and note on top, then the active projects (recently used first). Tapping a project saves the entry, so a plain log entry takes two taps.
+Two floating action buttons:
+- **Left: new task.** A sheet with title, optional deadline and optional assignment (project, KR or objective). Saving takes two taps for a plain task.
+- **Right: quick log.** An optional duration and note on top, then the active projects and the open tasks outside projects (recently used first). Tapping one saves the entry, so a plain log entry takes two taps.
 
 ### 6.2 Project detail
 - Title, description, area, linked KR, importance, deadline (own and effective), status.
-- Next step (editable) and open tasks; add, edit, complete and delete tasks. Open tasks are ordered by due date; manual reordering is deferred.
+- Next step (editable) and open tasks; add, complete and delete tasks; tapping a task opens its task page. The next step is marked in the task list instead of being shown twice. Open tasks are ordered by due date; manual reordering is deferred.
 - Habits belonging to this project.
 - Log entries for this project (most recent first).
 - Actions: activate / pause / move to backlog / complete.
 
-### 6.3 Plan
+### 6.3 Task page
+- Title, notes, deadline, status and what the task is assigned to (project, KR or objective, tapping it opens that item), or "Standalone".
+- Marked when it is its project's next step.
+- Actions: complete (with Undo), reopen a done task, edit, delete, log work.
+- Log entries for this task (most recent first).
+- Reachable from Home, the project detail, the Plan tab, the review summary and deadline reminders.
+
+### 6.4 Plan
 - **Objectives list:** for each active objective, its key results (with progress bars), and under each KR the **active** projects linked to it. Shown one after another.
 - Active projects with no KR are listed in a separate "Projects without a KR" section. Active projects whose KR belongs to a non-active objective are also listed there, with the KR's title.
 - Only active projects appear in the objectives list; backlog and paused projects appear only in the Backlog.
-- Create and edit objectives, KRs, projects, habits and areas.
+- Open tasks assigned to a KR or an objective are listed under it, like projects.
+- Create and edit objectives, KRs, projects, tasks, habits and areas. The create button offers **New task** next to new objective, project and habit. Archive, Habits and Areas stay in the menu; Settings has its own button (§6).
 - **Backlog:** all projects with status `backlog` or `paused`, filterable by area. Activating one makes it appear on Home.
 - Archive of completed objectives and projects.
 
-### 6.4 Review
+### 6.5 Review
 - **Review week:** on Sunday the Monday–Sunday week ending today, on any other day the previous Monday–Sunday week. One review per week.
 - **Default view**, top to bottom:
   - this week's plan, from the most recently completed review
   - a "Start / Continue / Edit weekly review" button
   - the review week at a glance: work logged per project (count and total duration), habit adherence per habit (done of expected), tasks completed, KR progress with the change since the previous completed review
   - the history.
-- **Guided flow:**
+- **Guided flow**, shown as full-screen pages with a progress bar and Back / Next:
   1. Look back: the week summary.
   2. Projects: go through each active project; update status and next step (applied immediately).
   3. Key results: update values of numeric/boolean KRs (applied immediately).
@@ -210,6 +225,20 @@ A floating action button opens **quick log**: an optional duration and note on t
   Score, reflection and plan are kept as a draft when changing steps or leaving, so a review can be continued later. A completed review can be edited and saved again.
 - **History:** list of past reviews with score and plan; each opens in full.
 - Later: longer-term stats (score trends, time per area/project, habit streaks).
+
+### 6.6 Settings
+- Reachable from the top bar of Plan, Home and Review.
+- Reminders, default reminder time, weekly review day and time, deadline lead time, account and sync.
+
+### 6.7 Design and interaction
+The app should feel calm, clear and quick. Guidelines for every screen:
+- **Visual identity:** an own color palette (not the default Material seed) with area colors as accents on cards and chips; a clear type scale (bold titles, smaller body text); consistent spacing; light and dark themes both tuned.
+- **Less text, more structure:** metadata as chips, icons and badges instead of text lines. For example importance as dots or stars, status as a colored chip, deadlines as a badge colored by urgency. Absent values are left out instead of written out ("No area", "No deadline").
+- **Compact cards and lists:** denser rows, cards for projects and tasks, and no duplicate rows for the same item on one screen.
+- **Detail pages:** a header with title, status, area and deadline; actions in the top bar or a menu instead of rows of large buttons.
+- **Empty states:** an icon, one line of text and the action that fills the section.
+- **Motion:** list changes (checking, completing, reordering by score) animate; detail pages open with a transition from the tapped card.
+- **Wide screens:** at desktop width Plan shows the list and the selected item's detail side by side.
 
 ## 7. Sync
 
@@ -232,10 +261,10 @@ A floating action button opens **quick log**: an optional duration and note on t
 
 Android only. All scheduled locally with `flutter_local_notifications` as exact alarms, for the next 14 days, and rescheduled whenever relevant data or settings change and when the app starts or returns to the foreground:
 - **Habits:** a reminder at each habit's `reminder_time` (or the default reminder time) on every day it is due and not yet checked.
-- **Deadlines:** for the same items Home lists as upcoming deadlines (own deadlines only), a reminder at the default reminder time when the deadline enters the lead time, and one on the day itself.
+- **Deadlines:** for open tasks (inside or outside projects), active projects and KRs with an own deadline, a reminder at the default reminder time when the deadline enters the lead time, and one on the day itself.
 - **Weekly review:** at the configured review day and time (default Sunday 18:00), opening the review flow; skipped when that week's review is already completed.
 
-Tapping a reminder opens its screen: Home for habits, the project detail for tasks and projects, the KR form for KRs.
+Tapping a reminder opens its screen: Home for habits, the task page for tasks, the project detail for projects, the KR form for KRs.
 
 ## 9. Milestones
 
@@ -244,7 +273,9 @@ Tapping a reminder opens its screen: Home for habits, the project detail for tas
 3. **Notifications:** habit and deadline reminders (Android), settings.
 4. **Review:** last-week summary, guided weekly review, review history, weekly review reminder and its day/time settings.
 5. **Sync:** Supabase schema and RLS, auth, push/pull sync.
-6. **Later:** stats, optional native desktop builds.
+6. **Tasks and navigation:** tasks as their own items (assignment to project, KR or objective, task page, log work on tasks), new-task button on Home and in Plan, tasks section on Home, Settings from every main screen.
+7. **Design refresh:** the guidelines of §6.7 applied to all screens, Home as a dashboard, review flow as pages, two-pane Plan on wide screens.
+8. **Later:** stats, optional native desktop builds.
 
 The schema includes the sync columns from milestone 1, so adding sync later requires no migration of existing data.
 
