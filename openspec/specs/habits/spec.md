@@ -40,11 +40,15 @@ For `weekdays` the user SHALL pick at least one weekday (Monday first). For `tim
 - **THEN** the habit is not saved and the field shows an error
 
 ### Requirement: Reminder time stored
-The user SHALL be able to set or clear a reminder time of day for a habit. In this milestone the time is stored and displayed only; no notification is scheduled.
+The user SHALL be able to set or clear a reminder time of day for a habit. The habit's reminders are shown at this time (see notifications); without a reminder time the default reminder time from Settings is used.
 
 #### Scenario: Set reminder time
 - **WHEN** the user sets a reminder time of 07:30 and saves
 - **THEN** the habit shows the reminder time 07:30
+
+#### Scenario: Clear reminder time
+- **WHEN** the user clears a habit's reminder time and saves
+- **THEN** the habit shows no reminder time and its reminders use the default reminder time
 
 ### Requirement: Edit and deactivate habit
 The user SHALL be able to edit every field of a habit, including switching it inactive and active again.

@@ -117,7 +117,9 @@ Server-side, every table also has `user_id` (Supabase auth user), protected by R
 - `completed_at` nullable
 
 ### Settings (local only, not synced)
-- Habit reminder default time, weekly review day and time, deadline warning lead time (default 7 days), sync credentials.
+- Reminders on/off (default on), default reminder time (default 08:00; used by habits without own time and by deadline reminders), deadline warning lead time (default 7 days, 1–30).
+- Later: weekly review day and time (milestone 4), sync credentials (milestone 5).
+- Stored in a local-only `settings` key-value table (schema version 2), never synced.
 
 ## 5. Derived logic
 
@@ -217,17 +219,19 @@ A floating action button opens **quick log**: an optional duration and note on t
 
 ## 8. Notifications
 
-All scheduled locally with `flutter_local_notifications`, rescheduled whenever relevant data or settings change:
-- **Habits:** daily reminder at each habit's `reminder_time` (or the default time) if it is due and not yet checked.
-- **Deadlines:** a reminder when a task, project or KR deadline is within the lead time, and on the day itself.
-- **Weekly review:** at the configured day and time (e.g. Sunday evening), opening the review flow.
+Android only. All scheduled locally with `flutter_local_notifications` as exact alarms, for the next 14 days, and rescheduled whenever relevant data or settings change and when the app starts or returns to the foreground:
+- **Habits:** a reminder at each habit's `reminder_time` (or the default reminder time) on every day it is due and not yet checked.
+- **Deadlines:** for the same items Home lists as upcoming deadlines (own deadlines only), a reminder at the default reminder time when the deadline enters the lead time, and one on the day itself.
+- **Weekly review:** at the configured day and time (e.g. Sunday evening), opening the review flow. Comes with milestone 4.
+
+Tapping a reminder opens its screen: Home for habits, the project detail for tasks and projects, the KR form for KRs.
 
 ## 9. Milestones
 
 1. **Foundation:** Flutter project for Android and web, drift schema with sync columns (working on both platforms), responsive app shell, Plan tab CRUD for areas, objectives, KRs, projects and the backlog.
 2. **Home:** tasks and next steps, habits and habit checks, upcoming deadlines, project score sorting, quick log, project detail.
-3. **Notifications:** habits, deadlines, weekly review.
-4. **Review:** last-week summary, guided weekly review, review history.
+3. **Notifications:** habit and deadline reminders (Android), settings.
+4. **Review:** last-week summary, guided weekly review, review history, weekly review reminder and its day/time settings.
 5. **Sync:** Supabase schema and RLS, auth, push/pull sync.
 6. **Later:** stats, optional native desktop builds.
 
