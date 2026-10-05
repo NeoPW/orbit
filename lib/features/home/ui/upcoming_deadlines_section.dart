@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/time/date_format.dart';
 import '../../../core/widgets/section_heading.dart';
+import '../../settings/data/settings_repository.dart';
 import '../data/home_providers.dart';
 import '../domain/upcoming_deadlines.dart';
 
@@ -15,12 +16,13 @@ class UpcomingDeadlinesSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final items = ref.watch(upcomingDeadlinesProvider).value;
+    final leadDays = ref.watch(appSettingsProvider).value?.deadlineLeadDays;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SectionHeading('Upcoming deadlines'),
         if (items != null && items.isEmpty)
-          const SectionEmptyText('Nothing due in the next 7 days'),
+          SectionEmptyText('Nothing due in the next $leadDays days'),
         for (final item in items ?? const <UpcomingDeadline>[])
           _DeadlineTile(item: item),
       ],

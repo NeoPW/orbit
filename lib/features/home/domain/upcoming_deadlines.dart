@@ -1,10 +1,6 @@
 import '../../../core/db/app_database.dart';
 import '../../key_results/domain/kr_progress.dart';
 
-/// How many days ahead Home lists deadlines. Fixed until there is a
-/// Settings screen.
-const deadlineLeadDays = 7;
-
 enum DeadlineKind { task, project, keyResult }
 
 /// A task, project or KR whose own deadline is overdue or coming up.
@@ -34,12 +30,12 @@ class UpcomingDeadline {
   final String? projectTitle;
 }
 
-/// The upcoming deadlines for Home (home spec, "Upcoming deadlines"):
-/// open tasks of active projects, active projects and not yet reached KRs
-/// of active objectives, each by its *own* deadline, when it is at most
-/// [deadlineLeadDays] after [today] (overdue included). Sorted by date,
-/// then title.
-List<UpcomingDeadline> buildUpcomingDeadlines({
+/// Every task, project and KR with an own deadline that Home and the
+/// reminders care about: open tasks of active projects, active projects and
+/// not yet reached KRs of active objectives (home spec, "Upcoming
+/// deadlines"). Inherited deadlines are not included. No date filter;
+/// sorted by date, then title.
+List<UpcomingDeadline> deadlineCandidates({
   required List<({Task task, Project project})> tasks,
   required List<Project> projects,
   required List<KeyResult> keyResults,
@@ -47,8 +43,6 @@ List<UpcomingDeadline> buildUpcomingDeadlines({
   required Map<String, int> habitCheckIns,
   required CalendarDate today,
 }) {
-  final last = today.addDays(deadlineLeadDays);
-  bool upcoming(CalendarDate date) => !date.isAfter(last);
   final activeObjectiveIds = {
     for (final o in objectives)
       if (o.status == ObjectiveStatus.active) o.id,
@@ -58,8 +52,7 @@ List<UpcomingDeadline> buildUpcomingDeadlines({
     for (final (:task, :project) in tasks)
       if (task.dueDate case final due?
           when task.status == TaskStatus.open &&
-              project.status == ProjectStatus.active &&
-              upcoming(due))
+              project.status == ProjectStatus.active)
         UpcomingDeadline(
           kind: DeadlineKind.task,
           id: task.id,
@@ -71,7 +64,7 @@ List<UpcomingDeadline> buildUpcomingDeadlines({
         ),
     for (final project in projects)
       if (project.deadline case final deadline?
-          when project.status == ProjectStatus.active && upcoming(deadline))
+          when project.status == ProjectStatus.active)
         UpcomingDeadline(
           kind: DeadlineKind.project,
           id: project.id,
@@ -83,7 +76,6 @@ List<UpcomingDeadline> buildUpcomingDeadlines({
     for (final kr in keyResults)
       if (kr.deadline case final deadline?
           when activeObjectiveIds.contains(kr.objectiveId) &&
-              upcoming(deadline) &&
               krProgress(
                     kr.measureType,
                     start: kr.startValue,
@@ -106,4 +98,29 @@ List<UpcomingDeadline> buildUpcomingDeadlines({
         ? byDate
         : a.title.toLowerCase().compareTo(b.title.toLowerCase());
   });
+}
+
+/// The upcoming deadlines for Home: the [deadlineCandidates] whose deadline
+/// is at most [leadDays] after [today] (overdue included).
+List<UpcomingDeadline> buildUpcomingDeadlines({
+  required List<({Task task, Project project})> tasks,
+  required List<Project> projects,
+  required List<KeyResult> keyResults,
+  required List<Objective> objectives,
+  required Map<String, int> habitCheckIns,
+  required CalendarDate today,
+  required int leadDays,
+}) {
+  final last = today.addDays(leadDays);
+  return [
+    for (final item in deadlineCandidates(
+      tasks: tasks,
+      projects: projects,
+      keyResults: keyResults,
+      objectives: objectives,
+      habitCheckIns: habitCheckIns,
+      today: today,
+    ))
+      if (!item.date.isAfter(last)) item,
+  ];
 }

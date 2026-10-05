@@ -151,3 +151,16 @@ class WeeklyReviews extends Table with SyncColumns {
   TextColumn get planNextWeek => text().withDefault(const Constant(''))();
   DateTimeColumn get completedAt => dateTime().nullable()();
 }
+
+/// Local settings as key-value pairs (docs/SPEC.md §4 "Settings").
+///
+/// Local-only: no sync columns, and sync (milestone 5) must skip this
+/// table. Missing keys mean the default value.
+@DataClassName('SettingRow')
+class Settings extends Table {
+  TextColumn get key => text()();
+  TextColumn get value => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {key};
+}

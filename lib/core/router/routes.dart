@@ -8,6 +8,7 @@ abstract final class Routes {
   static const archive = '/plan/archive';
   static const areas = '/plan/areas';
   static const habits = '/plan/habits';
+  static const settings = '/plan/settings';
 
   static const newObjective = '/plan/objectives/new';
   static String objective(String id) => '/plan/objectives/$id';

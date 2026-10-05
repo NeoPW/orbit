@@ -11,6 +11,7 @@ import '../../key_results/domain/kr_deadline.dart';
 import '../../objectives/data/objective_repository.dart';
 import '../../projects/data/project_repository.dart';
 import '../../projects/domain/project_deadline.dart';
+import '../../settings/data/settings_repository.dart';
 import '../../tasks/data/task_repository.dart';
 import '../domain/home_habits.dart';
 import '../domain/project_score.dart';
@@ -47,8 +48,9 @@ AsyncValue<List<UpcomingDeadline>> upcomingDeadlines(Ref ref) {
   final keyResults = ref.watch(keyResultsProvider);
   final objectives = ref.watch(objectivesProvider);
   final checkIns = ref.watch(habitCheckInsProvider);
+  final settings = ref.watch(appSettingsProvider);
   return combineAsync(
-    [tasks, projects, keyResults, objectives, checkIns],
+    [tasks, projects, keyResults, objectives, checkIns, settings],
     () => buildUpcomingDeadlines(
       tasks: tasks.requireValue,
       projects: projects.requireValue,
@@ -56,6 +58,7 @@ AsyncValue<List<UpcomingDeadline>> upcomingDeadlines(Ref ref) {
       objectives: objectives.requireValue,
       habitCheckIns: checkIns.requireValue,
       today: today,
+      leadDays: settings.requireValue.deadlineLeadDays,
     ),
   );
 }

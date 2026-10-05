@@ -112,7 +112,7 @@ final class UpcomingDeadlinesProvider
   }
 }
 
-String _$upcomingDeadlinesHash() => r'434abf12dccd0bf209c147ff2514339b023848dd';
+String _$upcomingDeadlinesHash() => r'060c6d2ca9afcb670c75d7589eb56a0b8677ea6b';
 
 /// Home's "Active projects", ordered by score.
 

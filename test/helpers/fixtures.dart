@@ -117,3 +117,11 @@ Task task(
   dueDate: dueDate,
   status: status,
 );
+
+HabitCheck habitCheck(String habitId, CalendarDate date) => HabitCheck(
+  id: 'check-$habitId-${date.toIso()}',
+  createdAt: _t0,
+  updatedAt: _t0,
+  habitId: habitId,
+  date: date,
+);

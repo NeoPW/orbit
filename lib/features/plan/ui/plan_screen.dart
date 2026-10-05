@@ -49,6 +49,7 @@ class PlanScreen extends StatelessWidget {
                 PopupMenuItem(value: Routes.archive, child: Text('Archive')),
                 PopupMenuItem(value: Routes.habits, child: Text('Habits')),
                 PopupMenuItem(value: Routes.areas, child: Text('Areas')),
+                PopupMenuItem(value: Routes.settings, child: Text('Settings')),
               ],
             ),
           ],

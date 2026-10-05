@@ -289,7 +289,7 @@ class _HabitFormState extends ConsumerState<_HabitForm> {
           child: InputDecorator(
             decoration: InputDecoration(
               labelText: 'Reminder time (optional)',
-              helperText: 'Notifications come in a later milestone.',
+              helperText: 'Without a time, the default reminder time is used.',
               border: const OutlineInputBorder(),
               suffixIcon: reminder == null
                   ? const Icon(Icons.schedule)

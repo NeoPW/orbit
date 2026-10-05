@@ -117,6 +117,14 @@ void main() {
       expect((await habits()).single.timesPerWeek, 3);
     });
 
+    testApp('the reminder field explains the default time', (tester) async {
+      await pumpApp(tester, db: db, location: Routes.newHabit);
+      expect(
+        find.text('Without a time, the default reminder time is used.'),
+        findsOneWidget,
+      );
+    });
+
     testApp('links a project and sets a reminder time', (tester) async {
       await seed.projects.create(title: 'Thesis');
       await pumpApp(tester, db: db, location: Routes.newHabit);

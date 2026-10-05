@@ -28,6 +28,7 @@ void main() {
       ('Archive', Routes.archive),
       ('Habits', Routes.habits),
       ('Areas', Routes.areas),
+      ('Settings', Routes.settings),
     ]) {
       testApp('menu entry $entry opens $route', (tester) async {
         final app = await pumpApp(tester, db: db, location: Routes.plan);

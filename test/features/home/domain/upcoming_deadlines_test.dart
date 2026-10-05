@@ -13,6 +13,7 @@ void main() {
     List<KeyResult> keyResults = const [],
     List<Objective> objectives = const [],
     Map<String, int> habitCheckIns = const {},
+    int leadDays = 7,
   }) => buildUpcomingDeadlines(
     tasks: tasks,
     projects: projects,
@@ -20,6 +21,7 @@ void main() {
     objectives: objectives,
     habitCheckIns: habitCheckIns,
     today: today,
+    leadDays: leadDays,
   );
 
   test('a task due within 7 days is listed with its project', () {
@@ -131,5 +133,34 @@ void main() {
     expect(items.map((i) => i.title), ['Late', 'A task', 'b task']);
     expect(items.first.overdue, isTrue);
     expect(items.last.overdue, isFalse);
+  });
+
+  test('a shorter lead time lists fewer items', () {
+    // Today 2026-10-05, lead time 3: a task due 2026-10-09 is beyond it.
+    final p = project('p');
+    final tasks = [
+      (
+        task: task('t1', title: 'Soon', dueDate: CalendarDate(2026, 10, 8)),
+        project: p,
+      ),
+      (
+        task: task('t2', title: 'Later', dueDate: CalendarDate(2026, 10, 9)),
+        project: p,
+      ),
+    ];
+    expect(build(tasks: tasks, leadDays: 3).map((i) => i.title), ['Soon']);
+  });
+
+  test('candidates include deadlines beyond the lead time', () {
+    final items = deadlineCandidates(
+      tasks: const [],
+      projects: [project('p', deadline: CalendarDate(2027, 3, 1))],
+      keyResults: const [],
+      objectives: const [],
+      habitCheckIns: const {},
+      today: today,
+    );
+    expect(items.single.date, CalendarDate(2027, 3, 1));
+    expect(items.single.overdue, isFalse);
   });
 }

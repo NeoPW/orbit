@@ -22,33 +22,37 @@ void main() {
   setUp(() => db = newTestDatabase());
   tearDown(() => db.close());
 
-  test('a fresh database has schema version 1 and all nine tables', () async {
-    expect(db.schemaVersion, 1);
-    final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 1);
+  test(
+    'a fresh database has schema version 2, nine tables and settings',
+    () async {
+      expect(db.schemaVersion, 2);
+      final version = await db.customSelect('PRAGMA user_version').getSingle();
+      expect(version.read<int>('user_version'), 2);
 
-    final tables = await db
-        .customSelect(
-          "SELECT name FROM sqlite_master WHERE type = 'table' "
-          "AND name NOT LIKE 'sqlite_%'",
-        )
-        .map((row) => row.read<String>('name'))
-        .get();
-    expect(
-      tables,
-      unorderedEquals([
-        'areas',
-        'objectives',
-        'key_results',
-        'projects',
-        'tasks',
-        'habits',
-        'habit_checks',
-        'log_entries',
-        'weekly_reviews',
-      ]),
-    );
-  });
+      final tables = await db
+          .customSelect(
+            "SELECT name FROM sqlite_master WHERE type = 'table' "
+            "AND name NOT LIKE 'sqlite_%'",
+          )
+          .map((row) => row.read<String>('name'))
+          .get();
+      expect(
+        tables,
+        unorderedEquals([
+          'areas',
+          'objectives',
+          'key_results',
+          'projects',
+          'tasks',
+          'habits',
+          'habit_checks',
+          'log_entries',
+          'weekly_reviews',
+          'settings',
+        ]),
+      );
+    },
+  );
 
   test('first launch seeds Job, Personal, Sport, Uni in order', () async {
     expect(await _activeAreaNames(db), ['Job', 'Personal', 'Sport', 'Uni']);

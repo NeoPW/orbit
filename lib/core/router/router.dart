@@ -12,6 +12,7 @@ import '../../features/plan/ui/plan_screen.dart';
 import '../../features/projects/ui/project_detail_screen.dart';
 import '../../features/projects/ui/project_form_screen.dart';
 import '../../features/review/ui/review_screen.dart';
+import '../../features/settings/ui/settings_screen.dart';
 import 'app_shell.dart';
 import 'routes.dart';
 
@@ -59,6 +60,10 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
                   GoRoute(
                     path: 'areas',
                     builder: (context, state) => const AreasScreen(),
+                  ),
+                  GoRoute(
+                    path: 'settings',
+                    builder: (context, state) => const SettingsScreen(),
                   ),
                   GoRoute(
                     path: 'habits',

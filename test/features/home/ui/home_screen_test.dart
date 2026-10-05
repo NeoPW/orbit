@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:orbit/core/db/app_database.dart';
 import 'package:orbit/core/router/routes.dart';
 import 'package:orbit/core/time/today.dart';
+import 'package:orbit/features/settings/data/settings_repository.dart';
 
 import '../../../helpers/pump_app.dart';
 import '../../../helpers/seed.dart';
@@ -130,6 +131,24 @@ void main() {
       await tester.tap(tile);
       await tester.pumpAndSettle();
       expect(path(app), Routes.projectDetail(p.id));
+    });
+  });
+
+  group('lead time', () {
+    testApp('a shorter lead time from Settings hides later deadlines', (
+      tester,
+    ) async {
+      await SettingsRepository(db).setDeadlineLeadDays(3);
+      final p = await seed.projects.create(title: 'Thesis');
+      await seed.tasks.create(
+        projectId: p.id,
+        title: 'Submit form',
+        dueDate: CalendarDate(2026, 10, 9),
+      );
+      await pumpHome(tester);
+
+      expect(find.text('Submit form'), findsNothing);
+      expect(find.text('Nothing due in the next 3 days'), findsOneWidget);
     });
   });
 
