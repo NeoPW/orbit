@@ -122,7 +122,7 @@ Server-side, every table also has `user_id` (Supabase auth user), protected by R
 
 ### Settings (local only, not synced)
 - Reminders on/off (default on), default reminder time (default 08:00; used by habits without own time and by deadline reminders), deadline warning lead time (default 7 days, 1–30), weekly review day and time (default Sunday 18:00).
-- Later: sync credentials (milestone 5).
+- Sync credentials are not settings: the Supabase session keeps the sign-in, and sync bookkeeping (watermarks, last sync, account of the device) uses `sync_*` keys of the settings table.
 - Stored in a local-only `settings` key-value table, never synced.
 
 ## 5. Derived logic
@@ -214,14 +214,18 @@ A floating action button opens **quick log**: an optional duration and note on t
 ## 7. Sync
 
 - Local SQLite is the source of truth for the UI; the app never waits on the network.
-- Every change updates `updated_at` and marks the row dirty locally.
+- Every change updates `updated_at`; local changes since the last upload are found by it.
 - Sync cycle:
-  1. **Push:** upsert all dirty rows to Supabase.
-  2. **Pull:** fetch rows with `updated_at > last_pulled_at`; apply each if newer than the local copy (last-write-wins per row).
-  3. Store the new `last_pulled_at`.
-- Deletes are soft (`deleted_at`) so they propagate.
-- Trigger sync on app start, on resume, debounced after local changes, and via pull-to-refresh. Failures are silent and retried later.
-- Supabase: one table per entity, RLS policy `user_id = auth.uid()`, email login.
+  1. **Push:** upsert all rows changed since the last complete upload.
+  2. **Pull:** fetch rows with a server-set `server_updated_at` after the last pull (minus a 2-minute overlap); apply each if newer than the local copy (last-write-wins per row, by `updated_at`).
+  3. Store the new watermarks (in the local settings table).
+- The server enforces last-write-wins too: a trigger ignores an update whose `updated_at` is not newer than the stored row. Device clocks therefore decide which edit wins.
+- Deletes are soft (`deleted_at`) so they propagate. Local settings are never synced.
+- Habit checks and weekly reviews get IDs derived from their natural key (habit + date, week start), so the same record created on two devices is one record.
+- Trigger sync on app start, on resume, a few seconds after local changes, via pull-to-refresh and with "Sync now" in Settings. Failures are silent, retried later and shown in Settings.
+- **First sign-in on a device:** an empty account receives the device's data; otherwise the device's local data is replaced by the account's after a confirmation.
+- Supabase: one table per entity (`supabase/schema.sql`), RLS policy `user_id = auth.uid()`, email and password login. There is no sign-up in the app: the single user is created in the dashboard and sign-ups are disabled.
+- The app gets the project URL and publishable key at build time (`--dart-define-from-file=supabase.json`); without them it runs without sync.
 - Note: free Supabase projects pause after a period of inactivity. Since data is local-first, a pause only delays sync.
 
 ## 8. Notifications

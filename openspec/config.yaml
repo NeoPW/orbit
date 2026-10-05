@@ -18,7 +18,9 @@ context: |
     use conditional imports where unavoidable.
   - Navigation: go_router with a bottom navigation shell (Plan, Home, Review)
   - Notifications (later): flutter_local_notifications, scheduled locally
-  - Backend (later): Supabase, custom last-write-wins sync
+  - Backend: Supabase, custom last-write-wins sync (lib/core/sync/). Every
+    change to the local drift tables must update supabase/schema.sql in the
+    same change (checked by test/core/sync/schema_sql_test.dart).
 
   Architecture conventions:
   - Feature-first folders: lib/core/ (db, router, theme, shared widgets),
