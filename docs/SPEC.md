@@ -137,6 +137,7 @@ Server-side, every table also has `user_id` (Supabase auth user), protected by R
 | ≤ 30 days | 2 |
 | > 30 days or none | 1 |
 
+- Task due dates do not affect urgency; only the project's effective deadline counts.
 - Sort by score descending; ties broken by nearest effective deadline (none last), then title.
 - Each project card shows a deadline badge ("due in 3 days", "overdue") so the ordering is self-explanatory. The numeric score is not shown.
 
@@ -153,10 +154,10 @@ Server-side, every table also has `user_id` (Supabase auth user), protected by R
 - `habit`: check-ins of the linked habit since the objective's start date, divided by `target_value`
 
 ### Next step
-- Marking a project's next-step task as done prompts: "What's the next step?" (create a new task, pick an existing open task, or skip).
+- Marking a project's next-step task as done prompts: "What's the next step?" (create a new task, pick an existing open task, or skip). Cancelling the prompt leaves the task open.
 
 ### Completing tasks
-- Marking a task done may optionally create a `LogEntry` (`source = task`).
+- Marking a task done always creates a `LogEntry` (`source = task`, the task title as note). An Undo right after completing reopens the task and removes the entry.
 
 ## 6. Screens
 
@@ -166,13 +167,13 @@ Bottom navigation with three tabs: **Plan**, **Home**, **Review**.
 Order from top to bottom:
 1. **Habits due today:** checkboxes, grouped or labeled by project.
 2. **Upcoming deadlines:** tasks, projects and KRs whose *own* deadline is overdue or within the warning lead time (default 7 days), sorted by date. Inherited deadlines are not listed separately here, to avoid duplicates.
-3. **Active projects:** sorted by score (§5). Each card shows title, area, deadline badge and the next step. Tapping the next step marks it done (with the next-step prompt). Tapping the card opens the project detail.
+3. **Active projects:** sorted by score (§5). Each card shows title, area, deadline badge and the next step. Tapping the next step opens the next-step prompt and marks it done unless the prompt is cancelled. Tapping the card opens the project detail.
 
-A floating action button opens **quick log**: pick a project (recently used first), optional duration, note. The goal is two taps for a log entry.
+A floating action button opens **quick log**: an optional duration and note on top, then the active projects (recently used first). Tapping a project saves the entry, so a plain log entry takes two taps.
 
 ### 6.2 Project detail
 - Title, description, area, linked KR, importance, deadline (own and effective), status.
-- Next step (editable) and open tasks; add, complete, reorder tasks.
+- Next step (editable) and open tasks; add, edit, complete and delete tasks. Open tasks are ordered by due date; manual reordering is deferred.
 - Habits belonging to this project.
 - Log entries for this project (most recent first).
 - Actions: activate / pause / move to backlog / complete.
@@ -234,6 +235,5 @@ The schema includes the sync columns from milestone 1, so adding sync later requ
 
 ## 10. Open questions
 
-- Should task deadlines also raise their project's urgency, or only project/KR deadlines?
 - Habit schedules: are `daily`, `weekdays` and `times_per_week` enough?
 - Area list: fixed defaults (Job, Personal, Sport, Uni) or fully user-defined from the start?
