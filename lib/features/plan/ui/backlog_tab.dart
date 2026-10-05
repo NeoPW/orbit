@@ -7,6 +7,7 @@ import '../../../core/router/routes.dart';
 import '../../../core/widgets/async_body.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/max_width_body.dart';
+import '../../account/ui/sync_refresh.dart';
 import '../../areas/data/area_repository.dart';
 import '../../key_results/data/key_result_repository.dart';
 import '../../key_results/domain/kr_deadline.dart';
@@ -86,25 +87,31 @@ class _BacklogTabState extends ConsumerState<BacklogTab> {
                       icon: Icons.inventory_2_outlined,
                       message: 'No backlog or paused projects here.',
                     )
-                  : ListView(
-                      padding: const EdgeInsets.only(bottom: 88),
-                      children: [
-                        for (final project in projects)
-                          ProjectTile(
-                            project: project,
-                            area: areasById[project.areaId],
-                            deadline: deadlineOf(project),
-                            showStatus: true,
-                            onTap: () =>
-                                context.push(Routes.projectDetail(project.id)),
-                            trailing: TextButton(
-                              onPressed: () => ref
-                                  .read(projectRepositoryProvider)
-                                  .setStatus(project.id, ProjectStatus.active),
-                              child: const Text('Activate'),
+                  : SyncRefresh(
+                      child: ListView(
+                        padding: const EdgeInsets.only(bottom: 88),
+                        children: [
+                          for (final project in projects)
+                            ProjectTile(
+                              project: project,
+                              area: areasById[project.areaId],
+                              deadline: deadlineOf(project),
+                              showStatus: true,
+                              onTap: () => context.push(
+                                Routes.projectDetail(project.id),
+                              ),
+                              trailing: TextButton(
+                                onPressed: () => ref
+                                    .read(projectRepositoryProvider)
+                                    .setStatus(
+                                      project.id,
+                                      ProjectStatus.active,
+                                    ),
+                                child: const Text('Activate'),
+                              ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
             ),
           ),

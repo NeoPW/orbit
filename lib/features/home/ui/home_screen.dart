@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/widgets/max_width_body.dart';
 import '../../../core/widgets/section_heading.dart';
+import '../../account/ui/sync_refresh.dart';
 import '../../log/ui/quick_log_sheet.dart';
 import '../data/home_providers.dart';
 import 'home_habits_section.dart';
@@ -25,18 +26,20 @@ class HomeScreen extends ConsumerWidget {
         child: const Icon(Icons.more_time),
       ),
       body: MaxWidthBody(
-        child: ListView(
-          // Room for the floating action button.
-          padding: const EdgeInsets.only(bottom: 88),
-          children: [
-            const HomeHabitsSection(),
-            const UpcomingDeadlinesSection(),
-            const SectionHeading('Active projects'),
-            if (projects != null && projects.isEmpty)
-              const SectionEmptyText('No active projects'),
-            for (final project in projects ?? const <HomeProject>[])
-              HomeProjectCard(item: project),
-          ],
+        child: SyncRefresh(
+          child: ListView(
+            // Room for the floating action button.
+            padding: const EdgeInsets.only(bottom: 88),
+            children: [
+              const HomeHabitsSection(),
+              const UpcomingDeadlinesSection(),
+              const SectionHeading('Active projects'),
+              if (projects != null && projects.isEmpty)
+                const SectionEmptyText('No active projects'),
+              for (final project in projects ?? const <HomeProject>[])
+                HomeProjectCard(item: project),
+            ],
+          ),
         ),
       ),
     );

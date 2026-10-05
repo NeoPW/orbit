@@ -7,6 +7,7 @@ import '../../../core/time/date_format.dart';
 import '../../../core/widgets/async_body.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/max_width_body.dart';
+import '../../account/ui/sync_refresh.dart';
 import '../../key_results/ui/key_result_tile.dart';
 import '../../projects/ui/project_tile.dart';
 import '../data/plan_providers.dart';
@@ -22,34 +23,36 @@ class OverviewTab extends ConsumerWidget {
     return AsyncBody(
       value: ref.watch(planOverviewProvider),
       data: (overview) => MaxWidthBody(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
-          children: [
-            if (overview.objectives.isEmpty)
-              EmptyState(
-                icon: Icons.flag_outlined,
-                message: 'No active objectives.',
-                action: FilledButton.tonal(
-                  onPressed: () => context.push(Routes.newObjective),
-                  child: const Text('Create objective'),
+        child: SyncRefresh(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
+            children: [
+              if (overview.objectives.isEmpty)
+                EmptyState(
+                  icon: Icons.flag_outlined,
+                  message: 'No active objectives.',
+                  action: FilledButton.tonal(
+                    onPressed: () => context.push(Routes.newObjective),
+                    child: const Text('Create objective'),
+                  ),
+                )
+              else
+                for (final objective in overview.objectives)
+                  _ObjectiveCard(plan: objective),
+              const _SectionHeader('Projects without a KR'),
+              if (overview.projectsWithoutKr.isEmpty)
+                const _Hint('No active projects without a key result.')
+              else
+                Card.outlined(
+                  child: Column(
+                    children: [
+                      for (final entry in overview.projectsWithoutKr)
+                        _ProjectEntryTile(entry: entry),
+                    ],
+                  ),
                 ),
-              )
-            else
-              for (final objective in overview.objectives)
-                _ObjectiveCard(plan: objective),
-            const _SectionHeader('Projects without a KR'),
-            if (overview.projectsWithoutKr.isEmpty)
-              const _Hint('No active projects without a key result.')
-            else
-              Card.outlined(
-                child: Column(
-                  children: [
-                    for (final entry in overview.projectsWithoutKr)
-                      _ProjectEntryTile(entry: entry),
-                  ],
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -5,6 +5,7 @@ import '../../../core/notifications/notification_scheduler.dart';
 import '../../../core/widgets/async_body.dart';
 import '../../../core/widgets/max_width_body.dart';
 import '../../../core/widgets/section_heading.dart';
+import '../../account/ui/account_section.dart';
 import '../data/settings_repository.dart';
 import '../domain/app_settings.dart';
 
@@ -40,6 +41,7 @@ class SettingsScreen extends ConsumerWidget {
               ),
               const SectionHeading('Deadlines'),
               _LeadDaysField(days: settings.deadlineLeadDays),
+              const AccountSection(),
             ],
           ),
         ),

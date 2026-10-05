@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/db/app_database.dart';
+import 'package:orbit/core/db/ids.dart';
 
 import '../../../helpers/repos.dart';
 
@@ -113,5 +114,10 @@ void main() {
 
     final latest = await r.reviews.watchLatestSnapshotsBefore(week).first;
     expect(latest, {'kr1': 0.3, 'kr2': 0.2});
+  });
+
+  test('the ID is derived from the week', () async {
+    final review = await r.reviews.saveDraft(week, score: 5);
+    expect(review.id, naturalKeyId('weekly_review:2026-10-05'));
   });
 }

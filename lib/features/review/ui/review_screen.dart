@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/widgets/max_width_body.dart';
 import '../../../core/widgets/section_heading.dart';
+import '../../account/ui/sync_refresh.dart';
 import '../data/review_providers.dart';
 import '../data/review_repository.dart';
 import 'week_format.dart';
@@ -27,28 +28,30 @@ class ReviewScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Review')),
       body: MaxWidthBody(
-        child: ListView(
-          padding: const EdgeInsets.only(bottom: 24),
-          children: [
-            const _PlanCard(),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: FilledButton.icon(
-                onPressed: () => context.push(Routes.weeklyReview),
-                icon: const Icon(Icons.rate_review_outlined),
-                label: Text(label),
+        child: SyncRefresh(
+          child: ListView(
+            padding: const EdgeInsets.only(bottom: 24),
+            children: [
+              const _PlanCard(),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: FilledButton.icon(
+                  onPressed: () => context.push(Routes.weeklyReview),
+                  icon: const Icon(Icons.rate_review_outlined),
+                  label: Text(label),
+                ),
               ),
-            ),
-            SectionHeading('Week ${formatWeek(week)}'),
-            WeekSummaryView(weekStart: week),
-            const SectionHeading('History'),
-            ListTile(
-              leading: const Icon(Icons.history),
-              title: const Text('Past reviews'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.push(Routes.reviewHistory),
-            ),
-          ],
+              SectionHeading('Week ${formatWeek(week)}'),
+              WeekSummaryView(weekStart: week),
+              const SectionHeading('History'),
+              ListTile(
+                leading: const Icon(Icons.history),
+                title: const Text('Past reviews'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push(Routes.reviewHistory),
+              ),
+            ],
+          ),
         ),
       ),
     );

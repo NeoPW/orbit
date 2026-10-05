@@ -2,7 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/db/app_database.dart';
 import '../../../core/db/database_providers.dart';
-import '../../../core/db/ids.dart' show idGeneratorProvider;
+import '../../../core/db/ids.dart' show idGeneratorProvider, naturalKeyId;
 import '../../../core/db/repository_support.dart';
 import '../../../core/time/clock.dart' show clockProvider;
 import '../../log/data/log_repository.dart';
@@ -58,7 +58,7 @@ class HabitCheckRepository extends Repository {
             .into(db.habitChecks)
             .insertReturning(
               HabitChecksCompanion.insert(
-                id: newId(),
+                id: naturalKeyId('habit_check:${habit.id}:${date.toIso()}'),
                 createdAt: now,
                 updatedAt: now,
                 habitId: habit.id,

@@ -23,4 +23,27 @@ void main() {
     addTearDown(container.dispose);
     expect(container.read(clockProvider)().isUtc, isTrue);
   });
+
+  group('naturalKeyId', () {
+    test('the same key always gives the same UUID', () {
+      expect(
+        naturalKeyId('habit_check:h1:2026-10-05'),
+        naturalKeyId('habit_check:h1:2026-10-05'),
+      );
+    });
+
+    test('different keys give different UUIDs', () {
+      expect(
+        naturalKeyId('habit_check:h1:2026-10-05'),
+        isNot(naturalKeyId('habit_check:h1:2026-10-06')),
+      );
+    });
+
+    test('is a UUID v5', () {
+      expect(
+        naturalKeyId('weekly_review:2026-10-05'),
+        matches(RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab]')),
+      );
+    });
+  });
 }

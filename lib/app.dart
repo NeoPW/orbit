@@ -6,6 +6,7 @@ import 'core/notifications/notification_scheduler.dart';
 import 'core/router/router.dart';
 import 'core/router/routes.dart';
 import 'core/theme/app_theme.dart';
+import 'features/account/ui/sync_scope.dart';
 import 'features/reminders/ui/reminder_sync_scope.dart';
 
 class OrbitApp extends ConsumerStatefulWidget {
@@ -44,7 +45,8 @@ class _OrbitAppState extends ConsumerState<OrbitApp> {
       darkTheme: darkTheme,
       themeMode: ThemeMode.system,
       routerConfig: _router,
-      builder: (context, child) => ReminderSyncScope(child: child!),
+      builder: (context, child) =>
+          ReminderSyncScope(child: SyncScope(child: child!)),
     );
   }
 }

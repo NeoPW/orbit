@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/db/app_database.dart';
+import 'package:orbit/core/db/ids.dart';
 
 import '../../../helpers/repos.dart';
 
@@ -84,5 +85,11 @@ void main() {
     // The habit can be checked again afterwards.
     await r.habitChecks.check(habit, today);
     expect(await r.habitChecks.watchSince(today).first, hasLength(1));
+  });
+
+  test('the ID is derived from habit and date', () async {
+    final habit = await runHabit();
+    final check = await r.habitChecks.check(habit, today);
+    expect(check.id, naturalKeyId('habit_check:${habit.id}:2026-10-05'));
   });
 }

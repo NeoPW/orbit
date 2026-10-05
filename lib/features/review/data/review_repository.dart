@@ -2,7 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/db/app_database.dart';
 import '../../../core/db/database_providers.dart';
-import '../../../core/db/ids.dart' show idGeneratorProvider;
+import '../../../core/db/ids.dart' show idGeneratorProvider, naturalKeyId;
 import '../../../core/db/repository_support.dart';
 import '../../../core/time/clock.dart' show clockProvider;
 
@@ -131,7 +131,7 @@ class ReviewRepository extends Repository {
           .into(db.weeklyReviews)
           .insertReturning(
             WeeklyReviewsCompanion.insert(
-              id: newId(),
+              id: naturalKeyId('weekly_review:${weekStart.toIso()}'),
               createdAt: now,
               updatedAt: now,
               weekStart: weekStart,
