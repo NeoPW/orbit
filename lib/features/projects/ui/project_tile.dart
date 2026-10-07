@@ -1,25 +1,21 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/db/app_database.dart';
-import '../../../core/time/date_format.dart';
 import '../../../core/widgets/area_dot.dart';
+import '../../../core/widgets/orbit_chips.dart';
 import '../domain/project_deadline.dart';
 import 'project_labels.dart';
 
-/// "Due dd-mm-yyyy", marked when inherited from the KR, or "No deadline".
-String deadlineLabel(EffectiveDeadline? deadline) {
-  if (deadline == null) return 'No deadline';
-  final date = 'Due ${formatDate(deadline.date)}';
-  return deadline.inherited ? '$date (from key result)' : date;
-}
-
-/// A project in a Plan list: title, area, importance and effective deadline.
+/// A project in a Plan list: title, then chips for status, area, deadline
+/// and importance. Values that are not set are left out.
 class ProjectTile extends StatelessWidget {
   const ProjectTile({
     super.key,
     required this.project,
     required this.area,
     required this.deadline,
+    required this.today,
+    this.leadDays = 7,
     this.keyResultTitle,
     this.showStatus = false,
     this.trailing,
@@ -29,6 +25,8 @@ class ProjectTile extends StatelessWidget {
   final Project project;
   final Area? area;
   final EffectiveDeadline? deadline;
+  final CalendarDate today;
+  final int leadDays;
 
   /// Shown when the project is listed outside its KR.
   final String? keyResultTitle;
@@ -39,43 +37,58 @@ class ProjectTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final muted = theme.textTheme.bodySmall?.copyWith(
-      color: theme.colorScheme.onSurfaceVariant,
-    );
     final area = this.area;
+    final deadline = this.deadline;
     final keyResultTitle = this.keyResultTitle;
 
     return ListTile(
       onTap: onTap,
+      leading: area == null
+          ? const Icon(Icons.folder_outlined)
+          : AreaDot(color: area.color, size: 12),
       title: Text(project.title),
       trailing: trailing,
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (keyResultTitle != null)
-            Text('Key result: $keyResultTitle', style: muted),
-          Wrap(
-            spacing: 12,
-            runSpacing: 2,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              if (showStatus)
-                Text(projectStatusLabel(project.status), style: muted),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            if (showStatus)
+              StatusChip<void>(
+                label: projectStatusLabel(project.status),
+                color: projectStatusColor(context, project.status),
+              ),
+            if (area != null) AreaChip(area: area),
+            if (deadline != null)
+              DeadlineChip(
+                date: deadline.date,
+                today: today,
+                leadDays: leadDays,
+                inherited: deadline.inherited,
+              ),
+            ImportanceDots(value: project.importance),
+            if (keyResultTitle != null)
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (area != null) ...[
-                    AreaDot(color: area.color),
-                    const SizedBox(width: 4),
-                  ],
-                  Text(area?.name ?? 'No area', style: muted),
+                  Icon(
+                    Icons.track_changes,
+                    size: 14,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    keyResultTitle,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 ],
               ),
-              Text('Importance ${project.importance}', style: muted),
-              Text(deadlineLabel(deadline), style: muted),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

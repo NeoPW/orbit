@@ -7,7 +7,7 @@ Defines the Plan tab: the structured overview of active objectives, their key re
 ## Requirements
 
 ### Requirement: Objectives section
-The Plan tab SHALL list every objective with status `active`, one after another in sort order. Each objective SHALL show its title and date range, followed by its key results in sort order, each with its progress (see key-results), and under each KR the `active` projects linked to it.
+The Plan tab SHALL list every objective with status `active`, one after another in sort order. Each objective SHALL show its title and date range, the open tasks assigned to the objective, and its key results in sort order, each with its progress (see key-results), and under each KR the `active` projects and the open tasks assigned to it.
 
 #### Scenario: Objective with KRs and projects
 - **WHEN** an active objective has two KRs and one active project linked to the first KR
@@ -28,6 +28,10 @@ The Plan tab SHALL list every objective with status `active`, one after another 
 #### Scenario: No active objectives
 - **WHEN** there is no active objective
 - **THEN** the section shows an empty state with an action to create an objective
+
+#### Scenario: Tasks under a KR
+- **WHEN** the open task "Book physio" is assigned to the KR "Run 100 km" of an active objective
+- **THEN** it is listed under that KR and tapping it opens its task page
 
 ### Requirement: Project entries
 Each project entry in the Plan tab SHALL show its title, area, importance and effective deadline (or that it has none). Within a section or KR, projects SHALL be ordered by importance (highest first), then effective deadline (earliest first, none last), then title.
@@ -92,11 +96,11 @@ All Plan tab views SHALL update immediately after any create, edit, status chang
 - **THEN** the project is shown in the Backlog and no longer in its previous section
 
 ### Requirement: Entry points for creating and editing
-From the Plan tab the user SHALL be able to create an objective, a project and a habit, add a key result to an objective, open the Areas, Habits, Archive and Settings screens, and open the edit form of any shown objective or KR by tapping it. Tapping a project in the Overview or the Backlog SHALL open its project detail (see project-detail).
+From the Plan tab the user SHALL be able to create an objective, a project, a task and a habit, add a key result to an objective, open the Areas, Habits and Archive screens from the menu and Settings from the settings button, and open the edit form of any shown objective or KR by tapping it. Tapping a project in the Overview or the Backlog SHALL open its project detail (see project-detail).
 
 #### Scenario: Create from Plan tab
 - **WHEN** the user uses the Plan tab's create action
-- **THEN** they can choose to create an objective, a project or a habit
+- **THEN** they can choose to create an objective, a project, a task or a habit
 
 #### Scenario: Edit by tapping
 - **WHEN** the user taps a KR in the objectives section
@@ -107,12 +111,12 @@ From the Plan tab the user SHALL be able to create an objective, a project and a
 - **THEN** the project's detail opens
 
 #### Scenario: Open settings
-- **WHEN** the user chooses Settings in the Plan tab menu
+- **WHEN** the user taps the settings button in the Plan tab's top bar
 - **THEN** the Settings screen opens
 
 ### Requirement: Usable at phone and desktop width
-The Plan tab and all its forms SHALL be usable at phone width and at desktop browser width; on wide screens content SHALL be limited to a readable maximum width instead of stretching across the window.
+The Plan tab and all its forms SHALL be usable at phone width and at desktop browser width; on wide screens content SHALL be limited to a readable maximum width instead of stretching across the window, and at 1000 pixels or more the selected project or task SHALL be shown next to the list (see visual-design).
 
 #### Scenario: Desktop browser
 - **WHEN** the Plan tab is shown in a 1600 pixel wide browser window
-- **THEN** the content is centered with a limited width and no text runs across the full window
+- **THEN** the content is limited to readable widths and no text runs across the full window

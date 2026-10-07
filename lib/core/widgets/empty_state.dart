@@ -22,7 +22,16 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 48, color: theme.colorScheme.outline),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer.withValues(
+                  alpha: 0.5,
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 32, color: theme.colorScheme.primary),
+            ),
             const SizedBox(height: 12),
             Text(
               message,

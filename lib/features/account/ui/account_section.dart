@@ -18,14 +18,17 @@ class AccountSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SectionHeading('Account & sync'),
-        switch (account.status) {
-          AccountStatus.notConfigured => const ListTile(
-            leading: Icon(Icons.cloud_off_outlined),
-            title: Text('Sync is not configured in this build'),
-          ),
-          AccountStatus.signedOut => _SignInForm(state: account),
-          AccountStatus.signedIn => _SignedIn(email: account.email ?? ''),
-        },
+        Card(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          child: switch (account.status) {
+            AccountStatus.notConfigured => const ListTile(
+              leading: Icon(Icons.cloud_off_outlined),
+              title: Text('Sync is not configured in this build'),
+            ),
+            AccountStatus.signedOut => _SignInForm(state: account),
+            AccountStatus.signedIn => _SignedIn(email: account.email ?? ''),
+          },
+        ),
       ],
     );
   }

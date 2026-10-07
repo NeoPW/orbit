@@ -11,18 +11,46 @@ PlanOverview build({
   List<Project> projects = const [],
   List<Area> areas = const [],
   Map<String, int> habitCheckIns = const {},
+  List<Task> tasks = const [],
 }) => buildPlanOverview(
   objectives: objectives,
   keyResults: keyResults,
   projects: projects,
   areas: areas,
   habitCheckIns: habitCheckIns,
+  tasks: tasks,
 );
 
 List<String> titles(List<ProjectEntry> entries) =>
     entries.map((e) => e.project.title).toList();
 
 void main() {
+  group('assigned tasks', () {
+    test('listed under their KR or objective, by deadline then title', () {
+      final overview = build(
+        objectives: [objective('o1')],
+        keyResults: [keyResult('kr1', objectiveId: 'o1')],
+        tasks: [
+          task('b', title: 'b', keyResultId: 'kr1'),
+          task('A', title: 'A', keyResultId: 'kr1'),
+          task('late', keyResultId: 'kr1', dueDate: CalendarDate(2026, 11, 1)),
+          task('soon', keyResultId: 'kr1', dueDate: CalendarDate(2026, 10, 7)),
+          task('obj', objectiveId: 'o1'),
+          task('done', keyResultId: 'kr1', status: TaskStatus.done),
+          task('other', keyResultId: 'kr-elsewhere'),
+        ],
+      );
+      final plan = overview.objectives.single;
+      expect(plan.tasks.map((t) => t.id), ['obj']);
+      expect(plan.keyResults.single.tasks.map((t) => t.id), [
+        'soon',
+        'late',
+        'A',
+        'b',
+      ]);
+    });
+  });
+
   group('objectives section', () {
     test('objective with KRs and projects', () {
       final overview = build(

@@ -179,3 +179,133 @@ final class LastLoggedAtProvider
 }
 
 String _$lastLoggedAtHash() => r'f9f89427a2316fa4d533b84a50bd2addc3ded23c';
+
+/// A task's log entries, most recent first.
+
+@ProviderFor(taskLog)
+final taskLogProvider = TaskLogFamily._();
+
+/// A task's log entries, most recent first.
+
+final class TaskLogProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<LogEntry>>,
+          List<LogEntry>,
+          Stream<List<LogEntry>>
+        >
+    with $FutureModifier<List<LogEntry>>, $StreamProvider<List<LogEntry>> {
+  /// A task's log entries, most recent first.
+  TaskLogProvider._({
+    required TaskLogFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'taskLogProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$taskLogHash();
+
+  @override
+  String toString() {
+    return r'taskLogProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<List<LogEntry>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<LogEntry>> create(Ref ref) {
+    final argument = this.argument as String;
+    return taskLog(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TaskLogProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$taskLogHash() => r'06a6659b65ab159d2c438378d2f73f624d42df26';
+
+/// A task's log entries, most recent first.
+
+final class TaskLogFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<List<LogEntry>>, String> {
+  TaskLogFamily._()
+    : super(
+        retry: null,
+        name: r'taskLogProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A task's log entries, most recent first.
+
+  TaskLogProvider call(String taskId) =>
+      TaskLogProvider._(argument: taskId, from: this);
+
+  @override
+  String toString() => r'taskLogProvider';
+}
+
+/// The time of each task's most recent log entry.
+
+@ProviderFor(lastLoggedAtTasks)
+final lastLoggedAtTasksProvider = LastLoggedAtTasksProvider._();
+
+/// The time of each task's most recent log entry.
+
+final class LastLoggedAtTasksProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<String, DateTime>>,
+          Map<String, DateTime>,
+          Stream<Map<String, DateTime>>
+        >
+    with
+        $FutureModifier<Map<String, DateTime>>,
+        $StreamProvider<Map<String, DateTime>> {
+  /// The time of each task's most recent log entry.
+  LastLoggedAtTasksProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'lastLoggedAtTasksProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$lastLoggedAtTasksHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<Map<String, DateTime>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<Map<String, DateTime>> create(Ref ref) {
+    return lastLoggedAtTasks(ref);
+  }
+}
+
+String _$lastLoggedAtTasksHash() => r'd359414692c3eba9896a721e98968c9c86ecf4c7';

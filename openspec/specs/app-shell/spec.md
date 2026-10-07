@@ -82,7 +82,7 @@ Every calendar date shown in the app SHALL be displayed as `dd-mm-yyyy` with lea
 - **THEN** the date field shows `15-11-2026`
 
 ### Requirement: Light and dark theme
-The app SHALL use a Material 3 theme with a light and a dark variant and SHALL follow the system brightness setting.
+The app SHALL use a Material 3 theme built from the Orbit palette and the Inter typeface (see visual-design), with a light and a dark variant, and SHALL follow the system brightness setting.
 
 #### Scenario: System in dark mode
 - **WHEN** the operating system or browser is set to dark mode

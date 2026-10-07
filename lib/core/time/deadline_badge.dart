@@ -1,4 +1,4 @@
-import '../../../core/time/calendar_date.dart';
+import 'calendar_date.dart';
 
 /// The deadline badge of a project card (home spec, "Project card").
 sealed class DeadlineBadge {

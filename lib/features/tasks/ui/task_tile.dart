@@ -1,24 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/db/app_database.dart';
-import '../../../core/time/date_format.dart';
+import '../../../core/router/routes.dart';
+import '../../../core/time/today.dart';
 import '../../../core/widgets/confirm_delete.dart';
+import '../../../core/widgets/orbit_chips.dart';
 import '../../projects/data/project_repository.dart';
+import '../../settings/data/settings_repository.dart';
 import '../data/task_repository.dart';
 import 'complete_task.dart';
 import 'task_dialog.dart';
 
 enum _TaskAction { edit, makeNextStep, delete }
 
-/// An open task of a project: checkbox to complete it, due date, a marker
-/// when it is the project's next step, and a menu to edit, make it the
-/// next step or delete it.
+/// An open task: checkbox to complete it, deadline badge, a marker when it
+/// is its project's next step, and a menu to edit, make it the next step
+/// (project tasks only) or delete it. Tapping opens the task page.
 class TaskTile extends ConsumerWidget {
-  const TaskTile({super.key, required this.task, required this.isNextStep});
+  const TaskTile({
+    super.key,
+    required this.task,
+    required this.isNextStep,
+    this.onTap,
+  });
 
   final Task task;
   final bool isNextStep;
+
+  /// Replaces opening the task page.
+  final VoidCallback? onTap;
 
   Future<void> _onAction(
     BuildContext context,
@@ -66,7 +78,12 @@ class TaskTile extends ConsumerWidget {
             ),
           ],
         ),
-      if (dueDate != null) Text('Due ${formatDate(dueDate)}'),
+      if (dueDate != null)
+        DeadlineChip(
+          date: dueDate,
+          today: ref.watch(todayProvider),
+          leadDays: ref.watch(appSettingsProvider).value?.deadlineLeadDays ?? 7,
+        ),
     ];
     return ListTile(
       leading: Checkbox(
@@ -78,13 +95,21 @@ class TaskTile extends ConsumerWidget {
       title: Text(task.title),
       subtitle: details.isEmpty
           ? null
-          : Wrap(spacing: 12, runSpacing: 2, children: details),
+          : Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: details,
+              ),
+            ),
       trailing: PopupMenuButton<_TaskAction>(
         tooltip: 'Task actions',
         onSelected: (action) => _onAction(context, ref, action),
         itemBuilder: (context) => [
           const PopupMenuItem(value: _TaskAction.edit, child: Text('Edit')),
-          if (!isNextStep)
+          if (!isNextStep && task.projectId != null)
             const PopupMenuItem(
               value: _TaskAction.makeNextStep,
               child: Text('Make next step'),
@@ -92,8 +117,7 @@ class TaskTile extends ConsumerWidget {
           const PopupMenuItem(value: _TaskAction.delete, child: Text('Delete')),
         ],
       ),
-      onTap: () =>
-          showTaskDialog(context, projectId: task.projectId!, task: task),
+      onTap: onTap ?? () => context.push(Routes.task(task.id)),
     );
   }
 }

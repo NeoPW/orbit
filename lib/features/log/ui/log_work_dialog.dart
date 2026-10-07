@@ -5,19 +5,28 @@ import '../data/log_repository.dart';
 import '../domain/duration.dart';
 import 'duration_field.dart';
 
-/// Logs work on [projectId] with an optional duration and note.
+/// Logs work on a project or a task (with the task's project or KR) with
+/// an optional duration and note.
 Future<void> showLogWorkDialog(
   BuildContext context, {
-  required String projectId,
+  String? projectId,
+  String? keyResultId,
+  String? taskId,
 }) => showDialog<void>(
   context: context,
-  builder: (context) => _LogWorkDialog(projectId: projectId),
+  builder: (context) => _LogWorkDialog(
+    projectId: projectId,
+    keyResultId: keyResultId,
+    taskId: taskId,
+  ),
 );
 
 class _LogWorkDialog extends ConsumerStatefulWidget {
-  const _LogWorkDialog({required this.projectId});
+  const _LogWorkDialog({this.projectId, this.keyResultId, this.taskId});
 
-  final String projectId;
+  final String? projectId;
+  final String? keyResultId;
+  final String? taskId;
 
   @override
   ConsumerState<_LogWorkDialog> createState() => _LogWorkDialogState();
@@ -47,6 +56,8 @@ class _LogWorkDialogState extends ConsumerState<_LogWorkDialog> {
         .read(logRepositoryProvider)
         .createManual(
           projectId: widget.projectId,
+          keyResultId: widget.keyResultId,
+          taskId: widget.taskId,
           durationMinutes: parseDuration(_duration.text),
           note: _note.text,
         );

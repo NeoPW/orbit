@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/db/app_database.dart';
+import 'package:orbit/core/widgets/orbit_ring.dart';
 import 'package:orbit/features/key_results/domain/kr_progress.dart';
 import 'package:orbit/features/key_results/ui/key_result_tile.dart';
 
@@ -25,18 +26,18 @@ Future<void> pumpTile(
           ),
           habitCheckIns: habitCheckIns,
           effectiveDeadline: CalendarDate(2026, 12, 31),
+          today: CalendarDate(2026, 10, 5),
         ),
       ),
     ),
   );
 }
 
-double? barValue(WidgetTester tester) => tester
-    .widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator))
-    .value;
+double ringValue(WidgetTester tester) =>
+    tester.widget<OrbitRing>(find.byType(OrbitRing)).progress;
 
 void main() {
-  testWidgets('numeric shows a progress bar, values and percent', (
+  testWidgets('numeric shows an orbit ring, values and percent', (
     tester,
   ) async {
     final kr = keyResult(
@@ -46,8 +47,9 @@ void main() {
       current: 20,
     ).copyWith(unit: const Value('km'));
     await pumpTile(tester, kr);
-    expect(barValue(tester), 0.2);
-    expect(find.text('20 / 100 km · 20%'), findsOneWidget);
+    expect(ringValue(tester), 0.2);
+    expect(find.text('20 / 100 km'), findsOneWidget);
+    expect(find.text('20%'), findsOneWidget);
     expect(find.text('Due 31-12-2026'), findsOneWidget);
   });
 
@@ -61,11 +63,13 @@ void main() {
       current: 1,
     );
     await pumpTile(tester, kr);
-    expect(barValue(tester), 1);
+    expect(ringValue(tester), 1);
     expect(find.text('Done'), findsOneWidget);
+    // A reached KR shows no deadline badge.
+    expect(find.text('Due 31-12-2026'), findsNothing);
 
     await pumpTile(tester, kr.copyWith(currentValue: const Value(0)));
-    expect(barValue(tester), 0);
+    expect(ringValue(tester), 0);
     expect(find.text('Not done'), findsOneWidget);
   });
 
@@ -80,8 +84,8 @@ void main() {
       habitId: 'h1',
     );
     await pumpTile(tester, kr, habitCheckIns: 10);
-    expect(barValue(tester), 0.5);
-    expect(find.text('10 / 20 check-ins · 50%'), findsOneWidget);
+    expect(ringValue(tester), 0.5);
+    expect(find.text('10 / 20 check-ins'), findsOneWidget);
   });
 
   testWidgets('habit KR without a habit says so', (tester) async {
@@ -94,7 +98,7 @@ void main() {
       target: 20,
     );
     await pumpTile(tester, kr);
-    expect(barValue(tester), 0);
+    expect(ringValue(tester), 0);
     expect(find.text('No habit linked'), findsOneWidget);
   });
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../router/routes.dart';
+import 'empty_state.dart';
 import 'max_width_body.dart';
 
 /// Leaves a form: back to the previous page, or to Plan when the form was
@@ -102,7 +103,10 @@ class _FormLoaderState<T> extends State<FormLoader<T>> {
         if (record == null) {
           return Scaffold(
             appBar: AppBar(),
-            body: const Center(child: Text('This item no longer exists.')),
+            body: const EmptyState(
+              icon: Icons.search_off,
+              message: 'This item no longer exists',
+            ),
           );
         }
         return widget.builder(record);

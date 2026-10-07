@@ -34,9 +34,13 @@ class AreasScreen extends ConsumerWidget {
       body: AsyncBody(
         value: ref.watch(areasProvider),
         data: (areas) => areas.isEmpty
-            ? const EmptyState(
+            ? EmptyState(
                 icon: Icons.category_outlined,
-                message: 'No areas yet.',
+                message: 'No areas yet',
+                action: FilledButton.tonal(
+                  onPressed: () => showAreaDialog(context),
+                  child: const Text('New area'),
+                ),
               )
             : MaxWidthBody(
                 child: ListView(
@@ -44,7 +48,12 @@ class AreasScreen extends ConsumerWidget {
                   children: [
                     for (final area in areas)
                       ListTile(
-                        leading: AreaDot(color: area.color, size: 20),
+                        leading: CircleAvatar(
+                          radius: 16,
+                          backgroundColor: colorFromHex(area.color)
+                              .withValues(alpha: 0.2),
+                          child: AreaDot(color: area.color, size: 12),
+                        ),
                         title: Text(area.name),
                         onTap: () => showAreaDialog(context, area: area),
                         trailing: IconButton(

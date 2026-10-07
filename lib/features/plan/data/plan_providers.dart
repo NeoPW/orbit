@@ -6,6 +6,7 @@ import '../../areas/data/area_repository.dart';
 import '../../key_results/data/key_result_repository.dart';
 import '../../objectives/data/objective_repository.dart';
 import '../../projects/data/project_repository.dart';
+import '../../tasks/data/task_repository.dart';
 import '../domain/plan_overview.dart';
 
 part 'plan_providers.g.dart';
@@ -18,16 +19,50 @@ AsyncValue<PlanOverview> planOverview(Ref ref) {
   final projects = ref.watch(activeProjectsProvider);
   final areas = ref.watch(areasProvider);
   final checkIns = ref.watch(habitCheckInsProvider);
+  final tasks = ref.watch(assignedTasksProvider);
   return combineAsync(
-    [objectives, keyResults, projects, areas, checkIns],
+    [objectives, keyResults, projects, areas, checkIns, tasks],
     () => buildPlanOverview(
       objectives: objectives.requireValue,
       keyResults: keyResults.requireValue,
       projects: projects.requireValue,
       areas: areas.requireValue,
       habitCheckIns: checkIns.requireValue,
+      tasks: tasks.requireValue,
     ),
   );
+}
+
+/// A project or task shown in Plan's detail pane on wide screens.
+sealed class PlanItem {
+  const PlanItem(this.id);
+
+  final String id;
+
+  @override
+  bool operator ==(Object other) =>
+      other.runtimeType == runtimeType && other is PlanItem && other.id == id;
+
+  @override
+  int get hashCode => Object.hash(runtimeType, id);
+}
+
+class PlanProject extends PlanItem {
+  const PlanProject(super.id);
+}
+
+class PlanTask extends PlanItem {
+  const PlanTask(super.id);
+}
+
+/// The item in Plan's detail pane (visual-design spec, "Two panes on wide
+/// screens"); kept while switching tabs.
+@Riverpod(keepAlive: true)
+class PlanSelection extends _$PlanSelection {
+  @override
+  PlanItem? build() => null;
+
+  void select(PlanItem? item) => state = item;
 }
 
 /// An entry in the Archive.

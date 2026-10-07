@@ -18,22 +18,26 @@ Tapping a project on Home, in the Plan tab's Overview or in the Backlog SHALL op
 - **THEN** the same project detail is shown
 
 ### Requirement: Project information
-The project detail SHALL show the title, description, area, linked KR, importance, status, own deadline and effective deadline (marked when inherited). An edit action SHALL open the project's edit form.
+The project detail SHALL start with a header showing the title, a status chip, the area chip, the importance as dots and the deadline badge (marked when the effective deadline is inherited from the KR), followed by the description and the linked KR. Values that are not set SHALL be left out. An edit action in the top bar SHALL open the project's edit form.
 
 #### Scenario: Inherited deadline
 - **WHEN** a project without own deadline is linked to a KR due 2026-11-15
-- **THEN** the detail shows no own deadline and an effective deadline of 15-11-2026 marked as inherited
+- **THEN** the detail shows a deadline badge for 15-11-2026 marked as inherited from the key result
 
 #### Scenario: Edit
 - **WHEN** the user uses the edit action and changes the importance to 5
-- **THEN** the detail shows importance 5 after saving
+- **THEN** the detail shows five of five importance dots after saving
 
 ### Requirement: Next step and open tasks in detail
-The project detail SHALL show the next step (or "No next step") and the project's open tasks, and SHALL provide the task actions defined in tasks.
+The project detail SHALL show the project's open tasks with the next step marked in that list and placed first (or a hint "No next step" with an action to set one), and SHALL provide the task actions defined in tasks. Tapping a task SHALL open its task page. The next step SHALL NOT be shown twice.
 
 #### Scenario: Next step shown
 - **WHEN** a project's next step is the task "Write intro"
-- **THEN** the detail shows "Write intro" as next step
+- **THEN** the detail lists "Write intro" first in the open tasks, marked as next step, and nowhere else
+
+#### Scenario: Open a task
+- **WHEN** the user taps the open task "Book venue"
+- **THEN** its task page opens
 
 ### Requirement: Habits in detail
 The project detail SHALL list the habits linked to the project with their schedule summary and whether they are inactive, or "No habits". Tapping a habit SHALL open its edit form.
@@ -50,7 +54,7 @@ The project detail SHALL list the project's log entries, most recent first (see 
 - **THEN** Wednesday's entry is listed first
 
 ### Requirement: Status actions
-The project detail SHALL offer the actions Activate, Pause, Move to backlog and Complete, except the one matching the current status. Each action SHALL set the corresponding status (`active`, `paused`, `backlog`, `completed`) immediately.
+Tapping the status chip SHALL offer the statuses Active, Paused, Backlog and Completed, except the current one. Choosing one SHALL set the corresponding status (`active`, `paused`, `backlog`, `completed`) immediately.
 
 #### Scenario: Pause
 - **WHEN** the user pauses an active project from its detail
@@ -62,7 +66,7 @@ The project detail SHALL offer the actions Activate, Pause, Move to backlog and 
 
 #### Scenario: Current status not offered
 - **WHEN** the project is active
-- **THEN** the detail offers Pause, Move to backlog and Complete, but not Activate
+- **THEN** the status chip offers Paused, Backlog and Completed, but not Active
 
 ### Requirement: Missing project
 When the project of a detail does not exist or was deleted, the detail SHALL show "Project not found" instead of its content.

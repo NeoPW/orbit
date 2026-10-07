@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/db/app_database.dart';
-import '../../../core/router/routes.dart';
+import '../../../core/time/today.dart';
+import '../../../core/widgets/animated_items.dart';
 import '../../../core/widgets/async_body.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/max_width_body.dart';
@@ -16,6 +16,9 @@ import '../../projects/data/area_filter.dart';
 import '../../projects/data/project_repository.dart';
 import '../../projects/domain/project_deadline.dart';
 import '../../projects/ui/project_tile.dart';
+import '../data/plan_providers.dart';
+import 'open_plan_item.dart';
+import '../../settings/data/settings_repository.dart';
 
 /// Backlog and paused projects, filterable by area, with "Activate".
 class BacklogTab extends ConsumerStatefulWidget {
@@ -30,6 +33,9 @@ class _BacklogTabState extends ConsumerState<BacklogTab> {
 
   @override
   Widget build(BuildContext context) {
+    final today = ref.watch(todayProvider);
+    final leadDays =
+        ref.watch(appSettingsProvider).value?.deadlineLeadDays ?? 7;
     final areas = ref.watch(areasProvider).value ?? const <Area>[];
     final areasById = {for (final a in areas) a.id: a};
     final objectivesById = {
@@ -85,31 +91,40 @@ class _BacklogTabState extends ConsumerState<BacklogTab> {
               data: (projects) => projects.isEmpty
                   ? const EmptyState(
                       icon: Icons.inventory_2_outlined,
-                      message: 'No backlog or paused projects here.',
+                      message: 'No backlog or paused projects here',
                     )
                   : SyncRefresh(
                       child: ListView(
                         padding: const EdgeInsets.only(bottom: 88),
                         children: [
-                          for (final project in projects)
-                            ProjectTile(
-                              project: project,
-                              area: areasById[project.areaId],
-                              deadline: deadlineOf(project),
-                              showStatus: true,
-                              onTap: () => context.push(
-                                Routes.projectDetail(project.id),
-                              ),
-                              trailing: TextButton(
-                                onPressed: () => ref
-                                    .read(projectRepositoryProvider)
-                                    .setStatus(
-                                      project.id,
-                                      ProjectStatus.active,
-                                    ),
-                                child: const Text('Activate'),
-                              ),
-                            ),
+                          AnimatedItems(
+                            children: [
+                              for (final project in projects)
+                                ProjectTile(
+                                  key: ValueKey(project.id),
+                                  project: project,
+                                  area: areasById[project.areaId],
+                                  deadline: deadlineOf(project),
+                                  today: today,
+                                  leadDays: leadDays,
+                                  showStatus: true,
+                                  onTap: () => openPlanItem(
+                                    context,
+                                    ref,
+                                    PlanProject(project.id),
+                                  ),
+                                  trailing: TextButton(
+                                    onPressed: () => ref
+                                        .read(projectRepositoryProvider)
+                                        .setStatus(
+                                          project.id,
+                                          ProjectStatus.active,
+                                        ),
+                                    child: const Text('Activate'),
+                                  ),
+                                ),
+                            ],
+                          ),
                         ],
                       ),
                     ),

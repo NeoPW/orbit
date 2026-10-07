@@ -118,3 +118,47 @@ AsyncValue<List<HomeProject>> homeProjects(Ref ref) {
     ];
   });
 }
+
+/// The today header's numbers (home spec, "Today header").
+typedef TodayProgress = ({int habitsDone, int habitsDue, int tasksDue});
+
+/// Habits checked of due today, and open tasks due today or overdue.
+@riverpod
+AsyncValue<TodayProgress> todayProgress(Ref ref) {
+  final today = ref.watch(todayProvider);
+  final habits = ref.watch(homeHabitsProvider);
+  final tasks = ref.watch(openTasksProvider);
+  return combineAsync([habits, tasks], () {
+    final listed = habits.requireValue;
+    return (
+      habitsDone: listed.where((h) => h.checkedToday).length,
+      habitsDue: listed.length,
+      tasksDue: tasks.requireValue
+          .where((t) => t.dueDate != null && !t.dueDate!.isAfter(today))
+          .length,
+    );
+  });
+}
+
+/// A task on Home with the title of what it is assigned to.
+typedef HomeTask = ({Task task, String? assignedTo});
+
+/// Home's "Tasks": open tasks outside projects, by deadline (overdue first,
+/// none last), then by creation (home spec, "Tasks on Home").
+@riverpod
+AsyncValue<List<HomeTask>> homeTasks(Ref ref) {
+  final tasks = ref.watch(tasksOutsideProjectsProvider);
+  final keyResults = ref.watch(keyResultsProvider);
+  final objectives = ref.watch(objectivesProvider);
+  return combineAsync([tasks, keyResults, objectives], () {
+    final krs = {for (final k in keyResults.requireValue) k.id: k.title};
+    final goals = {for (final o in objectives.requireValue) o.id: o.title};
+    return [
+      for (final task in tasks.requireValue)
+        (
+          task: task,
+          assignedTo: krs[task.keyResultId] ?? goals[task.objectiveId],
+        ),
+    ];
+  });
+}

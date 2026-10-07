@@ -163,4 +163,31 @@ void main() {
     expect(items.single.date, CalendarDate(2027, 3, 1));
     expect(items.single.overdue, isFalse);
   });
+
+  group('items with their own card on Home', () {
+    test('an active project is not repeated under deadlines', () {
+      final items = build(projects: [project('p', deadline: today.addDays(1))]);
+      expect(items, isEmpty);
+    });
+
+    test('a task outside projects is a candidate but not listed', () {
+      final standalone = task(
+        't',
+        title: 'Tax return',
+        dueDate: today.addDays(1),
+      );
+      final candidates = deadlineCandidates(
+        tasks: const [],
+        tasksOutsideProjects: [standalone],
+        projects: const [],
+        keyResults: const [],
+        objectives: const [],
+        habitCheckIns: const {},
+        today: today,
+      );
+      expect(candidates.single.title, 'Tax return');
+      expect(candidates.single.hasOwnCard, isTrue);
+      expect(build(), isEmpty);
+    });
+  });
 }

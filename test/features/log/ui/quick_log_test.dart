@@ -47,7 +47,7 @@ void main() {
     expect(entry.projectId, p.id);
     expect(entry.source, LogSource.manual);
     expect(entry.durationMinutes, isNull);
-    expect(find.text('Choose a project'), findsNothing);
+    expect(find.text('Choose what you worked on'), findsNothing);
     expect(find.text('Logged work on Thesis'), findsOneWidget);
   });
 
@@ -102,9 +102,21 @@ void main() {
 
   testApp('without active projects says so', (tester) async {
     await open(tester);
-    expect(
-      find.text('There are no active projects to log work on.'),
-      findsOneWidget,
-    );
+    expect(find.text('There is nothing to log work on yet.'), findsOneWidget);
+  });
+
+  testApp('logging on a standalone task', (tester) async {
+    final task = await seed.tasks.create(title: 'Tax return');
+    await seed.projects.create(title: 'Thesis');
+    await open(tester);
+    expect(find.text('Projects'), findsOneWidget);
+    expect(find.text('Tasks'), findsOneWidget);
+    await tester.tap(find.text('Tax return'));
+    await tester.pumpAndSettle();
+
+    final entry = (await entries()).single;
+    expect(entry.taskId, task.id);
+    expect(entry.projectId, isNull);
+    expect(find.text('Logged work on Tax return'), findsOneWidget);
   });
 }

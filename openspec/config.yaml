@@ -34,9 +34,24 @@ context: |
     domain/ as plain Dart functions with unit tests, no Flutter imports
   - Dates: store timestamps in UTC; habit and review dates are local
     calendar dates; weeks start on Monday
-  - Material 3, light and dark theme
+  - Material 3, light and dark theme with the Orbit palette and the
+    bundled Inter font (lib/core/theme/); use theme colors and the
+    OrbitColors extension, never hard-coded colors
   - Responsive layout: bottom navigation on narrow screens (phone),
-    navigation rail on wide screens (browser on PC)
+    navigation rail on wide screens (browser on PC); Plan shows two panes
+    from 1000 px on (TwoPane)
+
+  UI conventions (visual-design spec):
+  - Show metadata with the shared widgets in lib/core/widgets/
+    (StatusChip, AreaChip, DeadlineChip, ImportanceDots, OrbitRing)
+    instead of text lines
+  - Leave unset values out; no placeholder texts like "No area",
+    "No deadline" or "Importance 3" (choices in pickers are fine)
+  - Empty lists and sections use EmptyState / SectionEmptyText: an icon,
+    one short line without a period, and the action that fills it
+  - Animate list changes with AnimatedItems; respect reduced motion
+  - Pages that also appear in Plan's detail pane keep their content in a
+    scaffold-free ...Body widget
 
   Quality:
   - flutter analyze must pass with no warnings

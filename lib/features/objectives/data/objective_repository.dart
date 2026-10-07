@@ -98,6 +98,17 @@ class ObjectiveRepository extends Repository {
       'key_result_id',
       (h) => h.keyResultId.isIn(krIds),
     );
+    // Tasks of the objective or its KRs stay, as standalone tasks.
+    await clearReference(
+      db.tasks,
+      'key_result_id',
+      (t) => t.keyResultId.isIn(krIds),
+    );
+    await clearReference(
+      db.tasks,
+      'objective_id',
+      (t) => t.objectiveId.equals(id),
+    );
     await softDeleteWhere(db.keyResults, (k) => k.id.isIn(krIds));
     await softDeleteWhere(db.objectives, (o) => o.id.equals(id));
   });

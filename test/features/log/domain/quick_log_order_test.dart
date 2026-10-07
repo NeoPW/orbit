@@ -24,4 +24,21 @@ void main() {
     ], {});
     expect(ordered.map((p) => p.title), ['Apartment', 'Garden', 'thesis']);
   });
+
+  test('targets: projects then tasks, each recent first', () {
+    final ordered = orderQuickLogTargets(
+      projects: [
+        project('p1', title: 'Thesis'),
+        project('p2', title: 'Garden'),
+      ],
+      tasks: [
+        task('t1', title: 'Tax return'),
+        task('t2', title: 'Book physio'),
+      ],
+      lastLoggedProjects: {'p1': DateTime.utc(2026, 10, 4)},
+      lastLoggedTasks: {'t1': DateTime.utc(2026, 10, 4)},
+    );
+    expect(ordered.projects.map((p) => p.title), ['Thesis', 'Garden']);
+    expect(ordered.tasks.map((t) => t.title), ['Tax return', 'Book physio']);
+  });
 }

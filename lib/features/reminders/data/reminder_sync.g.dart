@@ -58,7 +58,7 @@ final class ReminderInputsProvider
   }
 }
 
-String _$reminderInputsHash() => r'dc07df6ce3fa0f40a35e8781f664a58e2f88a0aa';
+String _$reminderInputsHash() => r'47a1fae48733a493d41563911011427f868a565c';
 
 /// Keeps the scheduled reminders equal to the current plan (notifications
 /// spec, "Reminders stay up to date"): re-plans after changes (debounced),

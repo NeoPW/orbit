@@ -3,8 +3,9 @@ import '../../key_results/domain/kr_deadline.dart';
 import '../../key_results/domain/kr_progress.dart';
 import '../../projects/domain/project_deadline.dart';
 
-/// The Plan tab's Overview: active objectives → KRs → active projects, and
-/// the active projects without a KR (plan-overview spec).
+/// The Plan tab's Overview: active objectives → KRs → active projects and
+/// assigned open tasks, and the active projects without a KR (plan-overview
+/// spec).
 class PlanOverview {
   const PlanOverview({
     required this.objectives,
@@ -16,10 +17,17 @@ class PlanOverview {
 }
 
 class ObjectivePlan {
-  const ObjectivePlan({required this.objective, required this.keyResults});
+  const ObjectivePlan({
+    required this.objective,
+    required this.keyResults,
+    this.tasks = const [],
+  });
 
   final Objective objective;
   final List<KeyResultPlan> keyResults;
+
+  /// Open tasks assigned to the objective itself.
+  final List<Task> tasks;
 }
 
 class KeyResultPlan {
@@ -29,6 +37,7 @@ class KeyResultPlan {
     required this.progress,
     this.habitCheckIns = 0,
     required this.projects,
+    this.tasks = const [],
   });
 
   final KeyResult keyResult;
@@ -40,6 +49,9 @@ class KeyResultPlan {
   /// Check-ins counted towards a habit KR; 0 for other KRs.
   final int habitCheckIns;
   final List<ProjectEntry> projects;
+
+  /// Open tasks assigned to the KR.
+  final List<Task> tasks;
 }
 
 /// A project as shown in the Plan tab.
@@ -84,19 +96,38 @@ int compareProjectsForPlan(ProjectEntry a, ProjectEntry b) {
   return a.project.title.toLowerCase().compareTo(b.project.title.toLowerCase());
 }
 
+/// Assigned tasks in Plan: deadline (earliest first, none last), then title
+/// (case-insensitive).
+int compareTasksForPlan(Task a, Task b) {
+  final aDate = a.dueDate;
+  final bDate = b.dueDate;
+  if (aDate != null && bDate != null) {
+    final byDate = aDate.compareTo(bDate);
+    if (byDate != 0) return byDate;
+  } else if (aDate != null) {
+    return -1;
+  } else if (bDate != null) {
+    return 1;
+  }
+  return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+}
+
 /// Builds the Overview from non-deleted rows.
 ///
 /// [objectives] and [keyResults] may include non-active objectives and their
 /// KRs: they are needed for active projects linked to a KR of a non-active
 /// objective, which are listed under "without KR" with their KR. Only
 /// projects with status active are used from [projects]. [habitCheckIns]
-/// holds the check-ins counted towards each habit KR, by KR ID.
+/// holds the check-ins counted towards each habit KR, by KR ID. Open tasks
+/// in [tasks] are listed under the KR or objective they are assigned to;
+/// others are ignored.
 PlanOverview buildPlanOverview({
   required List<Objective> objectives,
   required List<KeyResult> keyResults,
   required List<Project> projects,
   required List<Area> areas,
   Map<String, int> habitCheckIns = const {},
+  List<Task> tasks = const [],
 }) {
   final objectivesById = {for (final o in objectives) o.id: o};
   final areasById = {for (final a in areas) a.id: a};
@@ -139,6 +170,11 @@ PlanOverview buildPlanOverview({
     }
   }
 
+  final openTasks = tasks.where((t) => t.status == TaskStatus.open).toList()
+    ..sort(compareTasksForPlan);
+  List<Task> tasksFor(bool Function(Task) assigned) =>
+      openTasks.where(assigned).toList();
+
   final activeObjectives =
       objectives.where((o) => o.status == ObjectiveStatus.active).toList()
         ..sort(_bySortOrder((o) => o.sortOrder, (o) => o.createdAt));
@@ -147,6 +183,7 @@ PlanOverview buildPlanOverview({
     for (final objective in activeObjectives)
       ObjectivePlan(
         objective: objective,
+        tasks: tasksFor((t) => t.objectiveId == objective.id),
         keyResults: [
           for (final kr
               in krsById.values
@@ -166,6 +203,7 @@ PlanOverview buildPlanOverview({
               habitCheckIns: habitCheckIns[kr.id] ?? 0,
               projects: (projectsByKr[kr.id] ?? [])
                 ..sort(compareProjectsForPlan),
+              tasks: tasksFor((t) => t.keyResultId == kr.id),
             ),
         ],
       ),

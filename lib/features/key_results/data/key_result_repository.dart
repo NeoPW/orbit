@@ -101,6 +101,12 @@ class KeyResultRepository extends Repository {
       'key_result_id',
       (h) => h.keyResultId.equals(id),
     );
+    // Its tasks stay, as standalone tasks.
+    await clearReference(
+      db.tasks,
+      'key_result_id',
+      (t) => t.keyResultId.equals(id),
+    );
     await softDeleteWhere(db.keyResults, (k) => k.id.equals(id));
   });
 

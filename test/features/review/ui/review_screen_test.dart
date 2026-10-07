@@ -9,6 +9,7 @@ import 'package:orbit/features/habits/data/habit_repository.dart';
 import 'package:orbit/features/log/data/log_repository.dart';
 import 'package:orbit/features/review/data/review_repository.dart';
 import 'package:orbit/features/tasks/data/task_repository.dart';
+import 'package:orbit/features/tasks/domain/task_assignment.dart';
 
 import '../../../helpers/pump_app.dart';
 import '../../../helpers/seed.dart';
@@ -105,8 +106,36 @@ void main() {
       expect(find.textContaining('1 h 15 min'), findsWidgets);
       expect(find.text('0 of 3'), findsOneWidget);
       expect(find.text('Book venue'), findsOneWidget);
-      expect(find.text('55 %'), findsOneWidget);
+      expect(find.text('55%'), findsOneWidget);
       expect(find.text('+15 since last review'), findsOneWidget);
+    });
+
+    testApp('a completed task shows its assignment and opens its page', (
+      tester,
+    ) async {
+      final o = await seed.objective();
+      final kr = await seed.kr(o.id, title: 'Run 100 km');
+      final wednesday = DateTime(2026, 10, 7, 10).toUtc();
+      final tasks = TaskRepository(db, () => wednesday, uuidV4);
+      final t = await tasks.create(
+        title: 'Book physio',
+        assignment: ForKeyResult(kr.id),
+      );
+      await tasks.complete(t.id);
+      final app = await pumpReview(tester);
+
+      final tile = find.widgetWithText(ListTile, 'Book physio');
+      expect(
+        find.descendant(of: tile, matching: find.text('Run 100 km')),
+        findsOneWidget,
+      );
+      await tester.ensureVisible(tile);
+      await tester.tap(tile);
+      await tester.pumpAndSettle();
+      expect(
+        app.router.routeInformationProvider.value.uri.path,
+        Routes.task(t.id),
+      );
     });
 
     testApp('empty sections say so', (tester) async {

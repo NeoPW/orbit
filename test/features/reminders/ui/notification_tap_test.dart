@@ -5,6 +5,7 @@ import 'package:orbit/app.dart';
 import 'package:orbit/core/db/app_database.dart';
 import 'package:orbit/core/notifications/notification_scheduler.dart';
 import 'package:orbit/core/router/routes.dart';
+import 'package:orbit/features/projects/ui/project_detail_screen.dart';
 
 import '../../../helpers/fake_scheduler.dart';
 import '../../../helpers/pump_app.dart';
@@ -31,7 +32,7 @@ void main() {
     final app = await pumpApp(tester, db: db, location: Routes.plan);
     await tap(tester, Routes.projectDetail(p.id));
 
-    expect(find.widgetWithText(AppBar, 'Thesis'), findsOneWidget);
+    expect(find.widgetWithText(ProjectDetailBody, 'Thesis'), findsOneWidget);
     // Opened on top: back returns to Plan.
     app.router.pop();
     await tester.pumpAndSettle();
@@ -51,7 +52,7 @@ void main() {
     app.router.pop();
     await tester.pumpAndSettle();
     await tap(tester, Routes.projectDetail(p.id));
-    expect(find.widgetWithText(AppBar, 'Thesis'), findsOneWidget);
+    expect(find.widgetWithText(ProjectDetailBody, 'Thesis'), findsOneWidget);
   });
 
   testApp('with reminders supported, the permission is asked once', (

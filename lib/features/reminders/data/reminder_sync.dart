@@ -58,6 +58,7 @@ AsyncValue<ReminderInputs> reminderInputs(Ref ref) {
   final keyResults = ref.watch(keyResultsProvider);
   final objectives = ref.watch(objectivesProvider);
   final tasks = ref.watch(dueTasksProvider);
+  final outside = ref.watch(tasksOutsideProjectsProvider);
   final checkIns = ref.watch(habitCheckInsProvider);
   final reviews = ref.watch(completedReviewsProvider);
   return combineAsync(
@@ -69,6 +70,7 @@ AsyncValue<ReminderInputs> reminderInputs(Ref ref) {
       keyResults,
       objectives,
       tasks,
+      outside,
       checkIns,
       reviews,
     ],
@@ -82,6 +84,7 @@ AsyncValue<ReminderInputs> reminderInputs(Ref ref) {
         keyResults: {for (final k in keyResults.requireValue) k.id: k},
         deadlines: deadlineCandidates(
           tasks: tasks.requireValue,
+          tasksOutsideProjects: outside.requireValue,
           projects: allProjects,
           keyResults: keyResults.requireValue,
           objectives: objectives.requireValue,

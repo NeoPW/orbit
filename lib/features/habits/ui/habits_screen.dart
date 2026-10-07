@@ -7,6 +7,7 @@ import '../../../core/router/routes.dart';
 import '../../../core/widgets/async_body.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/max_width_body.dart';
+import '../../../core/widgets/orbit_chips.dart';
 import '../../key_results/data/key_result_repository.dart';
 import '../../projects/data/project_repository.dart';
 import '../data/habit_repository.dart';
@@ -37,7 +38,14 @@ class HabitsScreen extends ConsumerWidget {
       body: AsyncBody(
         value: ref.watch(habitsProvider),
         data: (habits) => habits.isEmpty
-            ? const EmptyState(icon: Icons.repeat, message: 'No habits yet.')
+            ? EmptyState(
+                icon: Icons.repeat,
+                message: 'No habits yet',
+                action: FilledButton.tonal(
+                  onPressed: () => context.push(Routes.newHabit),
+                  child: const Text('New habit'),
+                ),
+              )
             : MaxWidthBody(
                 child: ListView(
                   padding: const EdgeInsets.only(bottom: 88),
@@ -45,7 +53,7 @@ class HabitsScreen extends ConsumerWidget {
                     for (final habit in habits)
                       _HabitTile(
                         habit: habit,
-                        links: habitLinkLabel(
+                        links: habitLinks(
                           habit,
                           projects: projects,
                           keyResults: keyResults,
@@ -63,11 +71,12 @@ class _HabitTile extends StatelessWidget {
   const _HabitTile({required this.habit, required this.links});
 
   final Habit habit;
-  final String links;
+  final List<({IconData icon, String title})> links;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
     final reminder = habit.reminderTime;
     final details = [
       scheduleSummary(
@@ -82,20 +91,39 @@ class _HabitTile extends StatelessWidget {
       onTap: () => context.push(Routes.habit(habit.id)),
       leading: Icon(
         habit.active ? Icons.repeat : Icons.pause_circle_outline,
-        color: habit.active ? null : theme.disabledColor,
+        color: habit.active ? theme.colorScheme.primary : muted,
       ),
       title: Text(
         habit.title,
-        style: habit.active ? null : TextStyle(color: theme.disabledColor),
+        style: habit.active ? null : TextStyle(color: muted),
       ),
-      subtitle: Text('$links\n$details'),
-      isThreeLine: true,
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(details),
+          if (links.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 12,
+              runSpacing: 2,
+              children: [
+                for (final link in links)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(link.icon, size: 14, color: muted),
+                      const SizedBox(width: 4),
+                      Text(link.title),
+                    ],
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
       trailing: habit.active
           ? null
-          : const Chip(
-              label: Text('Inactive'),
-              visualDensity: VisualDensity.compact,
-            ),
+          : StatusChip<void>(label: 'Inactive', color: muted),
     );
   }
 }

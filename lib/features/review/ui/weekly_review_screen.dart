@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../../core/db/app_database.dart';
 import '../../../core/numbers.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/widgets/max_width_body.dart';
+import '../../../core/widgets/orbit_ring.dart';
+import '../../../core/widgets/section_heading.dart';
 import '../../key_results/data/key_result_repository.dart';
 import '../../projects/data/project_repository.dart';
 import '../../projects/ui/project_labels.dart';
@@ -17,14 +20,25 @@ import 'week_format.dart';
 import 'week_summary_view.dart';
 
 /// The guided weekly review of the review week (weekly-review spec): look
-/// back, projects, key results, score, plan, save. Score, reflection and
-/// plan are kept as a draft when changing steps and when leaving.
+/// back, projects, key results, score, plan, save, one full-screen page
+/// each with a progress bar and Back / Next. Score, reflection and plan are
+/// kept as a draft when changing pages and when leaving.
 class WeeklyReviewScreen extends ConsumerStatefulWidget {
   const WeeklyReviewScreen({super.key});
 
   @override
   ConsumerState<WeeklyReviewScreen> createState() => _WeeklyReviewState();
 }
+
+/// The review's steps, in order.
+const stepNames = [
+  'Look back',
+  'Projects',
+  'Key results',
+  'Score',
+  'Plan',
+  'Save',
+];
 
 class _WeeklyReviewState extends ConsumerState<WeeklyReviewScreen> {
   static const _scoreStep = 3;
@@ -34,6 +48,7 @@ class _WeeklyReviewState extends ConsumerState<WeeklyReviewScreen> {
   late final ReviewRepository _reviews = ref.read(reviewRepositoryProvider);
   final _reflection = TextEditingController();
   final _plan = TextEditingController();
+  final _pages = PageController();
   int? _score;
   int _step = 0;
   bool _loaded = false;
@@ -63,6 +78,7 @@ class _WeeklyReviewState extends ConsumerState<WeeklyReviewScreen> {
   void dispose() {
     _reflection.dispose();
     _plan.dispose();
+    _pages.dispose();
     super.dispose();
   }
 
@@ -85,16 +101,25 @@ class _WeeklyReviewState extends ConsumerState<WeeklyReviewScreen> {
 
   Future<void> _goTo(int step) async {
     await _saveDraft();
-    if (mounted) setState(() => _step = step);
+    if (!mounted) return;
+    setState(() => _step = step);
+    if (!_pages.hasClients) return;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _pages.jumpToPage(step);
+    } else {
+      await _pages.animateToPage(
+        step,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+      );
+    }
   }
 
   Future<void> _save() async {
     final score = _score;
     if (score == null) {
-      setState(() {
-        _scoreError = 'Choose a score to save the review';
-        _step = _scoreStep;
-      });
+      setState(() => _scoreError = 'Choose a score to save the review');
+      await _goTo(_scoreStep);
       return;
     }
     final summary = ref.read(weekSummaryProvider(_week)).value;
@@ -121,7 +146,15 @@ class _WeeklyReviewState extends ConsumerState<WeeklyReviewScreen> {
   Widget build(BuildContext context) {
     // Kept alive for the whole review: the KR snapshots are taken from it.
     ref.watch(weekSummaryProvider(_week));
-    final wide = MediaQuery.sizeOf(context).width >= 600;
+    final theme = Theme.of(context);
+    final pages = [
+      WeekSummaryView(weekStart: _week),
+      const _ProjectsStep(),
+      _KeyResultsStep(week: _week),
+      _scoreContent(),
+      _planContent(),
+      _saveContent(),
+    ];
     return PopScope(
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) _saveDraft();
@@ -130,61 +163,89 @@ class _WeeklyReviewState extends ConsumerState<WeeklyReviewScreen> {
         appBar: AppBar(title: Text('Review ${formatWeek(_week)}')),
         body: !_loaded
             ? const Center(child: CircularProgressIndicator())
-            : Align(
-                alignment: Alignment.topCenter,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 840),
-                  child: Stepper(
-                    type: wide ? StepperType.horizontal : StepperType.vertical,
-                    currentStep: _step,
-                    onStepTapped: _goTo,
-                    onStepContinue: _step == _lastStep
-                        ? _save
-                        : () => _goTo(_step + 1),
-                    onStepCancel: _step == 0 ? null : () => _goTo(_step - 1),
-                    controlsBuilder: (context, details) => Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: Row(
+            : Column(
+                children: [
+                  MaxWidthBody(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          FilledButton(
-                            onPressed: details.onStepContinue,
-                            child: Text(
-                              details.stepIndex == _lastStep ? 'Save' : 'Next',
+                          Text(
+                            'Step ${_step + 1} of ${stepNames.length} · '
+                            '${stepNames[_step]}',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: theme.colorScheme.primary,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          if (details.onStepCancel != null)
-                            TextButton(
-                              onPressed: details.onStepCancel,
-                              child: const Text('Back'),
+                          const SizedBox(height: 8),
+                          LinearProgressIndicator(
+                            value: (_step + 1) / stepNames.length,
+                            minHeight: 6,
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: PageView(
+                      controller: _pages,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        for (final page in pages)
+                          MaxWidthBody(
+                            child: ListView(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                              children: [page],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+        bottomNavigationBar: !_loaded
+            ? null
+            : SafeArea(
+                child: Align(
+                  heightFactor: 1,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 840),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                      child: Row(
+                        children: [
+                          TextButton.icon(
+                            onPressed: _step == 0
+                                ? null
+                                : () => _goTo(_step - 1),
+                            icon: const Icon(Icons.arrow_back),
+                            label: const Text('Back'),
+                          ),
+                          const Spacer(),
+                          if (_step == _lastStep)
+                            FilledButton.icon(
+                              onPressed: _save,
+                              icon: const Icon(Icons.check),
+                              label: const Text('Save'),
+                            )
+                          else
+                            FilledButton.icon(
+                              onPressed: () => _goTo(_step + 1),
+                              icon: const Icon(Icons.arrow_forward),
+                              iconAlignment: IconAlignment.end,
+                              label: const Text('Next'),
                             ),
                         ],
                       ),
                     ),
-                    steps: [
-                      _step0LookBack(),
-                      _stepFor(1, 'Projects', const _ProjectsStep()),
-                      _stepFor(2, 'Key results', _KeyResultsStep(week: _week)),
-                      _stepFor(_scoreStep, 'Score', _scoreContent()),
-                      _stepFor(4, 'Plan', _planContent()),
-                      _stepFor(_lastStep, 'Save', _saveContent()),
-                    ],
                   ),
                 ),
               ),
       ),
     );
   }
-
-  Step _stepFor(int index, String title, Widget content) => Step(
-    title: Text(title),
-    content: content,
-    isActive: _step == index,
-    state: _step > index ? StepState.complete : StepState.indexed,
-  );
-
-  Step _step0LookBack() =>
-      _stepFor(0, 'Look back', WeekSummaryView(weekStart: _week));
 
   Widget _scoreContent() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -259,7 +320,12 @@ class _ProjectsStep extends ConsumerWidget {
       for (final task in ref.watch(openTasksProvider).value ?? const <Task>[])
         task.id: task,
     };
-    if (projects.isEmpty) return const Text('No active projects.');
+    if (projects.isEmpty) {
+      return const SectionEmptyText(
+        'No active projects',
+        icon: Icons.folder_outlined,
+      );
+    }
     return Column(
       children: [
         for (final project in projects)
@@ -281,11 +347,25 @@ class _ProjectTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final nextStep = this.nextStep;
+    final colors = Theme.of(context).colorScheme;
     return ListTile(
       contentPadding: EdgeInsets.zero,
       title: Text(project.title),
-      subtitle: Text(
-        nextStep == null ? 'No next step' : 'Next: ${nextStep.title}',
+      subtitle: Row(
+        children: [
+          Icon(
+            nextStep == null ? Icons.flag_outlined : Icons.flag,
+            size: 14,
+            color: nextStep == null ? colors.outline : colors.primary,
+          ),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              nextStep == null ? 'No next step' : nextStep.title,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -335,7 +415,12 @@ class _KeyResultsStep extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final items = ref.watch(weekSummaryProvider(week)).value?.keyResults;
     if (items == null) return const LinearProgressIndicator();
-    if (items.isEmpty) return const Text('No key results.');
+    if (items.isEmpty) {
+      return const SectionEmptyText(
+        'No key results',
+        icon: Icons.track_changes,
+      );
+    }
     return Column(
       children: [
         for (final item in items)
@@ -377,11 +462,15 @@ class _KeyResultInputState extends ConsumerState<_KeyResultInput> {
   @override
   Widget build(BuildContext context) {
     final kr = widget.item.keyResult;
-    final percent = '${(widget.item.progress * 100).round()} %';
+    final percent = '${(widget.item.progress * 100).round()}%';
     return ListTile(
       contentPadding: EdgeInsets.zero,
+      leading: OrbitRing(
+        progress: widget.item.progress,
+        size: 44,
+        label: percent,
+      ),
       title: Text(kr.title),
-      subtitle: Text(percent),
       trailing: switch (kr.measureType) {
         MeasureType.numeric => SizedBox(
           width: 120,

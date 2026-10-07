@@ -6,13 +6,15 @@ import '../../../core/db/ids.dart' show idGeneratorProvider;
 import '../../../core/db/repository_support.dart';
 import '../../../core/time/clock.dart' show clockProvider;
 import '../../log/data/log_repository.dart';
+import '../domain/task_assignment.dart';
 
 part 'task_repository.g.dart';
 
 /// An open task together with its project.
 typedef TaskWithProject = ({Task task, Project project});
 
-/// Tasks of projects. Completing a task logs it (source task).
+/// Tasks: standalone or assigned to one project, key result or objective.
+/// Completing a task logs it (source task).
 class TaskRepository extends Repository {
   TaskRepository(super.db, super.clock, super.newId)
     : _logs = LogRepository(db, clock, newId);
@@ -74,14 +76,36 @@ class TaskRepository extends Repository {
           ))
           .watch();
 
-  /// Adds an open task.
+  /// The task (open or done), live.
+  Stream<Task?> watch(String id) => (db.select(
+    db.tasks,
+  )..where((t) => t.id.equals(id) & alive(t))).watchSingleOrNull();
+
+  /// Open tasks that are not part of a project (standalone or assigned to a
+  /// KR or objective): due date first (none last), then oldest first.
+  Stream<List<Task>> watchOpenOutsideProjects() =>
+      (_open()..where((t) => t.projectId.isNull())).watch();
+
+  /// Open tasks assigned to a KR or an objective.
+  Stream<List<Task>> watchOpenAssigned() =>
+      (_open()..where(
+            (t) => t.keyResultId.isNotNull() | t.objectiveId.isNotNull(),
+          ))
+          .watch();
+
+  /// Adds an open task. [projectId] is a shorthand for [InProject];
+  /// [assignment] wins when both are given.
   Future<Task> create({
-    required String? projectId,
+    String? projectId,
+    TaskAssignment? assignment,
     required String title,
     String notes = '',
     CalendarDate? dueDate,
   }) {
     final now = clock();
+    final to =
+        assignment ??
+        (projectId == null ? const Standalone() : InProject(projectId));
     return db
         .into(db.tasks)
         .insertReturning(
@@ -89,7 +113,9 @@ class TaskRepository extends Repository {
             id: newId(),
             createdAt: now,
             updatedAt: now,
-            projectId: Value(projectId),
+            projectId: Value(to.projectId),
+            keyResultId: Value(to.keyResultId),
+            objectiveId: Value(to.objectiveId),
             title: title.trim(),
             notes: Value(notes.trim()),
             dueDate: Value(dueDate),
@@ -103,15 +129,49 @@ class TaskRepository extends Repository {
         TasksCompanion(title: Value(title.trim()), updatedAt: Value(clock())),
       );
 
-  /// Saves the title, notes and due date of [task].
-  Future<void> update(Task task) =>
-      (db.update(
-        db.tasks,
-      )..where((t) => t.id.equals(task.id) & alive(t))).write(
+  /// Saves the title, notes and due date of [task], and its [assignment]
+  /// when given. A task leaving the project whose next step it was leaves
+  /// that project without a next step.
+  Future<void> update(Task task, {TaskAssignment? assignment}) =>
+      db.transaction(() async {
+        final previous = await get(task.id);
+        await (db.update(
+          db.tasks,
+        )..where((t) => t.id.equals(task.id) & alive(t))).write(
+          TasksCompanion(
+            title: Value(task.title.trim()),
+            notes: Value(task.notes.trim()),
+            dueDate: Value(task.dueDate),
+            updatedAt: Value(clock()),
+            projectId: assignment == null
+                ? const Value.absent()
+                : Value(assignment.projectId),
+            keyResultId: assignment == null
+                ? const Value.absent()
+                : Value(assignment.keyResultId),
+            objectiveId: assignment == null
+                ? const Value.absent()
+                : Value(assignment.objectiveId),
+          ),
+        );
+        final oldProject = previous?.projectId;
+        if (assignment != null &&
+            oldProject != null &&
+            assignment.projectId != oldProject) {
+          await clearReference(
+            db.projects,
+            'next_step_task_id',
+            (p) => p.id.equals(oldProject) & p.nextStepTaskId.equals(task.id),
+          );
+        }
+      });
+
+  /// Opens a done task again; its log entries stay.
+  Future<void> reopen(String id) =>
+      (db.update(db.tasks)..where((t) => t.id.equals(id) & alive(t))).write(
         TasksCompanion(
-          title: Value(task.title.trim()),
-          notes: Value(task.notes.trim()),
-          dueDate: Value(task.dueDate),
+          status: const Value(TaskStatus.open),
+          completedAt: const Value(null),
           updatedAt: Value(clock()),
         ),
       );
@@ -131,6 +191,8 @@ class TaskRepository extends Repository {
     );
     final entry = await _logs.add(
       projectId: task.projectId,
+      keyResultId: task.keyResultId,
+      taskId: task.id,
       note: task.title,
       source: LogSource.task,
     );
@@ -189,3 +251,18 @@ Stream<List<Task>> projectOpenTasks(Ref ref, String projectId) =>
 @riverpod
 Stream<List<TaskWithProject>> dueTasks(Ref ref) =>
     ref.watch(taskRepositoryProvider).watchOpenWithDueDate();
+
+/// A task, open or done.
+@riverpod
+Stream<Task?> task(Ref ref, String id) =>
+    ref.watch(taskRepositoryProvider).watch(id);
+
+/// Open tasks outside projects, for Home.
+@riverpod
+Stream<List<Task>> tasksOutsideProjects(Ref ref) =>
+    ref.watch(taskRepositoryProvider).watchOpenOutsideProjects();
+
+/// Open tasks assigned to a KR or objective, for Plan.
+@riverpod
+Stream<List<Task>> assignedTasks(Ref ref) =>
+    ref.watch(taskRepositoryProvider).watchOpenAssigned();

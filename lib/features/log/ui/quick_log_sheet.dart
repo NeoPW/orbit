@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/db/app_database.dart';
 import '../../projects/data/project_repository.dart';
+import '../../tasks/data/task_repository.dart';
 import '../data/log_repository.dart';
 import '../domain/duration.dart';
 import '../domain/quick_log_order.dart';
@@ -42,7 +42,13 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
     super.dispose();
   }
 
-  Future<void> _log(Project project) async {
+  /// Logs on a project, or on a task (with the task's KR).
+  Future<void> _log({
+    required String title,
+    String? projectId,
+    String? keyResultId,
+    String? taskId,
+  }) async {
     final error = durationErrorText(_duration.text);
     if (error != null) {
       setState(() => _durationError = error);
@@ -53,7 +59,9 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
     await ref
         .read(logRepositoryProvider)
         .createManual(
-          projectId: project.id,
+          projectId: projectId,
+          keyResultId: keyResultId,
+          taskId: taskId,
           durationMinutes: parseDuration(_duration.text),
           note: _note.text,
         );
@@ -61,19 +69,32 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
     Navigator.of(context).pop();
     widget.messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text('Logged work on ${project.title}')),
-      );
+      ..showSnackBar(SnackBar(content: Text('Logged work on $title')));
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final projects = ref.watch(activeProjectsProvider).value;
-    final lastLogged = ref.watch(lastLoggedAtProvider).value;
-    final ordered = projects == null || lastLogged == null
+    final tasks = ref.watch(tasksOutsideProjectsProvider).value;
+    final lastProjects = ref.watch(lastLoggedAtProvider).value;
+    final lastTasks = ref.watch(lastLoggedAtTasksProvider).value;
+    final ordered =
+        projects == null ||
+            tasks == null ||
+            lastProjects == null ||
+            lastTasks == null
         ? null
-        : orderQuickLogProjects(projects, lastLogged);
+        : orderQuickLogTargets(
+            projects: projects,
+            tasks: tasks,
+            lastLoggedProjects: lastProjects,
+            lastLoggedTasks: lastTasks,
+          );
+    Widget group(String text) => Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Text(text, style: theme.textTheme.labelMedium),
+    );
 
     return Padding(
       // Keeps the fields above the on-screen keyboard.
@@ -118,7 +139,10 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-            child: Text('Choose a project', style: theme.textTheme.labelLarge),
+            child: Text(
+              'Choose what you worked on',
+              style: theme.textTheme.labelLarge,
+            ),
           ),
           Flexible(
             child: switch (ordered) {
@@ -126,20 +150,34 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
                 padding: EdgeInsets.all(24),
                 child: Center(child: CircularProgressIndicator()),
               ),
-              [] => const Padding(
+              (projects: [], tasks: []) => const Padding(
                 padding: EdgeInsets.fromLTRB(16, 8, 16, 24),
-                child: Text('There are no active projects to log work on.'),
+                child: Text('There is nothing to log work on yet.'),
               ),
-              _ => ListView(
+              (:final projects, :final tasks) => ListView(
                 shrinkWrap: true,
                 padding: const EdgeInsets.only(bottom: 16),
                 children: [
-                  for (final project in ordered)
+                  if (projects.isNotEmpty) group('Projects'),
+                  for (final project in projects)
                     ListTile(
                       leading: const Icon(Icons.folder_outlined),
                       title: Text(project.title),
                       enabled: !_saving,
-                      onTap: () => _log(project),
+                      onTap: () =>
+                          _log(title: project.title, projectId: project.id),
+                    ),
+                  if (tasks.isNotEmpty) group('Tasks'),
+                  for (final task in tasks)
+                    ListTile(
+                      leading: const Icon(Icons.task_alt),
+                      title: Text(task.title),
+                      enabled: !_saving,
+                      onTap: () => _log(
+                        title: task.title,
+                        keyResultId: task.keyResultId,
+                        taskId: task.id,
+                      ),
                     ),
                 ],
               ),

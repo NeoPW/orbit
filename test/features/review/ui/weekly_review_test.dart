@@ -51,12 +51,28 @@ void main() {
     return app.router;
   }
 
-  /// Taps the step title. The vertical stepper builds every step's
-  /// content (collapsed ones off-screen), so only tappable texts count; the
-  /// last of those is the title ("Key results" is also a heading in the
-  /// look-back summary).
+  /// The page shown, from the progress text "Step N of 6 · name".
+  int currentStep() {
+    for (var i = 0; i < steps.length; i++) {
+      if (find
+          .text('Step ${i + 1} of ${steps.length} · ${steps[i]}')
+          .evaluate()
+          .isNotEmpty) {
+        return i;
+      }
+    }
+    throw StateError('No step shown');
+  }
+
+  /// Moves with Next / Back to the step [title].
   Future<void> goToStep(WidgetTester tester, String title) async {
-    await tapVisible(tester, find.text(title).hitTestable().last);
+    final target = steps.indexOf(title);
+    while (currentStep() != target) {
+      await tester.tap(
+        find.text(currentStep() < target ? 'Next' : 'Back').hitTestable(),
+      );
+      await tester.pumpAndSettle();
+    }
   }
 
   Future<void> leave(WidgetTester tester, GoRouter router) async {
@@ -74,11 +90,40 @@ void main() {
     ) async {
       await openReview(tester);
       expect(find.text('Review 05-10-2026 – 11-10-2026'), findsOneWidget);
-      final ys = [
-        for (final title in steps)
-          tester.getTopLeft(find.text(title).hitTestable().last).dy,
-      ];
-      expect(ys, [...ys]..sort());
+      expect(find.text('Back').hitTestable(), findsOneWidget);
+      for (var i = 0; i < steps.length; i++) {
+        expect(currentStep(), i);
+        if (i < steps.length - 1) {
+          await tester.tap(find.text('Next'));
+          await tester.pumpAndSettle();
+        }
+      }
+      expect(find.text('Next'), findsNothing);
+      expect(find.widgetWithText(FilledButton, 'Save'), findsOneWidget);
+    });
+
+    testApp('the progress bar shows step 3 of 6 on key results', (
+      tester,
+    ) async {
+      await openReview(tester);
+      await goToStep(tester, 'Key results');
+      expect(find.text('Step 3 of 6 · Key results'), findsOneWidget);
+      final bar = tester.widget<LinearProgressIndicator>(
+        find.byType(LinearProgressIndicator),
+      );
+      expect(bar.value, 3 / 6);
+    });
+
+    testApp('the score is saved as a draft when changing pages', (
+      tester,
+    ) async {
+      await openReview(tester);
+      await goToStep(tester, 'Score');
+      await tester.tap(find.widgetWithText(ChoiceChip, '6'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+      expect((await stored())!.score, 6);
     });
 
     testApp('an existing draft is prefilled', (tester) async {
@@ -123,7 +168,7 @@ void main() {
       await tester.tap(find.text('Save').last);
       await tester.pumpAndSettle();
 
-      expect(find.text('Next: Order seeds'), findsOneWidget);
+      expect(find.text('Order seeds'), findsOneWidget);
       final next = await seed.projects.nextStep(
         (await seed.projects.get(p.id))!,
       );
@@ -144,7 +189,7 @@ void main() {
         db.keyResults,
       )..where((k) => k.id.equals(kr.id))).getSingle();
       expect(stored.currentValue, 55);
-      expect(find.text('55 %'), findsWidgets);
+      expect(find.text('55%'), findsWidgets);
     });
 
     testApp('habit KRs are shown read-only', (tester) async {

@@ -10,6 +10,7 @@ import 'generated/schema.dart';
 import 'generated/schema_v1.dart' as v1;
 import 'generated/schema_v2.dart' as v2;
 import 'generated/schema_v3.dart' as v3;
+import 'generated/schema_v4.dart' as v4;
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -44,9 +45,9 @@ void main() {
       const t = '2026-10-01T10:00:00.000Z';
       await verifier.testWithDataIntegrity(
         oldVersion: 1,
-        newVersion: 3,
+        newVersion: 4,
         createOld: v1.DatabaseAtV1.new,
-        createNew: v3.DatabaseAtV3.new,
+        createNew: v4.DatabaseAtV4.new,
         openTestedDatabase: AppDatabase.new,
         createItems: (batch, oldDb) {
           batch.insert(
@@ -92,7 +93,7 @@ void main() {
         },
         validateItems: (newDb) async {
           expect(await newDb.select(newDb.projects).get(), [
-            const v3.ProjectsData(
+            const v4.ProjectsData(
               id: 'p1',
               createdAt: t,
               updatedAt: t,
@@ -105,7 +106,7 @@ void main() {
           ]);
 
           expect(await newDb.select(newDb.habits).get(), [
-            const v3.HabitsData(
+            const v4.HabitsData(
               id: 'h1',
               createdAt: t,
               updatedAt: t,
@@ -119,7 +120,7 @@ void main() {
           ]);
 
           expect(await newDb.select(newDb.logEntries).get(), [
-            const v3.LogEntriesData(
+            const v4.LogEntriesData(
               id: 'l1',
               createdAt: t,
               updatedAt: t,
@@ -183,6 +184,69 @@ void main() {
           ),
         ]);
         expect(await newDb.select(newDb.reviewKrSnapshots).get(), isEmpty);
+      },
+    );
+  });
+
+  test('migration from v3 to v4 keeps tasks and log entries', () async {
+    const t = '2026-10-05T12:00:00.000Z';
+    await verifier.testWithDataIntegrity(
+      oldVersion: 3,
+      newVersion: 4,
+      createOld: v3.DatabaseAtV3.new,
+      createNew: v4.DatabaseAtV4.new,
+      openTestedDatabase: AppDatabase.new,
+      createItems: (batch, oldDb) {
+        batch.insert(
+          oldDb.tasks,
+          const v3.TasksData(
+            id: 't1',
+            createdAt: t,
+            updatedAt: t,
+            projectId: 'p1',
+            title: 'Draft',
+            notes: 'ch. 1',
+            dueDate: '2026-10-20',
+            status: 'open',
+          ),
+        );
+        batch.insert(
+          oldDb.logEntries,
+          const v3.LogEntriesData(
+            id: 'l1',
+            createdAt: t,
+            updatedAt: t,
+            projectId: 'p1',
+            occurredAt: t,
+            note: 'Draft',
+            source: 'task',
+          ),
+        );
+      },
+      validateItems: (newDb) async {
+        expect(await newDb.select(newDb.tasks).get(), [
+          const v4.TasksData(
+            id: 't1',
+            createdAt: t,
+            updatedAt: t,
+            projectId: 'p1',
+            title: 'Draft',
+            notes: 'ch. 1',
+            dueDate: '2026-10-20',
+            status: 'open',
+          ),
+        ]);
+        expect(await newDb.select(newDb.logEntries).get(), [
+          const v4.LogEntriesData(
+            id: 'l1',
+            createdAt: t,
+            updatedAt: t,
+            projectId: 'p1',
+            occurredAt: t,
+            note: 'Draft',
+            source: 'task',
+          ),
+        ]);
       },
     );
   });

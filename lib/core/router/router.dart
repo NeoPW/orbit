@@ -15,6 +15,7 @@ import '../../features/review/ui/review_history_screen.dart';
 import '../../features/review/ui/review_screen.dart';
 import '../../features/review/ui/weekly_review_screen.dart';
 import '../../features/settings/ui/settings_screen.dart';
+import '../../features/tasks/ui/task_screen.dart';
 import 'app_shell.dart';
 import 'routes.dart';
 
@@ -43,9 +44,19 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
       // tab and its URL survives a reload.
       // Root level like project detail, so the review reminder can open it
       // from any tab. Listed before the shell so it wins over /review.
+      // Root level so every tab opens it and back returns to that tab.
+      GoRoute(
+        path: Routes.settings,
+        builder: (context, state) => const SettingsScreen(),
+      ),
       GoRoute(
         path: Routes.weeklyReview,
         builder: (context, state) => const WeeklyReviewScreen(),
+      ),
+      GoRoute(
+        path: '/tasks/:id',
+        builder: (context, state) =>
+            TaskScreen(taskId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/projects/:id',
@@ -68,10 +79,6 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
                   GoRoute(
                     path: 'areas',
                     builder: (context, state) => const AreasScreen(),
-                  ),
-                  GoRoute(
-                    path: 'settings',
-                    builder: (context, state) => const SettingsScreen(),
                   ),
                   GoRoute(
                     path: 'habits',
