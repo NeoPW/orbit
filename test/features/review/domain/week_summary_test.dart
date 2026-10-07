@@ -275,4 +275,26 @@ void main() {
     expect(summary.tasks.single.task.id, 't');
     expect(summary.keyResults.single.change, 10);
   });
+
+  group('snapshotProgressChanges', () {
+    test('uses the stored progress in KR order with the change', () {
+      final a = keyResult('a', objectiveId: 'o', sortOrder: 0);
+      final b = keyResult('b', objectiveId: 'o', sortOrder: 1);
+      final changes = snapshotProgressChanges([a, b], {'b': 0.5, 'a': 0.4}, {
+        'a': 0.25,
+      });
+      expect(changes.map((c) => c.keyResult.id), ['a', 'b']);
+      expect(changes.map((c) => c.progress), [0.4, 0.5]);
+      expect(changes.map((c) => c.change), [15, null]);
+    });
+
+    test('KRs without a snapshot are left out', () {
+      final changes = snapshotProgressChanges(
+        [keyResult('a', objectiveId: 'o')],
+        {'deleted': 0.3},
+        const {},
+      );
+      expect(changes, isEmpty);
+    });
+  });
 }

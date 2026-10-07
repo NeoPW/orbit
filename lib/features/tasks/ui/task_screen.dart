@@ -8,6 +8,7 @@ import '../../../core/time/today.dart';
 import '../../../core/widgets/async_body.dart';
 import '../../../core/widgets/confirm_delete.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/form_sheet.dart';
 import '../../../core/widgets/max_width_body.dart';
 import '../../../core/widgets/orbit_chips.dart';
 import '../../../core/widgets/section_heading.dart';
@@ -22,7 +23,7 @@ import '../data/task_repository.dart';
 import '../domain/task_assignment.dart';
 import 'assignment_picker.dart';
 import 'complete_task.dart';
-import 'task_dialog.dart';
+import 'task_form.dart';
 
 /// The task page (tasks spec, "Task page").
 class TaskScreen extends ConsumerWidget {
@@ -70,7 +71,15 @@ class TaskScreen extends ConsumerWidget {
             IconButton(
               tooltip: 'Edit task',
               icon: const Icon(Icons.edit_outlined),
-              onPressed: () => showTaskDialog(context, task: task),
+              onPressed: () async {
+                final result = await showTaskForm(context, task: task);
+                if (result != FormResult.deleted || !context.mounted) return;
+                if (onClose != null) {
+                  onClose();
+                } else if (context.canPop()) {
+                  context.pop();
+                }
+              },
             ),
             IconButton(
               tooltip: 'Delete task',
@@ -258,6 +267,14 @@ class _Actions extends ConsumerWidget {
             icon: const Icon(Icons.more_time),
             label: const Text('Log work'),
           ),
+          if (project != null && !done && project.nextStepTaskId != task.id)
+            OutlinedButton.icon(
+              onPressed: () => ref
+                  .read(projectRepositoryProvider)
+                  .setNextStep(project.id, task.id),
+              icon: const Icon(Icons.flag_outlined),
+              label: const Text('Make next step'),
+            ),
         ],
       ),
     );

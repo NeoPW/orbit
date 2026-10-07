@@ -8,6 +8,52 @@ part of 'review_providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// The Monday of the current week (weekly-review spec, "Review tab").
+
+@ProviderFor(currentWeek)
+final currentWeekProvider = CurrentWeekProvider._();
+
+/// The Monday of the current week (weekly-review spec, "Review tab").
+
+final class CurrentWeekProvider
+    extends $FunctionalProvider<CalendarDate, CalendarDate, CalendarDate>
+    with $Provider<CalendarDate> {
+  /// The Monday of the current week (weekly-review spec, "Review tab").
+  CurrentWeekProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'currentWeekProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$currentWeekHash();
+
+  @$internal
+  @override
+  $ProviderElement<CalendarDate> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  CalendarDate create(Ref ref) {
+    return currentWeek(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CalendarDate value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CalendarDate>(value),
+    );
+  }
+}
+
+String _$currentWeekHash() => r'1641491c49c41fa1f2a9598e4ee32160f285ec0b';
+
 /// The Monday of the week a review made today is about.
 
 @ProviderFor(reviewWeek)
@@ -272,7 +318,7 @@ final class WeekSummaryProvider
   }
 }
 
-String _$weekSummaryHash() => r'60b51314c669b27b5eee254a7f98e3464ad1fe56';
+String _$weekSummaryHash() => r'a7c4b86fb7da9cfd3c2dc1f78097d60ede867eb2';
 
 /// The summary of the week starting [weekStart], updated live.
 
@@ -294,4 +340,112 @@ final class WeekSummaryFamily extends $Family
 
   @override
   String toString() => r'weekSummaryProvider';
+}
+
+/// The KRs of active objectives with their current progress and the change
+/// since the latest review before [weekStart], live. The weekly review
+/// edits and saves these, also for a week already reviewed.
+
+@ProviderFor(currentKrProgress)
+final currentKrProgressProvider = CurrentKrProgressFamily._();
+
+/// The KRs of active objectives with their current progress and the change
+/// since the latest review before [weekStart], live. The weekly review
+/// edits and saves these, also for a week already reviewed.
+
+final class CurrentKrProgressProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<KrProgressChange>>,
+          AsyncValue<List<KrProgressChange>>,
+          AsyncValue<List<KrProgressChange>>
+        >
+    with $Provider<AsyncValue<List<KrProgressChange>>> {
+  /// The KRs of active objectives with their current progress and the change
+  /// since the latest review before [weekStart], live. The weekly review
+  /// edits and saves these, also for a week already reviewed.
+  CurrentKrProgressProvider._({
+    required CurrentKrProgressFamily super.from,
+    required CalendarDate super.argument,
+  }) : super(
+         retry: null,
+         name: r'currentKrProgressProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$currentKrProgressHash();
+
+  @override
+  String toString() {
+    return r'currentKrProgressProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<AsyncValue<List<KrProgressChange>>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  AsyncValue<List<KrProgressChange>> create(Ref ref) {
+    final argument = this.argument as CalendarDate;
+    return currentKrProgress(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AsyncValue<List<KrProgressChange>> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AsyncValue<List<KrProgressChange>>>(
+        value,
+      ),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CurrentKrProgressProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$currentKrProgressHash() => r'a71e964c7463e1059b1a86a4d08be4f572a8fc4c';
+
+/// The KRs of active objectives with their current progress and the change
+/// since the latest review before [weekStart], live. The weekly review
+/// edits and saves these, also for a week already reviewed.
+
+final class CurrentKrProgressFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          AsyncValue<List<KrProgressChange>>,
+          CalendarDate
+        > {
+  CurrentKrProgressFamily._()
+    : super(
+        retry: null,
+        name: r'currentKrProgressProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The KRs of active objectives with their current progress and the change
+  /// since the latest review before [weekStart], live. The weekly review
+  /// edits and saves these, also for a week already reviewed.
+
+  CurrentKrProgressProvider call(CalendarDate weekStart) =>
+      CurrentKrProgressProvider._(argument: weekStart, from: this);
+
+  @override
+  String toString() => r'currentKrProgressProvider';
 }

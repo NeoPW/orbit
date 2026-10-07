@@ -33,7 +33,8 @@ AsyncValue<PlanOverview> planOverview(Ref ref) {
   );
 }
 
-/// A project or task shown in Plan's detail pane on wide screens.
+/// An objective, KR, project or task shown in Plan's detail pane on wide
+/// screens.
 sealed class PlanItem {
   const PlanItem(this.id);
 
@@ -53,6 +54,14 @@ class PlanProject extends PlanItem {
 
 class PlanTask extends PlanItem {
   const PlanTask(super.id);
+}
+
+class PlanObjective extends PlanItem {
+  const PlanObjective(super.id);
+}
+
+class PlanKeyResult extends PlanItem {
+  const PlanKeyResult(super.id);
 }
 
 /// The item in Plan's detail pane (visual-design spec, "Two panes on wide

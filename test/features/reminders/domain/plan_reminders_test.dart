@@ -243,7 +243,7 @@ void main() {
       expect(reminders.first.body, 'Task · Due in 7 days');
     });
 
-    test('KR reminders open the KR form', () {
+    test('KR reminders open the KR page', () {
       final now = DateTime(2026, 10, 12, 6);
       final reminders = plan(
         deadlines: candidates(
@@ -259,7 +259,7 @@ void main() {
         ),
         now: now,
       );
-      expect(reminders.single.route, '/plan/key-results/kr');
+      expect(reminders.single.route, '/key-results/kr');
       expect(reminders.single.body, 'Key result · Due today');
     });
 

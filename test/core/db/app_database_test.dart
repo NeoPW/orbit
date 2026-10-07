@@ -23,11 +23,11 @@ void main() {
   tearDown(() => db.close());
 
   test(
-    'a fresh database has schema version 4, ten tables and settings',
+    'a fresh database has schema version 5, eleven tables and settings',
     () async {
-      expect(db.schemaVersion, 4);
+      expect(db.schemaVersion, 5);
       final version = await db.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), 4);
+      expect(version.read<int>('user_version'), 5);
 
       final tables = await db
           .customSelect(
@@ -49,6 +49,7 @@ void main() {
           'log_entries',
           'weekly_reviews',
           'review_kr_snapshots',
+          'timers',
           'settings',
         ]),
       );

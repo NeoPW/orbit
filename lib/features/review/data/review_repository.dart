@@ -63,6 +63,34 @@ class ReviewRepository extends Repository {
     });
   }
 
+  /// The KR snapshots stored with the completed review of [weekStart], by
+  /// KR ID; null when that week has no completed review.
+  Stream<Map<String, double>?> watchSnapshotsOfCompletedWeek(
+    CalendarDate weekStart,
+  ) {
+    final reviews = db.weeklyReviews;
+    final snapshots = db.reviewKrSnapshots;
+    final query =
+        db.select(reviews).join([
+          leftOuterJoin(
+            snapshots,
+            snapshots.weeklyReviewId.equalsExp(reviews.id) & alive(snapshots),
+          ),
+        ])..where(
+          alive(reviews) &
+              reviews.completedAt.isNotNull() &
+              reviews.weekStart.equals(weekStart.toIso()),
+        );
+    return query.watch().map((rows) {
+      if (rows.isEmpty) return null;
+      return {
+        for (final row in rows)
+          if (row.readTableOrNull(snapshots) case final snapshot?)
+            snapshot.keyResultId: snapshot.progress,
+      };
+    });
+  }
+
   /// Stores score, reflection and plan of the week's review as a draft.
   /// A completed review stays completed.
   Future<WeeklyReview> saveDraft(
@@ -185,3 +213,13 @@ Stream<Map<String, double>> latestSnapshotsBefore(
   Ref ref,
   CalendarDate weekStart,
 ) => ref.watch(reviewRepositoryProvider).watchLatestSnapshotsBefore(weekStart);
+
+/// The KR snapshots of the week's completed review, or null (see
+/// [ReviewRepository.watchSnapshotsOfCompletedWeek]).
+@riverpod
+Stream<Map<String, double>?> weekReviewSnapshots(
+  Ref ref,
+  CalendarDate weekStart,
+) => ref
+    .watch(reviewRepositoryProvider)
+    .watchSnapshotsOfCompletedWeek(weekStart);

@@ -11,6 +11,7 @@ String logSourceLabel(LogSource source) => switch (source) {
   LogSource.manual => 'Manual',
   LogSource.habit => 'Habit',
   LogSource.task => 'Task',
+  LogSource.timer => 'Timer',
 };
 
 /// A log entry: note, date and time, duration and source, with delete.
@@ -46,6 +47,7 @@ class LogEntryTile extends ConsumerWidget {
         LogSource.manual => Icons.edit_note,
         LogSource.habit => Icons.repeat,
         LogSource.task => Icons.task_alt,
+        LogSource.timer => Icons.timer_outlined,
       }),
       title: Text(entry.note.isEmpty ? 'Work logged' : entry.note),
       subtitle: Text(details.join(' · ')),

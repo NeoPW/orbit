@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:orbit/app.dart';
 import 'package:orbit/core/db/app_database.dart';
 import 'package:orbit/core/db/database_providers.dart';
+import 'package:orbit/core/messages/message_host.dart';
 import 'package:orbit/core/router/router.dart';
 
 import 'test_db.dart';
@@ -60,7 +61,10 @@ Future<AppDatabase> pumpInScaffold(
         appDatabaseProvider.overrideWithValue(database),
         ...overrides,
       ],
-      child: MaterialApp(home: Scaffold(body: child)),
+      child: MaterialApp(
+        home: Scaffold(body: child),
+        builder: (context, child) => MessageHost(child: child!),
+      ),
     ),
   );
   await tester.pumpAndSettle();
@@ -69,6 +73,34 @@ Future<AppDatabase> pumpInScaffold(
     await tester.pump(Duration.zero);
     await database.close();
   });
+  return database;
+}
+
+/// Pumps a screen with an "Open" button, taps it and lets [open] show a form
+/// sheet (see `showFormSheet`), on an in-memory database (or [db]).
+Future<AppDatabase> pumpSheet(
+  WidgetTester tester,
+  Future<Object?> Function(BuildContext context) open, {
+  AppDatabase? db,
+  double width = 400,
+  double height = 1000,
+}) async {
+  final database = await pumpInScaffold(
+    tester,
+    Builder(
+      builder: (context) => Center(
+        child: TextButton(
+          onPressed: () => open(context),
+          child: const Text('Open'),
+        ),
+      ),
+    ),
+    db: db,
+    width: width,
+    height: height,
+  );
+  await tester.tap(find.text('Open'));
+  await tester.pumpAndSettle();
   return database;
 }
 

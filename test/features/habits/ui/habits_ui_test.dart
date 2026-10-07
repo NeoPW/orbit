@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/db/app_database.dart';
 import 'package:orbit/core/router/routes.dart';
+import 'package:orbit/features/habits/ui/habit_form.dart';
 
 import '../../../helpers/pump_app.dart';
 import '../../../helpers/seed.dart';
@@ -27,6 +28,19 @@ void main() {
       (db.select(db.habits)..where((h) => h.deletedAt.isNull())).get();
 
   group('Habits screen', () {
+    testApp('tapping a habit opens its edit form in a sheet', (tester) async {
+      await seed.habits.create(
+        title: 'Stretch',
+        scheduleType: ScheduleType.daily,
+      );
+      final app = await pumpApp(tester, db: db, location: Routes.habits);
+      await tester.tap(find.text('Stretch'));
+      await tester.pumpAndSettle();
+      expect(find.text('Edit habit'), findsOneWidget);
+      expect(find.byType(BottomSheet), findsOneWidget);
+      expect(app.router.state.uri.path, Routes.habits);
+    });
+
     testApp('marks inactive habits and unlinked habits', (tester) async {
       final p = await seed.projects.create(title: 'Thesis');
       await seed.habits.create(
@@ -63,7 +77,7 @@ void main() {
 
   group('Habit form', () {
     testApp('a habit without any link saves', (tester) async {
-      await pumpApp(tester, db: db, location: Routes.newHabit);
+      await pumpSheet(tester, (c) => showHabitForm(c), db: db);
       await tester.enterText(field('Title'), 'Meditate');
       await save(tester);
 
@@ -76,7 +90,7 @@ void main() {
     });
 
     testApp('weekdays without a day is rejected', (tester) async {
-      await pumpApp(tester, db: db, location: Routes.newHabit);
+      await pumpSheet(tester, (c) => showHabitForm(c), db: db);
       await tester.enterText(field('Title'), 'Gym');
       await tester.tap(find.text('Weekdays'));
       await tester.pumpAndSettle();
@@ -87,7 +101,10 @@ void main() {
     });
 
     testApp('weekdays are saved Monday-first', (tester) async {
-      await pumpApp(tester, db: db, location: Routes.newHabit);
+      // From the Habits screen, so the saved habit shows in the list.
+      await pumpApp(tester, db: db, location: Routes.habits, height: 1000);
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
       await tester.enterText(field('Title'), 'Gym');
       await tester.tap(find.text('Weekdays'));
       await tester.pumpAndSettle();
@@ -102,7 +119,7 @@ void main() {
     });
 
     testApp('8 times per week is rejected', (tester) async {
-      await pumpApp(tester, db: db, location: Routes.newHabit);
+      await pumpSheet(tester, (c) => showHabitForm(c), db: db);
       await tester.enterText(field('Title'), 'Read');
       await tester.tap(find.text('Times per week'));
       await tester.pumpAndSettle();
@@ -118,7 +135,7 @@ void main() {
     });
 
     testApp('the reminder field explains the default time', (tester) async {
-      await pumpApp(tester, db: db, location: Routes.newHabit);
+      await pumpSheet(tester, (c) => showHabitForm(c), db: db);
       expect(
         find.text('Without a time, the default reminder time is used.'),
         findsOneWidget,
@@ -127,7 +144,7 @@ void main() {
 
     testApp('links a project and sets a reminder time', (tester) async {
       await seed.projects.create(title: 'Thesis');
-      await pumpApp(tester, db: db, location: Routes.newHabit);
+      await pumpSheet(tester, (c) => showHabitForm(c), db: db);
       await tester.enterText(field('Title'), 'Write');
       await tester.tap(find.text('No project'));
       await tester.pumpAndSettle();
@@ -161,7 +178,7 @@ void main() {
         title: 'Stretch',
         scheduleType: ScheduleType.daily,
       );
-      await pumpApp(tester, db: db, location: Routes.habit(h.id));
+      await pumpSheet(tester, (c) => showHabitForm(c, habitId: h.id), db: db);
       await tester.tap(find.text('Active'));
       await save(tester);
       expect((await seed.habits.get(h.id))!.active, isFalse);
@@ -172,7 +189,7 @@ void main() {
         title: 'Stretch',
         scheduleType: ScheduleType.daily,
       );
-      await pumpApp(tester, db: db, location: Routes.habit(h.id));
+      await pumpSheet(tester, (c) => showHabitForm(c, habitId: h.id), db: db);
       await tester.tap(find.byTooltip('Delete habit'));
       await tester.pumpAndSettle();
       expect(find.textContaining('without a linked habit'), findsOneWidget);

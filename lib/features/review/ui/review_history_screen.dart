@@ -10,6 +10,7 @@ import '../../../core/widgets/orbit_ring.dart';
 import '../../../core/widgets/section_heading.dart';
 import '../data/review_repository.dart';
 import 'week_format.dart';
+import 'week_summary_view.dart';
 
 /// Completed reviews, newest week first.
 class ReviewHistoryScreen extends ConsumerWidget {
@@ -92,6 +93,7 @@ class PastReviewScreen extends ConsumerWidget {
                     _Text(review.reflection, empty: 'No reflection written'),
                     const SectionHeading('Plan for next week'),
                     _Text(review.planNextWeek, empty: 'No plan written'),
+                    WeekSummaryView(weekStart: review.weekStart),
                   ],
                 ),
               ),

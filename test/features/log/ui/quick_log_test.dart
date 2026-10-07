@@ -119,4 +119,47 @@ void main() {
     expect(entry.projectId, isNull);
     expect(find.text('Logged work on Tax return'), findsOneWidget);
   });
+
+  group('timer mode', () {
+    testApp('Log is the default', (tester) async {
+      await seed.projects.create(title: 'Thesis');
+      await open(tester);
+      final toggle = tester.widget<SegmentedButton<bool>>(
+        find.byType(SegmentedButton<bool>),
+      );
+      expect(toggle.selected, {false});
+      expect(find.text('Minutes (optional)'), findsOneWidget);
+    });
+
+    testApp('Start timer starts a timer and logs nothing', (tester) async {
+      final p = await seed.projects.create(title: 'Thesis');
+      await open(tester);
+      await tester.tap(find.text('Start timer'));
+      await tester.pumpAndSettle();
+      expect(find.text('Minutes (optional)'), findsNothing);
+      expect(find.text('Note (optional)'), findsNothing);
+      expect(find.text('Choose what to time'), findsOneWidget);
+
+      await tester.tap(find.text('Thesis'));
+      await tester.pumpAndSettle();
+      expect(await entries(), isEmpty);
+      final timer = await (db.select(
+        db.timers,
+      )..where((t) => t.deletedAt.isNull())).getSingle();
+      expect(timer.projectId, p.id);
+      expect(find.text('Timer started for Thesis'), findsOneWidget);
+    });
+
+    testApp('Start timer on a task', (tester) async {
+      final task = await seed.tasks.create(title: 'Tax return');
+      await open(tester);
+      await tester.tap(find.text('Start timer'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tax return'));
+      await tester.pumpAndSettle();
+      final timer = await db.select(db.timers).getSingle();
+      expect(timer.taskId, task.id);
+      expect(timer.projectId, isNull);
+    });
+  });
 }

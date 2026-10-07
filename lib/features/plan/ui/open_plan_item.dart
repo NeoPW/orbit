@@ -16,5 +16,7 @@ void openPlanItem(BuildContext context, WidgetRef ref, PlanItem item) {
   context.push(switch (item) {
     PlanProject(:final id) => Routes.projectDetail(id),
     PlanTask(:final id) => Routes.task(id),
+    PlanObjective(:final id) => Routes.objective(id),
+    PlanKeyResult(:final id) => Routes.keyResult(id),
   });
 }

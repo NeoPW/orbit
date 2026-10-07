@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/db/app_database.dart';
 import 'package:orbit/core/router/routes.dart';
+import 'package:orbit/features/projects/ui/project_detail_screen.dart';
 import 'package:orbit/core/widgets/orbit_chips.dart';
 import 'package:orbit/features/log/ui/log_entry_tile.dart';
 import 'package:orbit/features/tasks/ui/task_tile.dart';
@@ -85,7 +86,7 @@ void main() {
       expect(find.text('Project not found'), findsOneWidget);
     });
 
-    testApp('deleting from the edit form leaves "Project not found"', (
+    testApp('deleting from the edit sheet leaves the project page', (
       tester,
     ) async {
       final p = await seed.projects.create(title: 'Thesis');
@@ -99,8 +100,9 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Project not found'), findsOneWidget);
-      expect(app.router.state.uri.path, '/projects/${p.id}');
+      expect(find.byType(ProjectDetailBody), findsNothing);
+      expect(app.router.state.uri.path, Routes.home);
+      expect(await seed.projects.get(p.id), isNull);
     });
   });
 

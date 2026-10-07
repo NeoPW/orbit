@@ -8,7 +8,7 @@ import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/max_width_body.dart';
 import '../../../core/db/app_database.dart';
 import '../data/area_repository.dart';
-import 'area_dialog.dart';
+import 'area_form.dart';
 
 class AreasScreen extends ConsumerWidget {
   const AreasScreen({super.key});
@@ -27,7 +27,7 @@ class AreasScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Areas')),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showAreaDialog(context),
+        onPressed: () => showAreaForm(context),
         icon: const Icon(Icons.add),
         label: const Text('New area'),
       ),
@@ -38,7 +38,7 @@ class AreasScreen extends ConsumerWidget {
                 icon: Icons.category_outlined,
                 message: 'No areas yet',
                 action: FilledButton.tonal(
-                  onPressed: () => showAreaDialog(context),
+                  onPressed: () => showAreaForm(context),
                   child: const Text('New area'),
                 ),
               )
@@ -55,7 +55,7 @@ class AreasScreen extends ConsumerWidget {
                           child: AreaDot(color: area.color, size: 12),
                         ),
                         title: Text(area.name),
-                        onTap: () => showAreaDialog(context, area: area),
+                        onTap: () => showAreaForm(context, area: area),
                         trailing: IconButton(
                           tooltip: 'Delete ${area.name}',
                           icon: const Icon(Icons.delete_outline),

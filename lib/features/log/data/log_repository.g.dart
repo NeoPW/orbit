@@ -309,3 +309,87 @@ final class LastLoggedAtTasksProvider
 }
 
 String _$lastLoggedAtTasksHash() => r'd359414692c3eba9896a721e98968c9c86ecf4c7';
+
+/// A key result's log entries, most recent first.
+
+@ProviderFor(keyResultLog)
+final keyResultLogProvider = KeyResultLogFamily._();
+
+/// A key result's log entries, most recent first.
+
+final class KeyResultLogProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<LogEntry>>,
+          List<LogEntry>,
+          Stream<List<LogEntry>>
+        >
+    with $FutureModifier<List<LogEntry>>, $StreamProvider<List<LogEntry>> {
+  /// A key result's log entries, most recent first.
+  KeyResultLogProvider._({
+    required KeyResultLogFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'keyResultLogProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$keyResultLogHash();
+
+  @override
+  String toString() {
+    return r'keyResultLogProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<List<LogEntry>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<LogEntry>> create(Ref ref) {
+    final argument = this.argument as String;
+    return keyResultLog(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is KeyResultLogProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$keyResultLogHash() => r'28ea50bbee169c2ee647d1454db36657cc7660af';
+
+/// A key result's log entries, most recent first.
+
+final class KeyResultLogFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<List<LogEntry>>, String> {
+  KeyResultLogFamily._()
+    : super(
+        retry: null,
+        name: r'keyResultLogProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A key result's log entries, most recent first.
+
+  KeyResultLogProvider call(String keyResultId) =>
+      KeyResultLogProvider._(argument: keyResultId, from: this);
+
+  @override
+  String toString() => r'keyResultLogProvider';
+}

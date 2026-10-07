@@ -32,7 +32,7 @@ void main() {
           },
     };
 
-    expect(local, hasLength(10));
+    expect(local, hasLength(11));
     expect(serverColumns(), local);
   });
 

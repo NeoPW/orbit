@@ -13,8 +13,9 @@ part 'log_repository.g.dart';
 class LogRepository extends Repository {
   LogRepository(super.db, super.clock, super.newId);
 
-  /// Adds a log entry at the current time. Used for every source; habit
-  /// checks and task completions call it inside their own transaction.
+  /// Adds a log entry at the current time (or [occurredAt]). Used for every
+  /// source; habit checks, task completions and the timer call it inside
+  /// their own transaction.
   Future<LogEntry> add({
     String? projectId,
     String? keyResultId,
@@ -22,6 +23,7 @@ class LogRepository extends Repository {
     int? durationMinutes,
     String note = '',
     required LogSource source,
+    DateTime? occurredAt,
   }) {
     final now = clock();
     return db
@@ -34,7 +36,7 @@ class LogRepository extends Repository {
             projectId: Value(projectId),
             keyResultId: Value(keyResultId),
             taskId: Value(taskId),
-            occurredAt: now,
+            occurredAt: occurredAt ?? now,
             durationMinutes: Value(durationMinutes),
             note: Value(note.trim()),
             source: source,
@@ -83,6 +85,16 @@ class LogRepository extends Repository {
   Stream<List<LogEntry>> watchForTask(String taskId) =>
       (db.select(db.logEntries)
             ..where((e) => alive(e) & e.taskId.equals(taskId))
+            ..orderBy([
+              (e) => OrderingTerm.desc(e.occurredAt),
+              (e) => OrderingTerm.desc(e.createdAt),
+            ]))
+          .watch();
+
+  /// The key result's entries, most recent first.
+  Stream<List<LogEntry>> watchForKeyResult(String keyResultId) =>
+      (db.select(db.logEntries)
+            ..where((e) => alive(e) & e.keyResultId.equals(keyResultId))
             ..orderBy([
               (e) => OrderingTerm.desc(e.occurredAt),
               (e) => OrderingTerm.desc(e.createdAt),
@@ -152,3 +164,8 @@ Stream<List<LogEntry>> taskLog(Ref ref, String taskId) =>
 @riverpod
 Stream<Map<String, DateTime>> lastLoggedAtTasks(Ref ref) =>
     ref.watch(logRepositoryProvider).watchLastLoggedAtTasks();
+
+/// A key result's log entries, most recent first.
+@riverpod
+Stream<List<LogEntry>> keyResultLog(Ref ref, String keyResultId) =>
+    ref.watch(logRepositoryProvider).watchForKeyResult(keyResultId);

@@ -45,6 +45,37 @@ class LocalNotificationScheduler implements NotificationScheduler {
   bool get supported => true;
 
   @override
+  Future<void> showTimer({
+    required String title,
+    required DateTime startedAt,
+  }) => _plugin.show(
+    id: timerNotificationId,
+    title: title,
+    body: 'Timer running',
+    notificationDetails: NotificationDetails(
+      android: AndroidNotificationDetails(
+        'timer',
+        'Timer',
+        channelDescription: 'The running work timer',
+        importance: Importance.low,
+        priority: Priority.low,
+        ongoing: true,
+        autoCancel: false,
+        onlyAlertOnce: true,
+        // Counts up from [startedAt] without the app running.
+        usesChronometer: true,
+        when: startedAt.millisecondsSinceEpoch,
+        showWhen: true,
+        category: AndroidNotificationCategory.stopwatch,
+      ),
+    ),
+    payload: '/home',
+  );
+
+  @override
+  Future<void> cancelTimer() => _plugin.cancel(id: timerNotificationId);
+
+  @override
   Future<void> init(void Function(String route) onTap) async {
     tz_data.initializeTimeZones();
     try {
@@ -88,7 +119,14 @@ class LocalNotificationScheduler implements NotificationScheduler {
     final mode = exact
         ? AndroidScheduleMode.exactAllowWhileIdle
         : AndroidScheduleMode.inexactAllowWhileIdle;
-    await _plugin.cancelAll();
+    // Not cancelAll: the timer notification stays.
+    await _plugin.cancelAllPendingNotifications();
+    for (final shown in await _plugin.getActiveNotifications()) {
+      final id = shown.id;
+      if (id != null && id != timerNotificationId) {
+        await _plugin.cancel(id: id, tag: shown.tag);
+      }
+    }
     for (final (id, reminder) in reminders.indexed) {
       final at = reminder.at;
       await _plugin.zonedSchedule(

@@ -1213,6 +1213,16 @@ class $KeyResultsTable extends KeyResults
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _stepMeta = const VerificationMeta('step');
+  @override
+  late final GeneratedColumn<double> step = GeneratedColumn<double>(
+    'step',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
   static const VerificationMeta _habitIdMeta = const VerificationMeta(
     'habitId',
   );
@@ -1258,6 +1268,7 @@ class $KeyResultsTable extends KeyResults
     targetValue,
     currentValue,
     unit,
+    step,
     habitId,
     deadline,
     sortOrder,
@@ -1359,6 +1370,12 @@ class $KeyResultsTable extends KeyResults
         unit.isAcceptableOrUnknown(data['unit']!, _unitMeta),
       );
     }
+    if (data.containsKey('step')) {
+      context.handle(
+        _stepMeta,
+        step.isAcceptableOrUnknown(data['step']!, _stepMeta),
+      );
+    }
     if (data.containsKey('habit_id')) {
       context.handle(
         _habitIdMeta,
@@ -1432,6 +1449,10 @@ class $KeyResultsTable extends KeyResults
         DriftSqlType.string,
         data['${effectivePrefix}unit'],
       ),
+      step: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}step'],
+      )!,
       habitId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}habit_id'],
@@ -1488,6 +1509,9 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
   /// Numeric: current value. Boolean: 1 when achieved, else 0.
   final double? currentValue;
   final String? unit;
+
+  /// Numeric: what the − / + buttons change the current value by.
+  final double step;
   final String? habitId;
 
   /// Falls back to the objective's end date when null.
@@ -1506,6 +1530,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
     this.targetValue,
     this.currentValue,
     this.unit,
+    required this.step,
     this.habitId,
     this.deadline,
     required this.sortOrder,
@@ -1539,6 +1564,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
     if (!nullToAbsent || unit != null) {
       map['unit'] = Variable<String>(unit);
     }
+    map['step'] = Variable<double>(step);
     if (!nullToAbsent || habitId != null) {
       map['habit_id'] = Variable<String>(habitId);
     }
@@ -1573,6 +1599,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
           ? const Value.absent()
           : Value(currentValue),
       unit: unit == null && nullToAbsent ? const Value.absent() : Value(unit),
+      step: Value(step),
       habitId: habitId == null && nullToAbsent
           ? const Value.absent()
           : Value(habitId),
@@ -1601,6 +1628,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
       targetValue: serializer.fromJson<double?>(json['targetValue']),
       currentValue: serializer.fromJson<double?>(json['currentValue']),
       unit: serializer.fromJson<String?>(json['unit']),
+      step: serializer.fromJson<double>(json['step']),
       habitId: serializer.fromJson<String?>(json['habitId']),
       deadline: serializer.fromJson<CalendarDate?>(json['deadline']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
@@ -1622,6 +1650,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
       'targetValue': serializer.toJson<double?>(targetValue),
       'currentValue': serializer.toJson<double?>(currentValue),
       'unit': serializer.toJson<String?>(unit),
+      'step': serializer.toJson<double>(step),
       'habitId': serializer.toJson<String?>(habitId),
       'deadline': serializer.toJson<CalendarDate?>(deadline),
       'sortOrder': serializer.toJson<int>(sortOrder),
@@ -1641,6 +1670,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
     Value<double?> targetValue = const Value.absent(),
     Value<double?> currentValue = const Value.absent(),
     Value<String?> unit = const Value.absent(),
+    double? step,
     Value<String?> habitId = const Value.absent(),
     Value<CalendarDate?> deadline = const Value.absent(),
     int? sortOrder,
@@ -1657,6 +1687,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
     targetValue: targetValue.present ? targetValue.value : this.targetValue,
     currentValue: currentValue.present ? currentValue.value : this.currentValue,
     unit: unit.present ? unit.value : this.unit,
+    step: step ?? this.step,
     habitId: habitId.present ? habitId.value : this.habitId,
     deadline: deadline.present ? deadline.value : this.deadline,
     sortOrder: sortOrder ?? this.sortOrder,
@@ -1687,6 +1718,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
           ? data.currentValue.value
           : this.currentValue,
       unit: data.unit.present ? data.unit.value : this.unit,
+      step: data.step.present ? data.step.value : this.step,
       habitId: data.habitId.present ? data.habitId.value : this.habitId,
       deadline: data.deadline.present ? data.deadline.value : this.deadline,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
@@ -1708,6 +1740,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
           ..write('targetValue: $targetValue, ')
           ..write('currentValue: $currentValue, ')
           ..write('unit: $unit, ')
+          ..write('step: $step, ')
           ..write('habitId: $habitId, ')
           ..write('deadline: $deadline, ')
           ..write('sortOrder: $sortOrder')
@@ -1729,6 +1762,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
     targetValue,
     currentValue,
     unit,
+    step,
     habitId,
     deadline,
     sortOrder,
@@ -1749,6 +1783,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
           other.targetValue == this.targetValue &&
           other.currentValue == this.currentValue &&
           other.unit == this.unit &&
+          other.step == this.step &&
           other.habitId == this.habitId &&
           other.deadline == this.deadline &&
           other.sortOrder == this.sortOrder);
@@ -1767,6 +1802,7 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
   final Value<double?> targetValue;
   final Value<double?> currentValue;
   final Value<String?> unit;
+  final Value<double> step;
   final Value<String?> habitId;
   final Value<CalendarDate?> deadline;
   final Value<int> sortOrder;
@@ -1784,6 +1820,7 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
     this.targetValue = const Value.absent(),
     this.currentValue = const Value.absent(),
     this.unit = const Value.absent(),
+    this.step = const Value.absent(),
     this.habitId = const Value.absent(),
     this.deadline = const Value.absent(),
     this.sortOrder = const Value.absent(),
@@ -1802,6 +1839,7 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
     this.targetValue = const Value.absent(),
     this.currentValue = const Value.absent(),
     this.unit = const Value.absent(),
+    this.step = const Value.absent(),
     this.habitId = const Value.absent(),
     this.deadline = const Value.absent(),
     required int sortOrder,
@@ -1826,6 +1864,7 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
     Expression<double>? targetValue,
     Expression<double>? currentValue,
     Expression<String>? unit,
+    Expression<double>? step,
     Expression<String>? habitId,
     Expression<String>? deadline,
     Expression<int>? sortOrder,
@@ -1844,6 +1883,7 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
       if (targetValue != null) 'target_value': targetValue,
       if (currentValue != null) 'current_value': currentValue,
       if (unit != null) 'unit': unit,
+      if (step != null) 'step': step,
       if (habitId != null) 'habit_id': habitId,
       if (deadline != null) 'deadline': deadline,
       if (sortOrder != null) 'sort_order': sortOrder,
@@ -1864,6 +1904,7 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
     Value<double?>? targetValue,
     Value<double?>? currentValue,
     Value<String?>? unit,
+    Value<double>? step,
     Value<String?>? habitId,
     Value<CalendarDate?>? deadline,
     Value<int>? sortOrder,
@@ -1882,6 +1923,7 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
       targetValue: targetValue ?? this.targetValue,
       currentValue: currentValue ?? this.currentValue,
       unit: unit ?? this.unit,
+      step: step ?? this.step,
       habitId: habitId ?? this.habitId,
       deadline: deadline ?? this.deadline,
       sortOrder: sortOrder ?? this.sortOrder,
@@ -1930,6 +1972,9 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
     if (unit.present) {
       map['unit'] = Variable<String>(unit.value);
     }
+    if (step.present) {
+      map['step'] = Variable<double>(step.value);
+    }
     if (habitId.present) {
       map['habit_id'] = Variable<String>(habitId.value);
     }
@@ -1962,6 +2007,7 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
           ..write('targetValue: $targetValue, ')
           ..write('currentValue: $currentValue, ')
           ..write('unit: $unit, ')
+          ..write('step: $step, ')
           ..write('habitId: $habitId, ')
           ..write('deadline: $deadline, ')
           ..write('sortOrder: $sortOrder, ')
@@ -6399,6 +6445,479 @@ class ReviewKrSnapshotsCompanion extends UpdateCompanion<ReviewKrSnapshot> {
   }
 }
 
+class $TimersTable extends Timers with TableInfo<$TimersTable, WorkTimer> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TimersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _projectIdMeta = const VerificationMeta(
+    'projectId',
+  );
+  @override
+  late final GeneratedColumn<String> projectId = GeneratedColumn<String>(
+    'project_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _taskIdMeta = const VerificationMeta('taskId');
+  @override
+  late final GeneratedColumn<String> taskId = GeneratedColumn<String>(
+    'task_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _startedAtMeta = const VerificationMeta(
+    'startedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> startedAt = GeneratedColumn<DateTime>(
+    'started_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    createdAt,
+    updatedAt,
+    deletedAt,
+    projectId,
+    taskId,
+    startedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'timers';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WorkTimer> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('project_id')) {
+      context.handle(
+        _projectIdMeta,
+        projectId.isAcceptableOrUnknown(data['project_id']!, _projectIdMeta),
+      );
+    }
+    if (data.containsKey('task_id')) {
+      context.handle(
+        _taskIdMeta,
+        taskId.isAcceptableOrUnknown(data['task_id']!, _taskIdMeta),
+      );
+    }
+    if (data.containsKey('started_at')) {
+      context.handle(
+        _startedAtMeta,
+        startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WorkTimer map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WorkTimer(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      projectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}project_id'],
+      ),
+      taskId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}task_id'],
+      ),
+      startedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}started_at'],
+      )!,
+    );
+  }
+
+  @override
+  $TimersTable createAlias(String alias) {
+    return $TimersTable(attachedDatabase, alias);
+  }
+}
+
+class WorkTimer extends DataClass implements Insertable<WorkTimer> {
+  /// UUID v4, generated on the client.
+  final String id;
+
+  /// UTC.
+  final DateTime createdAt;
+
+  /// UTC, set on every write.
+  final DateTime updatedAt;
+
+  /// UTC, set when the row is soft-deleted.
+  final DateTime? deletedAt;
+
+  /// Exactly one of [projectId] and [taskId] is set.
+  final String? projectId;
+  final String? taskId;
+  final DateTime startedAt;
+  const WorkTimer({
+    required this.id,
+    required this.createdAt,
+    required this.updatedAt,
+    this.deletedAt,
+    this.projectId,
+    this.taskId,
+    required this.startedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    if (!nullToAbsent || projectId != null) {
+      map['project_id'] = Variable<String>(projectId);
+    }
+    if (!nullToAbsent || taskId != null) {
+      map['task_id'] = Variable<String>(taskId);
+    }
+    map['started_at'] = Variable<DateTime>(startedAt);
+    return map;
+  }
+
+  TimersCompanion toCompanion(bool nullToAbsent) {
+    return TimersCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      projectId: projectId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(projectId),
+      taskId: taskId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(taskId),
+      startedAt: Value(startedAt),
+    );
+  }
+
+  factory WorkTimer.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WorkTimer(
+      id: serializer.fromJson<String>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      projectId: serializer.fromJson<String?>(json['projectId']),
+      taskId: serializer.fromJson<String?>(json['taskId']),
+      startedAt: serializer.fromJson<DateTime>(json['startedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'projectId': serializer.toJson<String?>(projectId),
+      'taskId': serializer.toJson<String?>(taskId),
+      'startedAt': serializer.toJson<DateTime>(startedAt),
+    };
+  }
+
+  WorkTimer copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    Value<String?> projectId = const Value.absent(),
+    Value<String?> taskId = const Value.absent(),
+    DateTime? startedAt,
+  }) => WorkTimer(
+    id: id ?? this.id,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    projectId: projectId.present ? projectId.value : this.projectId,
+    taskId: taskId.present ? taskId.value : this.taskId,
+    startedAt: startedAt ?? this.startedAt,
+  );
+  WorkTimer copyWithCompanion(TimersCompanion data) {
+    return WorkTimer(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      projectId: data.projectId.present ? data.projectId.value : this.projectId,
+      taskId: data.taskId.present ? data.taskId.value : this.taskId,
+      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WorkTimer(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('projectId: $projectId, ')
+          ..write('taskId: $taskId, ')
+          ..write('startedAt: $startedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    createdAt,
+    updatedAt,
+    deletedAt,
+    projectId,
+    taskId,
+    startedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WorkTimer &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.deletedAt == this.deletedAt &&
+          other.projectId == this.projectId &&
+          other.taskId == this.taskId &&
+          other.startedAt == this.startedAt);
+}
+
+class TimersCompanion extends UpdateCompanion<WorkTimer> {
+  final Value<String> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> deletedAt;
+  final Value<String?> projectId;
+  final Value<String?> taskId;
+  final Value<DateTime> startedAt;
+  final Value<int> rowid;
+  const TimersCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.projectId = const Value.absent(),
+    this.taskId = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TimersCompanion.insert({
+    required String id,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.deletedAt = const Value.absent(),
+    this.projectId = const Value.absent(),
+    this.taskId = const Value.absent(),
+    required DateTime startedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt),
+       startedAt = Value(startedAt);
+  static Insertable<WorkTimer> custom({
+    Expression<String>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? projectId,
+    Expression<String>? taskId,
+    Expression<DateTime>? startedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (projectId != null) 'project_id': projectId,
+      if (taskId != null) 'task_id': taskId,
+      if (startedAt != null) 'started_at': startedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TimersCompanion copyWith({
+    Value<String>? id,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<DateTime?>? deletedAt,
+    Value<String?>? projectId,
+    Value<String?>? taskId,
+    Value<DateTime>? startedAt,
+    Value<int>? rowid,
+  }) {
+    return TimersCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      projectId: projectId ?? this.projectId,
+      taskId: taskId ?? this.taskId,
+      startedAt: startedAt ?? this.startedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (projectId.present) {
+      map['project_id'] = Variable<String>(projectId.value);
+    }
+    if (taskId.present) {
+      map['task_id'] = Variable<String>(taskId.value);
+    }
+    if (startedAt.present) {
+      map['started_at'] = Variable<DateTime>(startedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TimersCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('projectId: $projectId, ')
+          ..write('taskId: $taskId, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SettingsTable extends Settings
     with TableInfo<$SettingsTable, SettingRow> {
   @override
@@ -6621,6 +7140,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $WeeklyReviewsTable weeklyReviews = $WeeklyReviewsTable(this);
   late final $ReviewKrSnapshotsTable reviewKrSnapshots =
       $ReviewKrSnapshotsTable(this);
+  late final $TimersTable timers = $TimersTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
   late final Index objectivesStatus = Index(
     'objectives_status',
@@ -6681,6 +7201,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     logEntries,
     weeklyReviews,
     reviewKrSnapshots,
+    timers,
     settings,
     objectivesStatus,
     keyResultsObjectiveId,
@@ -7254,6 +7775,7 @@ typedef $$KeyResultsTableCreateCompanionBuilder = KeyResultsCompanion Function({
   Value<double?> targetValue,
   Value<double?> currentValue,
   Value<String?> unit,
+  Value<double> step,
   Value<String?> habitId,
   Value<CalendarDate?> deadline,
   required int sortOrder,
@@ -7272,6 +7794,7 @@ typedef $$KeyResultsTableUpdateCompanionBuilder = KeyResultsCompanion Function({
   Value<double?> targetValue,
   Value<double?> currentValue,
   Value<String?> unit,
+  Value<double> step,
   Value<String?> habitId,
   Value<CalendarDate?> deadline,
   Value<int> sortOrder,
@@ -7345,6 +7868,11 @@ class $$KeyResultsTableFilterComposer
 
   ColumnFilters<String> get unit => $composableBuilder(
     column: $table.unit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get step => $composableBuilder(
+    column: $table.step,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7434,6 +7962,11 @@ class $$KeyResultsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get step => $composableBuilder(
+    column: $table.step,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get habitId => $composableBuilder(
     column: $table.habitId,
     builder: (column) => ColumnOrderings(column),
@@ -7508,6 +8041,9 @@ class $$KeyResultsTableAnnotationComposer
   GeneratedColumn<String> get unit =>
       $composableBuilder(column: $table.unit, builder: (column) => column);
 
+  GeneratedColumn<double> get step =>
+      $composableBuilder(column: $table.step, builder: (column) => column);
+
   GeneratedColumn<String> get habitId =>
       $composableBuilder(column: $table.habitId, builder: (column) => column);
 
@@ -7561,6 +8097,7 @@ class $$KeyResultsTableTableManager
                 Value<double?> targetValue = const Value.absent(),
                 Value<double?> currentValue = const Value.absent(),
                 Value<String?> unit = const Value.absent(),
+                Value<double> step = const Value.absent(),
                 Value<String?> habitId = const Value.absent(),
                 Value<CalendarDate?> deadline = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
@@ -7578,6 +8115,7 @@ class $$KeyResultsTableTableManager
                 targetValue: targetValue,
                 currentValue: currentValue,
                 unit: unit,
+                step: step,
                 habitId: habitId,
                 deadline: deadline,
                 sortOrder: sortOrder,
@@ -7597,6 +8135,7 @@ class $$KeyResultsTableTableManager
                 Value<double?> targetValue = const Value.absent(),
                 Value<double?> currentValue = const Value.absent(),
                 Value<String?> unit = const Value.absent(),
+                Value<double> step = const Value.absent(),
                 Value<String?> habitId = const Value.absent(),
                 Value<CalendarDate?> deadline = const Value.absent(),
                 required int sortOrder,
@@ -7614,6 +8153,7 @@ class $$KeyResultsTableTableManager
                 targetValue: targetValue,
                 currentValue: currentValue,
                 unit: unit,
+                step: step,
                 habitId: habitId,
                 deadline: deadline,
                 sortOrder: sortOrder,
@@ -9808,6 +10348,245 @@ typedef $$ReviewKrSnapshotsTableProcessedTableManager =
       ReviewKrSnapshot,
       PrefetchHooks Function()
     >;
+typedef $$TimersTableCreateCompanionBuilder = TimersCompanion Function({
+  required String id,
+  required DateTime createdAt,
+  required DateTime updatedAt,
+  Value<DateTime?> deletedAt,
+  Value<String?> projectId,
+  Value<String?> taskId,
+  required DateTime startedAt,
+  Value<int> rowid,
+});
+typedef $$TimersTableUpdateCompanionBuilder = TimersCompanion Function({
+  Value<String> id,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<DateTime?> deletedAt,
+  Value<String?> projectId,
+  Value<String?> taskId,
+  Value<DateTime> startedAt,
+  Value<int> rowid,
+});
+
+class $$TimersTableFilterComposer
+    extends Composer<_$AppDatabase, $TimersTable> {
+  $$TimersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get projectId => $composableBuilder(
+    column: $table.projectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get taskId => $composableBuilder(
+    column: $table.taskId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TimersTableOrderingComposer
+    extends Composer<_$AppDatabase, $TimersTable> {
+  $$TimersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get projectId => $composableBuilder(
+    column: $table.projectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get taskId => $composableBuilder(
+    column: $table.taskId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TimersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TimersTable> {
+  $$TimersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get projectId =>
+      $composableBuilder(column: $table.projectId, builder: (column) => column);
+
+  GeneratedColumn<String> get taskId =>
+      $composableBuilder(column: $table.taskId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get startedAt =>
+      $composableBuilder(column: $table.startedAt, builder: (column) => column);
+}
+
+class $$TimersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TimersTable,
+          WorkTimer,
+          $$TimersTableFilterComposer,
+          $$TimersTableOrderingComposer,
+          $$TimersTableAnnotationComposer,
+          $$TimersTableCreateCompanionBuilder,
+          $$TimersTableUpdateCompanionBuilder,
+          (WorkTimer, BaseReferences<_$AppDatabase, $TimersTable, WorkTimer>),
+          WorkTimer,
+          PrefetchHooks Function()
+        > {
+  $$TimersTableTableManager(_$AppDatabase db, $TimersTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TimersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TimersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TimersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String?> projectId = const Value.absent(),
+                Value<String?> taskId = const Value.absent(),
+                Value<DateTime> startedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TimersCompanion(
+                id: id,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                projectId: projectId,
+                taskId: taskId,
+                startedAt: startedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String?> projectId = const Value.absent(),
+                Value<String?> taskId = const Value.absent(),
+                required DateTime startedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => TimersCompanion.insert(
+                id: id,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                projectId: projectId,
+                taskId: taskId,
+                startedAt: startedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$TimersTable, WorkTimer>(table),
+                  BaseReferences<_$AppDatabase, $TimersTable, WorkTimer>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TimersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TimersTable,
+      WorkTimer,
+      $$TimersTableFilterComposer,
+      $$TimersTableOrderingComposer,
+      $$TimersTableAnnotationComposer,
+      $$TimersTableCreateCompanionBuilder,
+      $$TimersTableUpdateCompanionBuilder,
+      (WorkTimer, BaseReferences<_$AppDatabase, $TimersTable, WorkTimer>),
+      WorkTimer,
+      PrefetchHooks Function()
+    >;
 typedef $$SettingsTableCreateCompanionBuilder = SettingsCompanion Function({
   required String key,
   required String value,
@@ -9969,6 +10748,8 @@ class $AppDatabaseManager {
       $$WeeklyReviewsTableTableManager(_db, _db.weeklyReviews);
   $$ReviewKrSnapshotsTableTableManager get reviewKrSnapshots =>
       $$ReviewKrSnapshotsTableTableManager(_db, _db.reviewKrSnapshots);
+  $$TimersTableTableManager get timers =>
+      $$TimersTableTableManager(_db, _db.timers);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
 }

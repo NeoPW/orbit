@@ -4,11 +4,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/db/app_database.dart';
 import '../../../core/widgets/confirm_delete.dart';
 import '../../../core/widgets/date_field.dart';
-import '../../../core/widgets/form_scaffold.dart';
+import '../../../core/widgets/form_sheet.dart';
 import '../data/objective_repository.dart';
 
-class ObjectiveFormScreen extends ConsumerWidget {
-  const ObjectiveFormScreen({super.key, this.objectiveId});
+/// Opens the objective form in a sheet: a new objective, or [objectiveId].
+Future<FormResult?> showObjectiveForm(
+  BuildContext context, {
+  String? objectiveId,
+}) => showFormSheet(
+  context,
+  builder: (_) => ObjectiveFormSheet(objectiveId: objectiveId),
+);
+
+class ObjectiveFormSheet extends ConsumerWidget {
+  const ObjectiveFormSheet({super.key, this.objectiveId});
 
   /// Null to create a new objective.
   final String? objectiveId;
@@ -16,7 +25,7 @@ class ObjectiveFormScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final id = objectiveId;
-    return FormLoader<Objective>(
+    return FormSheetLoader<Objective>(
       load: id == null
           ? null
           : () => ref.read(objectiveRepositoryProvider).get(id),
@@ -91,7 +100,7 @@ class _ObjectiveFormState extends ConsumerState<_ObjectiveForm> {
         ),
       );
     }
-    if (mounted) closeForm(context);
+    if (mounted) closeFormSheet(context);
   }
 
   Future<void> _delete() async {
@@ -110,13 +119,13 @@ class _ObjectiveFormState extends ConsumerState<_ObjectiveForm> {
     );
     if (!confirmed) return;
     await repo.delete(objective.id);
-    if (mounted) closeForm(context);
+    if (mounted) closeFormSheet(context, FormResult.deleted);
   }
 
   @override
   Widget build(BuildContext context) {
     final editing = widget.objective != null;
-    return FormScaffold(
+    return FormSheetFrame(
       formKey: _formKey,
       title: editing ? 'Edit objective' : 'New objective',
       onSave: _save,

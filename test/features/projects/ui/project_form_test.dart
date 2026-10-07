@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/db/app_database.dart';
-import 'package:orbit/core/router/routes.dart';
+import 'package:orbit/features/projects/ui/project_form.dart';
 
 import '../../../helpers/pump_app.dart';
 import '../../../helpers/seed.dart';
@@ -34,14 +34,14 @@ void main() {
       (db.select(db.projects)..where((p) => p.deletedAt.isNull())).get();
 
   testApp('missing title is not saved', (tester) async {
-    await pumpApp(tester, db: db, location: Routes.newProject);
+    await pumpSheet(tester, (c) => showProjectForm(c), db: db);
     await save(tester);
     expect(find.text('Enter a title'), findsOneWidget);
     expect(await projects(), isEmpty);
   });
 
   testApp('defaults: active, importance 3, no area, no KR', (tester) async {
-    await pumpApp(tester, db: db, location: Routes.newProject);
+    await pumpSheet(tester, (c) => showProjectForm(c), db: db);
     expect(find.text('No area'), findsOneWidget);
     expect(find.text('No key result'), findsOneWidget);
     expect(find.textContaining('deadline:'), findsNothing);
@@ -61,7 +61,7 @@ void main() {
   ) async {
     final o = await seed.objective();
     final kr = await seed.kr(o.id);
-    await pumpApp(tester, db: db, location: Routes.newProject);
+    await pumpSheet(tester, (c) => showProjectForm(c), db: db);
 
     await tester.enterText(field('Title'), 'Thesis');
     await tester.enterText(field('Next step (optional)'), 'Draft outline');
@@ -87,7 +87,7 @@ void main() {
     final o = await seed.objective(end: CalendarDate(2026, 12, 31));
     final kr = await seed.kr(o.id);
     final p = await seed.projects.create(title: 'Thesis', keyResultId: kr.id);
-    await pumpApp(tester, db: db, location: Routes.project(p.id));
+    await pumpSheet(tester, (c) => showProjectForm(c, projectId: p.id), db: db);
 
     expect(
       find.text("Uses the key result's deadline: 31-12-2026"),
@@ -104,7 +104,7 @@ void main() {
       done.copyWith(status: ObjectiveStatus.completed),
     );
 
-    await pumpApp(tester, db: db, location: Routes.newProject);
+    await pumpSheet(tester, (c) => showProjectForm(c), db: db);
     await tester.tap(find.text('No key result'));
     await tester.pumpAndSettle();
     expect(find.text('Active goal › Current KR'), findsWidgets);
@@ -126,7 +126,7 @@ void main() {
       keyResultId: oldKr.id,
     );
 
-    await pumpApp(tester, db: db, location: Routes.project(p.id));
+    await pumpSheet(tester, (c) => showProjectForm(c, projectId: p.id), db: db);
     expect(find.text('Old goal › Old KR'), findsOneWidget);
     await save(tester);
     expect((await seed.projects.get(p.id))!.keyResultId, oldKr.id);
@@ -134,7 +134,7 @@ void main() {
 
   testApp('editing renames the next step', (tester) async {
     final p = await seed.projects.create(title: 'Thesis', nextStep: 'Draft');
-    await pumpApp(tester, db: db, location: Routes.project(p.id));
+    await pumpSheet(tester, (c) => showProjectForm(c, projectId: p.id), db: db);
     expect(find.text('Draft'), findsOneWidget);
 
     await tester.enterText(field('Next step (optional)'), 'Write intro');
@@ -146,7 +146,7 @@ void main() {
 
   testApp('delete asks for confirmation', (tester) async {
     final p = await seed.projects.create(title: 'Thesis');
-    await pumpApp(tester, db: db, location: Routes.project(p.id));
+    await pumpSheet(tester, (c) => showProjectForm(c, projectId: p.id), db: db);
 
     await tester.tap(find.byTooltip('Delete project'));
     await tester.pumpAndSettle();

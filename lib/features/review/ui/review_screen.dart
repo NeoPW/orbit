@@ -12,15 +12,17 @@ import '../data/review_repository.dart';
 import 'week_format.dart';
 import 'week_summary_view.dart';
 
-/// The Review tab (weekly-review spec): this week's plan, the review
-/// button, the review week's summary and the history.
+/// The Review tab (weekly-review spec): this week's plan, the current week
+/// so far, the review button (for the review week: last week until
+/// Saturday, the current week on Sunday), the history and "Last week".
 class ReviewScreen extends ConsumerWidget {
   const ReviewScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final week = ref.watch(reviewWeekProvider);
-    final review = ref.watch(reviewForWeekProvider(week)).value;
+    final reviewWeek = ref.watch(reviewWeekProvider);
+    final week = ref.watch(currentWeekProvider);
+    final review = ref.watch(reviewForWeekProvider(reviewWeek)).value;
     final label = review == null
         ? 'Start weekly review'
         : review.completedAt == null
@@ -37,6 +39,9 @@ class ReviewScreen extends ConsumerWidget {
             padding: const EdgeInsets.only(bottom: 24),
             children: [
               const _PlanCard(),
+              SectionHeading('Week ${formatWeek(week)}'),
+              WeekSummaryView(weekStart: week),
+              const SizedBox(height: 16),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: FilledButton.icon(
@@ -48,14 +53,24 @@ class ReviewScreen extends ConsumerWidget {
                   label: Text(label),
                 ),
               ),
-              SectionHeading('Week ${formatWeek(week)}'),
-              WeekSummaryView(weekStart: week),
               const SectionHeading('History'),
               ListTile(
                 leading: const Icon(Icons.history),
                 title: const Text('Past reviews'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push(Routes.reviewHistory),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                  onPressed: () =>
+                      context.push(Routes.reviewWeekPage(week.addDays(-7))),
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Last week'),
+                ),
               ),
             ],
           ),

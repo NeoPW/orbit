@@ -53,7 +53,7 @@ In the Supabase dashboard, open **SQL Editor → New query**, paste the contents
 
 Every change to the local drift tables (`lib/core/db/tables.dart`) must update `supabase/schema.sql` in the same change; `test/core/sync/schema_sql_test.dart` fails otherwise.
 
-**After an update that changes `supabase/schema.sql`** (for example schema version 4: task assignment and work logged on tasks), run the file again in the SQL Editor before syncing with the new app version. New columns are added with `add column if not exists`, so existing data stays. Until then, sync fails quietly and is retried; nothing local is lost.
+**After an update that changes `supabase/schema.sql`** (for example schema version 4: task assignment and work logged on tasks; schema version 5: the work timer and the KR step), run the file again in the SQL Editor before syncing with the new app version. New tables are created with `create table if not exists` and new columns are added with `add column if not exists`, so existing data stays. Until then, sync fails quietly and is retried; nothing local is lost.
 
 ### 2. Your user
 

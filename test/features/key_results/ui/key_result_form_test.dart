@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/db/app_database.dart';
-import 'package:orbit/core/router/routes.dart';
+import 'package:orbit/features/key_results/ui/key_result_form.dart';
 
 import '../../../helpers/pump_app.dart';
 import '../../../helpers/seed.dart';
@@ -23,7 +23,11 @@ void main() {
     db = newTestDatabase();
     seed = Seed(db);
     objective = await seed.objective();
-    await pumpApp(tester, db: db, location: Routes.newKeyResult(objective.id));
+    await pumpSheet(
+      tester,
+      (c) => showKeyResultForm(c, objectiveId: objective.id),
+      db: db,
+    );
   }
 
   // One-shot query: drift streams need timers that widget tests don't run.
@@ -36,6 +40,7 @@ void main() {
     expect(field('Target value'), findsOneWidget);
     expect(field('Current value'), findsOneWidget);
     expect(field('Unit (optional)'), findsOneWidget);
+    expect(field('Step'), findsOneWidget);
     expect(find.text('Achieved'), findsNothing);
   });
 
@@ -89,6 +94,26 @@ void main() {
     expect(kr.measureType, MeasureType.numeric);
     expect([kr.startValue, kr.targetValue, kr.currentValue], [0, 100, 12.5]);
     expect(kr.unit, 'km');
+    expect(kr.step, 1);
+  });
+
+  testApp('a custom step is saved', (tester) async {
+    await openNew(tester);
+    await tester.enterText(field('Title'), 'Run 100 km');
+    await tester.enterText(field('Target value'), '100');
+    await tester.enterText(field('Step'), '2,5');
+    await save(tester);
+    expect((await stored()).single.step, 2.5);
+  });
+
+  testApp('a step of 0 is not saved', (tester) async {
+    await openNew(tester);
+    await tester.enterText(field('Title'), 'Run 100 km');
+    await tester.enterText(field('Target value'), '100');
+    await tester.enterText(field('Step'), '0');
+    await save(tester);
+    expect(find.text('Enter a number above 0'), findsOneWidget);
+    expect(await stored(), isEmpty);
   });
 
   testApp('creates an achieved boolean KR', (tester) async {
@@ -112,7 +137,11 @@ void main() {
       title: 'Stretch',
       scheduleType: ScheduleType.daily,
     );
-    await pumpApp(tester, db: db, location: Routes.newKeyResult(objective.id));
+    await pumpSheet(
+      tester,
+      (c) => showKeyResultForm(c, objectiveId: objective.id),
+      db: db,
+    );
 
     await tester.enterText(field('Title'), 'Stretch 40 times');
     await tester.tap(find.text('Habit'));
@@ -138,7 +167,11 @@ void main() {
     seed = Seed(db);
     objective = await seed.objective();
     final kr = await seed.kr(objective.id, current: 20);
-    await pumpApp(tester, db: db, location: Routes.keyResult(kr.id));
+    await pumpSheet(
+      tester,
+      (c) => showKeyResultForm(c, keyResultId: kr.id),
+      db: db,
+    );
 
     expect(find.text('Get fit'), findsOneWidget);
     expect(find.textContaining('31-12-2026'), findsOneWidget);
@@ -152,7 +185,11 @@ void main() {
     seed = Seed(db);
     objective = await seed.objective();
     final kr = await seed.kr(objective.id);
-    await pumpApp(tester, db: db, location: Routes.keyResult(kr.id));
+    await pumpSheet(
+      tester,
+      (c) => showKeyResultForm(c, keyResultId: kr.id),
+      db: db,
+    );
 
     await tester.tap(find.byTooltip('Delete key result'));
     await tester.pumpAndSettle();

@@ -25,9 +25,21 @@ abstract interface class NotificationScheduler {
   /// Whether the system currently allows this app's notifications.
   Future<bool> notificationsAllowed();
 
-  /// Replaces all scheduled reminders with [reminders].
+  /// Replaces all scheduled reminders with [reminders]. Leaves the timer
+  /// notification alone.
   Future<void> replaceAll(List<PlannedReminder> reminders);
+
+  /// Shows (or updates) the ongoing notification of the running timer:
+  /// [title] and the time since [startedAt], counting live. Tapping it
+  /// opens Home.
+  Future<void> showTimer({required String title, required DateTime startedAt});
+
+  /// Removes the timer notification.
+  Future<void> cancelTimer();
 }
+
+/// The notification ID of the running timer; reminders use 0…n.
+const timerNotificationId = 900000;
 
 /// Used where reminders are not available (web, desktop, tests).
 class NoopNotificationScheduler implements NotificationScheduler {
@@ -50,6 +62,15 @@ class NoopNotificationScheduler implements NotificationScheduler {
 
   @override
   Future<void> replaceAll(List<PlannedReminder> reminders) async {}
+
+  @override
+  Future<void> showTimer({
+    required String title,
+    required DateTime startedAt,
+  }) async {}
+
+  @override
+  Future<void> cancelTimer() async {}
 }
 
 /// The platform's scheduler. Tests override it with a fake.

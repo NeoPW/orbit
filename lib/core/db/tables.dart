@@ -61,6 +61,9 @@ class KeyResults extends Table with SyncColumns {
   /// Numeric: current value. Boolean: 1 when achieved, else 0.
   RealColumn get currentValue => real().nullable()();
   TextColumn get unit => text().nullable()();
+
+  /// Numeric: what the − / + buttons change the current value by.
+  RealColumn get step => real().withDefault(const Constant(1))();
   TextColumn get habitId => text().nullable()();
 
   /// Falls back to the objective's end date when null.
@@ -172,6 +175,16 @@ class ReviewKrSnapshots extends Table with SyncColumns {
 
   /// 0–1.
   RealColumn get progress => real()();
+}
+
+/// The running work timer (work-timer spec). There is at most one row,
+/// with a fixed ID; stopping or discarding soft-deletes it.
+@DataClassName('WorkTimer')
+class Timers extends Table with SyncColumns {
+  /// Exactly one of [projectId] and [taskId] is set.
+  TextColumn get projectId => text().nullable()();
+  TextColumn get taskId => text().nullable()();
+  DateTimeColumn get startedAt => dateTime()();
 }
 
 /// Local settings as key-value pairs (docs/SPEC.md §4 "Settings").

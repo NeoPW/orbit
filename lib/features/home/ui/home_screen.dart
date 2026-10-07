@@ -7,13 +7,14 @@ import '../../../core/widgets/section_heading.dart';
 import '../../../core/widgets/settings_button.dart';
 import '../../account/ui/sync_refresh.dart';
 import '../../log/ui/quick_log_sheet.dart';
-import '../../tasks/ui/new_task_sheet.dart';
+import '../../tasks/ui/task_form.dart';
 import '../data/home_providers.dart';
 import 'home_habits_section.dart';
 import 'home_project_card.dart';
 import 'home_tasks_section.dart';
 import 'today_header.dart';
 import 'upcoming_deadlines_section.dart';
+import '../../timer/ui/timer_card.dart';
 
 /// Today, as a dashboard (home spec): header, habits, upcoming deadlines,
 /// active projects by score and tasks outside projects, with buttons for a
@@ -38,7 +39,7 @@ class HomeScreen extends ConsumerWidget {
             FloatingActionButton.extended(
               heroTag: 'new-task',
               tooltip: 'New task',
-              onPressed: () => showNewTaskSheet(context),
+              onPressed: () => showTaskForm(context),
               icon: const Icon(Icons.add_task),
               label: const Text('Task'),
             ),
@@ -59,6 +60,7 @@ class HomeScreen extends ConsumerWidget {
             padding: const EdgeInsets.only(bottom: 104),
             children: [
               const TodayHeader(),
+              const TimerCard(),
               const HomeHabitsSection(),
               const UpcomingDeadlinesSection(),
               const SectionHeading('Active projects'),

@@ -15,6 +15,10 @@ import 'review_repository.dart';
 
 part 'review_providers.g.dart';
 
+/// The Monday of the current week (weekly-review spec, "Review tab").
+@riverpod
+CalendarDate currentWeek(Ref ref) => ref.watch(todayProvider).weekStart;
+
 /// The Monday of the week a review made today is about.
 @riverpod
 CalendarDate reviewWeek(Ref ref) => reviewWeekStart(ref.watch(todayProvider));
@@ -45,6 +49,7 @@ AsyncValue<WeekSummary> weekSummary(Ref ref, CalendarDate weekStart) {
   final objectives = ref.watch(objectivesProvider);
   final checkIns = ref.watch(habitCheckInsProvider);
   final snapshots = ref.watch(latestSnapshotsBeforeProvider(weekStart));
+  final reviewed = ref.watch(weekReviewSnapshotsProvider(weekStart));
   return combineAsync(
     [
       entries,
@@ -56,6 +61,7 @@ AsyncValue<WeekSummary> weekSummary(Ref ref, CalendarDate weekStart) {
       objectives,
       checkIns,
       snapshots,
+      reviewed,
     ],
     () => buildWeekSummary(
       weekStart: weekStart,
@@ -68,6 +74,30 @@ AsyncValue<WeekSummary> weekSummary(Ref ref, CalendarDate weekStart) {
       objectives: objectives.requireValue,
       habitCheckIns: checkIns.requireValue,
       previousSnapshots: snapshots.requireValue,
+      reviewSnapshots: reviewed.requireValue,
+    ),
+  );
+}
+
+/// The KRs of active objectives with their current progress and the change
+/// since the latest review before [weekStart], live. The weekly review
+/// edits and saves these, also for a week already reviewed.
+@riverpod
+AsyncValue<List<KrProgressChange>> currentKrProgress(
+  Ref ref,
+  CalendarDate weekStart,
+) {
+  final keyResults = ref.watch(keyResultsProvider);
+  final objectives = ref.watch(objectivesProvider);
+  final checkIns = ref.watch(habitCheckInsProvider);
+  final snapshots = ref.watch(latestSnapshotsBeforeProvider(weekStart));
+  return combineAsync(
+    [keyResults, objectives, checkIns, snapshots],
+    () => krProgressChanges(
+      keyResults.requireValue,
+      objectives.requireValue,
+      checkIns.requireValue,
+      snapshots.requireValue,
     ),
   );
 }

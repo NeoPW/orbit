@@ -13,7 +13,7 @@ import '../../projects/ui/project_labels.dart';
 import '../data/plan_providers.dart';
 
 /// Completed/archived objectives and completed projects. Tapping one opens
-/// its form, where the status can be changed back.
+/// its page, where the status can be changed back.
 class ArchiveScreen extends ConsumerWidget {
   const ArchiveScreen({super.key});
 
@@ -63,7 +63,8 @@ class ArchiveScreen extends ConsumerWidget {
                             label: projectStatusLabel(project.status),
                             color: projectStatusColor(context, project.status),
                           ),
-                          onTap: () => context.push(Routes.project(project.id)),
+                          onTap: () =>
+                              context.push(Routes.projectDetail(project.id)),
                         ),
                       },
                   ],

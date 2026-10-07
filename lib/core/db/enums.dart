@@ -60,7 +60,8 @@ enum ScheduleType implements DbEnum {
 enum LogSource implements DbEnum {
   manual('manual'),
   habit('habit'),
-  task('task');
+  task('task'),
+  timer('timer');
 
   const LogSource(this.dbValue);
   @override

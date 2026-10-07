@@ -22,11 +22,14 @@ import '../../key_results/domain/kr_deadline.dart';
 import '../../objectives/data/objective_repository.dart';
 import '../../settings/data/settings_repository.dart';
 import '../../tasks/data/task_repository.dart';
-import '../../tasks/ui/task_dialog.dart';
+import '../../tasks/ui/task_form.dart';
 import '../../tasks/ui/task_tile.dart';
 import '../data/project_repository.dart';
 import '../domain/project_deadline.dart';
 import 'project_labels.dart';
+import '../../../core/widgets/form_sheet.dart';
+import 'project_form.dart';
+import '../../habits/ui/habit_form.dart';
 
 /// Everything about one project: header with status, area, importance and
 /// deadline, its tasks with the next step first, habits and logged work
@@ -60,7 +63,18 @@ class ProjectDetailScreen extends ConsumerWidget {
             IconButton(
               tooltip: 'Edit project',
               icon: const Icon(Icons.edit_outlined),
-              onPressed: () => context.push(Routes.project(project.id)),
+              onPressed: () async {
+                final result = await showProjectForm(
+                  context,
+                  projectId: project.id,
+                );
+                if (result != FormResult.deleted || !context.mounted) return;
+                if (onClose != null) {
+                  onClose();
+                } else if (context.canPop()) {
+                  context.pop();
+                }
+              },
             ),
         ],
       ),
@@ -209,7 +223,7 @@ class _TasksSection extends ConsumerWidget {
         SectionHeading(
           'Tasks',
           action: TextButton.icon(
-            onPressed: () => showTaskDialog(context, projectId: project.id),
+            onPressed: () => showTaskForm(context, projectId: project.id),
             icon: const Icon(Icons.add),
             label: const Text('Add task'),
           ),
@@ -219,7 +233,7 @@ class _TasksSection extends ConsumerWidget {
             'No next step',
             icon: Icons.flag_outlined,
             action: TextButton(
-              onPressed: () => showTaskDialog(
+              onPressed: () => showTaskForm(
                 context,
                 projectId: project.id,
                 asNextStep: true,
@@ -273,7 +287,7 @@ class _HabitsSection extends ConsumerWidget {
                 if (!habit.active) 'Inactive',
               ].join(' · '),
             ),
-            onTap: () => context.push(Routes.habit(habit.id)),
+            onTap: () => showHabitForm(context, habitId: habit.id),
           ),
       ],
     );

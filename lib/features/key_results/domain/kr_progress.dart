@@ -1,4 +1,4 @@
-import '../../../core/db/enums.dart';
+import '../../../core/db/app_database.dart';
 
 const _epsilon = 1e-9;
 
@@ -33,3 +33,12 @@ double krProgress(
       return ((current - start) / span).clamp(0.0, 1.0);
   }
 }
+
+/// [krProgress] of a stored KR; [habitCheckIns] as for [krProgress].
+double keyResultProgress(KeyResult kr, {int habitCheckIns = 0}) => krProgress(
+  kr.measureType,
+  start: kr.startValue,
+  target: kr.targetValue,
+  current: kr.currentValue,
+  habitCheckIns: habitCheckIns,
+);
