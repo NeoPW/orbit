@@ -180,7 +180,7 @@ Server-side, every table also has `user_id` (Supabase auth user), protected by R
 ### Weeks
 - The **current week** is the Monday–Sunday week containing today; **last week** is the one before.
 - The **review week** (for the weekly review) is on Sunday the current week, on any other day last week.
-- A week's summary is computed from the stored log entries, habit checks and completed tasks, so it stays available for every past week. Habit adherence uses the habits' current schedules. KR progress of a past week comes from the snapshots of that week's completed review.
+- A week's summary is computed from the stored log entries, habit checks and completed tasks, so it stays available for every past week. Habit adherence uses the habits' current schedules. KR progress of a past week comes from the snapshots of that week's completed review; a week without a completed review (the current week, or last week before it is reviewed) shows the current progress.
 
 ### Completing tasks
 - Marking a task done always creates a `LogEntry` (`source = task`, the task title as note, linked to the task and to its project or KR). An Undo right after completing reopens the task and removes the entry.
@@ -235,10 +235,10 @@ While a timer runs, a **timer card** at the top of Home (below the header) shows
 - **Review week:** on Sunday the Monday–Sunday week ending today, on any other day the previous Monday–Sunday week. One review per week.
 - **Default view**, top to bottom:
   - this week's plan, from the most recently completed review
-  - a "Start / Continue / Edit weekly review" button (for the review week, §5)
   - the **current week** so far, on every day of the week: work logged per project (count and total duration), habit adherence per habit (done of expected), tasks completed, KR progress with the change since the previous completed review
-  - a **Last week** button at the bottom, opening a page with last week's summary
-  - the history.
+  - a "Start / Continue / Edit weekly review" button (for the review week, §5: last week until Saturday, the current week on Sunday)
+  - the history
+  - a **Last week** button at the bottom, opening a page with last week's summary.
 - **Guided flow**, shown as full-screen pages with a progress bar and Back / Next:
   1. Look back: the week summary.
   2. Projects: go through each active project; update status and next step (applied immediately).
