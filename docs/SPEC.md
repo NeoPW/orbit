@@ -174,7 +174,7 @@ Bottom navigation with three tabs: **Plan**, **Home**, **Review**. Each of them 
 
 ### 6.1 Home (today)
 A dashboard for the day, top to bottom:
-1. **Header:** today's date and today's progress (habits done of due, tasks due today).
+1. **Header:** today's weekday and date, the number of tasks due today, and the habits done of due as an orbit ring ("2/4").
 2. **Habits due today:** compact chips, labeled with their project or KR; tapping a chip checks or unchecks it.
 3. **Upcoming deadlines:** KRs and tasks inside projects whose *own* deadline is overdue or within the warning lead time (default 7 days), sorted by date. Active projects and tasks outside projects are not listed here: their deadline is shown as a badge on their own card below, so nothing appears twice.
 4. **Active projects:** sorted by score (§5). Each card shows title, area, deadline badge and the next step as a checkbox. Ticking the next step opens the next-step prompt and marks it done unless the prompt is cancelled. Tapping the card opens the project detail.
@@ -185,11 +185,11 @@ Two floating action buttons:
 - **Right: quick log.** An optional duration and note on top, then the active projects and the open tasks outside projects (recently used first). Tapping one saves the entry, so a plain log entry takes two taps.
 
 ### 6.2 Project detail
-- Title, description, area, linked KR, importance, deadline (own and effective), status.
+- A header with title, status chip, area chip, importance dots and deadline badge (marked when taken from the KR), then description and linked KR.
 - Next step (editable) and open tasks; add, complete and delete tasks; tapping a task opens its task page. The next step is marked in the task list instead of being shown twice. Open tasks are ordered by due date; manual reordering is deferred.
 - Habits belonging to this project.
 - Log entries for this project (most recent first).
-- Actions: activate / pause / move to backlog / complete.
+- Status: changed through the status chip in the header, which offers the other statuses (active, paused, backlog, completed).
 
 ### 6.3 Task page
 - Title, notes, deadline, status and what the task is assigned to (project, KR or objective, tapping it opens that item), or "Standalone".
@@ -199,7 +199,7 @@ Two floating action buttons:
 - Reachable from Home, the project detail, the Plan tab, the review summary and deadline reminders.
 
 ### 6.4 Plan
-- **Objectives list:** for each active objective, its key results (with progress bars), and under each KR the **active** projects linked to it. Shown one after another.
+- **Objectives list:** for each active objective, its key results (progress as orbit rings), and under each KR the **active** projects linked to it. Shown one after another.
 - Active projects with no KR are listed in a separate "Projects without a KR" section. Active projects whose KR belongs to a non-active objective are also listed there, with the KR's title.
 - Only active projects appear in the objectives list; backlog and paused projects appear only in the Backlog.
 - Open tasks assigned to a KR or an objective are listed under it, like projects.
@@ -232,13 +232,13 @@ Two floating action buttons:
 
 ### 6.7 Design and interaction
 The app should feel calm, clear and quick. Guidelines for every screen:
-- **Visual identity:** an own color palette (not the default Material seed) with area colors as accents on cards and chips; a clear type scale (bold titles, smaller body text); consistent spacing; light and dark themes both tuned.
+- **Visual identity:** the space-inspired Orbit palette instead of the default Material seed: deep navy "night sky" surfaces in dark mode (#0B1026) and light lavender-grey ones in light mode (#F4F5FB), a blue-violet primary, a cyan secondary and an amber color reserved for urgency (red for overdue). Area colors are accents on cards and chips. Body text meets 4.5:1 contrast in both themes. Text uses **Inter**, bundled with the app so it also works offline, with bold titles and smaller, muted secondary text. Progress (habits today, KRs, review scores) is shown as orbit rings. A logo and app icon are a later branding step.
 - **Less text, more structure:** metadata as chips, icons and badges instead of text lines. For example importance as dots or stars, status as a colored chip, deadlines as a badge colored by urgency. Absent values are left out instead of written out ("No area", "No deadline").
 - **Compact cards and lists:** denser rows, cards for projects and tasks, and no duplicate rows for the same item on one screen.
 - **Detail pages:** a header with title, status, area and deadline; actions in the top bar or a menu instead of rows of large buttons.
 - **Empty states:** an icon, one line of text and the action that fills the section.
-- **Motion:** list changes (checking, completing, reordering by score) animate; detail pages open with a transition from the tapped card.
-- **Wide screens:** at desktop width Plan shows the list and the selected item's detail side by side.
+- **Motion:** list changes (checking, completing, reordering by score) animate in and out, and pages open with a short fade transition. Animations take at most 300 ms and are skipped when the system asks to remove animations.
+- **Wide screens:** from 1000 px on, Plan shows the list and the selected project or task side by side; below that they open as pages.
 
 ## 7. Sync
 

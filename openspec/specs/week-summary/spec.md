@@ -33,11 +33,15 @@ The summary SHALL list every active habit with the number of check-ins in the we
 - **THEN** it shows 4 of 3
 
 ### Requirement: Completed tasks
-The summary SHALL list the tasks completed in the week (by their local completion date) with their project, most recent first.
+The summary SHALL list the tasks completed in the week (by their local completion date) with what they were assigned to (project, KR or objective, if any), most recent first. Tapping a task SHALL open its task page.
 
 #### Scenario: Task completed in the week
 - **WHEN** the task "Book venue" of "Wedding" was completed on Tuesday of the week
 - **THEN** it is listed with "Wedding"
+
+#### Scenario: Open a completed task
+- **WHEN** the user taps a completed task in the summary
+- **THEN** its task page opens
 
 ### Requirement: KR progress and change
 The summary SHALL list the KRs of active objectives with their current progress and, when an earlier completed review stored a snapshot for the KR, the change in percentage points since the most recent such snapshot.

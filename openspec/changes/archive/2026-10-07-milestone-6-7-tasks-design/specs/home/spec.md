@@ -1,10 +1,33 @@
-# home Specification
+# Spec Delta
 
-## Purpose
+## ADDED Requirements
 
-Defines the Home tab, the daily view of the app: the habits due today, upcoming deadlines, the active projects in order of score with their next steps, and the entry point for logging work.
+### Requirement: Today header
+Home SHALL start with a header showing today's date and today's progress: habits checked of habits due today as an orbit ring, and the number of open tasks due today or overdue.
 
-## Requirements
+#### Scenario: Progress
+- **WHEN** 1 of 3 habits due today is checked and 2 tasks are due today
+- **THEN** the header shows a ring with "1/3" and "2 tasks due"
+
+### Requirement: Tasks on Home
+Below the active projects, Home SHALL list the open tasks that are not part of a project (standalone or assigned to a KR or objective), ordered by deadline (overdue first, none last), then by creation. Each task SHALL show a checkbox, its title, what it is assigned to and its deadline badge. Ticking the checkbox SHALL complete it (with Undo); tapping elsewhere SHALL open its task page.
+
+#### Scenario: Order
+- **WHEN** standalone tasks A (no deadline), B (due tomorrow) and C (overdue) are open
+- **THEN** Home lists C, B, A
+
+#### Scenario: Project tasks not repeated
+- **WHEN** a project's open task is not assigned elsewhere
+- **THEN** it does not appear in Home's Tasks section
+
+### Requirement: New task from Home
+Home SHALL have a second floating button on the left that opens a sheet to create a task with title, optional deadline and optional assignment (project, KR or objective). Saving with only a title SHALL create a standalone task.
+
+#### Scenario: Two buttons
+- **WHEN** Home is shown
+- **THEN** a new-task button is shown bottom left and the quick-log button bottom right
+
+## MODIFIED Requirements
 
 ### Requirement: Home sections
 The Home tab SHALL show, from top to bottom, the today header and the sections "Habits due today", "Upcoming deadlines", "Active projects" and "Tasks". A section without items SHALL show a short empty state instead of being hidden.
@@ -63,51 +86,6 @@ The "Upcoming deadlines" section SHALL list items whose own deadline is overdue 
 - **WHEN** an active project's own deadline is tomorrow
 - **THEN** it is not listed under upcoming deadlines and its card shows "Due tomorrow"
 
-### Requirement: Upcoming deadlines display
-Upcoming deadlines SHALL be sorted by date (earliest first), then title. Each item SHALL show its title, what kind of item it is (task, project or KR), its date and, for tasks, the project title. Overdue items SHALL be marked as overdue. Tapping a task or project SHALL open the project detail; tapping a KR SHALL open the KR's edit form.
-
-#### Scenario: Overdue marked
-- **WHEN** today is 2026-10-05 and a task is due 2026-10-03
-- **THEN** the task is listed first and marked as overdue
-
-#### Scenario: Open task's project
-- **WHEN** the user taps an upcoming task
-- **THEN** the detail of the task's project opens
-
-### Requirement: Project urgency
-A project's urgency SHALL be computed from its effective deadline (see projects) in local calendar days from today: overdue 5, 0 to 3 days 4, 4 to 7 days 3, 8 to 30 days 2, more than 30 days or no effective deadline 1. Task due dates SHALL NOT affect urgency.
-
-#### Scenario: Overdue
-- **WHEN** a project's effective deadline was yesterday
-- **THEN** its urgency is 5
-
-#### Scenario: Due today
-- **WHEN** a project's effective deadline is today
-- **THEN** its urgency is 4
-
-#### Scenario: Boundaries
-- **WHEN** effective deadlines are 3, 4, 7, 8, 30 and 31 days away
-- **THEN** the urgencies are 4, 3, 3, 2, 2 and 1
-
-#### Scenario: No deadline
-- **WHEN** a project has no effective deadline
-- **THEN** its urgency is 1
-
-#### Scenario: Task due date ignored
-- **WHEN** a project has no effective deadline and an open task due tomorrow
-- **THEN** its urgency is 1
-
-### Requirement: Active projects ordered by score
-The "Active projects" section SHALL list all projects with status `active`, ordered by score (importance × urgency, highest first), then by effective deadline (earliest first, none last), then by title. The numeric score SHALL NOT be shown.
-
-#### Scenario: Score beats importance
-- **WHEN** project A has importance 5 and no deadline (score 5) and project B has importance 2 and is overdue (score 10)
-- **THEN** B is listed before A
-
-#### Scenario: Tie broken by deadline
-- **WHEN** two projects have the same score and only one has an effective deadline
-- **THEN** the one with the deadline is listed first
-
 ### Requirement: Project card
 Each project card SHALL show the title, the area as a colored chip (when set), a deadline badge and the next step as a checkbox row. The badge SHALL read "Overdue", "Due today", "Due tomorrow", "Due in N days" up to 30 days, or "Due dd-mm-yyyy" beyond that, based on the effective deadline. Projects without an effective deadline SHALL show no badge. A project without a next step SHALL show "No next step".
 
@@ -140,42 +118,3 @@ The Home tab SHALL have a floating button at the bottom right that opens quick l
 #### Scenario: Open quick log
 - **WHEN** the user taps the quick-log button on Home
 - **THEN** the quick log opens
-
-### Requirement: Today follows the calendar
-Home SHALL use the device's local date for "today". When the date changes while the app is open, or when the app returns to the foreground on a later date, Home SHALL recompute due habits, upcoming deadlines and urgencies for the new date.
-
-#### Scenario: New day
-- **WHEN** a daily habit was checked yesterday and the app is brought back to the foreground today
-- **THEN** the habit is listed unchecked
-
-### Requirement: Home updates live
-Home SHALL update immediately after any change to habits, habit checks, tasks, projects, key results or objectives, without a manual refresh.
-
-#### Scenario: Project activated elsewhere
-- **WHEN** the user activates a backlog project in the Plan tab and switches to Home
-- **THEN** the project is listed under active projects
-
-### Requirement: Today header
-Home SHALL start with a header showing today's date and today's progress: habits checked of habits due today as an orbit ring, and the number of open tasks due today or overdue.
-
-#### Scenario: Progress
-- **WHEN** 1 of 3 habits due today is checked and 2 tasks are due today
-- **THEN** the header shows a ring with "1/3" and "2 tasks due"
-
-### Requirement: Tasks on Home
-Below the active projects, Home SHALL list the open tasks that are not part of a project (standalone or assigned to a KR or objective), ordered by deadline (overdue first, none last), then by creation. Each task SHALL show a checkbox, its title, what it is assigned to and its deadline badge. Ticking the checkbox SHALL complete it (with Undo); tapping elsewhere SHALL open its task page.
-
-#### Scenario: Order
-- **WHEN** standalone tasks A (no deadline), B (due tomorrow) and C (overdue) are open
-- **THEN** Home lists C, B, A
-
-#### Scenario: Project tasks not repeated
-- **WHEN** a project's open task is not assigned elsewhere
-- **THEN** it does not appear in Home's Tasks section
-
-### Requirement: New task from Home
-Home SHALL have a second floating button on the left that opens a sheet to create a task with title, optional deadline and optional assignment (project, KR or objective). Saving with only a title SHALL create a standalone task.
-
-#### Scenario: Two buttons
-- **WHEN** Home is shown
-- **THEN** a new-task button is shown bottom left and the quick-log button bottom right

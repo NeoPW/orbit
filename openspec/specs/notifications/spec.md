@@ -41,7 +41,7 @@ Checking a habit SHALL cancel its reminder for that date. Unchecking it before t
 - **THEN** the 18:00 reminder is scheduled again
 
 ### Requirement: Deadline reminders
-For each item that Home lists as an upcoming deadline by its own deadline (open tasks of active projects, active projects, KRs of active objectives with progress below 1; see home), the app SHALL schedule two notifications at the default reminder time: one on the date the deadline enters the lead time (deadline minus lead time days), showing "Due in N days", and one on the deadline date, showing "Due today". Reminders whose time has already passed SHALL NOT be scheduled.
+For each open task (of an active project, or outside projects), each active project with an own deadline and each KR of an active objective with progress below 1 and an own deadline, the app SHALL schedule two notifications at the default reminder time: one on the date the deadline enters the lead time (deadline minus lead time days), showing "Due in N days", and one on the deadline date, showing "Due today". Reminders whose time has already passed SHALL NOT be scheduled.
 
 #### Scenario: Task due date
 - **WHEN** the lead time is 7 days, the default reminder time is 08:00 and an open task of an active project is due 2026-10-20
@@ -58,6 +58,10 @@ For each item that Home lists as an upcoming deadline by its own deadline (open 
 #### Scenario: Inherited deadline
 - **WHEN** an active project has no own deadline and inherits one from its KR
 - **THEN** no reminder is scheduled for the project itself
+
+#### Scenario: Standalone task
+- **WHEN** the standalone task "Tax return" is due 2026-10-20
+- **THEN** its reminders are scheduled like those of a project task
 
 ### Requirement: Reminders stay up to date
 The scheduled reminders SHALL reflect the current habits, habit checks, tasks, projects, key results, objectives, weekly reviews and settings: they SHALL be recomputed after any change to them, when the app starts and when it returns to the foreground. Reminders SHALL be scheduled for the next 14 days.
@@ -79,11 +83,11 @@ The scheduled reminders SHALL reflect the current habits, habit checks, tasks, p
 - **THEN** the review reminders move to Mondays
 
 ### Requirement: Open from a reminder
-Tapping a notification SHALL open the app on the related screen: Home for a habit reminder, the project detail for a task or project reminder, the KR's edit form for a KR reminder, and the weekly review for a weekly review reminder. This SHALL also work when the app was not running.
+Tapping a notification SHALL open the app on the related screen: Home for a habit reminder, the task page for a task reminder, the project detail for a project reminder, the KR's edit form for a KR reminder, and the weekly review for a weekly review reminder. This SHALL also work when the app was not running.
 
 #### Scenario: Tap a task reminder
-- **WHEN** the user taps the reminder of a task of project "Thesis"
-- **THEN** the app opens the detail of "Thesis"
+- **WHEN** the user taps the reminder of the task "Book venue"
+- **THEN** the app opens the task page of "Book venue"
 
 #### Scenario: Tap a habit reminder while the app is closed
 - **WHEN** the app is not running and the user taps a habit reminder
