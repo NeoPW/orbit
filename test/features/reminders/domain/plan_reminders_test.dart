@@ -40,12 +40,14 @@ List<DateTime> times(List<PlannedReminder> reminders) =>
 
 List<UpcomingDeadline> candidates({
   List<({Task task, Project project})> tasks = const [],
+  List<Task> outside = const [],
   List<Project> projects = const [],
   List<KeyResult> keyResults = const [],
   List<Objective> objectives = const [],
   required DateTime now,
 }) => deadlineCandidates(
   tasks: tasks,
+  tasksOutsideProjects: outside,
   projects: projects,
   keyResults: keyResults,
   objectives: objectives,
@@ -180,7 +182,7 @@ void main() {
       ]);
       expect(reminders.first.body, 'Task · Thesis · Due in 7 days');
       expect(reminders.last.body, 'Task · Thesis · Due today');
-      expect(reminders.first.route, '/projects/p');
+      expect(reminders.first.route, '/tasks/t');
       expect(reminders.first.kind, ReminderKind.deadline);
     });
 
@@ -220,6 +222,25 @@ void main() {
         now: now,
       );
       expect(reminders, isEmpty);
+    });
+
+    test('a standalone task is reminded like a project task', () {
+      final now = DateTime(2026, 10, 12, 6);
+      final reminders = plan(
+        deadlines: candidates(
+          outside: [
+            task('s', title: 'Tax return', dueDate: CalendarDate(2026, 10, 20)),
+          ],
+          now: now,
+        ),
+        now: now,
+      );
+      expect(times(reminders), [
+        DateTime(2026, 10, 13, 8),
+        DateTime(2026, 10, 20, 8),
+      ]);
+      expect(reminders.first.route, '/tasks/s');
+      expect(reminders.first.body, 'Task · Due in 7 days');
     });
 
     test('KR reminders open the KR form', () {

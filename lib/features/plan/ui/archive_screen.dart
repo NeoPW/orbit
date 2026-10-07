@@ -8,6 +8,8 @@ import '../../../core/time/date_format.dart';
 import '../../../core/widgets/async_body.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/max_width_body.dart';
+import '../../../core/widgets/orbit_chips.dart';
+import '../../projects/ui/project_labels.dart';
 import '../data/plan_providers.dart';
 
 /// Completed/archived objectives and completed projects. Tapping one opens
@@ -17,6 +19,7 @@ class ArchiveScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(title: const Text('Archive')),
       body: AsyncBody(
@@ -24,7 +27,7 @@ class ArchiveScreen extends ConsumerWidget {
         data: (items) => items.isEmpty
             ? const EmptyState(
                 icon: Icons.archive_outlined,
-                message: 'Nothing archived yet.',
+                message: 'Nothing archived yet',
               )
             : MaxWidthBody(
                 child: ListView(
@@ -35,16 +38,31 @@ class ArchiveScreen extends ConsumerWidget {
                           leading: const Icon(Icons.flag_outlined),
                           title: Text(objective.title),
                           subtitle: Text(
-                            '${objective.status == ObjectiveStatus.completed ? 'Completed' : 'Archived'} objective · '
-                            '${formatDateRange(objective.startDate, objective.endDate)}',
+                            formatDateRange(
+                              objective.startDate,
+                              objective.endDate,
+                            ),
                           ),
+                          trailing:
+                              objective.status == ObjectiveStatus.completed
+                              ? StatusChip<void>(
+                                  label: 'Completed',
+                                  color: colors.secondary,
+                                )
+                              : StatusChip<void>(
+                                  label: 'Archived',
+                                  color: colors.onSurfaceVariant,
+                                ),
                           onTap: () =>
                               context.push(Routes.objective(objective.id)),
                         ),
                         ArchivedProject(:final project) => ListTile(
                           leading: const Icon(Icons.folder_outlined),
                           title: Text(project.title),
-                          subtitle: const Text('Completed project'),
+                          trailing: StatusChip<void>(
+                            label: projectStatusLabel(project.status),
+                            color: projectStatusColor(context, project.status),
+                          ),
                           onTap: () => context.push(Routes.project(project.id)),
                         ),
                       },

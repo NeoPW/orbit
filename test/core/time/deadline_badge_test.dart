@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/time/calendar_date.dart';
-import 'package:orbit/features/home/domain/deadline_badge.dart';
+import 'package:orbit/core/time/deadline_badge.dart';
 
 void main() {
   final today = CalendarDate(2026, 10, 5);

@@ -162,6 +162,8 @@ create table if not exists public.tasks (
   updated_at timestamptz not null,
   deleted_at timestamptz,
   project_id uuid,
+  key_result_id uuid,
+  objective_id uuid,
   title text not null,
   notes text not null default '',
   due_date date,
@@ -169,6 +171,9 @@ create table if not exists public.tasks (
   completed_at timestamptz,
   server_updated_at timestamptz not null default clock_timestamp()
 );
+-- Added in schema version 4 (tasks assigned to a KR or objective).
+alter table public.tasks add column if not exists key_result_id uuid;
+alter table public.tasks add column if not exists objective_id uuid;
 create index if not exists tasks_user_server_updated
   on public.tasks (user_id, server_updated_at);
 alter table public.tasks enable row level security;
@@ -252,12 +257,15 @@ create table if not exists public.log_entries (
   deleted_at timestamptz,
   project_id uuid,
   key_result_id uuid,
+  task_id uuid,
   occurred_at timestamptz not null,
   duration_minutes integer,
   note text not null default '',
   source text not null,
   server_updated_at timestamptz not null default clock_timestamp()
 );
+-- Added in schema version 4 (work logged on a task).
+alter table public.log_entries add column if not exists task_id uuid;
 create index if not exists log_entries_user_server_updated
   on public.log_entries (user_id, server_updated_at);
 alter table public.log_entries enable row level security;

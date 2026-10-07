@@ -5,28 +5,39 @@ import '../../../core/db/app_database.dart';
 import '../../../core/widgets/date_field.dart';
 import '../../projects/data/project_repository.dart';
 import '../data/task_repository.dart';
+import '../domain/task_assignment.dart';
+import 'assignment_picker.dart';
 
-/// Adds a task to [projectId], or edits [task] when given. With
-/// [asNextStep], the new task becomes the project's next step.
+/// Adds a task (assigned to [projectId], or to [assignment]), or edits
+/// [task] when given. With [asNextStep], the new task becomes the
+/// project's next step.
 Future<void> showTaskDialog(
   BuildContext context, {
-  required String projectId,
+  String? projectId,
+  TaskAssignment? assignment,
   Task? task,
   bool asNextStep = false,
 }) => showDialog<void>(
   context: context,
-  builder: (context) =>
-      _TaskDialog(projectId: projectId, task: task, asNextStep: asNextStep),
+  builder: (context) => _TaskDialog(
+    assignment:
+        assignment ??
+        (task == null
+            ? (projectId == null ? const Standalone() : InProject(projectId))
+            : TaskAssignment.of(task)),
+    task: task,
+    asNextStep: asNextStep,
+  ),
 );
 
 class _TaskDialog extends ConsumerStatefulWidget {
   const _TaskDialog({
-    required this.projectId,
+    required this.assignment,
     this.task,
     this.asNextStep = false,
   });
 
-  final String projectId;
+  final TaskAssignment assignment;
   final Task? task;
   final bool asNextStep;
 
@@ -38,6 +49,7 @@ class _TaskDialogState extends ConsumerState<_TaskDialog> {
   late final _title = TextEditingController(text: widget.task?.title);
   late final _notes = TextEditingController(text: widget.task?.notes);
   late CalendarDate? _dueDate = widget.task?.dueDate;
+  late TaskAssignment _assignment = widget.assignment;
   String? _titleError;
   bool _saving = false;
 
@@ -60,13 +72,14 @@ class _TaskDialogState extends ConsumerState<_TaskDialog> {
     if (task == null) {
       final projects = ref.read(projectRepositoryProvider);
       final created = await repo.create(
-        projectId: widget.projectId,
+        assignment: _assignment,
         title: title,
         notes: _notes.text,
         dueDate: _dueDate,
       );
-      if (widget.asNextStep) {
-        await projects.setNextStep(widget.projectId, created.id);
+      final projectId = _assignment.projectId;
+      if (widget.asNextStep && projectId != null) {
+        await projects.setNextStep(projectId, created.id);
       }
     } else {
       await repo.update(
@@ -75,6 +88,7 @@ class _TaskDialogState extends ConsumerState<_TaskDialog> {
           notes: _notes.text,
           dueDate: Value(_dueDate),
         ),
+        assignment: _assignment,
       );
     }
     if (mounted) Navigator.of(context).pop();
@@ -123,6 +137,13 @@ class _TaskDialogState extends ConsumerState<_TaskDialog> {
               clearable: true,
               onChanged: (date) => setState(() => _dueDate = date),
             ),
+            if (!widget.asNextStep) ...[
+              const SizedBox(height: 16),
+              AssignmentPicker(
+                value: _assignment,
+                onChanged: (value) => setState(() => _assignment = value),
+              ),
+            ],
           ],
         ),
       ),

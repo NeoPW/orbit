@@ -88,8 +88,14 @@ class Projects extends Table with SyncColumns {
 }
 
 @TableIndex(name: 'tasks_project_id', columns: {#projectId})
+@TableIndex(name: 'tasks_key_result_id', columns: {#keyResultId})
+@TableIndex(name: 'tasks_objective_id', columns: {#objectiveId})
 class Tasks extends Table with SyncColumns {
+  /// At most one of [projectId], [keyResultId] and [objectiveId] is set;
+  /// none means a standalone task.
   TextColumn get projectId => text().nullable()();
+  TextColumn get keyResultId => text().nullable()();
+  TextColumn get objectiveId => text().nullable()();
   TextColumn get title => text()();
   TextColumn get notes => text().withDefault(const Constant(''))();
   TextColumn get dueDate =>
@@ -130,9 +136,11 @@ class HabitChecks extends Table with SyncColumns {
 
 @DataClassName('LogEntry')
 @TableIndex(name: 'log_entries_occurred_at', columns: {#occurredAt})
+@TableIndex(name: 'log_entries_task_id', columns: {#taskId})
 class LogEntries extends Table with SyncColumns {
   TextColumn get projectId => text().nullable()();
   TextColumn get keyResultId => text().nullable()();
+  TextColumn get taskId => text().nullable()();
   DateTimeColumn get occurredAt => dateTime()();
   IntColumn get durationMinutes => integer().nullable()();
   TextColumn get note => text().withDefault(const Constant(''))();

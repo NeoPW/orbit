@@ -24,18 +24,34 @@ class SectionHeading extends StatelessWidget {
   }
 }
 
-/// A muted one-line text for a section without items.
+/// An empty section: an icon, one muted line and optionally the action
+/// that fills it (visual-design spec, "Empty states").
 class SectionEmptyText extends StatelessWidget {
-  const SectionEmptyText(this.text, {super.key});
+  const SectionEmptyText(
+    this.text, {
+    super.key,
+    this.icon = Icons.blur_on_outlined,
+    this.action,
+  });
 
   final String text;
+  final IconData icon;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(
-        text,
-        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 8, 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: colors.outline),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(text, style: TextStyle(color: colors.onSurfaceVariant)),
+          ),
+          ?action,
+        ],
       ),
     );
   }

@@ -105,6 +105,8 @@ Task task(
   String id, {
   String? title,
   String? projectId,
+  String? keyResultId,
+  String? objectiveId,
   CalendarDate? dueDate,
   TaskStatus status = TaskStatus.open,
 }) => Task(
@@ -112,6 +114,8 @@ Task task(
   createdAt: _t0,
   updatedAt: _t0,
   projectId: projectId,
+  keyResultId: keyResultId,
+  objectiveId: objectiveId,
   title: title ?? id,
   notes: '',
   dueDate: dueDate,

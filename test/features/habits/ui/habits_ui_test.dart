@@ -43,12 +43,12 @@ void main() {
       );
       await pumpApp(tester, db: db, location: Routes.habits);
 
-      expect(find.textContaining('Project: Thesis'), findsOneWidget);
+      expect(find.text('Thesis'), findsOneWidget);
       expect(
         find.textContaining('Mon, Wed, Fri · Reminder 07:30'),
         findsOneWidget,
       );
-      expect(find.textContaining('No link'), findsOneWidget);
+      expect(find.textContaining('No link'), findsNothing);
       expect(find.text('Inactive'), findsOneWidget);
       final inactiveTile = find.ancestor(
         of: find.text('Meditate'),

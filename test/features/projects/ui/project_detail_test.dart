@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/db/app_database.dart';
 import 'package:orbit/core/router/routes.dart';
+import 'package:orbit/core/widgets/orbit_chips.dart';
 import 'package:orbit/features/log/ui/log_entry_tile.dart';
 import 'package:orbit/features/tasks/ui/task_tile.dart';
 
@@ -24,7 +25,7 @@ void main() {
       app.router.push(Routes.projectDetail(p.id));
       await tester.pumpAndSettle();
 
-      expect(find.widgetWithText(AppBar, 'Thesis'), findsOneWidget);
+      expect(find.text('Thesis'), findsOneWidget);
       expect(
         app.router.routeInformationProvider.value.uri.path,
         '/projects/${p.id}',
@@ -37,7 +38,7 @@ void main() {
       final p = await seed.projects.create(title: 'Thesis');
       await pumpApp(tester, db: db, location: Routes.projectDetail(p.id));
 
-      expect(find.widgetWithText(AppBar, 'Thesis'), findsOneWidget);
+      expect(find.text('Thesis'), findsOneWidget);
     });
   });
 
@@ -58,15 +59,16 @@ void main() {
       await pumpApp(tester, db: db, location: Routes.projectDetail(p.id));
 
       expect(find.text('Spring race'), findsOneWidget);
-      expect(find.text('Status: Active'), findsOneWidget);
-      expect(find.text('No area'), findsOneWidget);
-      expect(find.text('Key result: Run 100 km'), findsOneWidget);
-      expect(find.text('Importance 4'), findsOneWidget);
-      expect(find.text('No own deadline'), findsOneWidget);
+      expect(find.text('Active'), findsOneWidget);
+      expect(find.text('Key result · Run 100 km'), findsOneWidget);
       expect(
-        find.text('Effective: Due 15-11-2026 (from key result)'),
-        findsOneWidget,
+        tester.widget<ImportanceDots>(find.byType(ImportanceDots)).value,
+        4,
       );
+      expect(find.text('Due 15-11-2026 · KR'), findsOneWidget);
+      // Absent values are left out instead of spelled out.
+      expect(find.text('No area'), findsNothing);
+      expect(find.textContaining('Status:'), findsNothing);
     });
 
     testApp('edit opens the project form', (tester) async {
@@ -109,15 +111,47 @@ void main() {
         nextStep: 'Write intro',
       );
       await pumpApp(tester, db: db, location: Routes.projectDetail(p.id));
-      // The next-step line and the task tile.
-      expect(find.widgetWithText(ListTile, 'Write intro'), findsNWidgets(2));
+      // Only in the task list, marked as the next step.
+      expect(find.text('Write intro'), findsOneWidget);
+      final tile = tester.widget<TaskTile>(
+        find.widgetWithText(TaskTile, 'Write intro'),
+      );
+      expect(tile.isNextStep, isTrue);
+      expect(find.text('No next step'), findsNothing);
+    });
+
+    testApp('the next step comes first among the tasks', (tester) async {
+      final p = await seed.projects.create(title: 'Thesis');
+      await seed.tasks.create(projectId: p.id, title: 'Collect sources');
+      await seed.projects.setNextStepFromTitle(p.id, 'Write intro');
+      await pumpApp(tester, db: db, location: Routes.projectDetail(p.id));
+      expect(
+        tester.getTopLeft(find.text('Write intro')).dy,
+        lessThan(tester.getTopLeft(find.text('Collect sources')).dy),
+      );
+    });
+
+    testApp('tapping a task opens its page', (tester) async {
+      final p = await seed.projects.create(
+        title: 'Thesis',
+        nextStep: 'Write intro',
+      );
+      final app = await pumpApp(
+        tester,
+        db: db,
+        location: Routes.projectDetail(p.id),
+      );
+      await tester.tap(find.text('Write intro'));
+      await tester.pumpAndSettle();
+      final task = (await db.select(db.tasks).get()).single;
+      expect(app.router.state.uri.path, Routes.task(task.id));
     });
 
     testApp('without next step or tasks shows that', (tester) async {
       final p = await seed.projects.create(title: 'Garden');
       await pumpApp(tester, db: db, location: Routes.projectDetail(p.id));
       expect(find.text('No next step'), findsOneWidget);
-      expect(find.text('No open tasks'), findsOneWidget);
+      expect(find.byType(TaskTile), findsNothing);
     });
 
     testApp('adding a task shows it without a reload', (tester) async {
@@ -211,28 +245,34 @@ void main() {
     });
   });
 
-  group('status actions', () {
-    testApp('an active project offers all but Activate', (tester) async {
+  group('status chip', () {
+    testApp('an active project offers the other statuses', (tester) async {
       final p = await seed.projects.create(title: 'Thesis');
       await pumpApp(tester, db: db, location: Routes.projectDetail(p.id));
 
-      expect(find.text('Activate'), findsNothing);
-      expect(find.text('Pause'), findsOneWidget);
-      expect(find.text('Move to backlog'), findsOneWidget);
-      expect(find.text('Complete'), findsOneWidget);
+      await tester.tap(find.byTooltip('Change status'));
+      await tester.pumpAndSettle();
+      Finder item(String label) =>
+          find.widgetWithText(PopupMenuItem<ProjectStatus>, label);
+      expect(item('Active'), findsNothing);
+      expect(item('Paused'), findsOneWidget);
+      expect(item('Backlog'), findsOneWidget);
+      expect(item('Completed'), findsOneWidget);
     });
 
-    testApp('pause sets the status and shows it in the Backlog', (
+    testApp('pausing sets the status and shows it in the Backlog', (
       tester,
     ) async {
       final p = await seed.projects.create(title: 'Thesis');
       final app = await pumpApp(tester, db: db, location: Routes.plan);
       app.router.push(Routes.projectDetail(p.id));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Pause'));
+      await tester.tap(find.byTooltip('Change status'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Paused'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Status: Paused'), findsOneWidget);
+      expect(find.text('Paused'), findsOneWidget);
       expect((await seed.projects.get(p.id))!.status, ProjectStatus.paused);
 
       app.router.pop();
@@ -242,17 +282,19 @@ void main() {
       expect(find.text('Thesis'), findsOneWidget);
     });
 
-    testApp('complete puts the project in the Archive', (tester) async {
+    testApp('completing puts the project in the Archive', (tester) async {
       final p = await seed.projects.create(title: 'Thesis');
       final app = await pumpApp(tester, db: db, location: Routes.archive);
       expect(find.text('Thesis'), findsNothing);
       app.router.push(Routes.projectDetail(p.id));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Complete'));
+      await tester.tap(find.byTooltip('Change status'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Completed'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Status: Completed'), findsOneWidget);
-      expect(find.text('Activate'), findsOneWidget);
+      expect(find.text('Completed'), findsOneWidget);
+      expect(find.text('Activate'), findsNothing);
       app.router.pop();
       await tester.pumpAndSettle();
       expect(find.text('Thesis'), findsOneWidget);

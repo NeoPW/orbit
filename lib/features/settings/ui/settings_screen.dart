@@ -22,25 +22,36 @@ class SettingsScreen extends ConsumerWidget {
         value: ref.watch(appSettingsProvider),
         data: (settings) => MaxWidthBody(
           child: ListView(
+            padding: const EdgeInsets.only(bottom: 24),
             children: [
               const SectionHeading('Reminders'),
-              _RemindersSwitch(enabled: settings.remindersEnabled),
-              _TimeTile(
-                title: 'Default reminder time',
-                subtitle: 'For habits without own time and for deadlines',
-                time: settings.defaultReminderTime,
-                onPicked: (repo, time) => repo.setDefaultReminderTime(time),
+              SettingsGroup(
+                children: [
+                  _RemindersSwitch(enabled: settings.remindersEnabled),
+                  _TimeTile(
+                    title: 'Default reminder time',
+                    subtitle: 'For habits without own time and for deadlines',
+                    time: settings.defaultReminderTime,
+                    onPicked: (repo, time) => repo.setDefaultReminderTime(time),
+                  ),
+                ],
               ),
               const SectionHeading('Weekly review'),
-              _ReviewDay(day: settings.reviewDay),
-              _TimeTile(
-                title: 'Review time',
-                subtitle: 'When the weekly review reminder comes',
-                time: settings.reviewTime,
-                onPicked: (repo, time) => repo.setReviewTime(time),
+              SettingsGroup(
+                children: [
+                  _ReviewDay(day: settings.reviewDay),
+                  _TimeTile(
+                    title: 'Review time',
+                    subtitle: 'When the weekly review reminder comes',
+                    time: settings.reviewTime,
+                    onPicked: (repo, time) => repo.setReviewTime(time),
+                  ),
+                ],
               ),
               const SectionHeading('Deadlines'),
-              _LeadDaysField(days: settings.deadlineLeadDays),
+              SettingsGroup(
+                children: [_LeadDaysField(days: settings.deadlineLeadDays)],
+              ),
               const AccountSection(),
             ],
           ),
@@ -48,6 +59,23 @@ class SettingsScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// One card holding a section's settings.
+class SettingsGroup extends StatelessWidget {
+  const SettingsGroup({super.key, required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    margin: const EdgeInsets.symmetric(horizontal: 16),
+    clipBehavior: Clip.antiAlias,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: children,
+    ),
+  );
 }
 
 class _RemindersSwitch extends ConsumerWidget {

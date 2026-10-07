@@ -167,3 +167,110 @@ final class HomeProjectsProvider
 }
 
 String _$homeProjectsHash() => r'2045bcb96d23873c690cafb6c90d58dcaa51569d';
+
+/// Habits checked of due today, and open tasks due today or overdue.
+
+@ProviderFor(todayProgress)
+final todayProgressProvider = TodayProgressProvider._();
+
+/// Habits checked of due today, and open tasks due today or overdue.
+
+final class TodayProgressProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<TodayProgress>,
+          AsyncValue<TodayProgress>,
+          AsyncValue<TodayProgress>
+        >
+    with $Provider<AsyncValue<TodayProgress>> {
+  /// Habits checked of due today, and open tasks due today or overdue.
+  TodayProgressProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'todayProgressProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$todayProgressHash();
+
+  @$internal
+  @override
+  $ProviderElement<AsyncValue<TodayProgress>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  AsyncValue<TodayProgress> create(Ref ref) {
+    return todayProgress(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AsyncValue<TodayProgress> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AsyncValue<TodayProgress>>(value),
+    );
+  }
+}
+
+String _$todayProgressHash() => r'e9b202386a25544445e3be146c8fa9dd6bd20d8a';
+
+/// Home's "Tasks": open tasks outside projects, by deadline (overdue first,
+/// none last), then by creation (home spec, "Tasks on Home").
+
+@ProviderFor(homeTasks)
+final homeTasksProvider = HomeTasksProvider._();
+
+/// Home's "Tasks": open tasks outside projects, by deadline (overdue first,
+/// none last), then by creation (home spec, "Tasks on Home").
+
+final class HomeTasksProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<HomeTask>>,
+          AsyncValue<List<HomeTask>>,
+          AsyncValue<List<HomeTask>>
+        >
+    with $Provider<AsyncValue<List<HomeTask>>> {
+  /// Home's "Tasks": open tasks outside projects, by deadline (overdue first,
+  /// none last), then by creation (home spec, "Tasks on Home").
+  HomeTasksProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'homeTasksProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$homeTasksHash();
+
+  @$internal
+  @override
+  $ProviderElement<AsyncValue<List<HomeTask>>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  AsyncValue<List<HomeTask>> create(Ref ref) {
+    return homeTasks(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AsyncValue<List<HomeTask>> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AsyncValue<List<HomeTask>>>(value),
+    );
+  }
+}
+
+String _$homeTasksHash() => r'ecc199766f1cdcbcd998ad7e26b751f5c64cfdb9';

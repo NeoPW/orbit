@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/widgets/max_width_body.dart';
 import '../../../core/widgets/section_heading.dart';
+import '../../../core/widgets/settings_button.dart';
 import '../../account/ui/sync_refresh.dart';
 import '../data/review_providers.dart';
 import '../data/review_repository.dart';
@@ -26,7 +27,10 @@ class ReviewScreen extends ConsumerWidget {
         ? 'Continue weekly review'
         : 'Edit weekly review';
     return Scaffold(
-      appBar: AppBar(title: const Text('Review')),
+      appBar: AppBar(
+        title: const Text('Review'),
+        actions: const [SettingsButton()],
+      ),
       body: MaxWidthBody(
         child: SyncRefresh(
           child: ListView(
@@ -36,6 +40,9 @@ class ReviewScreen extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                  ),
                   onPressed: () => context.push(Routes.weeklyReview),
                   icon: const Icon(Icons.rate_review_outlined),
                   label: Text(label),
@@ -74,8 +81,14 @@ class _PlanCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("This week's plan", style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.explore_outlined, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Text("This week's plan", style: theme.textTheme.titleMedium),
+              ],
+            ),
+            const SizedBox(height: 12),
             if (latest == null)
               Text(
                 'No plan yet. Write one in your weekly review.',

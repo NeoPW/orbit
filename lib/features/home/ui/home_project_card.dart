@@ -3,24 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/routes.dart';
-import '../../../core/time/date_format.dart';
 import '../../../core/time/today.dart';
 import '../../../core/widgets/area_dot.dart';
+import '../../../core/widgets/orbit_chips.dart';
+import '../../settings/data/settings_repository.dart';
 import '../../tasks/ui/complete_task.dart';
 import '../data/home_providers.dart';
-import '../domain/deadline_badge.dart';
 
-String deadlineBadgeText(DeadlineBadge badge) => switch (badge) {
-  Overdue() => 'Overdue',
-  DueToday() => 'Due today',
-  DueTomorrow() => 'Due tomorrow',
-  DueInDays(:final days) => 'Due in $days days',
-  DueOn(:final date) => 'Due ${formatDate(date)}',
-};
-
-/// An active project on Home: title, area, deadline badge and next step.
-/// Tapping the next step completes it (via the next-step prompt); tapping
-/// elsewhere opens the project detail.
+/// An active project on Home: an area accent, title, deadline badge, area
+/// and importance, and the next step as a checkbox row. Ticking the next
+/// step completes it (via the next-step prompt); tapping elsewhere opens
+/// the project detail.
 class HomeProjectCard extends ConsumerWidget {
   const HomeProjectCard({super.key, required this.item});
 
@@ -29,104 +22,109 @@ class HomeProjectCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final muted = theme.textTheme.bodySmall?.copyWith(
-      color: theme.colorScheme.onSurfaceVariant,
-    );
+    final colors = theme.colorScheme;
     final today = ref.watch(todayProvider);
+    final leadDays = ref.watch(appSettingsProvider).value?.deadlineLeadDays;
     final deadline = item.scored.deadline;
-    final badge = deadline == null ? null : deadlineBadge(deadline.date, today);
     final area = item.area;
     final nextStep = item.nextStep;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => context.push(Routes.projectDetail(item.project.id)),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      item.project.title,
-                      style: theme.textTheme.titleMedium,
-                    ),
-                  ),
-                  if (badge != null) _Badge(badge: badge),
-                ],
+              Container(
+                width: 4,
+                color: area == null
+                    ? colors.outlineVariant
+                    : colorFromHex(area.color),
               ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  if (area != null) ...[
-                    AreaDot(color: area.color),
-                    const SizedBox(width: 4),
-                  ],
-                  Text(area?.name ?? 'No area', style: muted),
-                ],
-              ),
-              const SizedBox(height: 4),
-              if (nextStep == null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text('No next step', style: muted),
-                )
-              else
-                InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: () =>
-                      completeTask(context, ref, nextStep, isNextStep: true),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.check_box_outline_blank,
-                          size: 20,
-                          color: theme.colorScheme.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item.project.title,
+                              style: theme.textTheme.titleMedium,
+                            ),
+                          ),
+                          if (deadline != null)
+                            DeadlineChip(
+                              date: deadline.date,
+                              today: today,
+                              leadDays: leadDays ?? 7,
+                              inherited: deadline.inherited,
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 6,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          if (area != null) AreaChip(area: area),
+                          ImportanceDots(value: item.project.importance),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      if (nextStep == null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Text(
-                            nextStep.title,
-                            semanticsLabel: 'Next step: ${nextStep.title}',
+                            'No next step',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        )
+                      else
+                        InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () => completeTask(
+                            context,
+                            ref,
+                            nextStep,
+                            isNextStep: true,
+                          ),
+                          child: Row(
+                            children: [
+                              Checkbox(
+                                value: false,
+                                semanticLabel: 'Complete ${nextStep.title}',
+                                onChanged: (_) => completeTask(
+                                  context,
+                                  ref,
+                                  nextStep,
+                                  isNextStep: true,
+                                ),
+                              ),
+                              Icon(Icons.flag, size: 14, color: colors.primary),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  nextStep.title,
+                                  semanticsLabel:
+                                      'Next step: ${nextStep.title}',
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
+              ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Badge extends StatelessWidget {
-  const _Badge({required this.badge});
-
-  final DeadlineBadge badge;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final urgent = badge is Overdue || badge is DueToday;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: urgent ? colors.errorContainer : colors.secondaryContainer,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        deadlineBadgeText(badge),
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: urgent ? colors.onErrorContainer : colors.onSecondaryContainer,
         ),
       ),
     );

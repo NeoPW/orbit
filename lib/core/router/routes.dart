@@ -11,7 +11,7 @@ abstract final class Routes {
   static const archive = '/plan/archive';
   static const areas = '/plan/areas';
   static const habits = '/plan/habits';
-  static const settings = '/plan/settings';
+  static const settings = '/settings';
 
   static const newObjective = '/plan/objectives/new';
   static String objective(String id) => '/plan/objectives/$id';
@@ -22,6 +22,9 @@ abstract final class Routes {
   static String project(String id) => '/plan/projects/$id';
   static const newHabit = '/plan/habits/new';
   static String habit(String id) => '/plan/habits/$id';
+
+  /// Task page, reachable from every tab and from reminders.
+  static String task(String id) => '/tasks/$id';
 
   /// Project detail, reachable from Home and Plan.
   static String projectDetail(String id) => '/projects/$id';

@@ -91,9 +91,11 @@ List<PlannedReminder> planReminders({
       DeadlineKind.keyResult => 'Key result',
     };
     final context = [kind, ?item.projectTitle].join(' · ');
-    final route = item.kind == DeadlineKind.keyResult
-        ? Routes.keyResult(item.id)
-        : Routes.projectDetail(item.projectId!);
+    final route = switch (item.kind) {
+      DeadlineKind.keyResult => Routes.keyResult(item.id),
+      DeadlineKind.task => Routes.task(item.id),
+      DeadlineKind.project => Routes.projectDetail(item.id),
+    };
 
     for (final (date, text) in [
       (item.date.addDays(-leadDays), 'Due in $leadDays days'),

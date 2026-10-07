@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -51,6 +51,15 @@ class AppDatabase extends _$AppDatabase {
       from2To3: (m, schema) async {
         await m.createTable(schema.reviewKrSnapshots);
         await m.createIndex(schema.reviewKrSnapshotsWeeklyReviewId);
+      },
+      // v4: tasks assigned to a KR or objective, log entries of a task.
+      from3To4: (m, schema) async {
+        await m.addColumn(schema.tasks, schema.tasks.keyResultId);
+        await m.addColumn(schema.tasks, schema.tasks.objectiveId);
+        await m.addColumn(schema.logEntries, schema.logEntries.taskId);
+        await m.createIndex(schema.tasksKeyResultId);
+        await m.createIndex(schema.tasksObjectiveId);
+        await m.createIndex(schema.logEntriesTaskId);
       },
     ),
   );

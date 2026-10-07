@@ -221,3 +221,167 @@ final class DueTasksProvider
 }
 
 String _$dueTasksHash() => r'4a3098e8ba1077e7e2b5350dbe908a87cdb2f9f7';
+
+/// A task, open or done.
+
+@ProviderFor(task)
+final taskProvider = TaskFamily._();
+
+/// A task, open or done.
+
+final class TaskProvider
+    extends $FunctionalProvider<AsyncValue<Task?>, Task?, Stream<Task?>>
+    with $FutureModifier<Task?>, $StreamProvider<Task?> {
+  /// A task, open or done.
+  TaskProvider._({
+    required TaskFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'taskProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$taskHash();
+
+  @override
+  String toString() {
+    return r'taskProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<Task?> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<Task?> create(Ref ref) {
+    final argument = this.argument as String;
+    return task(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TaskProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$taskHash() => r'38c285bae04dbe53f57995c0291d238e292e5ea3';
+
+/// A task, open or done.
+
+final class TaskFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<Task?>, String> {
+  TaskFamily._()
+    : super(
+        retry: null,
+        name: r'taskProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A task, open or done.
+
+  TaskProvider call(String id) => TaskProvider._(argument: id, from: this);
+
+  @override
+  String toString() => r'taskProvider';
+}
+
+/// Open tasks outside projects, for Home.
+
+@ProviderFor(tasksOutsideProjects)
+final tasksOutsideProjectsProvider = TasksOutsideProjectsProvider._();
+
+/// Open tasks outside projects, for Home.
+
+final class TasksOutsideProjectsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Task>>,
+          List<Task>,
+          Stream<List<Task>>
+        >
+    with $FutureModifier<List<Task>>, $StreamProvider<List<Task>> {
+  /// Open tasks outside projects, for Home.
+  TasksOutsideProjectsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'tasksOutsideProjectsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$tasksOutsideProjectsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Task>> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Task>> create(Ref ref) {
+    return tasksOutsideProjects(ref);
+  }
+}
+
+String _$tasksOutsideProjectsHash() =>
+    r'6d75fc06a6ea98f91857f3868b5739b652570ddc';
+
+/// Open tasks assigned to a KR or objective, for Plan.
+
+@ProviderFor(assignedTasks)
+final assignedTasksProvider = AssignedTasksProvider._();
+
+/// Open tasks assigned to a KR or objective, for Plan.
+
+final class AssignedTasksProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Task>>,
+          List<Task>,
+          Stream<List<Task>>
+        >
+    with $FutureModifier<List<Task>>, $StreamProvider<List<Task>> {
+  /// Open tasks assigned to a KR or objective, for Plan.
+  AssignedTasksProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'assignedTasksProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$assignedTasksHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Task>> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Task>> create(Ref ref) {
+    return assignedTasks(ref);
+  }
+}
+
+String _$assignedTasksHash() => r'95e849d5af61cc533b74614821b28d48473955b0';

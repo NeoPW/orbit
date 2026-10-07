@@ -58,7 +58,69 @@ final class PlanOverviewProvider
   }
 }
 
-String _$planOverviewHash() => r'39dc3e68bbcec95ff3e93a7e5c44f14d37ec7c02';
+String _$planOverviewHash() => r'6a144a4a79ca3643075a3ed2e3a2148c7403ca07';
+
+/// The item in Plan's detail pane (visual-design spec, "Two panes on wide
+/// screens"); kept while switching tabs.
+
+@ProviderFor(PlanSelection)
+final planSelectionProvider = PlanSelectionProvider._();
+
+/// The item in Plan's detail pane (visual-design spec, "Two panes on wide
+/// screens"); kept while switching tabs.
+final class PlanSelectionProvider
+    extends $NotifierProvider<PlanSelection, PlanItem?> {
+  /// The item in Plan's detail pane (visual-design spec, "Two panes on wide
+  /// screens"); kept while switching tabs.
+  PlanSelectionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'planSelectionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$planSelectionHash();
+
+  @$internal
+  @override
+  PlanSelection create() => PlanSelection();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PlanItem? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PlanItem?>(value),
+    );
+  }
+}
+
+String _$planSelectionHash() => r'06cc7003c7fab581b3f8971095ddfe0a98fb24f0';
+
+/// The item in Plan's detail pane (visual-design spec, "Two panes on wide
+/// screens"); kept while switching tabs.
+
+abstract class _$PlanSelection extends $Notifier<PlanItem?> {
+  PlanItem? build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<PlanItem?, PlanItem?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<PlanItem?, PlanItem?>,
+              PlanItem?,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
 
 /// Completed/archived objectives and completed projects, most recently
 /// updated first.

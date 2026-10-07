@@ -18,6 +18,7 @@ class LogRepository extends Repository {
   Future<LogEntry> add({
     String? projectId,
     String? keyResultId,
+    String? taskId,
     int? durationMinutes,
     String note = '',
     required LogSource source,
@@ -32,6 +33,7 @@ class LogRepository extends Repository {
             updatedAt: now,
             projectId: Value(projectId),
             keyResultId: Value(keyResultId),
+            taskId: Value(taskId),
             occurredAt: now,
             durationMinutes: Value(durationMinutes),
             note: Value(note.trim()),
@@ -40,13 +42,18 @@ class LogRepository extends Repository {
         );
   }
 
-  /// Logs work on a project by hand (quick log, "Log work").
+  /// Logs work by hand (quick log, "Log work") on a project or a task; a
+  /// task's entry also carries the task's project or KR.
   Future<LogEntry> createManual({
-    required String projectId,
+    String? projectId,
+    String? keyResultId,
+    String? taskId,
     int? durationMinutes,
     String note = '',
   }) => add(
     projectId: projectId,
+    keyResultId: keyResultId,
+    taskId: taskId,
     durationMinutes: durationMinutes,
     note: note,
     source: LogSource.manual,
@@ -71,6 +78,29 @@ class LogRepository extends Repository {
                 e.occurredAt.isSmallerThanValue(to.toUtc()),
           ))
           .watch();
+
+  /// The task's entries, most recent first.
+  Stream<List<LogEntry>> watchForTask(String taskId) =>
+      (db.select(db.logEntries)
+            ..where((e) => alive(e) & e.taskId.equals(taskId))
+            ..orderBy([
+              (e) => OrderingTerm.desc(e.occurredAt),
+              (e) => OrderingTerm.desc(e.createdAt),
+            ]))
+          .watch();
+
+  /// The time of each task's most recent entry, by task ID.
+  Stream<Map<String, DateTime>> watchLastLoggedAtTasks() {
+    final taskId = db.logEntries.taskId;
+    final latest = db.logEntries.occurredAt.max();
+    final query = db.selectOnly(db.logEntries)
+      ..addColumns([taskId, latest])
+      ..where(alive(db.logEntries) & taskId.isNotNull())
+      ..groupBy([taskId]);
+    return query.watch().map(
+      (rows) => {for (final row in rows) row.read(taskId)!: row.read(latest)!},
+    );
+  }
 
   /// The time of each project's most recent entry, by project ID. Projects
   /// without entries are missing from the map.
@@ -112,3 +142,13 @@ Stream<List<LogEntry>> projectLog(Ref ref, String projectId) =>
 @riverpod
 Stream<Map<String, DateTime>> lastLoggedAt(Ref ref) =>
     ref.watch(logRepositoryProvider).watchLastLoggedAt();
+
+/// A task's log entries, most recent first.
+@riverpod
+Stream<List<LogEntry>> taskLog(Ref ref, String taskId) =>
+    ref.watch(logRepositoryProvider).watchForTask(taskId);
+
+/// The time of each task's most recent log entry.
+@riverpod
+Stream<Map<String, DateTime>> lastLoggedAtTasks(Ref ref) =>
+    ref.watch(logRepositoryProvider).watchLastLoggedAtTasks();

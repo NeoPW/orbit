@@ -74,4 +74,16 @@ void main() {
     final entries = await r.logs.watchBetween(from, to).first;
     expect(entries.map((e) => e.note).toSet(), {first.note, last.note});
   });
+
+  test('manual entries on a task and the last-logged time per task', () async {
+    final entry = await r.logs.createManual(taskId: 't1', durationMinutes: 30);
+    expect(entry.taskId, 't1');
+    expect(entry.projectId, isNull);
+    expect((await r.logs.watchForTask('t1').first).map((e) => e.id), [
+      entry.id,
+    ]);
+    expect(await r.logs.watchLastLoggedAtTasks().first, {
+      't1': entry.occurredAt,
+    });
+  });
 }

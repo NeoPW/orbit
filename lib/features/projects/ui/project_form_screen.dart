@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/db/app_database.dart';
+import '../../../core/time/date_format.dart';
 import '../../../core/widgets/area_dot.dart';
 import '../../../core/widgets/confirm_delete.dart';
 import '../../../core/widgets/date_field.dart';
@@ -13,7 +14,6 @@ import '../../objectives/data/objective_repository.dart';
 import '../data/project_repository.dart';
 import '../domain/project_deadline.dart';
 import 'project_labels.dart';
-import 'project_tile.dart';
 
 class ProjectFormScreen extends ConsumerWidget {
   const ProjectFormScreen({super.key, this.projectId});
@@ -249,8 +249,9 @@ class _ProjectFormState extends ConsumerState<_ProjectForm> {
           label: 'Deadline (optional)',
           value: _deadline,
           clearable: true,
-          helperText: _deadline == null
-              ? 'Effective: ${deadlineLabel(effective)}'
+          helperText: _deadline == null && effective != null
+              ? 'Uses the key result\'s deadline: '
+                    '${formatDate(effective.date)}'
               : null,
           onChanged: (date) => setState(() => _deadline = date),
         ),

@@ -6,6 +6,7 @@ import '../../../core/router/routes.dart';
 import '../../../core/widgets/async_body.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/max_width_body.dart';
+import '../../../core/widgets/orbit_ring.dart';
 import '../../../core/widgets/section_heading.dart';
 import '../data/review_repository.dart';
 import 'week_format.dart';
@@ -30,15 +31,19 @@ class ReviewHistoryScreen extends ConsumerWidget {
                   children: [
                     for (final review in reviews)
                       ListTile(
-                        leading: CircleAvatar(child: Text('${review.score}')),
-                        title: Text(formatWeek(review.weekStart)),
-                        subtitle: Text(
-                          review.planNextWeek.isEmpty
-                              ? 'No plan written'
-                              : review.planNextWeek,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                        leading: OrbitRing(
+                          progress: (review.score ?? 0) / 10,
+                          size: 44,
+                          label: '${review.score}',
                         ),
+                        title: Text(formatWeek(review.weekStart)),
+                        subtitle: review.planNextWeek.isEmpty
+                            ? null
+                            : Text(
+                                review.planNextWeek,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                         onTap: () => context.push(Routes.pastReview(review.id)),
                       ),
                   ],
@@ -75,7 +80,14 @@ class PastReviewScreen extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: 24),
                   children: [
                     const SectionHeading('Score'),
-                    ListTile(title: Text('${review.score} / 10')),
+                    ListTile(
+                      leading: OrbitRing(
+                        progress: (review.score ?? 0) / 10,
+                        size: 44,
+                        label: '${review.score}',
+                      ),
+                      title: Text('${review.score} / 10'),
+                    ),
                     const SectionHeading('Reflection'),
                     _Text(review.reflection, empty: 'No reflection written'),
                     const SectionHeading('Plan for next week'),

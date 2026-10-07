@@ -2761,6 +2761,28 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _keyResultIdMeta = const VerificationMeta(
+    'keyResultId',
+  );
+  @override
+  late final GeneratedColumn<String> keyResultId = GeneratedColumn<String>(
+    'key_result_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _objectiveIdMeta = const VerificationMeta(
+    'objectiveId',
+  );
+  @override
+  late final GeneratedColumn<String> objectiveId = GeneratedColumn<String>(
+    'objective_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   @override
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
@@ -2816,6 +2838,8 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     updatedAt,
     deletedAt,
     projectId,
+    keyResultId,
+    objectiveId,
     title,
     notes,
     dueDate,
@@ -2865,6 +2889,24 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
       context.handle(
         _projectIdMeta,
         projectId.isAcceptableOrUnknown(data['project_id']!, _projectIdMeta),
+      );
+    }
+    if (data.containsKey('key_result_id')) {
+      context.handle(
+        _keyResultIdMeta,
+        keyResultId.isAcceptableOrUnknown(
+          data['key_result_id']!,
+          _keyResultIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('objective_id')) {
+      context.handle(
+        _objectiveIdMeta,
+        objectiveId.isAcceptableOrUnknown(
+          data['objective_id']!,
+          _objectiveIdMeta,
+        ),
       );
     }
     if (data.containsKey('title')) {
@@ -2919,6 +2961,14 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         DriftSqlType.string,
         data['${effectivePrefix}project_id'],
       ),
+      keyResultId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}key_result_id'],
+      ),
+      objectiveId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}objective_id'],
+      ),
       title: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}title'],
@@ -2971,7 +3021,12 @@ class Task extends DataClass implements Insertable<Task> {
 
   /// UTC, set when the row is soft-deleted.
   final DateTime? deletedAt;
+
+  /// At most one of [projectId], [keyResultId] and [objectiveId] is set;
+  /// none means a standalone task.
   final String? projectId;
+  final String? keyResultId;
+  final String? objectiveId;
   final String title;
   final String notes;
   final CalendarDate? dueDate;
@@ -2983,6 +3038,8 @@ class Task extends DataClass implements Insertable<Task> {
     required this.updatedAt,
     this.deletedAt,
     this.projectId,
+    this.keyResultId,
+    this.objectiveId,
     required this.title,
     required this.notes,
     this.dueDate,
@@ -3000,6 +3057,12 @@ class Task extends DataClass implements Insertable<Task> {
     }
     if (!nullToAbsent || projectId != null) {
       map['project_id'] = Variable<String>(projectId);
+    }
+    if (!nullToAbsent || keyResultId != null) {
+      map['key_result_id'] = Variable<String>(keyResultId);
+    }
+    if (!nullToAbsent || objectiveId != null) {
+      map['objective_id'] = Variable<String>(objectiveId);
     }
     map['title'] = Variable<String>(title);
     map['notes'] = Variable<String>(notes);
@@ -3030,6 +3093,12 @@ class Task extends DataClass implements Insertable<Task> {
       projectId: projectId == null && nullToAbsent
           ? const Value.absent()
           : Value(projectId),
+      keyResultId: keyResultId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(keyResultId),
+      objectiveId: objectiveId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(objectiveId),
       title: Value(title),
       notes: Value(notes),
       dueDate: dueDate == null && nullToAbsent
@@ -3053,6 +3122,8 @@ class Task extends DataClass implements Insertable<Task> {
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       projectId: serializer.fromJson<String?>(json['projectId']),
+      keyResultId: serializer.fromJson<String?>(json['keyResultId']),
+      objectiveId: serializer.fromJson<String?>(json['objectiveId']),
       title: serializer.fromJson<String>(json['title']),
       notes: serializer.fromJson<String>(json['notes']),
       dueDate: serializer.fromJson<CalendarDate?>(json['dueDate']),
@@ -3069,6 +3140,8 @@ class Task extends DataClass implements Insertable<Task> {
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'projectId': serializer.toJson<String?>(projectId),
+      'keyResultId': serializer.toJson<String?>(keyResultId),
+      'objectiveId': serializer.toJson<String?>(objectiveId),
       'title': serializer.toJson<String>(title),
       'notes': serializer.toJson<String>(notes),
       'dueDate': serializer.toJson<CalendarDate?>(dueDate),
@@ -3083,6 +3156,8 @@ class Task extends DataClass implements Insertable<Task> {
     DateTime? updatedAt,
     Value<DateTime?> deletedAt = const Value.absent(),
     Value<String?> projectId = const Value.absent(),
+    Value<String?> keyResultId = const Value.absent(),
+    Value<String?> objectiveId = const Value.absent(),
     String? title,
     String? notes,
     Value<CalendarDate?> dueDate = const Value.absent(),
@@ -3094,6 +3169,8 @@ class Task extends DataClass implements Insertable<Task> {
     updatedAt: updatedAt ?? this.updatedAt,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
     projectId: projectId.present ? projectId.value : this.projectId,
+    keyResultId: keyResultId.present ? keyResultId.value : this.keyResultId,
+    objectiveId: objectiveId.present ? objectiveId.value : this.objectiveId,
     title: title ?? this.title,
     notes: notes ?? this.notes,
     dueDate: dueDate.present ? dueDate.value : this.dueDate,
@@ -3107,6 +3184,12 @@ class Task extends DataClass implements Insertable<Task> {
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
       projectId: data.projectId.present ? data.projectId.value : this.projectId,
+      keyResultId: data.keyResultId.present
+          ? data.keyResultId.value
+          : this.keyResultId,
+      objectiveId: data.objectiveId.present
+          ? data.objectiveId.value
+          : this.objectiveId,
       title: data.title.present ? data.title.value : this.title,
       notes: data.notes.present ? data.notes.value : this.notes,
       dueDate: data.dueDate.present ? data.dueDate.value : this.dueDate,
@@ -3125,6 +3208,8 @@ class Task extends DataClass implements Insertable<Task> {
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('projectId: $projectId, ')
+          ..write('keyResultId: $keyResultId, ')
+          ..write('objectiveId: $objectiveId, ')
           ..write('title: $title, ')
           ..write('notes: $notes, ')
           ..write('dueDate: $dueDate, ')
@@ -3141,6 +3226,8 @@ class Task extends DataClass implements Insertable<Task> {
     updatedAt,
     deletedAt,
     projectId,
+    keyResultId,
+    objectiveId,
     title,
     notes,
     dueDate,
@@ -3156,6 +3243,8 @@ class Task extends DataClass implements Insertable<Task> {
           other.updatedAt == this.updatedAt &&
           other.deletedAt == this.deletedAt &&
           other.projectId == this.projectId &&
+          other.keyResultId == this.keyResultId &&
+          other.objectiveId == this.objectiveId &&
           other.title == this.title &&
           other.notes == this.notes &&
           other.dueDate == this.dueDate &&
@@ -3169,6 +3258,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
   final Value<DateTime> updatedAt;
   final Value<DateTime?> deletedAt;
   final Value<String?> projectId;
+  final Value<String?> keyResultId;
+  final Value<String?> objectiveId;
   final Value<String> title;
   final Value<String> notes;
   final Value<CalendarDate?> dueDate;
@@ -3181,6 +3272,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.updatedAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
     this.projectId = const Value.absent(),
+    this.keyResultId = const Value.absent(),
+    this.objectiveId = const Value.absent(),
     this.title = const Value.absent(),
     this.notes = const Value.absent(),
     this.dueDate = const Value.absent(),
@@ -3194,6 +3287,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
     required DateTime updatedAt,
     this.deletedAt = const Value.absent(),
     this.projectId = const Value.absent(),
+    this.keyResultId = const Value.absent(),
+    this.objectiveId = const Value.absent(),
     required String title,
     this.notes = const Value.absent(),
     this.dueDate = const Value.absent(),
@@ -3211,6 +3306,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? deletedAt,
     Expression<String>? projectId,
+    Expression<String>? keyResultId,
+    Expression<String>? objectiveId,
     Expression<String>? title,
     Expression<String>? notes,
     Expression<String>? dueDate,
@@ -3224,6 +3321,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
       if (updatedAt != null) 'updated_at': updatedAt,
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (projectId != null) 'project_id': projectId,
+      if (keyResultId != null) 'key_result_id': keyResultId,
+      if (objectiveId != null) 'objective_id': objectiveId,
       if (title != null) 'title': title,
       if (notes != null) 'notes': notes,
       if (dueDate != null) 'due_date': dueDate,
@@ -3239,6 +3338,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Value<DateTime>? updatedAt,
     Value<DateTime?>? deletedAt,
     Value<String?>? projectId,
+    Value<String?>? keyResultId,
+    Value<String?>? objectiveId,
     Value<String>? title,
     Value<String>? notes,
     Value<CalendarDate?>? dueDate,
@@ -3252,6 +3353,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
       projectId: projectId ?? this.projectId,
+      keyResultId: keyResultId ?? this.keyResultId,
+      objectiveId: objectiveId ?? this.objectiveId,
       title: title ?? this.title,
       notes: notes ?? this.notes,
       dueDate: dueDate ?? this.dueDate,
@@ -3278,6 +3381,12 @@ class TasksCompanion extends UpdateCompanion<Task> {
     }
     if (projectId.present) {
       map['project_id'] = Variable<String>(projectId.value);
+    }
+    if (keyResultId.present) {
+      map['key_result_id'] = Variable<String>(keyResultId.value);
+    }
+    if (objectiveId.present) {
+      map['objective_id'] = Variable<String>(objectiveId.value);
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
@@ -3312,6 +3421,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('projectId: $projectId, ')
+          ..write('keyResultId: $keyResultId, ')
+          ..write('objectiveId: $objectiveId, ')
           ..write('title: $title, ')
           ..write('notes: $notes, ')
           ..write('dueDate: $dueDate, ')
@@ -4615,6 +4726,15 @@ class $LogEntriesTable extends LogEntries
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _taskIdMeta = const VerificationMeta('taskId');
+  @override
+  late final GeneratedColumn<String> taskId = GeneratedColumn<String>(
+    'task_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _occurredAtMeta = const VerificationMeta(
     'occurredAt',
   );
@@ -4664,6 +4784,7 @@ class $LogEntriesTable extends LogEntries
     deletedAt,
     projectId,
     keyResultId,
+    taskId,
     occurredAt,
     durationMinutes,
     note,
@@ -4723,6 +4844,12 @@ class $LogEntriesTable extends LogEntries
         ),
       );
     }
+    if (data.containsKey('task_id')) {
+      context.handle(
+        _taskIdMeta,
+        taskId.isAcceptableOrUnknown(data['task_id']!, _taskIdMeta),
+      );
+    }
     if (data.containsKey('occurred_at')) {
       context.handle(
         _occurredAtMeta,
@@ -4779,6 +4906,10 @@ class $LogEntriesTable extends LogEntries
         DriftSqlType.string,
         data['${effectivePrefix}key_result_id'],
       ),
+      taskId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}task_id'],
+      ),
       occurredAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}occurred_at'],
@@ -4823,6 +4954,7 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
   final DateTime? deletedAt;
   final String? projectId;
   final String? keyResultId;
+  final String? taskId;
   final DateTime occurredAt;
   final int? durationMinutes;
   final String note;
@@ -4834,6 +4966,7 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
     this.deletedAt,
     this.projectId,
     this.keyResultId,
+    this.taskId,
     required this.occurredAt,
     this.durationMinutes,
     required this.note,
@@ -4853,6 +4986,9 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
     }
     if (!nullToAbsent || keyResultId != null) {
       map['key_result_id'] = Variable<String>(keyResultId);
+    }
+    if (!nullToAbsent || taskId != null) {
+      map['task_id'] = Variable<String>(taskId);
     }
     map['occurred_at'] = Variable<DateTime>(occurredAt);
     if (!nullToAbsent || durationMinutes != null) {
@@ -4881,6 +5017,9 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
       keyResultId: keyResultId == null && nullToAbsent
           ? const Value.absent()
           : Value(keyResultId),
+      taskId: taskId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(taskId),
       occurredAt: Value(occurredAt),
       durationMinutes: durationMinutes == null && nullToAbsent
           ? const Value.absent()
@@ -4902,6 +5041,7 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       projectId: serializer.fromJson<String?>(json['projectId']),
       keyResultId: serializer.fromJson<String?>(json['keyResultId']),
+      taskId: serializer.fromJson<String?>(json['taskId']),
       occurredAt: serializer.fromJson<DateTime>(json['occurredAt']),
       durationMinutes: serializer.fromJson<int?>(json['durationMinutes']),
       note: serializer.fromJson<String>(json['note']),
@@ -4918,6 +5058,7 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'projectId': serializer.toJson<String?>(projectId),
       'keyResultId': serializer.toJson<String?>(keyResultId),
+      'taskId': serializer.toJson<String?>(taskId),
       'occurredAt': serializer.toJson<DateTime>(occurredAt),
       'durationMinutes': serializer.toJson<int?>(durationMinutes),
       'note': serializer.toJson<String>(note),
@@ -4932,6 +5073,7 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
     Value<DateTime?> deletedAt = const Value.absent(),
     Value<String?> projectId = const Value.absent(),
     Value<String?> keyResultId = const Value.absent(),
+    Value<String?> taskId = const Value.absent(),
     DateTime? occurredAt,
     Value<int?> durationMinutes = const Value.absent(),
     String? note,
@@ -4943,6 +5085,7 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
     projectId: projectId.present ? projectId.value : this.projectId,
     keyResultId: keyResultId.present ? keyResultId.value : this.keyResultId,
+    taskId: taskId.present ? taskId.value : this.taskId,
     occurredAt: occurredAt ?? this.occurredAt,
     durationMinutes: durationMinutes.present
         ? durationMinutes.value
@@ -4960,6 +5103,7 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
       keyResultId: data.keyResultId.present
           ? data.keyResultId.value
           : this.keyResultId,
+      taskId: data.taskId.present ? data.taskId.value : this.taskId,
       occurredAt: data.occurredAt.present
           ? data.occurredAt.value
           : this.occurredAt,
@@ -4980,6 +5124,7 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
           ..write('deletedAt: $deletedAt, ')
           ..write('projectId: $projectId, ')
           ..write('keyResultId: $keyResultId, ')
+          ..write('taskId: $taskId, ')
           ..write('occurredAt: $occurredAt, ')
           ..write('durationMinutes: $durationMinutes, ')
           ..write('note: $note, ')
@@ -4996,6 +5141,7 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
     deletedAt,
     projectId,
     keyResultId,
+    taskId,
     occurredAt,
     durationMinutes,
     note,
@@ -5011,6 +5157,7 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
           other.deletedAt == this.deletedAt &&
           other.projectId == this.projectId &&
           other.keyResultId == this.keyResultId &&
+          other.taskId == this.taskId &&
           other.occurredAt == this.occurredAt &&
           other.durationMinutes == this.durationMinutes &&
           other.note == this.note &&
@@ -5024,6 +5171,7 @@ class LogEntriesCompanion extends UpdateCompanion<LogEntry> {
   final Value<DateTime?> deletedAt;
   final Value<String?> projectId;
   final Value<String?> keyResultId;
+  final Value<String?> taskId;
   final Value<DateTime> occurredAt;
   final Value<int?> durationMinutes;
   final Value<String> note;
@@ -5036,6 +5184,7 @@ class LogEntriesCompanion extends UpdateCompanion<LogEntry> {
     this.deletedAt = const Value.absent(),
     this.projectId = const Value.absent(),
     this.keyResultId = const Value.absent(),
+    this.taskId = const Value.absent(),
     this.occurredAt = const Value.absent(),
     this.durationMinutes = const Value.absent(),
     this.note = const Value.absent(),
@@ -5049,6 +5198,7 @@ class LogEntriesCompanion extends UpdateCompanion<LogEntry> {
     this.deletedAt = const Value.absent(),
     this.projectId = const Value.absent(),
     this.keyResultId = const Value.absent(),
+    this.taskId = const Value.absent(),
     required DateTime occurredAt,
     this.durationMinutes = const Value.absent(),
     this.note = const Value.absent(),
@@ -5066,6 +5216,7 @@ class LogEntriesCompanion extends UpdateCompanion<LogEntry> {
     Expression<DateTime>? deletedAt,
     Expression<String>? projectId,
     Expression<String>? keyResultId,
+    Expression<String>? taskId,
     Expression<DateTime>? occurredAt,
     Expression<int>? durationMinutes,
     Expression<String>? note,
@@ -5079,6 +5230,7 @@ class LogEntriesCompanion extends UpdateCompanion<LogEntry> {
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (projectId != null) 'project_id': projectId,
       if (keyResultId != null) 'key_result_id': keyResultId,
+      if (taskId != null) 'task_id': taskId,
       if (occurredAt != null) 'occurred_at': occurredAt,
       if (durationMinutes != null) 'duration_minutes': durationMinutes,
       if (note != null) 'note': note,
@@ -5094,6 +5246,7 @@ class LogEntriesCompanion extends UpdateCompanion<LogEntry> {
     Value<DateTime?>? deletedAt,
     Value<String?>? projectId,
     Value<String?>? keyResultId,
+    Value<String?>? taskId,
     Value<DateTime>? occurredAt,
     Value<int?>? durationMinutes,
     Value<String>? note,
@@ -5107,6 +5260,7 @@ class LogEntriesCompanion extends UpdateCompanion<LogEntry> {
       deletedAt: deletedAt ?? this.deletedAt,
       projectId: projectId ?? this.projectId,
       keyResultId: keyResultId ?? this.keyResultId,
+      taskId: taskId ?? this.taskId,
       occurredAt: occurredAt ?? this.occurredAt,
       durationMinutes: durationMinutes ?? this.durationMinutes,
       note: note ?? this.note,
@@ -5135,6 +5289,9 @@ class LogEntriesCompanion extends UpdateCompanion<LogEntry> {
     }
     if (keyResultId.present) {
       map['key_result_id'] = Variable<String>(keyResultId.value);
+    }
+    if (taskId.present) {
+      map['task_id'] = Variable<String>(taskId.value);
     }
     if (occurredAt.present) {
       map['occurred_at'] = Variable<DateTime>(occurredAt.value);
@@ -5165,6 +5322,7 @@ class LogEntriesCompanion extends UpdateCompanion<LogEntry> {
           ..write('deletedAt: $deletedAt, ')
           ..write('projectId: $projectId, ')
           ..write('keyResultId: $keyResultId, ')
+          ..write('taskId: $taskId, ')
           ..write('occurredAt: $occurredAt, ')
           ..write('durationMinutes: $durationMinutes, ')
           ..write('note: $note, ')
@@ -6488,9 +6646,21 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'tasks_project_id',
     'CREATE INDEX tasks_project_id ON tasks (project_id)',
   );
+  late final Index tasksKeyResultId = Index(
+    'tasks_key_result_id',
+    'CREATE INDEX tasks_key_result_id ON tasks (key_result_id)',
+  );
+  late final Index tasksObjectiveId = Index(
+    'tasks_objective_id',
+    'CREATE INDEX tasks_objective_id ON tasks (objective_id)',
+  );
   late final Index logEntriesOccurredAt = Index(
     'log_entries_occurred_at',
     'CREATE INDEX log_entries_occurred_at ON log_entries (occurred_at)',
+  );
+  late final Index logEntriesTaskId = Index(
+    'log_entries_task_id',
+    'CREATE INDEX log_entries_task_id ON log_entries (task_id)',
   );
   late final Index reviewKrSnapshotsWeeklyReviewId = Index(
     'review_kr_snapshots_weekly_review_id',
@@ -6518,7 +6688,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     projectsKeyResultId,
     projectsAreaId,
     tasksProjectId,
+    tasksKeyResultId,
+    tasksObjectiveId,
     logEntriesOccurredAt,
+    logEntriesTaskId,
     reviewKrSnapshotsWeeklyReviewId,
   ];
   @override
@@ -7827,6 +8000,8 @@ typedef $$TasksTableCreateCompanionBuilder = TasksCompanion Function({
   required DateTime updatedAt,
   Value<DateTime?> deletedAt,
   Value<String?> projectId,
+  Value<String?> keyResultId,
+  Value<String?> objectiveId,
   required String title,
   Value<String> notes,
   Value<CalendarDate?> dueDate,
@@ -7840,6 +8015,8 @@ typedef $$TasksTableUpdateCompanionBuilder = TasksCompanion Function({
   Value<DateTime> updatedAt,
   Value<DateTime?> deletedAt,
   Value<String?> projectId,
+  Value<String?> keyResultId,
+  Value<String?> objectiveId,
   Value<String> title,
   Value<String> notes,
   Value<CalendarDate?> dueDate,
@@ -7878,6 +8055,16 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
 
   ColumnFilters<String> get projectId => $composableBuilder(
     column: $table.projectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get keyResultId => $composableBuilder(
+    column: $table.keyResultId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get objectiveId => $composableBuilder(
+    column: $table.objectiveId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7943,6 +8130,16 @@ class $$TasksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get keyResultId => $composableBuilder(
+    column: $table.keyResultId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get objectiveId => $composableBuilder(
+    column: $table.objectiveId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get title => $composableBuilder(
     column: $table.title,
     builder: (column) => ColumnOrderings(column),
@@ -7992,6 +8189,16 @@ class $$TasksTableAnnotationComposer
 
   GeneratedColumn<String> get projectId =>
       $composableBuilder(column: $table.projectId, builder: (column) => column);
+
+  GeneratedColumn<String> get keyResultId => $composableBuilder(
+    column: $table.keyResultId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get objectiveId => $composableBuilder(
+    column: $table.objectiveId,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
@@ -8044,6 +8251,8 @@ class $$TasksTableTableManager
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String?> projectId = const Value.absent(),
+                Value<String?> keyResultId = const Value.absent(),
+                Value<String?> objectiveId = const Value.absent(),
                 Value<String> title = const Value.absent(),
                 Value<String> notes = const Value.absent(),
                 Value<CalendarDate?> dueDate = const Value.absent(),
@@ -8056,6 +8265,8 @@ class $$TasksTableTableManager
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
                 projectId: projectId,
+                keyResultId: keyResultId,
+                objectiveId: objectiveId,
                 title: title,
                 notes: notes,
                 dueDate: dueDate,
@@ -8070,6 +8281,8 @@ class $$TasksTableTableManager
                 required DateTime updatedAt,
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String?> projectId = const Value.absent(),
+                Value<String?> keyResultId = const Value.absent(),
+                Value<String?> objectiveId = const Value.absent(),
                 required String title,
                 Value<String> notes = const Value.absent(),
                 Value<CalendarDate?> dueDate = const Value.absent(),
@@ -8082,6 +8295,8 @@ class $$TasksTableTableManager
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
                 projectId: projectId,
+                keyResultId: keyResultId,
+                objectiveId: objectiveId,
                 title: title,
                 notes: notes,
                 dueDate: dueDate,
@@ -8722,6 +8937,7 @@ typedef $$LogEntriesTableCreateCompanionBuilder = LogEntriesCompanion Function({
   Value<DateTime?> deletedAt,
   Value<String?> projectId,
   Value<String?> keyResultId,
+  Value<String?> taskId,
   required DateTime occurredAt,
   Value<int?> durationMinutes,
   Value<String> note,
@@ -8735,6 +8951,7 @@ typedef $$LogEntriesTableUpdateCompanionBuilder = LogEntriesCompanion Function({
   Value<DateTime?> deletedAt,
   Value<String?> projectId,
   Value<String?> keyResultId,
+  Value<String?> taskId,
   Value<DateTime> occurredAt,
   Value<int?> durationMinutes,
   Value<String> note,
@@ -8778,6 +8995,11 @@ class $$LogEntriesTableFilterComposer
 
   ColumnFilters<String> get keyResultId => $composableBuilder(
     column: $table.keyResultId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get taskId => $composableBuilder(
+    column: $table.taskId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8842,6 +9064,11 @@ class $$LogEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get taskId => $composableBuilder(
+    column: $table.taskId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get occurredAt => $composableBuilder(
     column: $table.occurredAt,
     builder: (column) => ColumnOrderings(column),
@@ -8891,6 +9118,9 @@ class $$LogEntriesTableAnnotationComposer
     column: $table.keyResultId,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get taskId =>
+      $composableBuilder(column: $table.taskId, builder: (column) => column);
 
   GeneratedColumn<DateTime> get occurredAt => $composableBuilder(
     column: $table.occurredAt,
@@ -8943,6 +9173,7 @@ class $$LogEntriesTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String?> projectId = const Value.absent(),
                 Value<String?> keyResultId = const Value.absent(),
+                Value<String?> taskId = const Value.absent(),
                 Value<DateTime> occurredAt = const Value.absent(),
                 Value<int?> durationMinutes = const Value.absent(),
                 Value<String> note = const Value.absent(),
@@ -8955,6 +9186,7 @@ class $$LogEntriesTableTableManager
                 deletedAt: deletedAt,
                 projectId: projectId,
                 keyResultId: keyResultId,
+                taskId: taskId,
                 occurredAt: occurredAt,
                 durationMinutes: durationMinutes,
                 note: note,
@@ -8969,6 +9201,7 @@ class $$LogEntriesTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String?> projectId = const Value.absent(),
                 Value<String?> keyResultId = const Value.absent(),
+                Value<String?> taskId = const Value.absent(),
                 required DateTime occurredAt,
                 Value<int?> durationMinutes = const Value.absent(),
                 Value<String> note = const Value.absent(),
@@ -8981,6 +9214,7 @@ class $$LogEntriesTableTableManager
                 deletedAt: deletedAt,
                 projectId: projectId,
                 keyResultId: keyResultId,
+                taskId: taskId,
                 occurredAt: occurredAt,
                 durationMinutes: durationMinutes,
                 note: note,

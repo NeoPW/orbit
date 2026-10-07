@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/db/app_database.dart';
+import 'package:orbit/core/widgets/orbit_chips.dart';
 import 'package:orbit/features/projects/data/project_repository.dart';
 import 'package:orbit/features/tasks/data/task_repository.dart';
 import 'package:orbit/features/tasks/ui/task_tile.dart';
@@ -49,7 +50,12 @@ void main() {
 
     expect(markerIn('Draft'), findsOneWidget);
     expect(markerIn('Book venue'), findsNothing);
-    expect(find.text('Due 20-10-2026'), findsOneWidget);
+    final chip = find.descendant(
+      of: tileOf('Book venue'),
+      matching: find.byType(DeadlineChip),
+    );
+    expect(chip, findsOneWidget);
+    expect(tester.widget<DeadlineChip>(chip).date, CalendarDate(2026, 10, 20));
   });
 
   testApp('"Make next step" moves the marker', (tester) async {

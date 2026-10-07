@@ -44,7 +44,7 @@ void main() {
     await pumpApp(tester, db: db, location: Routes.newProject);
     expect(find.text('No area'), findsOneWidget);
     expect(find.text('No key result'), findsOneWidget);
-    expect(find.text('Effective: No deadline'), findsOneWidget);
+    expect(find.textContaining('deadline:'), findsNothing);
 
     await tester.enterText(field('Title'), 'Thesis');
     await save(tester);
@@ -90,7 +90,7 @@ void main() {
     await pumpApp(tester, db: db, location: Routes.project(p.id));
 
     expect(
-      find.text('Effective: Due 31-12-2026 (from key result)'),
+      find.text("Uses the key result's deadline: 31-12-2026"),
       findsOneWidget,
     );
   });

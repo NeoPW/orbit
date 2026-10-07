@@ -23,20 +23,29 @@ class UpcomingDeadline {
   final CalendarDate date;
   final bool overdue;
 
-  /// The project to open: the task's project, or the project itself.
+  /// The task's project, or the project itself; null for tasks outside
+  /// projects and for KRs.
   final String? projectId;
 
   /// For tasks: the title of their project.
   final String? projectTitle;
+
+  /// Whether Home shows this item on a card of its own (active projects
+  /// and tasks outside projects), so its deadline appears as a badge there
+  /// instead of in "Upcoming deadlines".
+  bool get hasOwnCard =>
+      kind == DeadlineKind.project ||
+      (kind == DeadlineKind.task && projectId == null);
 }
 
 /// Every task, project and KR with an own deadline that Home and the
-/// reminders care about: open tasks of active projects, active projects and
-/// not yet reached KRs of active objectives (home spec, "Upcoming
-/// deadlines"). Inherited deadlines are not included. No date filter;
-/// sorted by date, then title.
+/// reminders care about: open tasks of active projects, open tasks outside
+/// projects ([tasksOutsideProjects]), active projects and not yet reached
+/// KRs of active objectives. Inherited deadlines are not included. No date
+/// filter; sorted by date, then title.
 List<UpcomingDeadline> deadlineCandidates({
   required List<({Task task, Project project})> tasks,
+  List<Task> tasksOutsideProjects = const [],
   required List<Project> projects,
   required List<KeyResult> keyResults,
   required List<Objective> objectives,
@@ -61,6 +70,16 @@ List<UpcomingDeadline> deadlineCandidates({
           overdue: due.isBefore(today),
           projectId: project.id,
           projectTitle: project.title,
+        ),
+    for (final task in tasksOutsideProjects)
+      if (task.dueDate case final due?
+          when task.status == TaskStatus.open && task.projectId == null)
+        UpcomingDeadline(
+          kind: DeadlineKind.task,
+          id: task.id,
+          title: task.title,
+          date: due,
+          overdue: due.isBefore(today),
         ),
     for (final project in projects)
       if (project.deadline case final deadline?
@@ -100,8 +119,9 @@ List<UpcomingDeadline> deadlineCandidates({
   });
 }
 
-/// The upcoming deadlines for Home: the [deadlineCandidates] whose deadline
-/// is at most [leadDays] after [today] (overdue included).
+/// Home's "Upcoming deadlines": the [deadlineCandidates] without their own
+/// card on Home (KRs and tasks inside projects) whose deadline is at most
+/// [leadDays] after [today] (overdue included).
 List<UpcomingDeadline> buildUpcomingDeadlines({
   required List<({Task task, Project project})> tasks,
   required List<Project> projects,
@@ -121,6 +141,6 @@ List<UpcomingDeadline> buildUpcomingDeadlines({
       habitCheckIns: habitCheckIns,
       today: today,
     ))
-      if (!item.date.isAfter(last)) item,
+      if (!item.hasOwnCard && !item.date.isAfter(last)) item,
   ];
 }
