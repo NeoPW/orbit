@@ -9,7 +9,7 @@ import '../../../core/widgets/orbit_chips.dart';
 import '../../../core/widgets/section_heading.dart';
 import '../../settings/data/settings_repository.dart';
 import '../../tasks/ui/complete_task.dart';
-import '../../tasks/ui/new_task_sheet.dart';
+import '../../tasks/ui/task_form.dart';
 import '../data/home_providers.dart';
 
 /// "Tasks": open tasks outside projects (home spec, "Tasks on Home").
@@ -28,7 +28,7 @@ class HomeTasksSection extends ConsumerWidget {
             'No open tasks outside projects',
             icon: Icons.task_alt,
             action: TextButton(
-              onPressed: () => showNewTaskSheet(context),
+              onPressed: () => showTaskForm(context),
               child: const Text('New task'),
             ),
           ),

@@ -6,14 +6,26 @@ import '../../../core/numbers.dart';
 import '../../../core/time/date_format.dart';
 import '../../../core/widgets/confirm_delete.dart';
 import '../../../core/widgets/date_field.dart';
-import '../../../core/widgets/form_scaffold.dart';
+import '../../../core/widgets/form_sheet.dart';
 import '../../habits/data/habit_repository.dart';
 import '../../objectives/data/objective_repository.dart';
 import '../data/key_result_repository.dart';
 
+/// Opens the KR form in a sheet: a new KR for [objectiveId], or
+/// [keyResultId].
+Future<FormResult?> showKeyResultForm(
+  BuildContext context, {
+  String? keyResultId,
+  String? objectiveId,
+}) => showFormSheet(
+  context,
+  builder: (_) =>
+      KeyResultFormSheet(keyResultId: keyResultId, objectiveId: objectiveId),
+);
+
 /// Creates a KR for [objectiveId], or edits [keyResultId].
-class KeyResultFormScreen extends ConsumerWidget {
-  const KeyResultFormScreen({super.key, this.keyResultId, this.objectiveId})
+class KeyResultFormSheet extends ConsumerWidget {
+  const KeyResultFormSheet({super.key, this.keyResultId, this.objectiveId})
     : assert((keyResultId == null) != (objectiveId == null));
 
   final String? keyResultId;
@@ -23,7 +35,7 @@ class KeyResultFormScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final id = keyResultId;
     final newFor = objectiveId;
-    return FormLoader<(KeyResult?, Objective)>(
+    return FormSheetLoader<(KeyResult?, Objective)>(
       load: () async {
         final kr = id == null
             ? null
@@ -65,6 +77,7 @@ class _KeyResultFormState extends ConsumerState<_KeyResultForm> {
     _kr?.measureType == MeasureType.numeric ? _kr?.currentValue : 0,
   );
   late final _unit = TextEditingController(text: _kr?.unit);
+  late final _step = _numberController(_kr?.step ?? 1);
   late bool _achieved = _kr?.currentValue == 1;
   late String? _habitId = _kr?.habitId;
   late CalendarDate? _deadline = _kr?.deadline;
@@ -81,6 +94,7 @@ class _KeyResultFormState extends ConsumerState<_KeyResultForm> {
       _target,
       _current,
       _unit,
+      _step,
     ]) {
       controller.dispose();
     }
@@ -89,6 +103,11 @@ class _KeyResultFormState extends ConsumerState<_KeyResultForm> {
 
   String? _requiredNumber(String? text) =>
       parseNumber(text ?? '') == null ? 'Enter a number' : null;
+
+  String? _positiveNumber(String? text) {
+    final value = parseNumber(text ?? '');
+    return value == null || value <= 0 ? 'Enter a number above 0' : null;
+  }
 
   String? _positiveWholeNumber(String? text) {
     final value = parseNumber(text ?? '');
@@ -111,6 +130,7 @@ class _KeyResultFormState extends ConsumerState<_KeyResultForm> {
       MeasureType.habit => (null, parseNumber(_target.text), null),
     };
 
+    final step = _type == MeasureType.numeric ? parseNumber(_step.text)! : 1.0;
     final kr = _kr;
     if (kr == null) {
       await repo.create(
@@ -122,6 +142,7 @@ class _KeyResultFormState extends ConsumerState<_KeyResultForm> {
         targetValue: target,
         currentValue: current,
         unit: _unit.text,
+        step: step,
         habitId: _habitId,
         deadline: _deadline,
       );
@@ -135,12 +156,13 @@ class _KeyResultFormState extends ConsumerState<_KeyResultForm> {
           targetValue: Value(target),
           currentValue: Value(current),
           unit: Value(_unit.text),
+          step: step,
           habitId: Value(_habitId),
           deadline: Value(_deadline),
         ),
       );
     }
-    if (mounted) closeForm(context);
+    if (mounted) closeFormSheet(context);
   }
 
   Future<void> _delete() async {
@@ -154,7 +176,7 @@ class _KeyResultFormState extends ConsumerState<_KeyResultForm> {
     );
     if (!confirmed) return;
     await ref.read(keyResultRepositoryProvider).delete(kr.id);
-    if (mounted) closeForm(context);
+    if (mounted) closeFormSheet(context, FormResult.deleted);
   }
 
   Widget _numberField(
@@ -187,6 +209,7 @@ class _KeyResultFormState extends ConsumerState<_KeyResultForm> {
           border: OutlineInputBorder(),
         ),
       ),
+      _numberField(_step, 'Step', _positiveNumber),
     ],
     MeasureType.boolean => [
       SwitchListTile(
@@ -207,7 +230,7 @@ class _KeyResultFormState extends ConsumerState<_KeyResultForm> {
   @override
   Widget build(BuildContext context) {
     final editing = _kr != null;
-    return FormScaffold(
+    return FormSheetFrame(
       formKey: _formKey,
       title: editing ? 'Edit key result' : 'New key result',
       onSave: _save,

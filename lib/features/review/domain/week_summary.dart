@@ -201,6 +201,26 @@ KrProgressChange _change(KeyResult kr, int checkIns, double? previous) {
   );
 }
 
+/// The KRs as stored with a week's completed review: [snapshots] (progress
+/// by KR ID) in the order of [keyResults], with the change since
+/// [previousSnapshots]. KRs deleted since the review are left out.
+List<KrProgressChange> snapshotProgressChanges(
+  List<KeyResult> keyResults,
+  Map<String, double> snapshots,
+  Map<String, double> previousSnapshots,
+) => [
+  for (final kr in keyResults)
+    if (snapshots[kr.id] case final progress?)
+      KrProgressChange(
+        keyResult: kr,
+        progress: progress,
+        change: switch (previousSnapshots[kr.id]) {
+          null => null,
+          final previous => ((progress - previous) * 100).round(),
+        },
+      ),
+];
+
 /// Everything the Review tab and the look-back step show about a week.
 class WeekSummary {
   const WeekSummary({
@@ -229,6 +249,7 @@ WeekSummary buildWeekSummary({
   required List<Objective> objectives,
   required Map<String, int> habitCheckIns,
   required Map<String, double> previousSnapshots,
+  Map<String, double>? reviewSnapshots,
 }) {
   final projectsById = {for (final p in projects) p.id: p};
   return WeekSummary(
@@ -236,11 +257,18 @@ WeekSummary buildWeekSummary({
     work: workPerProject(entries, projectsById, weekStart),
     habits: habitAdherence(habits, checks, weekStart),
     tasks: completedTasksInWeek(completedTasks, projectsById, weekStart),
-    keyResults: krProgressChanges(
-      keyResults,
-      objectives,
-      habitCheckIns,
-      previousSnapshots,
-    ),
+    // A reviewed week shows the progress saved with its review.
+    keyResults: reviewSnapshots == null
+        ? krProgressChanges(
+            keyResults,
+            objectives,
+            habitCheckIns,
+            previousSnapshots,
+          )
+        : snapshotProgressChanges(
+            keyResults,
+            reviewSnapshots,
+            previousSnapshots,
+          ),
   );
 }

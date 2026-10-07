@@ -77,6 +77,49 @@ void main() {
       expect((await browser.projects.get(p.id))!.title, 'Thesis v2');
     });
 
+    test('a timer and a KR step reach the other device', () async {
+      final now = phone.clock();
+      await phone.db
+          .into(phone.db.timers)
+          .insert(
+            WorkTimer(
+              id: 'timer',
+              createdAt: now,
+              updatedAt: now,
+              projectId: 'p1',
+              startedAt: now,
+            ),
+          );
+      await phone.db
+          .into(phone.db.keyResults)
+          .insert(
+            KeyResult(
+              id: 'k1',
+              createdAt: now,
+              updatedAt: now,
+              objectiveId: 'o1',
+              title: 'Run 100 km',
+              description: '',
+              measureType: MeasureType.numeric,
+              startValue: 0,
+              targetValue: 100,
+              currentValue: 40,
+              step: 5,
+              sortOrder: 0,
+            ),
+          );
+      await phone.sync();
+      expect(remote.rows('timers').single['project_id'], 'p1');
+      expect(remote.rows('key_results').single['step'], 5);
+
+      await browser.sync();
+      final timer = await browser.db.select(browser.db.timers).getSingle();
+      expect(timer.projectId, 'p1');
+      expect(timer.startedAt, now);
+      final kr = await browser.db.select(browser.db.keyResults).getSingle();
+      expect(kr.step, 5);
+    });
+
     test('a delete propagates', () async {
       final p = await phone.projects.create(title: 'Thesis');
       final t = await phone.tasks.create(projectId: p.id, title: 'Draft');

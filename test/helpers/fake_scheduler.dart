@@ -33,4 +33,20 @@ class FakeNotificationScheduler implements NotificationScheduler {
   @override
   Future<void> replaceAll(List<PlannedReminder> reminders) async =>
       calls.add(List.unmodifiable(reminders));
+
+  /// The shown timer notification, if any.
+  ({String title, DateTime startedAt})? timer;
+  int timerShows = 0;
+
+  @override
+  Future<void> showTimer({
+    required String title,
+    required DateTime startedAt,
+  }) async {
+    timer = (title: title, startedAt: startedAt);
+    timerShows++;
+  }
+
+  @override
+  Future<void> cancelTimer() async => timer = null;
 }

@@ -25,6 +25,7 @@ void main() {
       'log_entries',
       'weekly_reviews',
       'review_kr_snapshots',
+      'timers',
     });
     expect(tables['habit_checks']!.naturalKey, ['habit_id', 'date']);
     expect(tables['weekly_reviews']!.naturalKey, ['week_start']);

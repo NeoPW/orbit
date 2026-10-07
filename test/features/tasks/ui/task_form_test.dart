@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/db/app_database.dart';
 import 'package:orbit/features/tasks/data/task_repository.dart';
 import 'package:orbit/features/tasks/domain/task_assignment.dart';
-import 'package:orbit/features/tasks/ui/task_dialog.dart';
+import 'package:orbit/features/tasks/ui/task_form.dart';
 
 import '../../../helpers/pump_app.dart';
 import '../../../helpers/seed.dart';
@@ -12,7 +12,7 @@ import '../../../helpers/test_db.dart';
 
 Widget opener({Task? task}) => Builder(
   builder: (context) => TextButton(
-    onPressed: () => showTaskDialog(context, projectId: 'p1', task: task),
+    onPressed: () => showTaskForm(context, projectId: 'p1', task: task),
     child: const Text('open'),
   ),
 );
@@ -50,7 +50,10 @@ void main() {
       find.widgetWithText(TextField, 'Title'),
       'Book venue',
     );
-    await tester.enterText(find.widgetWithText(TextField, 'Notes'), 'Call');
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Notes (optional)'),
+      'Call',
+    );
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 

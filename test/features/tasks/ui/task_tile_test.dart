@@ -58,42 +58,19 @@ void main() {
     expect(tester.widget<DeadlineChip>(chip).date, CalendarDate(2026, 10, 20));
   });
 
-  testApp('"Make next step" moves the marker', (tester) async {
+  testApp('a task row has no action menu', (tester) async {
     final p = await seed.projects.create(title: 'Thesis', nextStep: 'Draft');
     await seed.tasks.create(projectId: p.id, title: 'Book venue');
     await pumpInScaffold(tester, taskList(p.id), db: db);
 
-    await tester.tap(
+    expect(find.byType(PopupMenuButton), findsNothing);
+    expect(find.byTooltip('Task actions'), findsNothing);
+    expect(
       find.descendant(
         of: tileOf('Book venue'),
-        matching: find.byTooltip('Task actions'),
+        matching: find.byType(Checkbox),
       ),
+      findsOneWidget,
     );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Make next step'));
-    await tester.pumpAndSettle();
-
-    expect(markerIn('Book venue'), findsOneWidget);
-    expect(markerIn('Draft'), findsNothing);
-  });
-
-  testApp('delete asks for confirmation and removes the task', (tester) async {
-    final p = await seed.projects.create(title: 'Thesis');
-    await seed.tasks.create(projectId: p.id, title: 'Book venue');
-    await pumpInScaffold(tester, taskList(p.id), db: db);
-
-    await tester.tap(find.byTooltip('Task actions'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Delete'));
-    await tester.pumpAndSettle();
-    expect(find.text('Delete task?'), findsOneWidget);
-    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
-    await tester.pumpAndSettle();
-
-    expect(tileOf('Book venue'), findsNothing);
-    final alive = await (db.select(
-      db.tasks,
-    )..where((t) => t.deletedAt.isNull())).get();
-    expect(alive, isEmpty);
   });
 }

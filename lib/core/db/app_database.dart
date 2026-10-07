@@ -27,6 +27,7 @@ part 'app_database.drift.dart';
     LogEntries,
     WeeklyReviews,
     ReviewKrSnapshots,
+    Timers,
     Settings,
   ],
 )
@@ -34,7 +35,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -60,6 +61,10 @@ class AppDatabase extends _$AppDatabase {
         await m.createIndex(schema.tasksKeyResultId);
         await m.createIndex(schema.tasksObjectiveId);
         await m.createIndex(schema.logEntriesTaskId);
+      },
+      from4To5: (m, schema) async {
+        await m.createTable(schema.timers);
+        await m.addColumn(schema.keyResults, schema.keyResults.step);
       },
     ),
   );

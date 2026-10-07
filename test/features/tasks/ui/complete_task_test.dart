@@ -28,7 +28,7 @@ void main() {
   Future<List<LogEntry>> logEntries() =>
       (db.select(db.logEntries)..where((e) => e.deletedAt.isNull())).get();
 
-  testApp('completing shows a snackbar; Undo reopens the task', (tester) async {
+  testApp('completing shows a message; Undo reopens the task', (tester) async {
     final p = await seed.projects.create(title: 'Thesis');
     final task = await seed.tasks.create(projectId: p.id, title: 'Book venue');
     await pumpInScaffold(tester, completer(task), db: db);

@@ -6,7 +6,7 @@ import '../../../core/time/date_format.dart';
 import '../../../core/widgets/area_dot.dart';
 import '../../../core/widgets/confirm_delete.dart';
 import '../../../core/widgets/date_field.dart';
-import '../../../core/widgets/form_scaffold.dart';
+import '../../../core/widgets/form_sheet.dart';
 import '../../areas/data/area_repository.dart';
 import '../../key_results/data/key_result_repository.dart';
 import '../../key_results/domain/kr_deadline.dart';
@@ -15,8 +15,17 @@ import '../data/project_repository.dart';
 import '../domain/project_deadline.dart';
 import 'project_labels.dart';
 
-class ProjectFormScreen extends ConsumerWidget {
-  const ProjectFormScreen({super.key, this.projectId});
+/// Opens the project form in a sheet: a new project, or [projectId].
+Future<FormResult?> showProjectForm(
+  BuildContext context, {
+  String? projectId,
+}) => showFormSheet(
+  context,
+  builder: (_) => ProjectFormSheet(projectId: projectId),
+);
+
+class ProjectFormSheet extends ConsumerWidget {
+  const ProjectFormSheet({super.key, this.projectId});
 
   /// Null to create a new project.
   final String? projectId;
@@ -24,7 +33,7 @@ class ProjectFormScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final id = projectId;
-    return FormLoader<(Project, String)>(
+    return FormSheetLoader<(Project, String)>(
       load: id == null
           ? null
           : () async {
@@ -99,7 +108,7 @@ class _ProjectFormState extends ConsumerState<_ProjectForm> {
         nextStep: _nextStep.text,
       );
     }
-    if (mounted) closeForm(context);
+    if (mounted) closeFormSheet(context);
   }
 
   Future<void> _delete() async {
@@ -113,7 +122,7 @@ class _ProjectFormState extends ConsumerState<_ProjectForm> {
     );
     if (!confirmed) return;
     await ref.read(projectRepositoryProvider).delete(project.id);
-    if (mounted) closeForm(context);
+    if (mounted) closeFormSheet(context, FormResult.deleted);
   }
 
   @override
@@ -149,7 +158,7 @@ class _ProjectFormState extends ConsumerState<_ProjectForm> {
           : effectiveKrDeadline(selectedKr.deadline, selectedObjective.endDate),
     );
 
-    return FormScaffold(
+    return FormSheetFrame(
       formKey: _formKey,
       title: editing ? 'Edit project' : 'New project',
       onSave: _save,

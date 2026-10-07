@@ -147,6 +147,87 @@ void main() {
     });
   });
 
+  group('current week and last week', () {
+    testApp('the review button sits between the week and the history', (
+      tester,
+    ) async {
+      await pumpReview(tester);
+      double y(String text) => tester.getTopLeft(find.text(text)).dy;
+      expect(y('Week 05-10-2026 – 11-10-2026'), lessThan(y('Key results')));
+      expect(y('Key results'), lessThan(y('Start weekly review')));
+      expect(y('Start weekly review'), lessThan(y('History')));
+      expect(y('History'), lessThan(y('Last week')));
+    });
+
+    testApp('on a Sunday the button reviews the week that ends today', (
+      tester,
+    ) async {
+      // today is Sunday 2026-10-11; the current week is the review week.
+      await reviews.complete(week, score: 7, snapshots: const {});
+      await pumpReview(tester);
+      expect(find.text('Week 05-10-2026 – 11-10-2026'), findsOneWidget);
+      expect(find.text('Edit weekly review'), findsOneWidget);
+    });
+
+    testApp('on a Monday the tab shows the new week; the button the last', (
+      tester,
+    ) async {
+      final p = await seed.projects.create(title: 'Thesis');
+      final monday = CalendarDate(2026, 10, 12);
+      await LogRepository(
+        db,
+        () => DateTime(2026, 10, 12, 9).toUtc(),
+        uuidV4,
+      ).createManual(projectId: p.id, durationMinutes: 20);
+      await reviews.saveDraft(week, score: 6);
+      await pumpApp(
+        tester,
+        db: db,
+        location: Routes.review,
+        height: 1600,
+        overrides: [todayProvider.overrideWithValue(monday)],
+      );
+
+      expect(find.text('Week 12-10-2026 – 18-10-2026'), findsOneWidget);
+      expect(find.text('Thesis'), findsOneWidget);
+      expect(find.textContaining('20 min'), findsOneWidget);
+      // The draft of the week 05-10 – 11-10 is still the one to continue.
+      expect(find.text('Continue weekly review'), findsOneWidget);
+    });
+
+    testApp('Last week opens the previous week', (tester) async {
+      final p = await seed.projects.create(title: 'Thesis');
+      await LogRepository(
+        db,
+        () => DateTime(2026, 9, 30, 9).toUtc(),
+        uuidV4,
+      ).createManual(projectId: p.id);
+      final app = await pumpApp(
+        tester,
+        db: db,
+        location: Routes.review,
+        height: 1600,
+        overrides: [todayProvider.overrideWithValue(CalendarDate(2026, 10, 7))],
+      );
+      await tester.ensureVisible(find.text('Last week'));
+      await tester.tap(find.text('Last week'));
+      await tester.pumpAndSettle();
+
+      expect(
+        app.router.routeInformationProvider.value.uri.path,
+        Routes.reviewWeekPage(CalendarDate(2026, 9, 28)),
+      );
+      expect(find.text('Week 28-09-2026 – 04-10-2026'), findsOneWidget);
+      expect(find.text('Thesis'), findsOneWidget);
+      expect(find.text('1 entry'), findsOneWidget);
+    });
+
+    testApp('an invalid week URL says so', (tester) async {
+      await pumpReview(tester, location: '/review/week/nonsense');
+      expect(find.text('Week not found'), findsOneWidget);
+    });
+  });
+
   group('history', () {
     testApp('newest week first; tapping shows the review in full', (
       tester,
@@ -179,6 +260,28 @@ void main() {
       expect(find.text('Good week'), findsOneWidget);
       expect(find.text('Newer plan'), findsOneWidget);
     });
+  });
+
+  testApp('a past review shows the work of its week', (tester) async {
+    final p = await seed.projects.create(title: 'Thesis');
+    final logs = LogRepository(
+      db,
+      () => DateTime(2026, 9, 30, 9).toUtc(),
+      uuidV4,
+    );
+    for (var i = 0; i < 3; i++) {
+      await logs.createManual(projectId: p.id);
+    }
+    final review = await reviews.complete(
+      CalendarDate(2026, 9, 28),
+      score: 6,
+      snapshots: const {},
+    );
+    await pumpReview(tester, location: Routes.pastReview(review.id));
+    expect(find.text('6 / 10'), findsOneWidget);
+    expect(find.text('Work logged'), findsOneWidget);
+    expect(find.text('Thesis'), findsOneWidget);
+    expect(find.text('3 entries'), findsOneWidget);
   });
 }
 

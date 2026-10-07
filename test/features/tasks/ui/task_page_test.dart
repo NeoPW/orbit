@@ -117,4 +117,59 @@ void main() {
     expect(find.textContaining('30 min · Manual'), findsOneWidget);
     expect((await entries(task.id)).single.durationMinutes, 30);
   });
+
+  group('make next step', () {
+    testApp('a project task becomes the next step from its page', (
+      tester,
+    ) async {
+      final p = await seed.projects.create(
+        title: 'Wedding',
+        nextStep: 'Draft outline',
+      );
+      final venue = await seed.tasks.create(
+        projectId: p.id,
+        title: 'Book venue',
+      );
+      await openTask(tester, venue.id);
+      expect(find.text('Next step'), findsNothing);
+
+      await tester.tap(find.text('Make next step'));
+      await tester.pumpAndSettle();
+      expect((await seed.projects.get(p.id))!.nextStepTaskId, venue.id);
+      expect(find.text('Next step'), findsOneWidget);
+      expect(find.text('Make next step'), findsNothing);
+    });
+
+    testApp('a standalone task offers no Make next step', (tester) async {
+      final task = await seed.tasks.create(title: 'Tax return');
+      await openTask(tester, task.id);
+      expect(find.text('Make next step'), findsNothing);
+    });
+  });
+
+  testApp('delete from the page asks first and leaves the page', (
+    tester,
+  ) async {
+    final p = await seed.projects.create(title: 'Thesis');
+    final task = await seed.tasks.create(projectId: p.id, title: 'Book venue');
+    final app = await pumpApp(
+      tester,
+      db: db,
+      overrides: [todayProvider.overrideWithValue(today)],
+    );
+    app.router.push(Routes.task(task.id));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Delete task'));
+    await tester.pumpAndSettle();
+    expect(find.text('Delete task?'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await tester.pumpAndSettle();
+
+    expect(app.router.state.uri.path, Routes.home);
+    final alive = await (db.select(
+      db.tasks,
+    )..where((t) => t.deletedAt.isNull())).get();
+    expect(alive, isEmpty);
+  });
 }

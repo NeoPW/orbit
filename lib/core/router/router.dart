@@ -2,22 +2,39 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/areas/ui/areas_screen.dart';
-import '../../features/habits/ui/habit_form_screen.dart';
 import '../../features/habits/ui/habits_screen.dart';
 import '../../features/home/ui/home_screen.dart';
-import '../../features/key_results/ui/key_result_form_screen.dart';
-import '../../features/objectives/ui/objective_form_screen.dart';
+import '../../features/key_results/ui/key_result_screen.dart';
+import '../../features/objectives/ui/objective_screen.dart';
 import '../../features/plan/ui/archive_screen.dart';
 import '../../features/plan/ui/plan_screen.dart';
 import '../../features/projects/ui/project_detail_screen.dart';
-import '../../features/projects/ui/project_form_screen.dart';
 import '../../features/review/ui/review_history_screen.dart';
 import '../../features/review/ui/review_screen.dart';
+import '../../features/review/ui/week_screen.dart';
 import '../../features/review/ui/weekly_review_screen.dart';
 import '../../features/settings/ui/settings_screen.dart';
 import '../../features/tasks/ui/task_screen.dart';
 import 'app_shell.dart';
 import 'routes.dart';
+
+/// Where an outdated path leads (plan-overview spec, "Old form URL"): `/`
+/// to Home, and the former form URLs to the matching page. Null keeps the
+/// path.
+String? redirectOldPath(String path) {
+  if (path == '/') return Routes.home;
+  final segments = Uri(path: path).pathSegments;
+  if (segments.length < 3 || segments.first != 'plan') return null;
+  final [_, kind, id, ...rest] = segments;
+  final isNew = id == 'new' || rest.isNotEmpty;
+  return switch (kind) {
+    'objectives' => isNew ? Routes.plan : Routes.objective(id),
+    'key-results' => Routes.keyResult(id),
+    'projects' => isNew ? Routes.plan : Routes.projectDetail(id),
+    'habits' => Routes.habits,
+    _ => null,
+  };
+}
 
 /// Creates the app router. Destinations are, in order: Plan, Home, Review.
 /// The app starts on Home; `/` and unknown paths go to Home as well.
@@ -27,17 +44,10 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
   GoRouter.optionURLReflectsImperativeAPIs = true;
   final rootKey = GlobalKey<NavigatorState>();
 
-  /// Forms cover the navigation bar and rail.
-  GoRoute form(String path, Widget Function(GoRouterState) build) => GoRoute(
-    path: path,
-    parentNavigatorKey: rootKey,
-    builder: (context, state) => build(state),
-  );
-
   return GoRouter(
     navigatorKey: rootKey,
     initialLocation: initialLocation,
-    redirect: (context, state) => state.uri.path == '/' ? Routes.home : null,
+    redirect: (context, state) => redirectOldPath(state.uri.path),
     onException: (context, state, router) => router.go(Routes.home),
     routes: [
       // On the root navigator like the forms, so it can be pushed from any
@@ -63,6 +73,18 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
         builder: (context, state) =>
             ProjectDetailScreen(projectId: state.pathParameters['id']!),
       ),
+      GoRoute(
+        parentNavigatorKey: rootKey,
+        path: '/objectives/:id',
+        builder: (context, state) =>
+            ObjectiveScreen(objectiveId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        parentNavigatorKey: rootKey,
+        path: '/key-results/:id',
+        builder: (context, state) =>
+            KeyResultScreen(keyResultId: state.pathParameters['id']!),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(shell: shell),
         branches: [
@@ -83,37 +105,6 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
                   GoRoute(
                     path: 'habits',
                     builder: (context, state) => const HabitsScreen(),
-                    routes: [
-                      form('new', (_) => const HabitFormScreen()),
-                      form(
-                        ':id',
-                        (s) => HabitFormScreen(habitId: s.pathParameters['id']),
-                      ),
-                    ],
-                  ),
-                  form('objectives/new', (_) => const ObjectiveFormScreen()),
-                  form(
-                    'objectives/:id',
-                    (s) => ObjectiveFormScreen(
-                      objectiveId: s.pathParameters['id'],
-                    ),
-                  ),
-                  form(
-                    'objectives/:id/key-results/new',
-                    (s) => KeyResultFormScreen(
-                      objectiveId: s.pathParameters['id'],
-                    ),
-                  ),
-                  form(
-                    'key-results/:id',
-                    (s) => KeyResultFormScreen(
-                      keyResultId: s.pathParameters['id'],
-                    ),
-                  ),
-                  form('projects/new', (_) => const ProjectFormScreen()),
-                  form(
-                    'projects/:id',
-                    (s) => ProjectFormScreen(projectId: s.pathParameters['id']),
                   ),
                 ],
               ),
@@ -133,6 +124,12 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
                 path: Routes.review,
                 builder: (context, state) => const ReviewScreen(),
                 routes: [
+                  GoRoute(
+                    path: 'week/:weekStart',
+                    builder: (context, state) => WeekScreen(
+                      weekStart: state.pathParameters['weekStart']!,
+                    ),
+                  ),
                   GoRoute(
                     path: 'history',
                     builder: (context, state) => const ReviewHistoryScreen(),

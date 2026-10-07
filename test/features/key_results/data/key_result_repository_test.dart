@@ -159,4 +159,67 @@ void main() {
       kr,
     );
   });
+
+  group('nudge', () {
+    test('raises and lowers the current value by the given amount', () async {
+      final kr = await r.numericKr(o.id);
+      await r.keyResults.nudge(kr.id, 5);
+      expect((await r.rawKeyResult(kr.id)).currentValue, 5);
+      await r.keyResults.nudge(kr.id, -2);
+      expect((await r.rawKeyResult(kr.id)).currentValue, 3);
+    });
+
+    test('goes past the start and the target', () async {
+      final kr = await r.numericKr(o.id);
+      await r.keyResults.nudge(kr.id, -1);
+      expect((await r.rawKeyResult(kr.id)).currentValue, -1);
+      await r.keyResults.nudge(kr.id, 150);
+      expect((await r.rawKeyResult(kr.id)).currentValue, 149);
+    });
+
+    test('two quick nudges both count', () async {
+      final kr = await r.numericKr(o.id);
+      await Future.wait([
+        r.keyResults.nudge(kr.id, 1),
+        r.keyResults.nudge(kr.id, 1),
+      ]);
+      expect((await r.rawKeyResult(kr.id)).currentValue, 2);
+    });
+
+    test('changes nothing on a boolean KR', () async {
+      final kr = await r.keyResults.create(
+        objectiveId: o.id,
+        title: 'Publish',
+        measureType: MeasureType.boolean,
+        currentValue: 0,
+      );
+      await r.keyResults.nudge(kr.id, 1);
+      expect((await r.rawKeyResult(kr.id)).currentValue, 0);
+    });
+  });
+
+  test('the step is stored on create and update', () async {
+    final kr = await r.keyResults.create(
+      objectiveId: o.id,
+      title: 'Save',
+      measureType: MeasureType.numeric,
+      startValue: 0,
+      targetValue: 5000,
+      currentValue: 0,
+      step: 50,
+    );
+    expect((await r.rawKeyResult(kr.id)).step, 50);
+    await r.keyResults.update(kr.copyWith(step: 100));
+    expect((await r.rawKeyResult(kr.id)).step, 100);
+    expect((await r.numericKr(o.id)).step, 1);
+  });
+
+  test('log entries on a KR, newest first', () async {
+    final kr = await r.numericKr(o.id);
+    await r.logs.createManual(keyResultId: kr.id, note: 'first');
+    await r.logs.createManual(keyResultId: kr.id, note: 'second');
+    await r.logs.createManual(note: 'elsewhere');
+    final entries = await r.logs.watchForKeyResult(kr.id).first;
+    expect(entries.map((e) => e.note), ['second', 'first']);
+  });
 }

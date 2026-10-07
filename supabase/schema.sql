@@ -102,11 +102,14 @@ create table if not exists public.key_results (
   target_value double precision,
   current_value double precision,
   unit text,
+  step double precision not null default 1,
   habit_id uuid,
   deadline date,
   sort_order integer not null,
   server_updated_at timestamptz not null default clock_timestamp()
 );
+-- Added in schema version 5 (step of the KR's − / + buttons).
+alter table public.key_results add column if not exists step double precision not null default 1;
 create index if not exists key_results_user_server_updated
   on public.key_results (user_id, server_updated_at);
 alter table public.key_results enable row level security;
@@ -335,4 +338,31 @@ grant select, insert, update on public.review_kr_snapshots to authenticated;
 drop trigger if exists review_kr_snapshots_sync_guard on public.review_kr_snapshots;
 create trigger review_kr_snapshots_sync_guard
   before insert or update on public.review_kr_snapshots
+  for each row execute function public.sync_guard();
+
+-- timers (added in schema version 5; at most one row, with a fixed ID)
+create table if not exists public.timers (
+  id uuid primary key,
+  user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  created_at timestamptz not null,
+  updated_at timestamptz not null,
+  deleted_at timestamptz,
+  project_id uuid,
+  task_id uuid,
+  started_at timestamptz not null,
+  server_updated_at timestamptz not null default clock_timestamp()
+);
+create index if not exists timers_user_server_updated
+  on public.timers (user_id, server_updated_at);
+alter table public.timers enable row level security;
+drop policy if exists "Owner only" on public.timers;
+create policy "Owner only" on public.timers
+  for all to authenticated
+  using (user_id = (select auth.uid()))
+  with check (user_id = (select auth.uid()));
+revoke all on public.timers from anon;
+grant select, insert, update on public.timers to authenticated;
+drop trigger if exists timers_sync_guard on public.timers;
+create trigger timers_sync_guard
+  before insert or update on public.timers
   for each row execute function public.sync_guard();

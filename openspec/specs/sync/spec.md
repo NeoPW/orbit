@@ -7,11 +7,15 @@ Keeps the local data of every signed-in device in step with the user's server co
 ## Requirements
 
 ### Requirement: Server copy per user
-The server SHALL hold one table per synced entity (areas, objectives, key results, projects, tasks, habits, habit checks, log entries, weekly reviews, review KR snapshots) with the same fields as on the device. Every row SHALL belong to a user, and a user SHALL only be able to read and write their own rows.
+The server SHALL hold one table per synced entity (areas, objectives, key results, projects, tasks, habits, habit checks, log entries, weekly reviews, review KR snapshots, timers) with the same fields as on the device. Every row SHALL belong to a user, and a user SHALL only be able to read and write their own rows.
 
 #### Scenario: Other user's rows
 - **WHEN** a signed-in user queries a table
 - **THEN** only rows of that user are returned
+
+#### Scenario: Timer and KR step on the server
+- **WHEN** a timer runs and a KR has step 5 on the phone, and the phone syncs
+- **THEN** the server holds the timer row and the KR's step 5
 
 ### Requirement: Local-first
 The app SHALL keep working entirely from the local database. Sync SHALL run in the background, and no screen SHALL wait for the network.
@@ -43,11 +47,15 @@ When the same record was changed on two devices, the version with the later `upd
 - **THEN** both devices end up with the browser's title
 
 ### Requirement: One record per natural key
-Habit checks (per habit and date) and weekly reviews (per week) SHALL get an ID derived from their natural key, so the same check or review created on two devices is one record after sync.
+Habit checks (per habit and date), weekly reviews (per week) and the timer (one per account) SHALL get an ID derived from their natural key, so the same check, review or timer created on two devices is one record after sync.
 
 #### Scenario: Habit checked on both devices
 - **WHEN** the same habit is checked for the same date on the phone and on the browser before either syncs
 - **THEN** after syncing both devices have exactly one check for that habit and date
+
+#### Scenario: Timer started on both devices
+- **WHEN** a timer is started on the phone and another on the browser before either syncs
+- **THEN** after syncing both devices have exactly one timer, the one started later
 
 ### Requirement: First sign-in on a device
 At the first sign-in on a device, if the account has no data on the server, the device SHALL upload all its local data. If the account already has data, the app SHALL ask for confirmation and then replace the device's local data with the account's data. Without confirmation the user SHALL be signed out again and the local data left unchanged.

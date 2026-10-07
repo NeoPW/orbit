@@ -94,7 +94,6 @@ ThemeData _theme(ColorScheme colors, OrbitColors orbit) {
       style: OutlinedButton.styleFrom(shape: rounded12),
     ),
     dividerTheme: DividerThemeData(color: colors.outlineVariant, space: 1),
-    snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating),
     progressIndicatorTheme: ProgressIndicatorThemeData(
       linearTrackColor: orbit.ringTrack,
     ),

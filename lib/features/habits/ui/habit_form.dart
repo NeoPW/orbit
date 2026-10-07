@@ -3,15 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/db/app_database.dart';
 import '../../../core/widgets/confirm_delete.dart';
-import '../../../core/widgets/form_scaffold.dart';
+import '../../../core/widgets/form_sheet.dart';
 import '../../key_results/data/key_result_repository.dart';
 import '../../objectives/data/objective_repository.dart';
 import '../../projects/data/project_repository.dart';
 import '../data/habit_repository.dart';
 import '../domain/habit_schedule.dart';
 
-class HabitFormScreen extends ConsumerWidget {
-  const HabitFormScreen({super.key, this.habitId});
+/// Opens the habit form in a sheet: a new habit, or [habitId].
+Future<FormResult?> showHabitForm(BuildContext context, {String? habitId}) =>
+    showFormSheet(context, builder: (_) => HabitFormSheet(habitId: habitId));
+
+class HabitFormSheet extends ConsumerWidget {
+  const HabitFormSheet({super.key, this.habitId});
 
   /// Null to create a new habit.
   final String? habitId;
@@ -19,7 +23,7 @@ class HabitFormScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final id = habitId;
-    return FormLoader<Habit>(
+    return FormSheetLoader<Habit>(
       load: id == null ? null : () => ref.read(habitRepositoryProvider).get(id),
       builder: (habit) => _HabitForm(habit: habit),
     );
@@ -103,7 +107,7 @@ class _HabitFormState extends ConsumerState<_HabitForm> {
         ),
       );
     }
-    if (mounted) closeForm(context);
+    if (mounted) closeFormSheet(context);
   }
 
   Future<void> _delete() async {
@@ -117,7 +121,7 @@ class _HabitFormState extends ConsumerState<_HabitForm> {
     );
     if (!confirmed) return;
     await ref.read(habitRepositoryProvider).delete(habit.id);
-    if (mounted) closeForm(context);
+    if (mounted) closeFormSheet(context, FormResult.deleted);
   }
 
   Future<void> _pickReminder() async {
@@ -201,7 +205,7 @@ class _HabitFormState extends ConsumerState<_HabitForm> {
     ];
     final reminder = _reminderTime;
 
-    return FormScaffold(
+    return FormSheetFrame(
       formKey: _formKey,
       title: editing ? 'Edit habit' : 'New habit',
       onSave: _save,

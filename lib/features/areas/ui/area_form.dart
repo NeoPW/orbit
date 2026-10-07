@@ -4,25 +4,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/db/app_database.dart';
 import '../../../core/theme/area_palette.dart';
 import '../../../core/widgets/area_dot.dart';
+import '../../../core/widgets/confirm_delete.dart';
+import '../../../core/widgets/form_sheet.dart';
 import '../data/area_repository.dart';
 
-/// Creates an area, or edits [area] when given.
-Future<void> showAreaDialog(BuildContext context, {Area? area}) =>
-    showDialog<void>(
-      context: context,
-      builder: (context) => _AreaDialog(area: area),
-    );
+/// Opens the area form in a sheet: a new area, or [area] to edit.
+Future<FormResult?> showAreaForm(BuildContext context, {Area? area}) =>
+    showFormSheet(context, builder: (_) => _AreaForm(area: area));
 
-class _AreaDialog extends ConsumerStatefulWidget {
-  const _AreaDialog({this.area});
+class _AreaForm extends ConsumerStatefulWidget {
+  const _AreaForm({this.area});
 
   final Area? area;
 
   @override
-  ConsumerState<_AreaDialog> createState() => _AreaDialogState();
+  ConsumerState<_AreaForm> createState() => _AreaFormState();
 }
 
-class _AreaDialogState extends ConsumerState<_AreaDialog> {
+class _AreaFormState extends ConsumerState<_AreaForm> {
+  final _formKey = GlobalKey<FormState>();
   late final _name = TextEditingController(text: widget.area?.name);
   late String _color = widget.area?.color ?? areaPalette.first;
   String? _nameError;
@@ -55,34 +55,44 @@ class _AreaDialogState extends ConsumerState<_AreaDialog> {
     } else {
       await repo.update(area.copyWith(name: name, color: _color));
     }
-    if (mounted) Navigator.of(context).pop();
+    if (mounted) closeFormSheet(context);
+  }
+
+  Future<void> _delete() async {
+    final area = widget.area!;
+    final confirmed = await confirmDelete(
+      context,
+      title: 'Delete "${area.name}"?',
+      message: 'Projects in this area keep existing without an area.',
+    );
+    if (!confirmed) return;
+    await ref.read(areaRepositoryProvider).delete(area.id);
+    if (mounted) closeFormSheet(context, FormResult.deleted);
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return AlertDialog(
-      title: Text(widget.area == null ? 'New area' : 'Edit area'),
-      content: SizedBox(
-        width: 360,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    return FormSheetFrame(
+      formKey: _formKey,
+      title: widget.area == null ? 'New area' : 'Edit area',
+      onSave: _saving ? null : _save,
+      onDelete: widget.area == null ? null : _delete,
+      deleteTooltip: 'Delete area',
+      children: [
+        TextField(
+          controller: _name,
+          autofocus: widget.area == null,
+          decoration: InputDecoration(labelText: 'Name', errorText: _nameError),
+          textCapitalization: TextCapitalization.sentences,
+          onChanged: (_) {
+            if (_nameError != null) setState(() => _nameError = null);
+          },
+          onSubmitted: (_) => _save(),
+        ),
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
-              controller: _name,
-              autofocus: true,
-              decoration: InputDecoration(
-                labelText: 'Name',
-                errorText: _nameError,
-              ),
-              textCapitalization: TextCapitalization.sentences,
-              onChanged: (_) {
-                if (_nameError != null) setState(() => _nameError = null);
-              },
-              onSubmitted: (_) => _save(),
-            ),
-            const SizedBox(height: 16),
             Text('Color', style: Theme.of(context).textTheme.labelLarge),
             const SizedBox(height: 8),
             Wrap(
@@ -115,16 +125,6 @@ class _AreaDialogState extends ConsumerState<_AreaDialog> {
               ],
             ),
           ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _saving ? null : _save,
-          child: const Text('Save'),
         ),
       ],
     );

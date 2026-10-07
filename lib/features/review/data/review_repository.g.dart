@@ -345,3 +345,95 @@ final class LatestSnapshotsBeforeFamily extends $Family
   @override
   String toString() => r'latestSnapshotsBeforeProvider';
 }
+
+/// The KR snapshots of the week's completed review, or null (see
+/// [ReviewRepository.watchSnapshotsOfCompletedWeek]).
+
+@ProviderFor(weekReviewSnapshots)
+final weekReviewSnapshotsProvider = WeekReviewSnapshotsFamily._();
+
+/// The KR snapshots of the week's completed review, or null (see
+/// [ReviewRepository.watchSnapshotsOfCompletedWeek]).
+
+final class WeekReviewSnapshotsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<String, double>?>,
+          Map<String, double>?,
+          Stream<Map<String, double>?>
+        >
+    with
+        $FutureModifier<Map<String, double>?>,
+        $StreamProvider<Map<String, double>?> {
+  /// The KR snapshots of the week's completed review, or null (see
+  /// [ReviewRepository.watchSnapshotsOfCompletedWeek]).
+  WeekReviewSnapshotsProvider._({
+    required WeekReviewSnapshotsFamily super.from,
+    required CalendarDate super.argument,
+  }) : super(
+         retry: null,
+         name: r'weekReviewSnapshotsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$weekReviewSnapshotsHash();
+
+  @override
+  String toString() {
+    return r'weekReviewSnapshotsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<Map<String, double>?> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<Map<String, double>?> create(Ref ref) {
+    final argument = this.argument as CalendarDate;
+    return weekReviewSnapshots(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is WeekReviewSnapshotsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$weekReviewSnapshotsHash() =>
+    r'31baeddbf72a23da72990f5f09bf470cc4d2baa7';
+
+/// The KR snapshots of the week's completed review, or null (see
+/// [ReviewRepository.watchSnapshotsOfCompletedWeek]).
+
+final class WeekReviewSnapshotsFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<Map<String, double>?>, CalendarDate> {
+  WeekReviewSnapshotsFamily._()
+    : super(
+        retry: null,
+        name: r'weekReviewSnapshotsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The KR snapshots of the week's completed review, or null (see
+  /// [ReviewRepository.watchSnapshotsOfCompletedWeek]).
+
+  WeekReviewSnapshotsProvider call(CalendarDate weekStart) =>
+      WeekReviewSnapshotsProvider._(argument: weekStart, from: this);
+
+  @override
+  String toString() => r'weekReviewSnapshotsProvider';
+}

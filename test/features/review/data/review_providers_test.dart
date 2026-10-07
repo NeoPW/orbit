@@ -67,4 +67,67 @@ void main() {
     expect(summary.work.single.title, 'Thesis');
     expect(summary.work.single.minutes, 30);
   });
+
+  group('KRs of a reviewed week', () {
+    test(
+      'a completed review shows its snapshots, not today\'s value',
+      () async {
+        final o = await r.objective();
+        final kr = await r.numericKr(o.id);
+        await r.keyResults.setProgressValue(kr.id, 70);
+        await r.reviews.complete(
+          week,
+          score: 7,
+          reflection: '',
+          plan: '',
+          snapshots: {kr.id: 0.4},
+        );
+
+        final reviewed = await valueWhere(
+          container,
+          weekSummaryProvider(week),
+          (s) => s.keyResults.isNotEmpty,
+        );
+        expect(reviewed.keyResults.single.progress, 0.4);
+
+        // The next week has no completed review: today's value, +30 since.
+        final next = await valueWhere(
+          container,
+          weekSummaryProvider(week.addDays(7)),
+          (s) => s.keyResults.isNotEmpty,
+        );
+        expect(next.keyResults.single.progress, 0.7);
+        expect(next.keyResults.single.change, 30);
+
+        // The review flow always works on the live values.
+        final live = await valueWhere(
+          container,
+          currentKrProgressProvider(week),
+          (krs) => krs.isNotEmpty,
+        );
+        expect(live.single.progress, 0.7);
+      },
+    );
+
+    test('a KR deleted since the review is left out', () async {
+      final o = await r.objective();
+      final kept = await r.numericKr(o.id, title: 'Kept');
+      final gone = await r.numericKr(o.id, title: 'Gone');
+      await r.reviews.complete(
+        week,
+        score: 7,
+        reflection: '',
+        plan: '',
+        snapshots: {kept.id: 0.2, gone.id: 0.5},
+      );
+      await r.keyResults.delete(gone.id);
+
+      final summary = await valueWhere(
+        container,
+        weekSummaryProvider(week),
+        (s) => s.keyResults.isNotEmpty,
+      );
+      expect(summary.keyResults.map((k) => k.keyResult.title), ['Kept']);
+    });
+  });
 }

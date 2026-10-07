@@ -102,7 +102,7 @@ A task SHALL be standalone or assigned to exactly one project, one key result or
 - **THEN** the task belongs to the objective and no longer to the project, and if it was the project's next step the project has no next step
 
 ### Requirement: Task page
-Every task SHALL have a page showing its title, notes, deadline, status and assignment (the assigned project, KR or objective, tappable to open it, or "Standalone"), marked when it is its project's next step, and the log entries recorded for it, newest first. The page SHALL offer complete (with Undo), reopen, edit, delete and log work. The page SHALL have its own URL.
+Every task SHALL have a page showing its title, notes, deadline, status and assignment (the assigned project, KR or objective, tappable to open it, or "Standalone"), marked when it is its project's next step, and the log entries recorded for it, newest first. The page SHALL offer complete (with Undo), reopen, edit, delete and log work, and for an open project task that is not the next step "Make next step". The page SHALL have its own URL.
 
 #### Scenario: Open from Home
 - **WHEN** the user taps a task in the Tasks section of Home
@@ -115,6 +115,14 @@ Every task SHALL have a page showing its title, notes, deadline, status and assi
 #### Scenario: Missing task
 - **WHEN** the task page of a deleted task is opened
 - **THEN** it says the task was not found
+
+#### Scenario: Make next step
+- **WHEN** the project "Wedding" has the next step "Draft outline" and the user taps "Make next step" on the page of its open task "Book venue"
+- **THEN** "Book venue" is the next step and the page shows the next-step marker
+
+#### Scenario: No next-step action outside projects
+- **WHEN** the page of a standalone task is shown
+- **THEN** it offers no "Make next step"
 
 ### Requirement: Reopen task
 A done task SHALL be reopenable from its task page. Reopening SHALL set it back to open and clear its completion time; its log entries SHALL stay.
@@ -129,3 +137,14 @@ The task page SHALL offer "Log work" with an optional duration and note. The ent
 #### Scenario: Log on a standalone task
 - **WHEN** the user logs 30 minutes on the standalone task "Tax return"
 - **THEN** the task page lists a 30-minute manual entry
+
+### Requirement: Task rows
+Wherever open tasks are listed as rows (project detail, Plan, objective and KR pages), a row SHALL show a checkbox that completes the task, the title, a next-step marker when it applies and a deadline badge. Tapping the row SHALL open the task page. A row SHALL NOT have its own action menu; editing, deleting and making a task the next step happen on the task page.
+
+#### Scenario: No row menu
+- **WHEN** a project's open tasks are listed in its detail
+- **THEN** no task row has an action menu, and tapping "Book venue" opens its task page
+
+#### Scenario: Complete from the row
+- **WHEN** the user ticks the checkbox of "Book venue"
+- **THEN** the task is completed with an Undo offer

@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/db/app_database.dart';
-import '../../../core/router/routes.dart';
 import '../../../core/time/date_format.dart';
 import '../../../core/time/today.dart';
 import '../../../core/widgets/animated_items.dart';
 import '../../../core/widgets/async_body.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/max_width_body.dart';
+import '../../../core/widgets/orbit_chips.dart';
 import '../../../core/widgets/section_heading.dart';
 import '../../account/ui/sync_refresh.dart';
 import '../../key_results/ui/key_result_tile.dart';
@@ -19,6 +18,8 @@ import '../../tasks/ui/task_tile.dart';
 import '../data/plan_providers.dart';
 import '../domain/plan_overview.dart';
 import 'open_plan_item.dart';
+import '../../key_results/ui/key_result_form.dart';
+import '../../objectives/ui/objective_form.dart';
 
 /// Active objectives → KRs → active projects and assigned tasks, then
 /// active projects without a KR.
@@ -39,7 +40,7 @@ class OverviewTab extends ConsumerWidget {
                   icon: Icons.flag_outlined,
                   message: 'No active objectives',
                   action: FilledButton.tonal(
-                    onPressed: () => context.push(Routes.newObjective),
+                    onPressed: () => showObjectiveForm(context),
                     child: const Text('Create objective'),
                   ),
                 )
@@ -92,15 +93,30 @@ class _ObjectiveCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           ListTile(
-            onTap: () => context.push(Routes.objective(objective.id)),
+            onTap: () =>
+                openPlanItem(context, ref, PlanObjective(objective.id)),
             leading: CircleAvatar(
               backgroundColor: theme.colorScheme.primaryContainer,
               foregroundColor: theme.colorScheme.onPrimaryContainer,
               child: const Icon(Icons.flag_outlined),
             ),
             title: Text(objective.title, style: theme.textTheme.titleMedium),
-            subtitle: Text(
-              formatDateRange(objective.startDate, objective.endDate),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(formatDateRange(objective.startDate, objective.endDate)),
+                  // Only active objectives are listed here.
+                  DeadlineChip(
+                    date: objective.endDate,
+                    today: today,
+                    leadDays: leadDays,
+                  ),
+                ],
+              ),
             ),
           ),
           if (plan.tasks.isNotEmpty) _Tasks(tasks: plan.tasks),
@@ -122,7 +138,8 @@ class _ObjectiveCard extends ConsumerWidget {
                 effectiveDeadline: kr.effectiveDeadline,
                 today: today,
                 leadDays: leadDays,
-                onTap: () => context.push(Routes.keyResult(kr.keyResult.id)),
+                onTap: () =>
+                    openPlanItem(context, ref, PlanKeyResult(kr.keyResult.id)),
               ),
               Padding(
                 padding: const EdgeInsets.only(left: 40),
@@ -148,7 +165,7 @@ class _ObjectiveCard extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
               child: TextButton.icon(
                 onPressed: () =>
-                    context.push(Routes.newKeyResult(objective.id)),
+                    showKeyResultForm(context, objectiveId: objective.id),
                 icon: const Icon(Icons.add),
                 label: const Text('Add key result'),
               ),

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/db/app_database.dart';
-import '../../../core/router/routes.dart';
 import '../../../core/widgets/async_body.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/max_width_body.dart';
@@ -13,6 +11,7 @@ import '../../projects/data/project_repository.dart';
 import '../data/habit_repository.dart';
 import '../domain/habit_schedule.dart';
 import 'habit_links.dart';
+import 'habit_form.dart';
 
 class HabitsScreen extends ConsumerWidget {
   const HabitsScreen({super.key});
@@ -31,7 +30,7 @@ class HabitsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Habits')),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push(Routes.newHabit),
+        onPressed: () => showHabitForm(context),
         icon: const Icon(Icons.add),
         label: const Text('New habit'),
       ),
@@ -42,7 +41,7 @@ class HabitsScreen extends ConsumerWidget {
                 icon: Icons.repeat,
                 message: 'No habits yet',
                 action: FilledButton.tonal(
-                  onPressed: () => context.push(Routes.newHabit),
+                  onPressed: () => showHabitForm(context),
                   child: const Text('New habit'),
                 ),
               )
@@ -88,7 +87,7 @@ class _HabitTile extends StatelessWidget {
     ].join(' · ');
 
     return ListTile(
-      onTap: () => context.push(Routes.habit(habit.id)),
+      onTap: () => showHabitForm(context, habitId: habit.id),
       leading: Icon(
         habit.active ? Icons.repeat : Icons.pause_circle_outline,
         color: habit.active ? theme.colorScheme.primary : muted,

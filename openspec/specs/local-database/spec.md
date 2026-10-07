@@ -29,11 +29,11 @@ On web, if the browser offers no persistent storage for the database, the app SH
 - **THEN** the app starts with an in-memory database and shows a warning banner that data is not saved
 
 ### Requirement: Complete schema from the start
-The database SHALL contain tables for all entities of the product spec: Area, Objective, KeyResult, Project, Task, Habit, HabitCheck, LogEntry, WeeklyReview and ReviewKrSnapshot, with the fields defined in `docs/SPEC.md` §4 (including the task's project, KR and objective links and the log entry's task link), including entities that have no UI yet, and a local-only settings table that is not synced.
+The database SHALL contain tables for all entities of the product spec: Area, Objective, KeyResult, Project, Task, Habit, HabitCheck, LogEntry, WeeklyReview, ReviewKrSnapshot and Timer, with the fields defined in `docs/SPEC.md` §4 (including the task's project, KR and objective links, the log entry's task link and the KR's step), including entities that have no UI yet, and a local-only settings table that is not synced.
 
 #### Scenario: Fresh install
 - **WHEN** the database is created for the first time
-- **THEN** all ten entity tables and the settings table exist and the schema version is 4
+- **THEN** all eleven entity tables and the settings table exist and the schema version is 5
 
 #### Scenario: Unique habit check per day
 - **WHEN** a second HabitCheck row is inserted for the same habit and the same date
@@ -96,7 +96,11 @@ The database SHALL record its schema version and SHALL run versioned migrations 
 
 #### Scenario: Upgrade from version 3
 - **WHEN** the app opens a database at schema version 3 that contains tasks and log entries
-- **THEN** it is migrated to version 4, existing tasks keep their project and have no KR or objective, existing log entries have no task, and all other values are unchanged
+- **THEN** it is migrated to the current version, existing tasks keep their project and have no KR or objective, existing log entries have no task, and all other values are unchanged
+
+#### Scenario: Upgrade from version 4
+- **WHEN** the app opens a database at schema version 4 that contains numeric key results
+- **THEN** it is migrated to version 5, the timer table exists and is empty, every key result has step 1, and all other values are unchanged
 
 ### Requirement: Default areas on first launch
 When the database is created for the first time, the app SHALL create the areas Job, Personal, Sport and Uni. Seeding SHALL NOT run again on later launches, even if the user has edited or deleted those areas.

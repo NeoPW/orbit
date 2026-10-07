@@ -7,7 +7,7 @@ Defines the Home tab, the daily view of the app: the habits due today, upcoming 
 ## Requirements
 
 ### Requirement: Home sections
-The Home tab SHALL show, from top to bottom, the today header and the sections "Habits due today", "Upcoming deadlines", "Active projects" and "Tasks". A section without items SHALL show a short empty state instead of being hidden.
+The Home tab SHALL show, from top to bottom, the today header, the timer card while a timer runs (see work-timer), and the sections "Habits due today", "Upcoming deadlines", "Active projects" and "Tasks". A section without items SHALL show a short empty state instead of being hidden.
 
 #### Scenario: Section order
 - **WHEN** there are due habits, upcoming deadlines, active projects and open tasks outside projects
@@ -16,6 +16,10 @@ The Home tab SHALL show, from top to bottom, the today header and the sections "
 #### Scenario: Empty section
 - **WHEN** no habit is due today
 - **THEN** the "Habits due today" section shows an empty state and the other sections are still shown
+
+#### Scenario: Timer card position
+- **WHEN** a timer runs
+- **THEN** the timer card is shown between the today header and "Habits due today"
 
 ### Requirement: Habits due today on Home
 The "Habits due today" section SHALL show every active habit that is due today (see habits) or already checked today as a chip with its title, labeled with the title of its linked project, or of its KR when it has no project, and visibly marked when checked today. Tapping a chip SHALL check or uncheck the habit for today.

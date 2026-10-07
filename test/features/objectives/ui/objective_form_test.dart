@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/db/app_database.dart';
-import 'package:orbit/core/router/routes.dart';
 import 'package:orbit/core/widgets/date_field.dart';
+import 'package:orbit/features/objectives/ui/objective_form.dart';
 
 import '../../../helpers/pump_app.dart';
 import '../../../helpers/seed.dart';
@@ -23,7 +23,7 @@ Future<void> save(WidgetTester tester) async {
 
 void main() {
   testApp('creates an active objective', (tester) async {
-    final app = await pumpApp(tester, location: Routes.newObjective);
+    final db = await pumpSheet(tester, (c) => showObjectiveForm(c));
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Title'),
       'Get fit',
@@ -32,7 +32,7 @@ void main() {
     await pickDay(tester, 'End date', '28');
     await save(tester);
 
-    final objectives = await app.db.select(app.db.objectives).get();
+    final objectives = await db.select(db.objectives).get();
     expect(objectives.single.title, 'Get fit');
     expect(objectives.single.status, ObjectiveStatus.active);
     expect(objectives.single.startDate.day, 1);
@@ -40,17 +40,17 @@ void main() {
   });
 
   testApp('missing title is not saved', (tester) async {
-    final app = await pumpApp(tester, location: Routes.newObjective);
+    final db = await pumpSheet(tester, (c) => showObjectiveForm(c));
     await pickDay(tester, 'Start date', '1');
     await pickDay(tester, 'End date', '28');
     await save(tester);
 
     expect(find.text('Enter a title'), findsOneWidget);
-    expect(await app.db.select(app.db.objectives).get(), isEmpty);
+    expect(await db.select(db.objectives).get(), isEmpty);
   });
 
   testApp('missing dates are not saved', (tester) async {
-    final app = await pumpApp(tester, location: Routes.newObjective);
+    final db = await pumpSheet(tester, (c) => showObjectiveForm(c));
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Title'),
       'Get fit',
@@ -59,13 +59,17 @@ void main() {
 
     expect(find.text('Pick a start date'), findsOneWidget);
     expect(find.text('Pick an end date'), findsOneWidget);
-    expect(await app.db.select(app.db.objectives).get(), isEmpty);
+    expect(await db.select(db.objectives).get(), isEmpty);
   });
 
   testApp('end before start is not saved', (tester) async {
     final db = newTestDatabase();
     final o = await Seed(db).objective();
-    await pumpApp(tester, db: db, location: Routes.objective(o.id));
+    await pumpSheet(
+      tester,
+      (c) => showObjectiveForm(c, objectiveId: o.id),
+      db: db,
+    );
     expect(find.text('01-10-2026'), findsOneWidget);
     expect(find.text('31-12-2026'), findsOneWidget);
 
@@ -98,7 +102,11 @@ void main() {
     for (var i = 0; i < 3; i++) {
       await seed.kr(o.id, title: 'KR $i');
     }
-    await pumpApp(tester, db: db, location: Routes.objective(o.id));
+    await pumpSheet(
+      tester,
+      (c) => showObjectiveForm(c, objectiveId: o.id),
+      db: db,
+    );
 
     await tester.tap(find.byTooltip('Delete objective'));
     await tester.pumpAndSettle();
@@ -117,7 +125,11 @@ void main() {
     final db = newTestDatabase();
     final seed = Seed(db);
     final o = await seed.objective();
-    await pumpApp(tester, db: db, location: Routes.objective(o.id));
+    await pumpSheet(
+      tester,
+      (c) => showObjectiveForm(c, objectiveId: o.id),
+      db: db,
+    );
 
     await tester.tap(find.byTooltip('Delete objective'));
     await tester.pumpAndSettle();
@@ -130,7 +142,11 @@ void main() {
     final db = newTestDatabase();
     final seed = Seed(db);
     final o = await seed.objective();
-    await pumpApp(tester, db: db, location: Routes.objective(o.id));
+    await pumpSheet(
+      tester,
+      (c) => showObjectiveForm(c, objectiveId: o.id),
+      db: db,
+    );
 
     await tester.tap(find.text('Completed'));
     await save(tester);

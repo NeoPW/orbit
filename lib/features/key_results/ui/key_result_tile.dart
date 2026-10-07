@@ -5,6 +5,27 @@ import '../../../core/numbers.dart';
 import '../../../core/widgets/orbit_chips.dart';
 import '../../../core/widgets/orbit_ring.dart';
 
+/// A KR's value: "40 / 100 km", "Done" / "Not done", or check-ins.
+String krValueText(
+  KeyResult kr, {
+  required double progress,
+  int habitCheckIns = 0,
+}) {
+  switch (kr.measureType) {
+    case MeasureType.numeric:
+      final unit = kr.unit == null ? '' : ' ${kr.unit}';
+      final current = formatNumber(kr.currentValue ?? 0);
+      final target = formatNumber(kr.targetValue ?? 0);
+      return '$current / $target$unit';
+    case MeasureType.boolean:
+      return progress == 1 ? 'Done' : 'Not done';
+    case MeasureType.habit:
+      if (kr.habitId == null) return 'No habit linked';
+      final target = formatNumber(kr.targetValue ?? 0);
+      return '$habitCheckIns / $target check-ins';
+  }
+}
+
 /// A KR with its progress as an orbit ring and, until it is reached, its
 /// effective deadline.
 class KeyResultTile extends StatelessWidget {
@@ -31,23 +52,6 @@ class KeyResultTile extends StatelessWidget {
   final int leadDays;
   final VoidCallback? onTap;
 
-  String _valueText() {
-    final kr = keyResult;
-    switch (kr.measureType) {
-      case MeasureType.numeric:
-        final unit = kr.unit == null ? '' : ' ${kr.unit}';
-        final current = formatNumber(kr.currentValue ?? 0);
-        final target = formatNumber(kr.targetValue ?? 0);
-        return '$current / $target$unit';
-      case MeasureType.boolean:
-        return progress == 1 ? 'Done' : 'Not done';
-      case MeasureType.habit:
-        if (kr.habitId == null) return 'No habit linked';
-        final target = formatNumber(kr.targetValue ?? 0);
-        return '$habitCheckIns / $target check-ins';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -72,7 +76,11 @@ class KeyResultTile extends StatelessWidget {
                   Text(keyResult.title, style: theme.textTheme.titleSmall),
                   const SizedBox(height: 2),
                   Text(
-                    _valueText(),
+                    krValueText(
+                      keyResult,
+                      progress: progress,
+                      habitCheckIns: habitCheckIns,
+                    ),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),

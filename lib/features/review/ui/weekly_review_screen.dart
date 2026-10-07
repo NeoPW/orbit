@@ -12,7 +12,7 @@ import '../../key_results/data/key_result_repository.dart';
 import '../../projects/data/project_repository.dart';
 import '../../projects/ui/project_labels.dart';
 import '../../tasks/data/task_repository.dart';
-import '../../tasks/ui/task_dialog.dart';
+import '../../tasks/ui/task_form.dart';
 import '../data/review_providers.dart';
 import '../data/review_repository.dart';
 import '../domain/week_summary.dart';
@@ -122,16 +122,14 @@ class _WeeklyReviewState extends ConsumerState<WeeklyReviewScreen> {
       await _goTo(_scoreStep);
       return;
     }
-    final summary = ref.read(weekSummaryProvider(_week)).value;
-    if (summary == null) return;
+    final keyResults = ref.read(currentKrProgressProvider(_week)).value;
+    if (keyResults == null) return;
     await _reviews.complete(
       _week,
       score: score,
       reflection: _reflection.text,
       plan: _plan.text,
-      snapshots: {
-        for (final kr in summary.keyResults) kr.keyResult.id: kr.progress,
-      },
+      snapshots: {for (final kr in keyResults) kr.keyResult.id: kr.progress},
     );
     _saved = true;
     if (!mounted) return;
@@ -145,7 +143,7 @@ class _WeeklyReviewState extends ConsumerState<WeeklyReviewScreen> {
   @override
   Widget build(BuildContext context) {
     // Kept alive for the whole review: the KR snapshots are taken from it.
-    ref.watch(weekSummaryProvider(_week));
+    ref.watch(currentKrProgressProvider(_week));
     final theme = Theme.of(context);
     final pages = [
       WeekSummaryView(weekStart: _week),
@@ -374,16 +372,8 @@ class _ProjectTile extends ConsumerWidget {
             tooltip: nextStep == null ? 'Set next step' : 'Change next step',
             icon: const Icon(Icons.flag_outlined),
             onPressed: () => nextStep == null
-                ? showTaskDialog(
-                    context,
-                    projectId: project.id,
-                    asNextStep: true,
-                  )
-                : showTaskDialog(
-                    context,
-                    projectId: project.id,
-                    task: nextStep,
-                  ),
+                ? showTaskForm(context, projectId: project.id, asNextStep: true)
+                : showTaskForm(context, projectId: project.id, task: nextStep),
           ),
           PopupMenuButton<ProjectStatus>(
             tooltip: 'Status of ${project.title}',
@@ -413,7 +403,7 @@ class _KeyResultsStep extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final items = ref.watch(weekSummaryProvider(week)).value?.keyResults;
+    final items = ref.watch(currentKrProgressProvider(week)).value;
     if (items == null) return const LinearProgressIndicator();
     if (items.isEmpty) {
       return const SectionEmptyText(

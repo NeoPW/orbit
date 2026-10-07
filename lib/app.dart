@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'core/messages/message_host.dart';
 import 'core/notifications/notification_scheduler.dart';
 import 'core/router/router.dart';
 import 'core/router/routes.dart';
 import 'core/theme/app_theme.dart';
 import 'features/account/ui/sync_scope.dart';
 import 'features/reminders/ui/reminder_sync_scope.dart';
+import 'features/timer/ui/timer_notification_scope.dart';
 
 class OrbitApp extends ConsumerStatefulWidget {
   /// [router] can be passed in tests to start at another location;
@@ -45,8 +47,11 @@ class _OrbitAppState extends ConsumerState<OrbitApp> {
       darkTheme: darkTheme,
       themeMode: ThemeMode.system,
       routerConfig: _router,
-      builder: (context, child) =>
-          ReminderSyncScope(child: SyncScope(child: child!)),
+      builder: (context, child) => ReminderSyncScope(
+        child: TimerNotificationScope(
+          child: SyncScope(child: MessageHost(child: child!)),
+        ),
+      ),
     );
   }
 }

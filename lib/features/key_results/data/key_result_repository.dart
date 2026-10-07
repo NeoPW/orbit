@@ -42,6 +42,7 @@ class KeyResultRepository extends Repository {
     double? targetValue,
     double? currentValue,
     String? unit,
+    double step = 1,
     String? habitId,
     CalendarDate? deadline,
   }) async {
@@ -64,6 +65,7 @@ class KeyResultRepository extends Repository {
         targetValue: targetValue,
         currentValue: currentValue,
         unit: unit,
+        step: step,
         habitId: habitId,
         deadline: deadline,
         sortOrder: sortOrder,
@@ -88,6 +90,15 @@ class KeyResultRepository extends Repository {
           updatedAt: Value(clock()),
         ),
       );
+
+  /// Changes a numeric KR's current value by [delta] (the − / + buttons on
+  /// the KR page), reading the stored value in the same transaction so
+  /// quick taps add up. The value is not limited to start or target.
+  Future<void> nudge(String id, double delta) => db.transaction(() async {
+    final kr = await get(id);
+    if (kr == null || kr.measureType != MeasureType.numeric) return;
+    await setProgressValue(id, (kr.currentValue ?? 0) + delta);
+  });
 
   /// Soft-deletes the KR; its projects and habits keep existing without it.
   Future<void> delete(String id) => db.transaction(() async {

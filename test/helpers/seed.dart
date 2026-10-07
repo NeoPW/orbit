@@ -47,6 +47,7 @@ class Seed {
     double? target = 100,
     double? current = 20,
     String? unit = 'km',
+    double step = 1,
     String? habitId,
     CalendarDate? deadline,
   }) => keyResults.create(
@@ -57,6 +58,7 @@ class Seed {
     targetValue: target,
     currentValue: current,
     unit: unit,
+    step: step,
     habitId: habitId,
     deadline: deadline,
   );

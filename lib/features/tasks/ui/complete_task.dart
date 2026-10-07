@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/db/app_database.dart';
+import '../../../core/messages/messenger.dart';
 import '../../projects/data/project_repository.dart';
 import '../data/task_repository.dart';
 import 'next_step_prompt.dart';
 
-/// Completes [task] and offers Undo in a snackbar.
+/// Completes [task] and offers Undo in a message at the top.
 ///
 /// When the task is its project's next step ([isNextStep]), the next-step
 /// prompt comes first; cancelling it changes nothing. Used by Home and the
@@ -20,7 +21,7 @@ Future<void> completeTask(
   // Read everything up front: the calling widget may be gone afterwards.
   final tasks = ref.read(taskRepositoryProvider);
   final projects = ref.read(projectRepositoryProvider);
-  final messenger = ScaffoldMessenger.of(context);
+  final messenger = ref.read(messengerProvider.notifier);
   final projectId = task.projectId;
 
   final String logEntryId;
@@ -38,15 +39,14 @@ Future<void> completeTask(
     logEntryId = await tasks.complete(task.id);
   }
 
-  messenger
-    ..hideCurrentSnackBar()
-    ..showSnackBar(
-      SnackBar(
-        content: const Text('Task completed'),
-        action: SnackBarAction(
-          label: 'Undo',
-          onPressed: () => tasks.undoComplete(task.id, logEntryId),
-        ),
+  messenger.show(
+    Message(
+      'Task completed',
+      icon: Icons.task_alt,
+      action: MessageAction(
+        'Undo',
+        () => tasks.undoComplete(task.id, logEntryId),
       ),
-    );
+    ),
+  );
 }
