@@ -52,6 +52,10 @@ context: |
   - Animate list changes with AnimatedItems; respect reduced motion
   - Pages that also appear in Plan's detail pane keep their content in a
     scaffold-free ...Body widget
+  - Create and edit forms open with showFormSheet (bottom sheet on
+    phones, side sheet on wide screens) and have no routes
+  - Confirmations go through the message host (showMessage), never a
+    SnackBar
 
   Quality:
   - flutter analyze must pass with no warnings
