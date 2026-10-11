@@ -16,6 +16,7 @@ Personal, local-first app for objectives, key results, projects, tasks, habits, 
 | Analyze | `flutter analyze` |
 | Test | `flutter test` |
 | Update web database assets | `tool/fetch_web_assets.sh` |
+| Release build on Android (`--install`: also install over USB) | `tool/build_release.sh [--install]` |
 
 Run code generation after changing drift tables or `@riverpod` providers. Generated files (`*.g.dart`, `*.drift.dart`) are committed.
 
@@ -82,7 +83,64 @@ Pass the file to every run or build:
 ```bash
 flutter run --dart-define-from-file=supabase.json
 flutter run -d chrome --dart-define-from-file=supabase.json
-flutter build apk --dart-define-from-file=supabase.json
 ```
 
+Release APKs for the phone are built with `tool/build_release.sh`, which passes the file itself (see [Release build on Android](#release-build-on-android)).
+
 Then sign in under **Plan → ⋮ → Settings → Account & sync**. Sign in on the device with your real data first: an empty account receives that device's data. Signing in on another device afterwards replaces that device's local data with the account's (after a confirmation).
+
+## Release build on Android
+
+The phone runs a signed release build named **Orbit**, installed by hand (no store) and updated in place. `flutter run` installs debug builds as **Orbit Dev** (`dev.neopw.orbit.debug`) next to it, with their own local data; both sync through the same account.
+
+### 1. Release key (once)
+
+Create the keystore outside the repository:
+
+```bash
+mkdir -p ~/.config/orbit
+keytool -genkeypair -v -keystore ~/.config/orbit/release.jks -keyalg RSA -keysize 4096 -validity 10000 -alias orbit
+```
+
+Then create `android/key.properties`, a plain text file (git-ignored) that points to the keystore:
+
+```properties
+storeFile=/home/<you>/.config/orbit/release.jks
+storePassword=<keystore password>
+keyAlias=orbit
+keyPassword=<key password>
+```
+
+`storeFile` must be an absolute path (no `~`). **Back up the keystore and both passwords outside this machine** (for example in a password manager). Without them, the installed app can't be updated: it has to be uninstalled and reinstalled, which loses any data that isn't synced.
+
+Without `android/key.properties`, release builds fail with "android/key.properties not found, see README". They never fall back to the debug key.
+
+### 2. Version
+
+Before every release, raise the build number (`+N`) in `pubspec.yaml`:
+
+```yaml
+version: 1.0.0+2
+```
+
+Android refuses to install a lower build number over a higher one. Commit the version change.
+
+### 3. Build and install
+
+```bash
+tool/build_release.sh            # build the signed APK
+tool/build_release.sh --install  # build, then install it over USB (adb install -r)
+```
+
+The script needs `android/key.properties` and `supabase.json` and stops if either is missing. It builds one APK for all phones with sync configured, fails if the APK is signed with the debug key, and prints the version, build number, signing certificate and APK path (`build/app/outputs/flutter-apk/app-release.apk`). It finds `apksigner` and `adb` under `$ANDROID_HOME`, or `~/Android/Sdk` when that's not set. Installing an update keeps the app's data, sign-in and reminders.
+
+### Moving from a development install (once)
+
+A phone that ran `flutter run` before this setup has an app with ID `dev.neopw.orbit` signed with the debug key. The release can't update it:
+
+1. In that app: **Settings → Account & sync → Sync now**, and check the last sync time.
+2. Uninstall it: `adb uninstall dev.neopw.orbit`.
+3. Run `tool/build_release.sh --install`.
+4. Open Orbit, sign in, confirm that the account's data replaces the empty local data, and allow notifications.
+
+To roll back, uninstall the release and use `flutter run` as before. The data is in the account.

@@ -23,6 +23,7 @@ Personal local-first Flutter app (Android + web) for objectives, key results, pr
 ## Commands
 - Run on phone: `flutter run`
 - Run in browser: `flutter run -d chrome`
+- Release build on Android: `tool/build_release.sh [--install]`
 - Analyze: `flutter analyze`
 - Test: `flutter test`
 - Code generation (drift, riverpod): `dart run build_runner build --delete-conflicting-outputs`
