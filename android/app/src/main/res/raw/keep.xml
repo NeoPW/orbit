@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keeps resources that are only referenced by name from resource
+     shrinking in release builds: the notification icon
+     (lib/core/notifications/local_notification_scheduler.dart). -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@mipmap/ic_launcher" />

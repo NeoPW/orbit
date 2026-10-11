@@ -1,7 +1,15 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// Release signing, from a git-ignored file outside version control (see README).
+val keyPropertiesFile = rootProject.file("key.properties")
+val keyProperties = Properties().apply {
+    if (keyPropertiesFile.exists()) keyPropertiesFile.inputStream().use { load(it) }
 }
 
 android {
@@ -31,11 +39,44 @@ android {
         versionName = flutter.versionName
     }
 
+    buildFeatures {
+        // App names per build type (resValue below).
+        resValues = true
+    }
+
+    signingConfigs {
+        if (keyPropertiesFile.exists()) {
+            create("release") {
+                storeFile = file(keyProperties.getProperty("storeFile"))
+                storePassword = keyProperties.getProperty("storePassword")
+                keyAlias = keyProperties.getProperty("keyAlias")
+                keyPassword = keyProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Never falls back to the debug key; preReleaseBuild fails instead.
+            signingConfig = signingConfigs.findByName("release")
+            resValue("string", "app_name", "Orbit")
+        }
+        // Development builds install next to the release app.
+        debug {
+            applicationIdSuffix = ".debug"
+            resValue("string", "app_name", "Orbit Dev")
+        }
+        getByName("profile") {
+            applicationIdSuffix = ".profile"
+            resValue("string", "app_name", "Orbit Dev")
+        }
+    }
+}
+
+tasks.matching { it.name == "preReleaseBuild" }.configureEach {
+    doFirst {
+        if (!keyPropertiesFile.exists()) {
+            throw GradleException("android/key.properties not found, see README")
         }
     }
 }
