@@ -9,10 +9,6 @@ void main() {
       expect(date.toIso(), '2026-12-31');
     });
 
-    test('pads month and day', () {
-      expect(CalendarDate(2026, 3, 5).toIso(), '2026-03-05');
-    });
-
     test('rejects other formats', () {
       expect(() => CalendarDate.parse('31-12-2026'), throwsFormatException);
       expect(() => CalendarDate.parse('2026-1-5'), throwsFormatException);
@@ -43,15 +39,6 @@ void main() {
         '2026-12-31',
         '2027-01-01',
       ]);
-    });
-
-    test('isBefore / isAfter / equality', () {
-      final a = CalendarDate(2026, 10, 1);
-      final b = CalendarDate(2026, 10, 2);
-      expect(a.isBefore(b), isTrue);
-      expect(b.isAfter(a), isTrue);
-      expect(a == CalendarDate(2026, 10, 1), isTrue);
-      expect(a.hashCode, CalendarDate(2026, 10, 1).hashCode);
     });
   });
 

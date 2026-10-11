@@ -13,6 +13,13 @@ Personal local-first Flutter app (Android + web) for objectives, key results, pr
 - Do not implement features that are not part of the active change. If something outside the change seems necessary, say so instead of doing it.
 - If a decision changes during implementation, update the change's artifacts first, then the code. If it affects the overall product, flag that `docs/SPEC.md` needs updating.
 
+## Token budget
+- Keep OpenSpec changes small (see the rules in `openspec/config.yaml`). When a request or proposal would exceed them, propose splitting it first.
+- Keep the `context` in `openspec/config.yaml` short.
+- During apply, run only the tests affected by the task (`flutter test <paths> -r failures-only`); run the full suite once, in the final verification task.
+- Take screenshots only when a visual check is really needed.
+- Suggest switching to Sonnet (`/model`) for mechanical apply work; use Opus for propose and design.
+
 ## Commands
 - Run on phone: `flutter run`
 - Run in browser: `flutter run -d chrome`

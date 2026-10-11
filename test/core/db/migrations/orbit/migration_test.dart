@@ -1,6 +1,6 @@
 // dart format width=80
 // ignore_for_file: unused_local_variable, unused_import
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide isNull;
 import 'package:drift_dev/api/migrations_native.dart';
 import 'package:orbit/core/db/app_database.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +12,8 @@ import 'generated/schema_v2.dart' as v2;
 import 'generated/schema_v3.dart' as v3;
 import 'generated/schema_v4.dart' as v4;
 import 'generated/schema_v5.dart' as v5;
+import 'generated/schema_v6.dart' as v6;
+import 'generated/schema_v7.dart' as v7;
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -300,5 +302,270 @@ void main() {
         expect(await newDb.select(newDb.timers).get(), isEmpty);
       },
     );
+  });
+
+  group('migration from v6 to v7', () {
+    const t = '2026-10-05T12:00:00.000Z';
+    const later = '2026-10-06T09:00:00.000Z';
+    const deleted = '2026-10-06T10:00:00.000Z';
+
+    Future<void> migrate(
+      void Function(Batch batch, v6.DatabaseAtV6 oldDb) createItems,
+      Future<void> Function(v7.DatabaseAtV7 newDb) validateItems,
+    ) => verifier.testWithDataIntegrity(
+      oldVersion: 6,
+      newVersion: 7,
+      createOld: v6.DatabaseAtV6.new,
+      createNew: v7.DatabaseAtV7.new,
+      openTestedDatabase: AppDatabase.new,
+      createItems: createItems,
+      validateItems: validateItems,
+    );
+
+    void objectiveAndKr(Batch batch, v6.DatabaseAtV6 oldDb) {
+      batch.insert(
+        oldDb.objectives,
+        const v6.ObjectivesData(
+          id: 'o1',
+          createdAt: t,
+          updatedAt: later,
+          title: 'Get job',
+          description: 'want to be employed',
+          startDate: '2026-10-04',
+          endDate: '2026-10-05',
+          status: 'active',
+          sortOrder: 0,
+          color: '#FF7A9C',
+        ),
+      );
+      batch.insert(
+        oldDb.keyResults,
+        const v6.KeyResultsData(
+          id: 'kr1',
+          createdAt: t,
+          updatedAt: later,
+          objectiveId: 'o1',
+          title: 'Kann',
+          description: '',
+          measureType: 'numeric',
+          startValue: 0,
+          targetValue: 5,
+          currentValue: 4,
+          step: 1,
+          deadline: '2026-10-16',
+          sortOrder: 0,
+          color: '#FFE066',
+        ),
+      );
+    }
+
+    test('objectives become goals and key results measures', () async {
+      await migrate(objectiveAndKr, (newDb) async {
+        expect(await newDb.select(newDb.goals).get(), [
+          const v7.GoalsData(
+            id: 'o1',
+            createdAt: t,
+            updatedAt: later,
+            title: 'Get job',
+            description: 'want to be employed',
+            startDate: '2026-10-04',
+            endDate: '2026-10-05',
+            status: 'active',
+            sortOrder: 0,
+            color: '#FF7A9C',
+          ),
+        ]);
+        // Deadline and color of the KR are gone.
+        expect(await newDb.select(newDb.measures).get(), [
+          const v7.MeasuresData(
+            id: 'kr1',
+            createdAt: t,
+            updatedAt: later,
+            goalId: 'o1',
+            title: 'Kann',
+            description: '',
+            measureType: 'numeric',
+            startValue: 0,
+            targetValue: 5,
+            currentValue: 4,
+            step: 1,
+            sortOrder: 0,
+          ),
+        ]);
+      });
+    });
+
+    test('links to a key result or objective move to the goal', () async {
+      await migrate(
+        (batch, oldDb) {
+          objectiveAndKr(batch, oldDb);
+          batch.insert(
+            oldDb.projects,
+            const v6.ProjectsData(
+              id: 'p1',
+              createdAt: t,
+              updatedAt: later,
+              title: 'Create app',
+              description: '',
+              keyResultId: 'kr1',
+              status: 'active',
+              importance: 3,
+              nextStepTaskId: 't1',
+            ),
+          );
+          batch.insert(
+            oldDb.projects,
+            const v6.ProjectsData(
+              id: 'p2',
+              createdAt: t,
+              updatedAt: later,
+              title: 'Bier',
+              description: '',
+              status: 'completed',
+              importance: 2,
+            ),
+          );
+          for (final (id, kr, objective) in [
+            ('t1', null, null),
+            ('t2', 'kr1', null),
+            ('t3', null, 'o1'),
+          ]) {
+            batch.insert(
+              oldDb.tasks,
+              v6.TasksData(
+                id: id,
+                createdAt: t,
+                updatedAt: t,
+                projectId: id == 't1' ? 'p1' : null,
+                keyResultId: kr,
+                objectiveId: objective,
+                title: 'Task $id',
+                notes: '',
+                status: 'open',
+              ),
+            );
+          }
+          batch.insert(
+            oldDb.habits,
+            const v6.HabitsData(
+              id: 'h1',
+              createdAt: t,
+              updatedAt: t,
+              title: 'Drink',
+              projectId: 'p1',
+              keyResultId: 'kr1',
+              scheduleType: 'daily',
+              active: 1,
+            ),
+          );
+          batch.insert(
+            oldDb.logEntries,
+            const v6.LogEntriesData(
+              id: 'l1',
+              createdAt: t,
+              updatedAt: t,
+              keyResultId: 'kr1',
+              occurredAt: t,
+              note: 'Interview',
+              source: 'manual',
+            ),
+          );
+        },
+        (newDb) async {
+          final projects = {
+            for (final p in await newDb.select(newDb.projects).get()) p.id: p,
+          };
+          expect(projects['p1']!.goalId, 'o1');
+          expect(projects['p1']!.nextStepTaskId, 't1');
+          expect(projects['p1']!.updatedAt, later);
+          expect(projects['p1']!.completedAt, isNull);
+          expect(projects['p2']!.goalId, isNull);
+          expect(projects['p2']!.completedAt, later);
+
+          final tasks = {
+            for (final t in await newDb.select(newDb.tasks).get()) t.id: t,
+          };
+          expect(tasks['t1']!.projectId, 'p1');
+          expect(tasks['t1']!.goalId, isNull);
+          expect(tasks['t2']!.goalId, 'o1');
+          expect(tasks['t3']!.goalId, 'o1');
+
+          final habit = (await newDb.select(newDb.habits).get()).single;
+          expect(habit.projectId, 'p1');
+          expect(habit.goalId, 'o1');
+
+          final entry = (await newDb.select(newDb.logEntries).get()).single;
+          expect(entry.goalId, 'o1');
+          expect(entry.note, 'Interview');
+        },
+      );
+    });
+
+    test('review snapshots and deleted rows move along', () async {
+      await migrate(
+        (batch, oldDb) {
+          objectiveAndKr(batch, oldDb);
+          batch.insert(
+            oldDb.keyResults,
+            const v6.KeyResultsData(
+              id: 'kr2',
+              createdAt: t,
+              updatedAt: deleted,
+              deletedAt: deleted,
+              objectiveId: 'o1',
+              title: 'Old',
+              description: '',
+              measureType: 'boolean',
+              startValue: 0,
+              targetValue: 1,
+              currentValue: 0,
+              step: 1,
+              sortOrder: 1,
+            ),
+          );
+          batch.insert(
+            oldDb.weeklyReviews,
+            const v6.WeeklyReviewsData(
+              id: 'r1',
+              createdAt: t,
+              updatedAt: t,
+              weekStart: '2026-09-28',
+              score: 7,
+              reflection: '',
+              planNextWeek: '',
+              completedAt: t,
+            ),
+          );
+          batch.insert(
+            oldDb.reviewKrSnapshots,
+            const v6.ReviewKrSnapshotsData(
+              id: 's1',
+              createdAt: t,
+              updatedAt: t,
+              weeklyReviewId: 'r1',
+              keyResultId: 'kr1',
+              progress: 0.6,
+            ),
+          );
+        },
+        (newDb) async {
+          expect(await newDb.select(newDb.reviewMeasureSnapshots).get(), [
+            const v7.ReviewMeasureSnapshotsData(
+              id: 's1',
+              createdAt: t,
+              updatedAt: t,
+              weeklyReviewId: 'r1',
+              measureId: 'kr1',
+              progress: 0.6,
+            ),
+          ]);
+          final old = await (newDb.select(
+            newDb.measures,
+          )..where((m) => m.id.equals('kr2'))).getSingle();
+          expect(old.deletedAt, deleted);
+          expect(old.measureType, 'boolean');
+        },
+      );
+    });
   });
 }

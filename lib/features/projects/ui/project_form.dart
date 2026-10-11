@@ -8,9 +8,7 @@ import '../../../core/widgets/confirm_delete.dart';
 import '../../../core/widgets/date_field.dart';
 import '../../../core/widgets/form_sheet.dart';
 import '../../areas/data/area_repository.dart';
-import '../../key_results/data/key_result_repository.dart';
-import '../../key_results/domain/kr_deadline.dart';
-import '../../objectives/data/objective_repository.dart';
+import '../../goals/data/goal_repository.dart';
 import '../data/project_repository.dart';
 import '../domain/project_deadline.dart';
 import 'project_labels.dart';
@@ -19,16 +17,20 @@ import 'project_labels.dart';
 Future<FormResult?> showProjectForm(
   BuildContext context, {
   String? projectId,
+  String? goalId,
 }) => showFormSheet(
   context,
-  builder: (_) => ProjectFormSheet(projectId: projectId),
+  builder: (_) => ProjectFormSheet(projectId: projectId, goalId: goalId),
 );
 
 class ProjectFormSheet extends ConsumerWidget {
-  const ProjectFormSheet({super.key, this.projectId});
+  const ProjectFormSheet({super.key, this.projectId, this.goalId});
 
   /// Null to create a new project.
   final String? projectId;
+
+  /// The goal a new project serves, e.g. when added from the goal page.
+  final String? goalId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -43,17 +45,25 @@ class ProjectFormSheet extends ConsumerWidget {
               final nextStep = await repo.nextStep(project);
               return (project, nextStep?.title ?? '');
             },
-      builder: (loaded) =>
-          _ProjectForm(project: loaded?.$1, nextStep: loaded?.$2 ?? ''),
+      builder: (loaded) => _ProjectForm(
+        project: loaded?.$1,
+        nextStep: loaded?.$2 ?? '',
+        goalId: goalId,
+      ),
     );
   }
 }
 
 class _ProjectForm extends ConsumerStatefulWidget {
-  const _ProjectForm({required this.project, required this.nextStep});
+  const _ProjectForm({
+    required this.project,
+    required this.nextStep,
+    this.goalId,
+  });
 
   final Project? project;
   final String nextStep;
+  final String? goalId;
 
   @override
   ConsumerState<_ProjectForm> createState() => _ProjectFormState();
@@ -66,7 +76,7 @@ class _ProjectFormState extends ConsumerState<_ProjectForm> {
   late final _description = TextEditingController(text: _project?.description);
   late final _nextStep = TextEditingController(text: widget.nextStep);
   late String? _areaId = _project?.areaId;
-  late String? _keyResultId = _project?.keyResultId;
+  late String? _goalId = _project?.goalId ?? widget.goalId;
   late int _importance = _project?.importance ?? 3;
   late CalendarDate? _deadline = _project?.deadline;
   late ProjectStatus _status = _project?.status ?? ProjectStatus.active;
@@ -88,7 +98,7 @@ class _ProjectFormState extends ConsumerState<_ProjectForm> {
         title: _title.text,
         description: _description.text,
         areaId: _areaId,
-        keyResultId: _keyResultId,
+        goalId: _goalId,
         status: _status,
         importance: _importance,
         deadline: _deadline,
@@ -100,7 +110,7 @@ class _ProjectFormState extends ConsumerState<_ProjectForm> {
           title: _title.text,
           description: _description.text,
           areaId: Value(_areaId),
-          keyResultId: Value(_keyResultId),
+          goalId: Value(_goalId),
           status: _status,
           importance: _importance,
           deadline: Value(_deadline),
@@ -129,33 +139,17 @@ class _ProjectFormState extends ConsumerState<_ProjectForm> {
   Widget build(BuildContext context) {
     final editing = _project != null;
     final areas = ref.watch(areasProvider).value ?? const <Area>[];
-    final objectives =
-        ref.watch(objectivesProvider).value ?? const <Objective>[];
-    final keyResults =
-        ref.watch(keyResultsProvider).value ?? const <KeyResult>[];
-    final objectivesById = {for (final o in objectives) o.id: o};
+    final goals = ref.watch(goalsProvider).value ?? const <Goal>[];
 
-    // KRs of active objectives, plus the current link if its objective is
-    // no longer active.
-    final krOptions = [
-      for (final o in objectives)
-        if (o.status == ObjectiveStatus.active)
-          for (final kr in keyResults)
-            if (kr.objectiveId == o.id) kr,
-      for (final kr in keyResults)
-        if (kr.id == _keyResultId &&
-            objectivesById[kr.objectiveId]?.status != ObjectiveStatus.active)
-          kr,
+    // Active goals, plus the current one if it is no longer active.
+    final goalOptions = [
+      for (final g in goals)
+        if (g.status == GoalStatus.active || g.id == _goalId) g,
     ];
-    final selectedKr = krOptions.where((k) => k.id == _keyResultId).firstOrNull;
-    final selectedObjective = selectedKr == null
-        ? null
-        : objectivesById[selectedKr.objectiveId];
+    final selectedGoal = goalOptions.where((g) => g.id == _goalId).firstOrNull;
     final effective = effectiveProjectDeadline(
       _deadline,
-      selectedKr == null || selectedObjective == null
-          ? null
-          : effectiveKrDeadline(selectedKr.deadline, selectedObjective.endDate),
+      selectedGoal?.endDate,
     );
 
     return FormSheetFrame(
@@ -218,26 +212,22 @@ class _ProjectFormState extends ConsumerState<_ProjectForm> {
           onChanged: (id) => setState(() => _areaId = id),
         ),
         DropdownButtonFormField<String?>(
-          key: ValueKey('kr-${krOptions.length}'),
-          initialValue: selectedKr?.id,
+          key: ValueKey('goal-${goalOptions.length}'),
+          initialValue: selectedGoal?.id,
           isExpanded: true,
           decoration: const InputDecoration(
-            labelText: 'Key result',
+            labelText: 'Goal',
             border: OutlineInputBorder(),
           ),
           items: [
-            const DropdownMenuItem(value: null, child: Text('No key result')),
-            for (final kr in krOptions)
+            const DropdownMenuItem(value: null, child: Text('No goal')),
+            for (final goal in goalOptions)
               DropdownMenuItem(
-                value: kr.id,
-                child: Text(
-                  '${objectivesById[kr.objectiveId]?.title ?? ''} › '
-                  '${kr.title}',
-                  overflow: TextOverflow.ellipsis,
-                ),
+                value: goal.id,
+                child: Text(goal.title, overflow: TextOverflow.ellipsis),
               ),
           ],
-          onChanged: (id) => setState(() => _keyResultId = id),
+          onChanged: (id) => setState(() => _goalId = id),
         ),
         InputDecorator(
           decoration: const InputDecoration(
@@ -259,7 +249,7 @@ class _ProjectFormState extends ConsumerState<_ProjectForm> {
           value: _deadline,
           clearable: true,
           helperText: _deadline == null && effective != null
-              ? 'Uses the key result\'s deadline: '
+              ? 'Uses the goal\'s end date: '
                     '${formatDate(effective.date)}'
               : null,
           onChanged: (date) => setState(() => _deadline = date),

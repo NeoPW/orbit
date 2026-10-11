@@ -35,12 +35,43 @@ void main() {
     db.logEntries,
   )..where((e) => e.taskId.equals(taskId) & e.deletedAt.isNull())).get();
 
-  testApp('shows deadline, status and assignment', (tester) async {
-    final o = await seed.objective();
-    final kr = await seed.kr(o.id, title: 'Run 100 km');
+  testApp('tapping the assigned goal opens the goal page', (tester) async {
+    final g = await seed.goal(title: 'Get fit');
     final task = await seed.tasks.create(
       title: 'Book physio',
-      assignment: ForKeyResult(kr.id),
+      assignment: ForGoal(g.id),
+    );
+    final app = await openTask(tester, task.id);
+    await tester.tap(find.text('Goal · Get fit'));
+    await tester.pumpAndSettle();
+    expect(app.router.state.uri.path, Routes.goal(g.id));
+  });
+
+  testApp('logging work on a goal\'s task links the goal', (tester) async {
+    final g = await seed.goal(title: 'Get fit');
+    final task = await seed.tasks.create(
+      title: 'Book physio',
+      assignment: ForGoal(g.id),
+    );
+    await openTask(tester, task.id);
+    await tester.tap(find.text('Log work'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Minutes (optional)'),
+      '20',
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    final entry = (await entries(task.id)).single;
+    expect(entry.goalId, g.id);
+    expect(entry.durationMinutes, 20);
+  });
+
+  testApp('shows deadline, status and assignment', (tester) async {
+    final g = await seed.goal(title: 'Get fit');
+    final task = await seed.tasks.create(
+      title: 'Book physio',
+      assignment: ForGoal(g.id),
       dueDate: today.addDays(3),
       notes: 'Ask about knee',
     );
@@ -49,7 +80,7 @@ void main() {
     expect(find.text('Book physio'), findsOneWidget);
     expect(find.text('Open'), findsOneWidget);
     expect(find.text('Due in 3 days'), findsOneWidget);
-    expect(find.text('Key result · Run 100 km'), findsOneWidget);
+    expect(find.text('Goal · Get fit'), findsOneWidget);
     expect(find.text('Ask about knee'), findsOneWidget);
   });
 

@@ -11,8 +11,8 @@ import '../../settings/data/settings_repository.dart';
 import '../data/home_providers.dart';
 import '../domain/upcoming_deadlines.dart';
 
-/// "Upcoming deadlines": KRs and tasks inside projects due within the lead
-/// time; items with their own card show their badge there instead.
+/// "Upcoming deadlines": tasks and projects due within the lead time,
+/// overdue first.
 class UpcomingDeadlinesSection extends ConsumerWidget {
   const UpcomingDeadlinesSection({super.key});
 
@@ -55,7 +55,6 @@ class _DeadlineTile extends ConsumerWidget {
     final (icon, kind) = switch (item.kind) {
       DeadlineKind.task => (Icons.task_alt, 'Task'),
       DeadlineKind.project => (Icons.folder_outlined, 'Project'),
-      DeadlineKind.keyResult => (Icons.track_changes, 'Key result'),
     };
     final projectTitle = item.projectTitle;
     return ListTile(
@@ -68,7 +67,6 @@ class _DeadlineTile extends ConsumerWidget {
         leadDays: leadDays,
       ),
       onTap: () => context.push(switch (item.kind) {
-        DeadlineKind.keyResult => Routes.keyResult(item.id),
         DeadlineKind.task => Routes.task(item.id),
         DeadlineKind.project => Routes.projectDetail(item.id),
       }),

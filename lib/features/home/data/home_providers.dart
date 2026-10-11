@@ -6,9 +6,7 @@ import '../../../core/time/today.dart';
 import '../../areas/data/area_repository.dart';
 import '../../habits/data/habit_check_repository.dart';
 import '../../habits/data/habit_repository.dart';
-import '../../key_results/data/key_result_repository.dart';
-import '../../key_results/domain/kr_deadline.dart';
-import '../../objectives/data/objective_repository.dart';
+import '../../goals/data/goal_repository.dart';
 import '../../projects/data/project_repository.dart';
 import '../../projects/domain/project_deadline.dart';
 import '../../settings/data/settings_repository.dart';
@@ -26,14 +24,14 @@ AsyncValue<List<HomeHabit>> homeHabits(Ref ref) {
   final habits = ref.watch(habitsProvider);
   final checks = ref.watch(habitChecksSinceProvider(today.weekStart));
   final projects = ref.watch(allProjectsProvider);
-  final keyResults = ref.watch(keyResultsProvider);
+  final goals = ref.watch(goalsProvider);
   return combineAsync(
-    [habits, checks, projects, keyResults],
+    [habits, checks, projects, goals],
     () => buildHomeHabits(
       habits: habits.requireValue,
       checks: checks.requireValue,
       projects: {for (final p in projects.requireValue) p.id: p},
-      keyResults: {for (final k in keyResults.requireValue) k.id: k},
+      goals: {for (final g in goals.requireValue) g.id: g},
       today: today,
     ),
   );
@@ -44,19 +42,15 @@ AsyncValue<List<HomeHabit>> homeHabits(Ref ref) {
 AsyncValue<List<UpcomingDeadline>> upcomingDeadlines(Ref ref) {
   final today = ref.watch(todayProvider);
   final tasks = ref.watch(dueTasksProvider);
+  final outside = ref.watch(tasksOutsideProjectsProvider);
   final projects = ref.watch(activeProjectsProvider);
-  final keyResults = ref.watch(keyResultsProvider);
-  final objectives = ref.watch(objectivesProvider);
-  final checkIns = ref.watch(habitCheckInsProvider);
   final settings = ref.watch(appSettingsProvider);
   return combineAsync(
-    [tasks, projects, keyResults, objectives, checkIns, settings],
+    [tasks, outside, projects, settings],
     () => buildUpcomingDeadlines(
       tasks: tasks.requireValue,
+      tasksOutsideProjects: outside.requireValue,
       projects: projects.requireValue,
-      keyResults: keyResults.requireValue,
-      objectives: objectives.requireValue,
-      habitCheckIns: checkIns.requireValue,
       today: today,
       leadDays: settings.requireValue.deadlineLeadDays,
     ),
@@ -69,11 +63,15 @@ class HomeProject {
     required this.scored,
     required this.area,
     required this.nextStep,
+    this.goal,
   });
 
   final ScoredProject scored;
   final Area? area;
   final Task? nextStep;
+
+  /// The goal the project serves, if any.
+  final Goal? goal;
 
   Project get project => scored.project;
 }
@@ -84,25 +82,17 @@ AsyncValue<List<HomeProject>> homeProjects(Ref ref) {
   final today = ref.watch(todayProvider);
   final projects = ref.watch(activeProjectsProvider);
   final areas = ref.watch(areasProvider);
-  final keyResults = ref.watch(keyResultsProvider);
-  final objectives = ref.watch(objectivesProvider);
+  final goals = ref.watch(goalsProvider);
   final tasks = ref.watch(openTasksProvider);
-  return combineAsync([projects, areas, keyResults, objectives, tasks], () {
+  return combineAsync([projects, areas, goals, tasks], () {
     final areasById = {for (final a in areas.requireValue) a.id: a};
-    final krsById = {for (final k in keyResults.requireValue) k.id: k};
-    final objectivesById = {for (final o in objectives.requireValue) o.id: o};
+    final goalsById = {for (final g in goals.requireValue) g.id: g};
     final tasksById = {for (final t in tasks.requireValue) t.id: t};
 
-    EffectiveDeadline? deadline(Project project) {
-      final kr = krsById[project.keyResultId];
-      final objective = kr == null ? null : objectivesById[kr.objectiveId];
-      return effectiveProjectDeadline(
-        project.deadline,
-        kr == null || objective == null
-            ? null
-            : effectiveKrDeadline(kr.deadline, objective.endDate),
-      );
-    }
+    EffectiveDeadline? deadline(Project project) => effectiveProjectDeadline(
+      project.deadline,
+      goalsById[project.goalId]?.endDate,
+    );
 
     final scored = [
       for (final project in projects.requireValue)
@@ -114,6 +104,7 @@ AsyncValue<List<HomeProject>> homeProjects(Ref ref) {
           scored: s,
           area: areasById[s.project.areaId],
           nextStep: tasksById[s.project.nextStepTaskId],
+          goal: goalsById[s.project.goalId],
         ),
     ];
   });
@@ -148,17 +139,12 @@ typedef HomeTask = ({Task task, String? assignedTo});
 @riverpod
 AsyncValue<List<HomeTask>> homeTasks(Ref ref) {
   final tasks = ref.watch(tasksOutsideProjectsProvider);
-  final keyResults = ref.watch(keyResultsProvider);
-  final objectives = ref.watch(objectivesProvider);
-  return combineAsync([tasks, keyResults, objectives], () {
-    final krs = {for (final k in keyResults.requireValue) k.id: k.title};
-    final goals = {for (final o in objectives.requireValue) o.id: o.title};
+  final goals = ref.watch(goalsProvider);
+  return combineAsync([tasks, goals], () {
+    final titles = {for (final g in goals.requireValue) g.id: g.title};
     return [
       for (final task in tasks.requireValue)
-        (
-          task: task,
-          assignedTo: krs[task.keyResultId] ?? goals[task.objectiveId],
-        ),
+        (task: task, assignedTo: titles[task.goalId]),
     ];
   });
 }

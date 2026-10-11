@@ -16,7 +16,7 @@ class ProjectTile extends StatelessWidget {
     required this.deadline,
     required this.today,
     this.leadDays = 7,
-    this.keyResultTitle,
+    this.goalTitle,
     this.showStatus = false,
     this.trailing,
     this.onTap,
@@ -28,8 +28,8 @@ class ProjectTile extends StatelessWidget {
   final CalendarDate today;
   final int leadDays;
 
-  /// Shown when the project is listed outside its KR.
-  final String? keyResultTitle;
+  /// Shown when the project is listed outside its goal.
+  final String? goalTitle;
   final bool showStatus;
   final Widget? trailing;
   final VoidCallback? onTap;
@@ -39,7 +39,7 @@ class ProjectTile extends StatelessWidget {
     final theme = Theme.of(context);
     final area = this.area;
     final deadline = this.deadline;
-    final keyResultTitle = this.keyResultTitle;
+    final goalTitle = this.goalTitle;
 
     return ListTile(
       onTap: onTap,
@@ -69,18 +69,18 @@ class ProjectTile extends StatelessWidget {
                 inherited: deadline.inherited,
               ),
             ImportanceDots(value: project.importance),
-            if (keyResultTitle != null)
+            if (goalTitle != null)
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    Icons.track_changes,
+                    Icons.flag_outlined,
                     size: 14,
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    keyResultTitle,
+                    goalTitle,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),

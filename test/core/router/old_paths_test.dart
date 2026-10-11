@@ -1,9 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/router/router.dart';
 import 'package:orbit/core/router/routes.dart';
-import 'package:orbit/features/key_results/ui/key_result_screen.dart';
-import 'package:orbit/features/objectives/ui/objective_screen.dart';
-import 'package:orbit/features/projects/ui/project_detail_screen.dart';
+import 'package:orbit/features/goals/ui/goal_screen.dart';
 
 import '../../helpers/pump_app.dart';
 import '../../helpers/seed.dart';
@@ -14,9 +12,10 @@ void main() {
     for (final (from, to) in [
       ('/', Routes.home),
       ('/plan/objectives/new', Routes.plan),
-      ('/plan/objectives/o1', Routes.objective('o1')),
+      ('/plan/objectives/o1', Routes.goal('o1')),
       ('/plan/objectives/o1/key-results/new', Routes.plan),
-      ('/plan/key-results/k1', Routes.keyResult('k1')),
+      ('/plan/key-results/k1', '/key-results/k1'),
+      ('/objectives/o1', Routes.goal('o1')),
       ('/plan/projects/new', Routes.plan),
       ('/plan/projects/p1', Routes.projectDetail('p1')),
       ('/plan/habits/new', Routes.habits),
@@ -29,7 +28,8 @@ void main() {
       Routes.plan,
       Routes.habits,
       Routes.archive,
-      Routes.keyResult('k1'),
+      Routes.goal('g1'),
+      '/key-results/k1',
       Routes.task('t1'),
     ]) {
       test('$path stays', () => expect(redirectOldPath(path), isNull));
@@ -37,35 +37,34 @@ void main() {
   });
 
   group('opening an old URL', () {
-    testApp('the former KR form URL shows the KR page', (tester) async {
+    testApp('an old objective link shows the goal page', (tester) async {
       final db = newTestDatabase();
-      final seed = Seed(db);
-      final kr = await seed.kr((await seed.objective()).id);
+      final g = await Seed(db).goal(title: 'Get fit');
       final app = await pumpApp(
         tester,
         db: db,
-        location: '/plan/key-results/${kr.id}',
+        location: '/objectives/${g.id}',
       );
-      expect(find.byType(KeyResultPageBody), findsOneWidget);
-      expect(app.router.state.uri.path, Routes.keyResult(kr.id));
+      expect(find.byType(GoalPageBody), findsOneWidget);
+      expect(find.text('Get fit'), findsWidgets);
+      expect(app.router.state.uri.path, Routes.goal(g.id));
     });
 
-    testApp('the former objective form URL shows the objective page', (
-      tester,
-    ) async {
+    testApp('an old key result link shows its goal', (tester) async {
       final db = newTestDatabase();
-      final o = await Seed(db).objective();
-      await pumpApp(tester, db: db, location: '/plan/objectives/${o.id}');
-      expect(find.byType(ObjectivePageBody), findsOneWidget);
+      final seed = Seed(db);
+      final g = await seed.goal(title: 'Get fit');
+      final m = await seed.measure(g.id, title: 'Run 100 km');
+      await pumpApp(tester, db: db, location: '/key-results/${m.id}');
+      expect(find.byType(GoalPageBody), findsOneWidget);
+      expect(find.text('Run 100 km'), findsOneWidget);
     });
 
-    testApp('the former project form URL shows the project detail', (
+    testApp('an unknown key result says the goal was not found', (
       tester,
     ) async {
-      final db = newTestDatabase();
-      final p = await Seed(db).projects.create(title: 'Thesis');
-      await pumpApp(tester, db: db, location: '/plan/projects/${p.id}');
-      expect(find.byType(ProjectDetailBody), findsOneWidget);
+      await pumpApp(tester, location: '/key-results/gone');
+      expect(find.text('Goal not found'), findsOneWidget);
     });
   });
 }

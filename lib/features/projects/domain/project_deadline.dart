@@ -1,12 +1,13 @@
 import '../../../core/time/calendar_date.dart';
 
-/// A project's effective deadline and whether it comes from its KR.
+/// A project's effective deadline and whether it comes from its goal.
 class EffectiveDeadline {
   const EffectiveDeadline(this.date, {required this.inherited});
 
   final CalendarDate date;
 
-  /// True when the project has no own deadline and uses its KR's.
+  /// True when the project has no own deadline and uses its goal's end
+  /// date.
   final bool inherited;
 
   @override
@@ -22,17 +23,17 @@ class EffectiveDeadline {
   String toString() => 'EffectiveDeadline($date, inherited: $inherited)';
 }
 
-/// A project's effective deadline: its own deadline, else the effective
-/// deadline of its KR, else none (docs/SPEC.md §5).
+/// A project's effective deadline: its own deadline, else the end date of
+/// the goal it serves, else none (docs/SPEC.md §5).
 EffectiveDeadline? effectiveProjectDeadline(
   CalendarDate? projectDeadline,
-  CalendarDate? krEffectiveDeadline,
+  CalendarDate? goalEndDate,
 ) {
   if (projectDeadline != null) {
     return EffectiveDeadline(projectDeadline, inherited: false);
   }
-  if (krEffectiveDeadline != null) {
-    return EffectiveDeadline(krEffectiveDeadline, inherited: true);
+  if (goalEndDate != null) {
+    return EffectiveDeadline(goalEndDate, inherited: true);
   }
   return null;
 }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/notifications/notification_scheduler.dart';
+import '../../../core/router/routes.dart';
 import '../../../core/widgets/async_body.dart';
 import '../../../core/widgets/max_width_body.dart';
 import '../../../core/widgets/section_heading.dart';
@@ -51,6 +53,18 @@ class SettingsScreen extends ConsumerWidget {
               const SectionHeading('Deadlines'),
               SettingsGroup(
                 children: [_LeadDaysField(days: settings.deadlineLeadDays)],
+              ),
+              const SectionHeading('Look'),
+              SettingsGroup(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.auto_awesome_outlined),
+                    title: const Text('Space images'),
+                    subtitle: const Text('Background photos and credits'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push(Routes.spaceImages),
+                  ),
+                ],
               ),
               const AccountSection(),
             ],

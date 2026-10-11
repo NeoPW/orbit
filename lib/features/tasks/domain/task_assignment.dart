@@ -1,21 +1,19 @@
 import '../../../core/db/app_database.dart';
 
-/// What a task belongs to: nothing (standalone), or exactly one project,
-/// key result or objective (tasks spec, "Task assignment").
+/// What a task belongs to: nothing (standalone), or exactly one project or
+/// goal (tasks spec, "Assignment to a project or goal").
 sealed class TaskAssignment {
   const TaskAssignment();
 
   /// The assignment stored on [task].
   factory TaskAssignment.of(Task task) => switch (task) {
     Task(:final projectId?) => InProject(projectId),
-    Task(:final keyResultId?) => ForKeyResult(keyResultId),
-    Task(:final objectiveId?) => ForObjective(objectiveId),
+    Task(:final goalId?) => ForGoal(goalId),
     _ => const Standalone(),
   };
 
   String? get projectId => null;
-  String? get keyResultId => null;
-  String? get objectiveId => null;
+  String? get goalId => null;
 }
 
 class Standalone extends TaskAssignment {
@@ -43,32 +41,17 @@ class InProject extends TaskAssignment {
   int get hashCode => Object.hash('project', id);
 }
 
-class ForKeyResult extends TaskAssignment {
-  const ForKeyResult(this.id);
+class ForGoal extends TaskAssignment {
+  const ForGoal(this.id);
 
   final String id;
 
   @override
-  String get keyResultId => id;
+  String get goalId => id;
 
   @override
-  bool operator ==(Object other) => other is ForKeyResult && other.id == id;
+  bool operator ==(Object other) => other is ForGoal && other.id == id;
 
   @override
-  int get hashCode => Object.hash('kr', id);
-}
-
-class ForObjective extends TaskAssignment {
-  const ForObjective(this.id);
-
-  final String id;
-
-  @override
-  String get objectiveId => id;
-
-  @override
-  bool operator ==(Object other) => other is ForObjective && other.id == id;
-
-  @override
-  int get hashCode => Object.hash('objective', id);
+  int get hashCode => Object.hash('goal', id);
 }

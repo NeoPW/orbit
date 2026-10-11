@@ -88,9 +88,10 @@ void main() {
         scheduleType: ScheduleType.timesPerWeek,
         timesPerWeek: 3,
       );
-      final o = await seed.objective();
-      await seed.kr(o.id, title: 'Run 100 km', current: 55);
-      await reviewWithSnapshot(reviews, db, o.id);
+      final g = await seed.goal(title: 'Get fit');
+      await seed.measure(g.id, title: 'Run 100 km', current: 55);
+      await reviewWithSnapshot(reviews, db, g.id);
+      final done = await seed.projects.create(title: 'Garden');
       // Wednesday of the review week.
       final wednesday = DateTime(2026, 10, 7, 10).toUtc();
       await LogRepository(
@@ -101,32 +102,36 @@ void main() {
       final tasks = TaskRepository(db, () => wednesday, uuidV4);
       final t = await tasks.create(projectId: p.id, title: 'Book venue');
       await tasks.complete(t.id);
+      await seed.projects.setStatus(done.id, ProjectStatus.completed);
+      await (db.update(db.projects)..where((x) => x.id.equals(done.id))).write(
+        ProjectsCompanion(completedAt: Value(wednesday)),
+      );
       await pumpReview(tester);
 
       expect(find.textContaining('1 h 15 min'), findsWidgets);
       expect(find.text('0 of 3'), findsOneWidget);
       expect(find.text('Book venue'), findsOneWidget);
-      expect(find.text('55%'), findsOneWidget);
+      expect(find.text('55%'), findsWidgets);
       expect(find.text('+15 since last review'), findsOneWidget);
+      expect(find.text('Garden'), findsOneWidget);
     });
 
     testApp('a completed task shows its assignment and opens its page', (
       tester,
     ) async {
-      final o = await seed.objective();
-      final kr = await seed.kr(o.id, title: 'Run 100 km');
+      final g = await seed.goal(title: 'Get fit');
       final wednesday = DateTime(2026, 10, 7, 10).toUtc();
       final tasks = TaskRepository(db, () => wednesday, uuidV4);
       final t = await tasks.create(
         title: 'Book physio',
-        assignment: ForKeyResult(kr.id),
+        assignment: ForGoal(g.id),
       );
       await tasks.complete(t.id);
       final app = await pumpReview(tester);
 
       final tile = find.widgetWithText(ListTile, 'Book physio');
       expect(
-        find.descendant(of: tile, matching: find.text('Run 100 km')),
+        find.descendant(of: tile, matching: find.text('Get fit')),
         findsOneWidget,
       );
       await tester.ensureVisible(tile);
@@ -142,23 +147,12 @@ void main() {
       await pumpReview(tester);
       expect(find.text('Nothing logged'), findsOneWidget);
       expect(find.text('No active habits'), findsOneWidget);
-      expect(find.text('No tasks completed'), findsOneWidget);
-      expect(find.text('No key results'), findsOneWidget);
+      expect(find.text('No projects or tasks finished'), findsOneWidget);
+      expect(find.text('No active goals'), findsOneWidget);
     });
   });
 
   group('current week and last week', () {
-    testApp('the review button sits between the week and the history', (
-      tester,
-    ) async {
-      await pumpReview(tester);
-      double y(String text) => tester.getTopLeft(find.text(text)).dy;
-      expect(y('Week 05-10-2026 – 11-10-2026'), lessThan(y('Key results')));
-      expect(y('Key results'), lessThan(y('Start weekly review')));
-      expect(y('Start weekly review'), lessThan(y('History')));
-      expect(y('History'), lessThan(y('Last week')));
-    });
-
     testApp('on a Sunday the button reviews the week that ends today', (
       tester,
     ) async {
@@ -285,18 +279,18 @@ void main() {
   });
 }
 
-/// A completed review of the week before with the KR at 40 %.
+/// A completed review of the week before with the goal's measure at 40 %.
 Future<void> reviewWithSnapshot(
   ReviewRepository reviews,
   AppDatabase db,
-  String objectiveId,
+  String goalId,
 ) async {
-  final kr = await (db.select(
-    db.keyResults,
-  )..where((k) => k.objectiveId.equals(objectiveId))).getSingle();
+  final measure = await (db.select(
+    db.measures,
+  )..where((m) => m.goalId.equals(goalId))).getSingle();
   await reviews.complete(
     CalendarDate(2026, 9, 28),
     score: 6,
-    snapshots: {kr.id: 0.4},
+    snapshots: {measure.id: 0.4},
   );
 }

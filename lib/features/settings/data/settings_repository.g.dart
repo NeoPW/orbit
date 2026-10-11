@@ -100,3 +100,41 @@ final class AppSettingsProvider
 }
 
 String _$appSettingsHash() => r'11796137341bf38f3339d80ac6ef4272f5d09740';
+
+/// The background image chosen in Settings, or null for one per day.
+
+@ProviderFor(pinnedSpaceImage)
+final pinnedSpaceImageProvider = PinnedSpaceImageProvider._();
+
+/// The background image chosen in Settings, or null for one per day.
+
+final class PinnedSpaceImageProvider
+    extends $FunctionalProvider<AsyncValue<String?>, String?, Stream<String?>>
+    with $FutureModifier<String?>, $StreamProvider<String?> {
+  /// The background image chosen in Settings, or null for one per day.
+  PinnedSpaceImageProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'pinnedSpaceImageProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$pinnedSpaceImageHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<String?> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<String?> create(Ref ref) {
+    return pinnedSpaceImage(ref);
+  }
+}
+
+String _$pinnedSpaceImageHash() => r'2421b8253dc571f86b5723031d6633e9581c84a1';

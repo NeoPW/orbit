@@ -73,7 +73,7 @@ class ProjectRepository extends Repository {
     required String title,
     String description = '',
     String? areaId,
-    String? keyResultId,
+    String? goalId,
     ProjectStatus status = ProjectStatus.active,
     int importance = 3,
     CalendarDate? deadline,
@@ -90,10 +90,11 @@ class ProjectRepository extends Repository {
             title: title.trim(),
             description: Value(description.trim()),
             areaId: Value(areaId),
-            keyResultId: Value(keyResultId),
+            goalId: Value(goalId),
             status: status,
             importance: importance,
             deadline: Value(deadline),
+            completedAt: Value(status == ProjectStatus.completed ? now : null),
           ),
         );
     return _saveNextStep(project, nextStep);
@@ -104,10 +105,13 @@ class ProjectRepository extends Repository {
   /// removes the link and leaves the task open.
   Future<Project> save(Project project, {required String nextStep}) =>
       db.transaction(() async {
+        final previous = await get(project.id);
+        final now = clock();
         final updated = project.copyWith(
           title: project.title.trim(),
           description: project.description.trim(),
-          updatedAt: clock(),
+          updatedAt: now,
+          completedAt: Value(_completedAt(project.status, previous, now)),
         );
         await db.update(db.projects).replace(updated);
         return _saveNextStep(updated, nextStep);
@@ -178,11 +182,37 @@ class ProjectRepository extends Repository {
         return logEntryId;
       });
 
-  /// Changes only the status, e.g. "Activate" in the Backlog.
+  /// Changes only the status, e.g. "Activate" in the Backlog; completing
+  /// records the completion time, any other status clears it.
   Future<void> setStatus(String id, ProjectStatus status) =>
-      (db.update(db.projects)..where((p) => p.id.equals(id) & alive(p))).write(
-        ProjectsCompanion(status: Value(status), updatedAt: Value(clock())),
-      );
+      db.transaction(() async {
+        final previous = await get(id);
+        final now = clock();
+        await (db.update(
+          db.projects,
+        )..where((p) => p.id.equals(id) & alive(p))).write(
+          ProjectsCompanion(
+            status: Value(status),
+            updatedAt: Value(now),
+            completedAt: Value(_completedAt(status, previous, now)),
+          ),
+        );
+      });
+
+  /// The completion time for [status]: kept while the project stays
+  /// completed, set when it becomes completed, cleared otherwise (projects
+  /// spec, "Completion date").
+  static DateTime? _completedAt(
+    ProjectStatus status,
+    Project? previous,
+    DateTime now,
+  ) {
+    if (status != ProjectStatus.completed) return null;
+    if (previous?.status == ProjectStatus.completed) {
+      return previous!.completedAt ?? now;
+    }
+    return now;
+  }
 
   /// Soft-deletes the project and its tasks; its habits keep existing
   /// without the project link.

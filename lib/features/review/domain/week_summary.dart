@@ -1,5 +1,7 @@
 import '../../../core/db/app_database.dart';
-import '../../key_results/domain/kr_progress.dart';
+import '../../goals/domain/goal_progress.dart';
+import '../../goals/domain/goal_work.dart';
+import '../../goals/domain/measure_progress.dart';
 
 /// The Monday of the week a review is about (weekly-review spec, "Review
 /// week"): the week ending today on a Sunday, otherwise the previous week.
@@ -25,10 +27,14 @@ class ProjectWork {
     required this.title,
     required this.count,
     required this.minutes,
+    this.goalId,
   });
 
   /// Null for entries without a project.
   final String? projectId;
+
+  /// The goal the project serves now, if any.
+  final String? goalId;
   final String title;
   final int count;
   final int minutes;
@@ -64,6 +70,7 @@ List<ProjectWork> workPerProject(
             : projects[id]?.title ?? 'Deleted project',
         count: counts[id]!,
         minutes: minutes[id]!,
+        goalId: projects[id]?.goalId,
       ),
   ];
   return work..sort((a, b) {
@@ -129,35 +136,90 @@ int _expected(Habit habit, CalendarDate weekStart) {
   };
 }
 
-/// A task completed in the week, with its project if it still exists.
-typedef CompletedTask = ({Task task, Project? project});
+/// A task completed in the week, with its project or goal if it still
+/// exists.
+typedef CompletedTask = ({Task task, Project? project, Goal? goal});
 
 /// Done tasks whose local completion date is in the week, newest first.
 List<CompletedTask> completedTasksInWeek(
   List<Task> tasks,
   Map<String, Project> projects,
-  CalendarDate weekStart,
-) {
+  CalendarDate weekStart, {
+  Map<String, Goal> goals = const {},
+}) {
   final done = [
     for (final task in tasks)
       if (task.status == TaskStatus.done &&
           task.completedAt != null &&
           _inWeek(CalendarDate.fromDateTime(task.completedAt!), weekStart))
-        (task: task, project: projects[task.projectId]),
+        (
+          task: task,
+          project: projects[task.projectId],
+          goal: goals[task.goalId],
+        ),
   ];
   return done
     ..sort((a, b) => b.task.completedAt!.compareTo(a.task.completedAt!));
 }
 
-/// A KR's current progress and its change since the previous review.
-class KrProgressChange {
-  const KrProgressChange({
-    required this.keyResult,
+/// Projects whose local completion date is in the week, newest first, with
+/// the goal they serve (week-summary spec, "Finished projects").
+typedef FinishedProject = ({Project project, Goal? goal});
+
+List<FinishedProject> finishedProjectsInWeek(
+  List<Project> projects,
+  Map<String, Goal> goals,
+  CalendarDate weekStart,
+) {
+  final finished = [
+    for (final project in projects)
+      if (project.status == ProjectStatus.completed &&
+          project.completedAt != null &&
+          _inWeek(
+            CalendarDate.fromDateTime(project.completedAt!.toLocal()),
+            weekStart,
+          ))
+        (project: project, goal: goals[project.goalId]),
+  ];
+  return finished
+    ..sort((a, b) => b.project.completedAt!.compareTo(a.project.completedAt!));
+}
+
+/// The work of a week under one goal, or without a goal ([goal] null).
+class WorkGroup {
+  const WorkGroup({required this.goal, required this.projects});
+
+  final Goal? goal;
+  final List<ProjectWork> projects;
+}
+
+/// [work] grouped by the goal each project serves: goals in [goals] order,
+/// then the projects without a goal (and "No project").
+List<WorkGroup> workByGoal(List<ProjectWork> work, List<Goal> goals) {
+  final byGoal = {for (final g in goals) g.id: g};
+  final groups = <String?, List<ProjectWork>>{};
+  for (final item in work) {
+    final key = byGoal.containsKey(item.goalId) ? item.goalId : null;
+    groups.putIfAbsent(key, () => []).add(item);
+  }
+  return [
+    for (final goal in goals)
+      if (groups[goal.id] case final projects?)
+        WorkGroup(goal: goal, projects: projects),
+    if (groups[null] case final projects?)
+      WorkGroup(goal: null, projects: projects),
+  ];
+}
+
+/// A measure's progress and its change since the previous review.
+class MeasureChange {
+  const MeasureChange({
+    required this.measure,
     required this.progress,
     required this.change,
   });
 
-  final KeyResult keyResult;
+  final Measure measure;
 
   /// 0–1.
   final double progress;
@@ -167,75 +229,142 @@ class KrProgressChange {
   final int? change;
 }
 
-/// The KRs of active objectives, in the order given, with progress and
-/// change since [previousSnapshots] (progress by KR ID).
-List<KrProgressChange> krProgressChanges(
-  List<KeyResult> keyResults,
-  List<Objective> objectives,
+/// A goal's progress, its change since the previous review, its measures
+/// and the work on it in the week (week-summary spec, "Goals in the
+/// summary").
+class GoalProgressChange {
+  const GoalProgressChange({
+    required this.goal,
+    required this.measures,
+    this.work = WorkTotal.none,
+  });
+
+  final Goal goal;
+  final List<MeasureChange> measures;
+  final WorkTotal work;
+
+  /// The average of the measures, null without measures.
+  double? get progress => goalProgress(measures.map((m) => m.progress));
+
+  /// Percentage points since the previous review, over the measures that
+  /// had an earlier snapshot; null when none had one.
+  int? get change {
+    final compared = [
+      for (final m in measures)
+        if (m.change != null) m,
+    ];
+    if (compared.isEmpty) return null;
+    final now = compared.fold(0.0, (sum, m) => sum + m.progress);
+    final before = compared.fold(
+      0.0,
+      (sum, m) => sum + (m.progress - m.change! / 100),
+    );
+    return ((now - before) / compared.length * 100).round();
+  }
+}
+
+int? _changeOf(double progress, double? previous) =>
+    previous == null ? null : ((progress - previous) * 100).round();
+
+int Function(T, T) _bySortOrder<T>(
+  int Function(T) sortOrder,
+  DateTime Function(T) createdAt,
+) => (a, b) {
+  final bySortOrder = sortOrder(a).compareTo(sortOrder(b));
+  return bySortOrder != 0 ? bySortOrder : createdAt(a).compareTo(createdAt(b));
+};
+
+/// The active goals with the current progress of their measures and the
+/// change since [previousSnapshots] (progress by measure ID).
+List<GoalProgressChange> goalProgressChanges(
+  List<Goal> goals,
+  List<Measure> measures,
   Map<String, int> habitCheckIns,
-  Map<String, double> previousSnapshots,
-) {
-  final active = {
-    for (final o in objectives)
-      if (o.status == ObjectiveStatus.active) o.id,
-  };
+  Map<String, double> previousSnapshots, {
+  Map<String, WorkTotal> work = const {},
+}) => [
+  for (final goal
+      in goals.where((g) => g.status == GoalStatus.active).toList()
+        ..sort(_bySortOrder((g) => g.sortOrder, (g) => g.createdAt)))
+    GoalProgressChange(
+      goal: goal,
+      work: work[goal.id] ?? WorkTotal.none,
+      measures: [
+        for (final measure
+            in measures.where((m) => m.goalId == goal.id).toList()
+              ..sort(_bySortOrder((m) => m.sortOrder, (m) => m.createdAt)))
+          if (measureProgress(
+                measure,
+                habitCheckIns: habitCheckIns[measure.id] ?? 0,
+              )
+              case final progress)
+            MeasureChange(
+              measure: measure,
+              progress: progress,
+              change: _changeOf(progress, previousSnapshots[measure.id]),
+            ),
+      ],
+    ),
+];
+
+/// The goals as stored with a week's completed review: the goals of the
+/// measures in [snapshots] (progress by measure ID), with the change since
+/// [previousSnapshots]. Measures deleted since the review are left out.
+List<GoalProgressChange> snapshotProgressChanges(
+  List<Goal> goals,
+  List<Measure> measures,
+  Map<String, double> snapshots,
+  Map<String, double> previousSnapshots, {
+  Map<String, WorkTotal> work = const {},
+}) {
+  final byGoal = <String, List<MeasureChange>>{};
+  for (final measure
+      in measures.toList()
+        ..sort(_bySortOrder((m) => m.sortOrder, (m) => m.createdAt))) {
+    final progress = snapshots[measure.id];
+    if (progress == null) continue;
+    byGoal
+        .putIfAbsent(measure.goalId, () => [])
+        .add(
+          MeasureChange(
+            measure: measure,
+            progress: progress,
+            change: _changeOf(progress, previousSnapshots[measure.id]),
+          ),
+        );
+  }
   return [
-    for (final kr in keyResults)
-      if (active.contains(kr.objectiveId))
-        _change(kr, habitCheckIns[kr.id] ?? 0, previousSnapshots[kr.id]),
+    for (final goal
+        in goals.toList()
+          ..sort(_bySortOrder((g) => g.sortOrder, (g) => g.createdAt)))
+      if (byGoal[goal.id] case final changes?)
+        GoalProgressChange(
+          goal: goal,
+          measures: changes,
+          work: work[goal.id] ?? WorkTotal.none,
+        ),
   ];
 }
-
-KrProgressChange _change(KeyResult kr, int checkIns, double? previous) {
-  final progress = krProgress(
-    kr.measureType,
-    start: kr.startValue,
-    target: kr.targetValue,
-    current: kr.currentValue,
-    habitCheckIns: checkIns,
-  );
-  return KrProgressChange(
-    keyResult: kr,
-    progress: progress,
-    change: previous == null ? null : ((progress - previous) * 100).round(),
-  );
-}
-
-/// The KRs as stored with a week's completed review: [snapshots] (progress
-/// by KR ID) in the order of [keyResults], with the change since
-/// [previousSnapshots]. KRs deleted since the review are left out.
-List<KrProgressChange> snapshotProgressChanges(
-  List<KeyResult> keyResults,
-  Map<String, double> snapshots,
-  Map<String, double> previousSnapshots,
-) => [
-  for (final kr in keyResults)
-    if (snapshots[kr.id] case final progress?)
-      KrProgressChange(
-        keyResult: kr,
-        progress: progress,
-        change: switch (previousSnapshots[kr.id]) {
-          null => null,
-          final previous => ((progress - previous) * 100).round(),
-        },
-      ),
-];
 
 /// Everything the Review tab and the look-back step show about a week.
 class WeekSummary {
   const WeekSummary({
     required this.weekStart,
+    required this.goals,
     required this.work,
-    required this.habits,
+    required this.workGroups,
+    required this.finishedProjects,
     required this.tasks,
-    required this.keyResults,
+    required this.habits,
   });
 
   final CalendarDate weekStart;
+  final List<GoalProgressChange> goals;
   final List<ProjectWork> work;
-  final List<HabitAdherence> habits;
+  final List<WorkGroup> workGroups;
+  final List<FinishedProject> finishedProjects;
   final List<CompletedTask> tasks;
-  final List<KrProgressChange> keyResults;
+  final List<HabitAdherence> habits;
 }
 
 WeekSummary buildWeekSummary({
@@ -245,30 +374,54 @@ WeekSummary buildWeekSummary({
   required List<HabitCheck> checks,
   required List<Task> completedTasks,
   required List<Project> projects,
-  required List<KeyResult> keyResults,
-  required List<Objective> objectives,
+  required List<Goal> goals,
+  required List<Measure> measures,
   required Map<String, int> habitCheckIns,
   required Map<String, double> previousSnapshots,
   Map<String, double>? reviewSnapshots,
 }) {
   final projectsById = {for (final p in projects) p.id: p};
+  final goalsById = {for (final g in goals) g.id: g};
+  final weekEntries = [
+    for (final entry in entries)
+      if (_inWeek(CalendarDate.fromDateTime(entry.occurredAt), weekStart))
+        entry,
+  ];
+  final goalWork = workPerGoal(
+    weekEntries,
+    projectGoals: {for (final p in projects) p.id: p.goalId},
+    tasks: {for (final t in completedTasks) t.id: t},
+  );
+  final work = workPerProject(entries, projectsById, weekStart);
+  final orderedGoals = goals.toList()
+    ..sort(_bySortOrder((g) => g.sortOrder, (g) => g.createdAt));
   return WeekSummary(
     weekStart: weekStart,
-    work: workPerProject(entries, projectsById, weekStart),
-    habits: habitAdherence(habits, checks, weekStart),
-    tasks: completedTasksInWeek(completedTasks, projectsById, weekStart),
     // A reviewed week shows the progress saved with its review.
-    keyResults: reviewSnapshots == null
-        ? krProgressChanges(
-            keyResults,
-            objectives,
+    goals: reviewSnapshots == null
+        ? goalProgressChanges(
+            goals,
+            measures,
             habitCheckIns,
             previousSnapshots,
+            work: goalWork,
           )
         : snapshotProgressChanges(
-            keyResults,
+            goals,
+            measures,
             reviewSnapshots,
             previousSnapshots,
+            work: goalWork,
           ),
+    work: work,
+    workGroups: workByGoal(work, orderedGoals),
+    finishedProjects: finishedProjectsInWeek(projects, goalsById, weekStart),
+    tasks: completedTasksInWeek(
+      completedTasks,
+      projectsById,
+      weekStart,
+      goals: goalsById,
+    ),
+    habits: habitAdherence(habits, checks, weekStart),
   );
 }

@@ -2,27 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/db/app_database.dart';
+import '../../../core/space/planets.dart';
+import '../../../core/space/space_colors.dart';
 import '../../../core/time/date_format.dart';
 import '../../../core/time/today.dart';
 import '../../../core/widgets/animated_items.dart';
+import '../../../core/widgets/area_dot.dart';
 import '../../../core/widgets/async_body.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/max_width_body.dart';
 import '../../../core/widgets/orbit_chips.dart';
 import '../../../core/widgets/section_heading.dart';
 import '../../account/ui/sync_refresh.dart';
-import '../../key_results/ui/key_result_tile.dart';
+import '../../goals/ui/goal_form.dart';
+import '../../goals/ui/measure_form.dart';
+import '../../goals/ui/measure_tile.dart';
 import '../../projects/ui/project_tile.dart';
 import '../../settings/data/settings_repository.dart';
 import '../../tasks/ui/task_tile.dart';
 import '../data/plan_providers.dart';
 import '../domain/plan_overview.dart';
 import 'open_plan_item.dart';
-import '../../key_results/ui/key_result_form.dart';
-import '../../objectives/ui/objective_form.dart';
+import 'work_solar_system.dart';
 
-/// Active objectives → KRs → active projects and assigned tasks, then
-/// active projects without a KR.
+/// Active goals with their measures, active projects and assigned tasks,
+/// then the active projects without an active goal (plan-overview spec).
 class OverviewTab extends ConsumerWidget {
   const OverviewTab({super.key});
 
@@ -35,22 +39,25 @@ class OverviewTab extends ConsumerWidget {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
             children: [
-              if (overview.objectives.isEmpty)
+              WorkSolarSystem(
+                onGoal: (id) => openPlanItem(context, ref, PlanGoal(id)),
+                onProject: (id) => openPlanItem(context, ref, PlanProject(id)),
+              ),
+              if (overview.goals.isEmpty)
                 EmptyState(
                   icon: Icons.flag_outlined,
-                  message: 'No active objectives',
+                  message: 'No active goals',
                   action: FilledButton.tonal(
-                    onPressed: () => showObjectiveForm(context),
-                    child: const Text('Create objective'),
+                    onPressed: () => showGoalForm(context),
+                    child: const Text('Create goal'),
                   ),
                 )
               else
-                for (final objective in overview.objectives)
-                  _ObjectiveCard(plan: objective),
-              const SectionHeading('Projects without a KR'),
-              if (overview.projectsWithoutKr.isEmpty)
+                for (final goal in overview.goals) _GoalCard(plan: goal),
+              const SectionHeading('Projects without a goal'),
+              if (overview.projectsWithoutGoal.isEmpty)
                 const SectionEmptyText(
-                  'No active projects without a key result',
+                  'No active projects without a goal',
                   icon: Icons.folder_outlined,
                 )
               else
@@ -58,7 +65,7 @@ class OverviewTab extends ConsumerWidget {
                   clipBehavior: Clip.antiAlias,
                   child: AnimatedItems(
                     children: [
-                      for (final entry in overview.projectsWithoutKr)
+                      for (final entry in overview.projectsWithoutGoal)
                         _ProjectEntryTile(
                           key: ValueKey(entry.project.id),
                           entry: entry,
@@ -74,18 +81,21 @@ class OverviewTab extends ConsumerWidget {
   }
 }
 
-class _ObjectiveCard extends ConsumerWidget {
-  const _ObjectiveCard({required this.plan});
+class _GoalCard extends ConsumerWidget {
+  const _GoalCard({required this.plan});
 
-  final ObjectivePlan plan;
+  final GoalPlan plan;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final objective = plan.objective;
+    final goal = plan.goal;
     final theme = Theme.of(context);
     final today = ref.watch(todayProvider);
     final leadDays =
         ref.watch(appSettingsProvider).value?.deadlineLeadDays ?? 7;
+    final color = colorOfGoal(goal);
+    final progress = plan.progress;
+    void open() => openPlanItem(context, ref, PlanGoal(goal.id));
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
@@ -93,14 +103,26 @@ class _ObjectiveCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           ListTile(
-            onTap: () =>
-                openPlanItem(context, ref, PlanObjective(objective.id)),
-            leading: CircleAvatar(
-              backgroundColor: theme.colorScheme.primaryContainer,
-              foregroundColor: theme.colorScheme.onPrimaryContainer,
-              child: const Icon(Icons.flag_outlined),
+            onTap: open,
+            leading: GoalPlanet(
+              color: color,
+              progress: progress,
+              ringed: plan.allReached,
+              moons: [
+                for (final entry in plan.projects)
+                  entry.area == null
+                      ? const Color(0xFFC9CEE8)
+                      : colorFromHex(entry.area!.color),
+              ],
+              seed: stableSeed(goal.id),
             ),
-            title: Text(objective.title, style: theme.textTheme.titleMedium),
+            title: Text(goal.title, style: theme.textTheme.titleMedium),
+            trailing: progress == null
+                ? null
+                : Text(
+                    '${(progress * 100).round()} %',
+                    style: theme.textTheme.titleSmall?.copyWith(color: color),
+                  ),
             subtitle: Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Wrap(
@@ -108,10 +130,10 @@ class _ObjectiveCard extends ConsumerWidget {
                 runSpacing: 4,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  Text(formatDateRange(objective.startDate, objective.endDate)),
-                  // Only active objectives are listed here.
+                  Text(formatDateRange(goal.startDate, goal.endDate)),
+                  // Only active goals are listed here.
                   DeadlineChip(
-                    date: objective.endDate,
+                    date: goal.endDate,
                     today: today,
                     leadDays: leadDays,
                   ),
@@ -119,65 +141,97 @@ class _ObjectiveCard extends ConsumerWidget {
               ),
             ),
           ),
-          if (plan.tasks.isNotEmpty) _Tasks(tasks: plan.tasks),
-          const Divider(height: 1),
-          if (plan.keyResults.isEmpty)
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: SectionEmptyText(
-                'No key results yet',
-                icon: Icons.track_changes,
-              ),
-            )
-          else
-            for (final kr in plan.keyResults) ...[
-              KeyResultTile(
-                keyResult: kr.keyResult,
-                progress: kr.progress,
-                habitCheckIns: kr.habitCheckIns,
-                effectiveDeadline: kr.effectiveDeadline,
-                today: today,
-                leadDays: leadDays,
-                onTap: () =>
-                    openPlanItem(context, ref, PlanKeyResult(kr.keyResult.id)),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 40),
-                child: AnimatedItems(
-                  children: [
-                    for (final entry in kr.projects)
-                      _ProjectEntryTile(
-                        key: ValueKey(entry.project.id),
-                        entry: entry,
-                      ),
-                  ],
-                ),
-              ),
-              if (kr.tasks.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(left: 40),
-                  child: _Tasks(tasks: kr.tasks),
+          _Measures(plan: plan, color: color, onOpen: open),
+          if (plan.projects.isNotEmpty || plan.tasks.isNotEmpty)
+            const Divider(height: 1),
+          AnimatedItems(
+            children: [
+              for (final entry in plan.projects)
+                _ProjectEntryTile(
+                  key: ValueKey(entry.project.id),
+                  entry: entry,
                 ),
             ],
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
-              child: TextButton.icon(
-                onPressed: () =>
-                    showKeyResultForm(context, objectiveId: objective.id),
-                icon: const Icon(Icons.add),
-                label: const Text('Add key result'),
-              ),
-            ),
           ),
+          if (plan.tasks.isNotEmpty) _Tasks(tasks: plan.tasks),
         ],
       ),
     );
   }
 }
 
-/// Open tasks assigned to an objective or KR.
+/// A goal's measures, collapsed to "N measures" until tapped; expanded
+/// they show their progress and "Add measure".
+class _Measures extends StatefulWidget {
+  const _Measures({
+    required this.plan,
+    required this.color,
+    required this.onOpen,
+  });
+
+  final GoalPlan plan;
+  final Color color;
+  final VoidCallback onOpen;
+
+  @override
+  State<_Measures> createState() => _MeasuresState();
+}
+
+class _MeasuresState extends State<_Measures> {
+  var _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final plan = widget.plan;
+    final count = plan.measures.length;
+    final addMeasure = Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+        child: TextButton.icon(
+          onPressed: () => showMeasureForm(context, goalId: plan.goal.id),
+          icon: const Icon(Icons.add),
+          label: const Text('Add measure'),
+        ),
+      ),
+    );
+    if (count == 0) return addMeasure;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListTile(
+          dense: true,
+          title: Text(count == 1 ? '1 measure' : '$count measures'),
+          trailing: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
+          onTap: () => setState(() => _expanded = !_expanded),
+        ),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          alignment: Alignment.topCenter,
+          child: _expanded
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final m in plan.measures)
+                      MeasureTile(
+                        key: ValueKey(m.measure.id),
+                        measure: m.measure,
+                        progress: m.progress,
+                        habitCheckIns: m.habitCheckIns,
+                        color: widget.color,
+                        onTap: widget.onOpen,
+                      ),
+                    addMeasure,
+                  ],
+                )
+              : const SizedBox(width: double.infinity),
+        ),
+      ],
+    );
+  }
+}
+
+/// Open tasks assigned to a goal.
 class _Tasks extends ConsumerWidget {
   const _Tasks({required this.tasks});
 
@@ -210,7 +264,7 @@ class _ProjectEntryTile extends ConsumerWidget {
       deadline: entry.deadline,
       today: ref.watch(todayProvider),
       leadDays: ref.watch(appSettingsProvider).value?.deadlineLeadDays ?? 7,
-      keyResultTitle: entry.keyResult?.title,
+      goalTitle: entry.goal?.title,
       onTap: () => openPlanItem(context, ref, PlanProject(entry.project.id)),
     );
   }

@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 
 import '../theme/orbit_palette.dart';
 
-/// Progress as an orbit: a faint track, the done part as an arc and a small
-/// "planet" at its end (visual-design spec, "Progress as orbit rings").
+/// Progress as a slim orbit: a faint track and the done part as a rounded
+/// arc (visual-design spec, "Progress as orbit rings").
 class OrbitRing extends StatelessWidget {
   const OrbitRing({
     super.key,
     required this.progress,
     this.size = 48,
-    this.strokeWidth = 4,
+    this.strokeWidth = 3,
     this.label,
     this.color,
   });
@@ -74,7 +74,7 @@ class _OrbitPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
-    final radius = (size.shortestSide - strokeWidth) / 2 - 2;
+    final radius = (size.shortestSide - strokeWidth) / 2;
     final stroke = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
@@ -88,12 +88,6 @@ class _OrbitPainter extends CustomPainter {
       sweep,
       false,
       stroke..color = arc,
-    );
-    final end = -pi / 2 + sweep;
-    canvas.drawCircle(
-      center + Offset(cos(end), sin(end)) * radius,
-      strokeWidth * 0.9,
-      Paint()..color = arc,
     );
   }
 

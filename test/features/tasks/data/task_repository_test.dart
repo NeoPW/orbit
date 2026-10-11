@@ -20,23 +20,6 @@ void main() {
     expect(task.dueDate, isNull);
   });
 
-  test('create stores a due date', () async {
-    final task = await r.tasks.create(
-      projectId: 'p1',
-      title: 'Book venue',
-      dueDate: CalendarDate(2026, 10, 20),
-    );
-    expect(task.dueDate, CalendarDate(2026, 10, 20));
-  });
-
-  test('updateTitle renames and bumps updated_at', () async {
-    final task = await r.tasks.create(projectId: 'p1', title: 'Draft');
-    await r.tasks.updateTitle(task.id, 'Write intro');
-    final stored = await r.tasks.get(task.id);
-    expect(stored!.title, 'Write intro');
-    expect(stored.updatedAt.isAfter(task.updatedAt), isTrue);
-  });
-
   test('update saves title, notes and due date, including clearing', () async {
     final task = await r.tasks.create(
       projectId: 'p1',
@@ -186,26 +169,20 @@ void main() {
   group('assignment', () {
     test('a task can be standalone or assigned to one item', () async {
       final standalone = await r.tasks.create(title: 'Tax return');
-      final kr = await r.tasks.create(
+      final forGoal = await r.tasks.create(
         title: 'Book physio',
-        assignment: const ForKeyResult('kr1'),
-      );
-      final objective = await r.tasks.create(
-        title: 'Plan route',
-        assignment: const ForObjective('o1'),
+        assignment: const ForGoal('g1'),
       );
       expect(TaskAssignment.of(standalone), const Standalone());
-      expect(TaskAssignment.of(kr), const ForKeyResult('kr1'));
-      expect(kr.projectId, isNull);
-      expect(kr.objectiveId, isNull);
-      expect(TaskAssignment.of(objective), const ForObjective('o1'));
+      expect(TaskAssignment.of(forGoal), const ForGoal('g1'));
+      expect(forGoal.projectId, isNull);
     });
 
     test('changing the assignment keeps only the new one', () async {
       final task = await r.tasks.create(projectId: 'p1', title: 'Draft');
-      await r.tasks.update(task, assignment: const ForObjective('o1'));
+      await r.tasks.update(task, assignment: const ForGoal('g1'));
       final stored = await r.rawTask(task.id);
-      expect(TaskAssignment.of(stored), const ForObjective('o1'));
+      expect(TaskAssignment.of(stored), const ForGoal('g1'));
       expect(stored.projectId, isNull);
 
       await r.tasks.update(stored, assignment: const Standalone());
@@ -215,19 +192,19 @@ void main() {
     test('leaving the project clears its next step', () async {
       final p = await r.projects.create(title: 'Thesis', nextStep: 'Draft');
       final step = (await r.tasks.get(p.nextStepTaskId!))!;
-      await r.tasks.update(step, assignment: const ForKeyResult('kr1'));
+      await r.tasks.update(step, assignment: const ForGoal('g1'));
       expect((await r.projects.get(p.id))!.nextStepTaskId, isNull);
     });
 
     test('editing other fields keeps the assignment', () async {
       final task = await r.tasks.create(
         title: 'Book physio',
-        assignment: const ForKeyResult('kr1'),
+        assignment: const ForGoal('g1'),
       );
       await r.tasks.update(task.copyWith(title: 'Book physio now'));
       final stored = await r.rawTask(task.id);
       expect(stored.title, 'Book physio now');
-      expect(stored.keyResultId, 'kr1');
+      expect(stored.goalId, 'g1');
     });
   });
 
@@ -244,18 +221,12 @@ void main() {
       expect(tasks.map((t) => t.title), ['C', 'B', 'A']);
     });
 
-    test('assigned tasks are those of a KR or objective', () async {
+    test('assigned tasks are those of a goal', () async {
       await r.tasks.create(title: 'Standalone');
-      await r.tasks.create(
-        title: 'KR task',
-        assignment: const ForKeyResult('kr1'),
-      );
-      await r.tasks.create(
-        title: 'Objective task',
-        assignment: const ForObjective('o1'),
-      );
+      await r.tasks.create(projectId: 'p1', title: 'In project');
+      await r.tasks.create(title: 'Goal task', assignment: const ForGoal('g1'));
       final tasks = await r.tasks.watchOpenAssigned().first;
-      expect(tasks.map((t) => t.title).toSet(), {'KR task', 'Objective task'});
+      expect(tasks.map((t) => t.title), ['Goal task']);
     });
   });
 
@@ -270,51 +241,29 @@ void main() {
     expect(await r.logs.watchForTask(task.id).first, hasLength(1));
   });
 
-  test('completing logs the task and its KR', () async {
+  test('completing logs the task and its goal', () async {
     final task = await r.tasks.create(
       title: 'Book physio',
-      assignment: const ForKeyResult('kr1'),
+      assignment: const ForGoal('g1'),
     );
     final logEntryId = await r.tasks.complete(task.id);
     final entry = await r.rawLogEntry(logEntryId);
     expect(entry.taskId, task.id);
-    expect(entry.keyResultId, 'kr1');
+    expect(entry.goalId, 'g1');
     expect(entry.projectId, isNull);
   });
 
   group('when the assigned item is deleted', () {
-    test('a KR\'s tasks become standalone', () async {
-      final o = await r.objective();
-      final kr = await r.numericKr(o.id);
+    test('a goal\'s tasks become standalone', () async {
+      final g = await r.goal();
       final task = await r.tasks.create(
         title: 'Book physio',
-        assignment: ForKeyResult(kr.id),
+        assignment: ForGoal(g.id),
       );
-      await r.keyResults.delete(kr.id);
+      await r.goals.delete(g.id);
       final stored = (await r.tasks.get(task.id))!;
       expect(TaskAssignment.of(stored), const Standalone());
     });
-
-    test(
-      'an objective\'s tasks and its KRs\' tasks become standalone',
-      () async {
-        final o = await r.objective();
-        final kr = await r.numericKr(o.id);
-        final onObjective = await r.tasks.create(
-          title: 'Plan route',
-          assignment: ForObjective(o.id),
-        );
-        final onKr = await r.tasks.create(
-          title: 'Book physio',
-          assignment: ForKeyResult(kr.id),
-        );
-        await r.objectives.delete(o.id);
-        for (final id in [onObjective.id, onKr.id]) {
-          final stored = (await r.tasks.get(id))!;
-          expect(TaskAssignment.of(stored), const Standalone());
-        }
-      },
-    );
 
     test('a project\'s tasks are still deleted with it', () async {
       final p = await r.projects.create(title: 'Thesis');

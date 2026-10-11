@@ -18,7 +18,7 @@ void main() {
       note: ' Chapter 2 ',
     );
     expect(entry.projectId, 'p1');
-    expect(entry.keyResultId, isNull);
+    expect(entry.goalId, isNull);
     expect(entry.durationMinutes, 45);
     expect(entry.note, 'Chapter 2');
     expect(entry.source, LogSource.manual);

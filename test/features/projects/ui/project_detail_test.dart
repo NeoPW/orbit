@@ -45,28 +45,26 @@ void main() {
 
   group('information', () {
     testApp('shows fields and an inherited effective deadline', (tester) async {
-      final o = await seed.objective(end: CalendarDate(2026, 12, 31));
-      final kr = await seed.kr(
-        o.id,
-        title: 'Run 100 km',
-        deadline: CalendarDate(2026, 11, 15),
+      final g = await seed.goal(
+        title: 'Get fit',
+        end: CalendarDate(2026, 11, 15),
       );
       final p = await seed.projects.create(
         title: 'Marathon',
         description: 'Spring race',
-        keyResultId: kr.id,
+        goalId: g.id,
         importance: 4,
       );
       await pumpApp(tester, db: db, location: Routes.projectDetail(p.id));
 
       expect(find.text('Spring race'), findsOneWidget);
       expect(find.text('Active'), findsOneWidget);
-      expect(find.text('Key result · Run 100 km'), findsOneWidget);
+      expect(find.text('Goal · Get fit'), findsOneWidget);
       expect(
         tester.widget<ImportanceDots>(find.byType(ImportanceDots)).value,
         4,
       );
-      expect(find.text('Due 15-11-2026 · KR'), findsOneWidget);
+      expect(find.text('Due 15-11-2026 · goal'), findsOneWidget);
       // Absent values are left out instead of spelled out.
       expect(find.text('No area'), findsNothing);
       expect(find.textContaining('Status:'), findsNothing);

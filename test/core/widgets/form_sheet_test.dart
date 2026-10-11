@@ -79,6 +79,21 @@ void main() {
     expect(find.text('Edit thing'), findsNothing);
   });
 
+  testApp('the last field stays above the navigation bar', (tester) async {
+    await pumpInScaffold(tester, opener());
+    // A 48 px gesture/navigation bar at the bottom of the screen.
+    tester.view.padding = const FakeViewPadding(bottom: 48);
+    addTearDown(tester.view.resetPadding);
+    await tester.pump();
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    final screen = tester.view.physicalSize.height;
+    expect(
+      tester.getBottomLeft(find.byType(TextFormField)).dy,
+      lessThanOrEqualTo(screen - 48),
+    );
+  });
+
   testApp('at 1400 px it opens as a side sheet on the right', (tester) async {
     await pumpInScaffold(tester, opener(), width: 1400);
     await tester.tap(find.text('Open'));

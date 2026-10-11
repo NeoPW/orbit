@@ -6,15 +6,15 @@ import 'package:orbit/features/projects/domain/project_deadline.dart';
 import '../../../helpers/fixtures.dart';
 
 PlanOverview build({
-  List<Objective> objectives = const [],
-  List<KeyResult> keyResults = const [],
+  List<Goal> goals = const [],
+  List<Measure> measures = const [],
   List<Project> projects = const [],
   List<Area> areas = const [],
   Map<String, int> habitCheckIns = const {},
   List<Task> tasks = const [],
 }) => buildPlanOverview(
-  objectives: objectives,
-  keyResults: keyResults,
+  goals: goals,
+  measures: measures,
   projects: projects,
   areas: areas,
   habitCheckIns: habitCheckIns,
@@ -26,23 +26,19 @@ List<String> titles(List<ProjectEntry> entries) =>
 
 void main() {
   group('assigned tasks', () {
-    test('listed under their KR or objective, by deadline then title', () {
+    test('listed under their goal, by deadline then title', () {
       final overview = build(
-        objectives: [objective('o1')],
-        keyResults: [keyResult('kr1', objectiveId: 'o1')],
+        goals: [goal('g1')],
         tasks: [
-          task('b', title: 'b', keyResultId: 'kr1'),
-          task('A', title: 'A', keyResultId: 'kr1'),
-          task('late', keyResultId: 'kr1', dueDate: CalendarDate(2026, 11, 1)),
-          task('soon', keyResultId: 'kr1', dueDate: CalendarDate(2026, 10, 7)),
-          task('obj', objectiveId: 'o1'),
-          task('done', keyResultId: 'kr1', status: TaskStatus.done),
-          task('other', keyResultId: 'kr-elsewhere'),
+          task('b', title: 'b', goalId: 'g1'),
+          task('A', title: 'A', goalId: 'g1'),
+          task('late', goalId: 'g1', dueDate: CalendarDate(2026, 11, 1)),
+          task('soon', goalId: 'g1', dueDate: CalendarDate(2026, 10, 7)),
+          task('done', goalId: 'g1', status: TaskStatus.done),
+          task('other', goalId: 'g-elsewhere'),
         ],
       );
-      final plan = overview.objectives.single;
-      expect(plan.tasks.map((t) => t.id), ['obj']);
-      expect(plan.keyResults.single.tasks.map((t) => t.id), [
+      expect(overview.goals.single.tasks.map((t) => t.id), [
         'soon',
         'late',
         'A',
@@ -51,210 +47,129 @@ void main() {
     });
   });
 
-  group('objectives section', () {
-    test('objective with KRs and projects', () {
+  group('goals section', () {
+    test('goal with measures and projects', () {
       final overview = build(
-        objectives: [objective('o1')],
-        keyResults: [
-          keyResult('kr1', objectiveId: 'o1', sortOrder: 0, current: 50),
-          keyResult('kr2', objectiveId: 'o1', sortOrder: 1),
+        goals: [goal('g1', title: 'Get fit')],
+        measures: [
+          measure('m1', goalId: 'g1', current: 50),
+          measure('m2', goalId: 'g1', current: 100),
         ],
-        projects: [project('p1', keyResultId: 'kr1')],
+        projects: [project('p1', goalId: 'g1')],
       );
-
-      expect(overview.objectives, hasLength(1));
-      final krs = overview.objectives.single.keyResults;
-      expect(krs.map((k) => k.keyResult.id), ['kr1', 'kr2']);
-      expect(krs[0].progress, 0.5);
-      expect(titles(krs[0].projects), ['p1']);
-      expect(krs[1].projects, isEmpty);
-      expect(overview.projectsWithoutKr, isEmpty);
+      final plan = overview.goals.single;
+      expect(plan.goal.title, 'Get fit');
+      expect(plan.measures.map((m) => m.progress), [0.5, 1.0]);
+      expect(plan.progress, 0.75);
+      expect(plan.allReached, isFalse);
+      expect(titles(plan.projects), ['p1']);
     });
 
-    test('non-active objectives are hidden', () {
+    test('non-active goals are hidden', () {
       final overview = build(
-        objectives: [
-          objective('o1', status: ObjectiveStatus.completed),
-          objective('o2', status: ObjectiveStatus.archived),
-          objective('o3'),
+        goals: [
+          goal('done', status: GoalStatus.completed),
+          goal('old', status: GoalStatus.archived),
         ],
       );
-      expect(overview.objectives.map((o) => o.objective.id), ['o3']);
+      expect(overview.goals, isEmpty);
     });
 
-    test('objectives and KRs follow sort order', () {
+    test('goals and measures follow sort order', () {
       final overview = build(
-        objectives: [
-          objective('b', sortOrder: 1),
-          objective('a', sortOrder: 0),
-        ],
-        keyResults: [
-          keyResult('kr-b', objectiveId: 'a', sortOrder: 1),
-          keyResult('kr-a', objectiveId: 'a', sortOrder: 0),
+        goals: [goal('b', sortOrder: 1), goal('a', sortOrder: 0)],
+        measures: [
+          measure('m2', goalId: 'a', sortOrder: 1),
+          measure('m1', goalId: 'a', sortOrder: 0),
         ],
       );
-      expect(overview.objectives.map((o) => o.objective.id), ['a', 'b']);
-      expect(overview.objectives.first.keyResults.map((k) => k.keyResult.id), [
-        'kr-a',
-        'kr-b',
+      expect(overview.goals.map((g) => g.goal.id), ['a', 'b']);
+      expect(overview.goals.first.measures.map((m) => m.measure.id), [
+        'm1',
+        'm2',
       ]);
     });
 
-    test('backlog and paused projects under a KR are hidden', () {
+    test('backlog and paused projects of a goal are hidden', () {
       final overview = build(
-        objectives: [objective('o1')],
-        keyResults: [keyResult('kr1', objectiveId: 'o1')],
+        goals: [goal('g1')],
         projects: [
-          project('backlog', keyResultId: 'kr1', status: ProjectStatus.backlog),
-          project('paused', keyResultId: 'kr1', status: ProjectStatus.paused),
-          project('done', keyResultId: 'kr1', status: ProjectStatus.completed),
+          project('b', goalId: 'g1', status: ProjectStatus.backlog),
+          project('p', goalId: 'g1', status: ProjectStatus.paused),
         ],
       );
-      expect(overview.objectives.single.keyResults.single.projects, isEmpty);
-      expect(overview.projectsWithoutKr, isEmpty);
-    });
-
-    test('objective without KRs has an empty KR list', () {
-      final overview = build(objectives: [objective('o1')]);
-      expect(overview.objectives.single.keyResults, isEmpty);
-    });
-
-    test('no active objectives gives an empty section', () {
-      expect(build().objectives, isEmpty);
-    });
-
-    test('KR effective deadline and habit progress', () {
-      final overview = build(
-        objectives: [objective('o1', end: CalendarDate(2026, 12, 31))],
-        keyResults: [
-          keyResult(
-            'own',
-            objectiveId: 'o1',
-            deadline: CalendarDate(2026, 11, 15),
-          ),
-          keyResult(
-            'inherit',
-            objectiveId: 'o1',
-            measureType: MeasureType.habit,
-            target: 20,
-            habitId: 'h1',
-          ),
-        ],
-        habitCheckIns: {'inherit': 5},
-      );
-      final krs = {
-        for (final k in overview.objectives.single.keyResults)
-          k.keyResult.id: k,
-      };
-      expect(krs['own']!.effectiveDeadline, CalendarDate(2026, 11, 15));
-      expect(krs['inherit']!.effectiveDeadline, CalendarDate(2026, 12, 31));
-      expect(krs['inherit']!.progress, 0.25);
-      expect(krs['inherit']!.habitCheckIns, 5);
+      expect(overview.goals.single.projects, isEmpty);
+      expect(overview.projectsWithoutGoal, isEmpty);
     });
   });
 
   group('project entries', () {
     test('ordered by importance, then deadline (none last), then title', () {
       final overview = build(
-        objectives: [objective('o1', end: CalendarDate(2027, 6, 30))],
-        keyResults: [keyResult('kr1', objectiveId: 'o1')],
+        goals: [goal('g1')],
         projects: [
           project(
             'A',
-            keyResultId: 'kr1',
+            goalId: 'g1',
             importance: 3,
             deadline: CalendarDate(2026, 11, 1),
           ),
-          project('B', keyResultId: 'kr1', importance: 5),
-          project('C', keyResultId: 'kr1', importance: 3),
+          project('B', goalId: 'g1', importance: 5),
+          project('C', goalId: 'g1', importance: 3),
         ],
       );
-      // Under a KR every project inherits a deadline, so B, A, C here
-      // follows importance, then the own (earlier) deadline of A.
-      expect(titles(overview.objectives.single.keyResults.single.projects), [
-        'B',
-        'A',
-        'C',
-      ]);
+      // C inherits the goal's end date (2026-12-31), after A's own date.
+      expect(titles(overview.goals.single.projects), ['B', 'A', 'C']);
     });
 
-    test('projects without any deadline come last, then by title', () {
+    test('entries carry area and effective deadline from the goal', () {
       final overview = build(
-        projects: [
-          project('c'),
-          project('A', deadline: CalendarDate(2026, 11, 1)),
-          project('B', importance: 5),
-          project('b'),
-        ],
+        goals: [goal('g1', end: CalendarDate(2026, 12, 31))],
+        areas: [area('a1', name: 'Job')],
+        projects: [project('p', goalId: 'g1', areaId: 'a1')],
       );
-      expect(titles(overview.projectsWithoutKr), ['B', 'A', 'b', 'c']);
-    });
-
-    test('entries carry area and effective deadline', () {
-      final overview = build(
-        objectives: [objective('o1', end: CalendarDate(2026, 12, 31))],
-        keyResults: [keyResult('kr1', objectiveId: 'o1')],
-        areas: [area('uni', name: 'Uni')],
-        projects: [project('p1', keyResultId: 'kr1', areaId: 'uni')],
-      );
-      final entry =
-          overview.objectives.single.keyResults.single.projects.single;
-      expect(entry.area?.name, 'Uni');
+      final entry = overview.goals.single.projects.single;
+      expect(entry.area!.name, 'Job');
       expect(
         entry.deadline,
         EffectiveDeadline(CalendarDate(2026, 12, 31), inherited: true),
       );
+      expect(entry.goal, isNull);
     });
 
     test('a missing area shows as no area', () {
-      final overview = build(projects: [project('p1', areaId: 'deleted')]);
-      expect(overview.projectsWithoutKr.single.area, isNull);
+      final overview = build(projects: [project('p', areaId: 'gone')]);
+      expect(overview.projectsWithoutGoal.single.area, isNull);
     });
   });
 
-  group('projects without a KR', () {
-    test('active project without KR is listed', () {
-      final overview = build(projects: [project('p1')]);
-      expect(titles(overview.projectsWithoutKr), ['p1']);
-      expect(overview.projectsWithoutKr.single.deadline, isNull);
+  group('projects without a goal', () {
+    test('active project without goal is listed', () {
+      final overview = build(projects: [project('p')]);
+      expect(titles(overview.projectsWithoutGoal), ['p']);
     });
 
-    test('backlog project without KR is not listed', () {
+    test('backlog project without goal is not listed', () {
       final overview = build(
-        projects: [project('p1', status: ProjectStatus.backlog)],
+        projects: [project('p', status: ProjectStatus.backlog)],
       );
-      expect(overview.projectsWithoutKr, isEmpty);
+      expect(overview.projectsWithoutGoal, isEmpty);
     });
 
-    test(
-      'project linked to a KR of a completed objective is listed with its KR',
-      () {
-        final overview = build(
-          objectives: [
-            objective(
-              'o1',
-              status: ObjectiveStatus.completed,
-              end: CalendarDate(2026, 9, 30),
-            ),
-          ],
-          keyResults: [
-            keyResult('kr1', objectiveId: 'o1', title: 'Run 100 km'),
-          ],
-          projects: [project('p1', keyResultId: 'kr1')],
-        );
-        final entry = overview.projectsWithoutKr.single;
-        expect(entry.keyResult?.title, 'Run 100 km');
-        expect(
-          entry.deadline,
-          EffectiveDeadline(CalendarDate(2026, 9, 30), inherited: true),
-        );
-      },
-    );
+    test('a project of a completed goal is listed with the goal', () {
+      final overview = build(
+        goals: [goal('g1', title: 'Old', status: GoalStatus.completed)],
+        projects: [project('p', goalId: 'g1')],
+      );
+      final entry = overview.projectsWithoutGoal.single;
+      expect(entry.goal!.title, 'Old');
+      expect(entry.deadline!.inherited, isTrue);
+    });
 
-    test('project linked to a missing KR is listed without KR', () {
-      final overview = build(projects: [project('p1', keyResultId: 'gone')]);
-      final entry = overview.projectsWithoutKr.single;
-      expect(entry.keyResult, isNull);
+    test('a project of a missing goal is listed without goal', () {
+      final overview = build(projects: [project('p', goalId: 'gone')]);
+      final entry = overview.projectsWithoutGoal.single;
+      expect(entry.goal, isNull);
       expect(entry.deadline, isNull);
     });
   });

@@ -89,10 +89,9 @@ void main() {
     expect((await openTasks()).single.dueDate, CalendarDate(2026, 11, 15));
   });
 
-  testApp('a new task can be assigned to a key result', (tester) async {
+  testApp('a new task can be assigned to a goal', (tester) async {
     final seed = Seed(db);
-    final o = await seed.objective();
-    final kr = await seed.kr(o.id, title: 'Run 100 km');
+    final g = await seed.goal(title: 'Get fit');
     await pumpInScaffold(tester, opener(), db: db);
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
@@ -102,7 +101,7 @@ void main() {
     );
     await tester.tap(find.byType(DropdownButtonFormField<TaskAssignment>));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Key result · Run 100 km').last);
+    await tester.tap(find.text('Goal · Get fit').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
@@ -110,7 +109,7 @@ void main() {
     final task = await (db.select(
       db.tasks,
     )..where((t) => t.title.equals('Book physio'))).getSingle();
-    expect(task.keyResultId, kr.id);
+    expect(task.goalId, g.id);
     expect(task.projectId, isNull);
   });
 

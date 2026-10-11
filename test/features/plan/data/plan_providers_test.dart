@@ -19,21 +19,19 @@ void main() {
     await r.close();
   });
 
-  List<String> underKr(PlanOverview o) => [
-    for (final objective in o.objectives)
-      for (final kr in objective.keyResults)
-        for (final p in kr.projects) p.project.title,
+  List<String> underGoals(PlanOverview o) => [
+    for (final goal in o.goals)
+      for (final p in goal.projects) p.project.title,
   ];
 
   test('planOverview emits again after a project status change', () async {
-    final o = await r.objective();
-    final kr = await r.numericKr(o.id);
-    final p = await r.projects.create(title: 'Thesis', keyResultId: kr.id);
+    final g = await r.goal();
+    final p = await r.projects.create(title: 'Thesis', goalId: g.id);
 
     await valueWhere(
       container,
       planOverviewProvider,
-      (o) => underKr(o).contains('Thesis'),
+      (o) => underGoals(o).contains('Thesis'),
     );
 
     await r.projects.setStatus(p.id, ProjectStatus.backlog);
@@ -41,47 +39,43 @@ void main() {
     final after = await valueWhere(
       container,
       planOverviewProvider,
-      (o) => underKr(o).isEmpty,
+      (o) => underGoals(o).isEmpty,
     );
-    expect(after.objectives.single.keyResults.single.projects, isEmpty);
+    expect(after.goals.single.projects, isEmpty);
   });
 
-  test(
-    'archive lists completed objectives and projects, newest first',
-    () async {
-      final o = await r.objective(title: 'Old goal');
-      final p = await r.projects.create(title: 'Done project');
-      await r.objective(title: 'Still active');
-      await r.projects.setStatus(p.id, ProjectStatus.completed);
-      await r.objectives.update(o.copyWith(status: ObjectiveStatus.archived));
+  test('archive lists completed goals and projects, newest first', () async {
+    final g = await r.goal(title: 'Old goal');
+    final p = await r.projects.create(title: 'Done project');
+    await r.goal(title: 'Still active');
+    await r.projects.setStatus(p.id, ProjectStatus.completed);
+    await r.goals.update(g.copyWith(status: GoalStatus.archived));
 
-      final items = await valueWhere(
-        container,
-        archiveProvider,
-        (items) => items.length == 2,
-      );
-      expect(items.first, isA<ArchivedObjective>());
-      expect((items.first as ArchivedObjective).objective.title, 'Old goal');
-      expect((items.last as ArchivedProject).project.title, 'Done project');
-    },
-  );
+    final items = await valueWhere(
+      container,
+      archiveProvider,
+      (items) => items.length == 2,
+    );
+    expect(items.first, isA<ArchivedGoal>());
+    expect((items.first as ArchivedGoal).goal.title, 'Old goal');
+    expect((items.last as ArchivedProject).project.title, 'Done project');
+  });
 
-  test('checking the linked habit raises the habit KR progress', () async {
-    final o = await r.objective();
+  test('checking the linked habit raises the habit measure progress', () async {
+    final g = await r.goal();
     final habit = await r.habits.create(
       title: 'Run',
       scheduleType: ScheduleType.daily,
     );
-    await r.keyResults.create(
-      objectiveId: o.id,
+    await r.measures.create(
+      goalId: g.id,
       title: 'Run 20 times',
       measureType: MeasureType.habit,
       targetValue: 20,
       habitId: habit.id,
     );
 
-    double progress(PlanOverview o) =>
-        o.objectives.single.keyResults.single.progress;
+    double progress(PlanOverview o) => o.goals.single.measures.single.progress;
 
     await valueWhere(container, planOverviewProvider, (o) => progress(o) == 0);
     await r.habitChecks.check(habit, CalendarDate(2026, 10, 5));

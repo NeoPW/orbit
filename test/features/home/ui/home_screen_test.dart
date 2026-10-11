@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:orbit/core/db/app_database.dart';
 import 'package:orbit/core/router/routes.dart';
+import 'package:orbit/core/space/solar_system.dart';
+import 'package:orbit/core/space/shooting_star.dart';
 import 'package:orbit/core/time/today.dart';
 import 'package:orbit/features/home/ui/home_habits_section.dart';
 import 'package:orbit/features/settings/data/settings_repository.dart';
@@ -54,19 +56,6 @@ void main() {
       expect(find.text('No active projects'), findsOneWidget);
     });
 
-    testApp('a new-task button on the left, quick log on the right', (
-      tester,
-    ) async {
-      await pumpHome(tester);
-      final task = tester.getCenter(find.byTooltip('New task'));
-      final log = tester.getCenter(find.byTooltip('Log work'));
-      expect(task.dx, lessThan(log.dx));
-      await tester.tap(find.byTooltip('New task'));
-      await tester.pumpAndSettle();
-      expect(find.text('New task'), findsWidgets);
-      expect(find.widgetWithText(TextField, 'Title'), findsOneWidget);
-    });
-
     testApp('the header shows the habit ring and tasks due', (tester) async {
       final habit = await seed.habits.create(
         title: 'Stretch',
@@ -90,6 +79,23 @@ void main() {
   });
 
   group('habits', () {
+    testApp('a habit without project is labeled by its goal', (tester) async {
+      final g = await seed.goal(title: 'Learn Spanish');
+      await seed.habits.create(
+        title: 'Read',
+        goalId: g.id,
+        scheduleType: ScheduleType.daily,
+      );
+      await pumpHome(tester);
+      expect(
+        find.descendant(
+          of: find.widgetWithText(HabitChip, 'Read'),
+          matching: find.text('Learn Spanish'),
+        ),
+        findsOneWidget,
+      );
+    });
+
     testApp('a habit is labeled by its project', (tester) async {
       final p = await seed.projects.create(title: 'Marathon');
       await seed.habits.create(
@@ -208,6 +214,19 @@ void main() {
       expect(inCard('Later', 'No next step'), findsOneWidget);
     });
 
+    testApp('a project card shows the goal it serves', (tester) async {
+      final g = await seed.goal(title: 'Get job');
+      await seed.projects.create(title: 'Create app', goalId: g.id);
+      await pumpHome(tester);
+      expect(
+        find.descendant(
+          of: find.widgetWithText(Card, 'Create app'),
+          matching: find.text('Get job'),
+        ),
+        findsOneWidget,
+      );
+    });
+
     testApp('completing the next step from Home with skip', (tester) async {
       await seed.projects.create(title: 'Thesis', nextStep: 'Draft outline');
       await pumpHome(tester);
@@ -244,12 +263,11 @@ void main() {
       await seed.tasks.create(projectId: p.id, title: 'Project task');
       await seed.tasks.create(title: 'A');
       await seed.tasks.create(title: 'B', dueDate: today.addDays(1));
-      final o = await seed.objective();
-      final kr = await seed.kr(o.id, title: 'Run 100 km');
+      final g = await seed.goal(title: 'Get fit');
       final c = await seed.tasks.create(
         title: 'C',
         dueDate: today.addDays(-2),
-        assignment: ForKeyResult(kr.id),
+        assignment: ForGoal(g.id),
       );
       final app = await pumpHome(tester);
 
@@ -262,12 +280,12 @@ void main() {
       expect(
         find.descendant(
           of: find.widgetWithText(Card, 'C'),
-          matching: find.text('Run 100 km'),
+          matching: find.text('Get fit'),
         ),
         findsOneWidget,
       );
 
-      await tester.tap(find.text('C'));
+      await tester.tap(find.widgetWithText(Card, 'C'));
       await tester.pumpAndSettle();
       expect(path(app), Routes.task(c.id));
     });
@@ -284,14 +302,84 @@ void main() {
       expect(stored.status, TaskStatus.done);
     });
 
-    testApp('a project with a deadline is not repeated under deadlines', (
+    testApp('a project with a deadline is listed under deadlines too', (
       tester,
     ) async {
       await seed.projects.create(title: 'Garden', deadline: today.addDays(1));
       await pumpHome(tester);
-      expect(find.text('Garden'), findsOneWidget);
-      expect(find.text('Due tomorrow'), findsOneWidget);
-      expect(find.text('Nothing due in the next 7 days'), findsOneWidget);
+      expect(find.text('Garden'), findsNWidgets(2));
+      expect(find.text('Due tomorrow'), findsNWidgets(2));
+    });
+  });
+
+  testApp('sheets open above the tab bar, down to the screen bottom', (
+    tester,
+  ) async {
+    await pumpHome(tester);
+    await tester.tap(find.byTooltip('Log work'));
+    await tester.pumpAndSettle();
+    // Inside the tab it would end at the tab bar's top edge.
+    expect(tester.getBottomLeft(find.byType(BottomSheet)).dy, 1600);
+  });
+
+  group('space', () {
+    testApp('goals are planets with project moons; one opens its page', (
+      tester,
+    ) async {
+      final g = await seed.goal(title: 'Get fit');
+      await seed.measure(g.id);
+      await seed.goal(title: 'Finish thesis');
+      await seed.projects.create(title: 'Marathon plan', goalId: g.id);
+      await seed.projects.create(title: 'Bier');
+      final app = await pumpHome(tester);
+      final system = tester.widget<SolarSystem>(find.byType(SolarSystem));
+      // Compact on Home: low, at full width.
+      expect(system.compact, isTrue);
+      final size = tester.getSize(find.byType(SolarSystem));
+      expect(size.height, SolarSystem.compactHeight);
+      expect(size.width, greaterThan(300));
+      expect(system.planets.map((p) => p.label), ['Get fit', 'Finish thesis']);
+      expect(system.planets.first.moons, hasLength(1));
+      expect(system.planets.first.progress, 0.2);
+      expect(system.asteroids.map((a) => a.label), ['Bier']);
+
+      await tester.tap(find.bySemanticsLabel('Get fit').first);
+      await tester.pumpAndSettle();
+      expect(path(app), Routes.goal(g.id));
+    });
+
+    testApp('tapping an asteroid opens its project', (tester) async {
+      final p = await seed.projects.create(title: 'Bier');
+      final app = await pumpHome(tester);
+      await tester.tap(find.bySemanticsLabel('Bier'));
+      await tester.pumpAndSettle();
+      expect(path(app), Routes.projectDetail(p.id));
+    });
+
+    testApp('no solar system without active goals or projects', (tester) async {
+      await pumpHome(tester);
+      expect(find.byType(SolarSystem), findsNothing);
+    });
+
+    testApp('checking the last habit of the day sends a shooting star', (
+      tester,
+    ) async {
+      await seed.habits.create(
+        title: 'Stretch',
+        scheduleType: ScheduleType.daily,
+      );
+      await pumpHome(tester);
+      final paints = find.descendant(
+        of: find.byType(ShootingStar),
+        matching: find.byType(CustomPaint),
+      );
+      final before = tester.widgetList(paints).length;
+      await tester.tap(find.text('Stretch'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(tester.widgetList(paints).length, before + 1);
+      await tester.pumpAndSettle();
+      expect(tester.widgetList(paints).length, before);
     });
   });
 }

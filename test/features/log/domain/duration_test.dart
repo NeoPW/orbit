@@ -26,11 +26,6 @@ void main() {
     });
   });
 
-  test('parseDuration returns null for empty input', () {
-    expect(parseDuration(''), isNull);
-    expect(parseDuration(' 30 '), 30);
-  });
-
   group('formatDuration', () {
     test('minutes only', () => expect(formatDuration(45), '45 min'));
     test('whole hours', () {

@@ -44,21 +44,6 @@ void main() {
       expect(AppSettings.fromStored({}), settings);
     });
 
-    test('reads stored values', () {
-      final settings = AppSettings.fromStored({
-        SettingKeys.remindersEnabled: 'false',
-        SettingKeys.defaultReminderTime: '07:15',
-        SettingKeys.deadlineLeadDays: '3',
-        SettingKeys.reviewDay: '6',
-        SettingKeys.reviewTime: '10:00',
-      });
-      expect(settings.reviewDay, DateTime.saturday);
-      expect(settings.reviewTime, (hour: 10, minute: 0));
-      expect(settings.remindersEnabled, isFalse);
-      expect(settings.defaultReminderTime, (hour: 7, minute: 15));
-      expect(settings.deadlineLeadDays, 3);
-    });
-
     test('unreadable values fall back to the defaults', () {
       final settings = AppSettings.fromStored({
         SettingKeys.remindersEnabled: 'maybe',

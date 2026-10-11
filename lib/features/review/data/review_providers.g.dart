@@ -318,7 +318,7 @@ final class WeekSummaryProvider
   }
 }
 
-String _$weekSummaryHash() => r'a7c4b86fb7da9cfd3c2dc1f78097d60ede867eb2';
+String _$weekSummaryHash() => r'b59b12b4339df293360de53a5957efd55cf910a5';
 
 /// The summary of the week starting [weekStart], updated live.
 
@@ -342,74 +342,73 @@ final class WeekSummaryFamily extends $Family
   String toString() => r'weekSummaryProvider';
 }
 
-/// The KRs of active objectives with their current progress and the change
-/// since the latest review before [weekStart], live. The weekly review
-/// edits and saves these, also for a week already reviewed.
+/// The active goals with the current progress of their measures and the
+/// change since the latest review before [weekStart], live. The weekly
+/// review edits and saves these, also for a week already reviewed.
 
-@ProviderFor(currentKrProgress)
-final currentKrProgressProvider = CurrentKrProgressFamily._();
+@ProviderFor(currentGoalProgress)
+final currentGoalProgressProvider = CurrentGoalProgressFamily._();
 
-/// The KRs of active objectives with their current progress and the change
-/// since the latest review before [weekStart], live. The weekly review
-/// edits and saves these, also for a week already reviewed.
+/// The active goals with the current progress of their measures and the
+/// change since the latest review before [weekStart], live. The weekly
+/// review edits and saves these, also for a week already reviewed.
 
-final class CurrentKrProgressProvider
+final class CurrentGoalProgressProvider
     extends
         $FunctionalProvider<
-          AsyncValue<List<KrProgressChange>>,
-          AsyncValue<List<KrProgressChange>>,
-          AsyncValue<List<KrProgressChange>>
+          AsyncValue<List<GoalProgressChange>>,
+          AsyncValue<List<GoalProgressChange>>,
+          AsyncValue<List<GoalProgressChange>>
         >
-    with $Provider<AsyncValue<List<KrProgressChange>>> {
-  /// The KRs of active objectives with their current progress and the change
-  /// since the latest review before [weekStart], live. The weekly review
-  /// edits and saves these, also for a week already reviewed.
-  CurrentKrProgressProvider._({
-    required CurrentKrProgressFamily super.from,
+    with $Provider<AsyncValue<List<GoalProgressChange>>> {
+  /// The active goals with the current progress of their measures and the
+  /// change since the latest review before [weekStart], live. The weekly
+  /// review edits and saves these, also for a week already reviewed.
+  CurrentGoalProgressProvider._({
+    required CurrentGoalProgressFamily super.from,
     required CalendarDate super.argument,
   }) : super(
          retry: null,
-         name: r'currentKrProgressProvider',
+         name: r'currentGoalProgressProvider',
          isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
 
   @override
-  String debugGetCreateSourceHash() => _$currentKrProgressHash();
+  String debugGetCreateSourceHash() => _$currentGoalProgressHash();
 
   @override
   String toString() {
-    return r'currentKrProgressProvider'
+    return r'currentGoalProgressProvider'
         ''
         '($argument)';
   }
 
   @$internal
   @override
-  $ProviderElement<AsyncValue<List<KrProgressChange>>> $createElement(
+  $ProviderElement<AsyncValue<List<GoalProgressChange>>> $createElement(
     $ProviderPointer pointer,
   ) => $ProviderElement(pointer);
 
   @override
-  AsyncValue<List<KrProgressChange>> create(Ref ref) {
+  AsyncValue<List<GoalProgressChange>> create(Ref ref) {
     final argument = this.argument as CalendarDate;
-    return currentKrProgress(ref, argument);
+    return currentGoalProgress(ref, argument);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(AsyncValue<List<KrProgressChange>> value) {
+  Override overrideWithValue(AsyncValue<List<GoalProgressChange>> value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<AsyncValue<List<KrProgressChange>>>(
-        value,
-      ),
+      providerOverride:
+          $SyncValueProvider<AsyncValue<List<GoalProgressChange>>>(value),
     );
   }
 
   @override
   bool operator ==(Object other) {
-    return other is CurrentKrProgressProvider && other.argument == argument;
+    return other is CurrentGoalProgressProvider && other.argument == argument;
   }
 
   @override
@@ -418,34 +417,35 @@ final class CurrentKrProgressProvider
   }
 }
 
-String _$currentKrProgressHash() => r'a71e964c7463e1059b1a86a4d08be4f572a8fc4c';
+String _$currentGoalProgressHash() =>
+    r'0faa1d53035eab08e17a81b6a1429fa34cf4f51c';
 
-/// The KRs of active objectives with their current progress and the change
-/// since the latest review before [weekStart], live. The weekly review
-/// edits and saves these, also for a week already reviewed.
+/// The active goals with the current progress of their measures and the
+/// change since the latest review before [weekStart], live. The weekly
+/// review edits and saves these, also for a week already reviewed.
 
-final class CurrentKrProgressFamily extends $Family
+final class CurrentGoalProgressFamily extends $Family
     with
         $FunctionalFamilyOverride<
-          AsyncValue<List<KrProgressChange>>,
+          AsyncValue<List<GoalProgressChange>>,
           CalendarDate
         > {
-  CurrentKrProgressFamily._()
+  CurrentGoalProgressFamily._()
     : super(
         retry: null,
-        name: r'currentKrProgressProvider',
+        name: r'currentGoalProgressProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
 
-  /// The KRs of active objectives with their current progress and the change
-  /// since the latest review before [weekStart], live. The weekly review
-  /// edits and saves these, also for a week already reviewed.
+  /// The active goals with the current progress of their measures and the
+  /// change since the latest review before [weekStart], live. The weekly
+  /// review edits and saves these, also for a week already reviewed.
 
-  CurrentKrProgressProvider call(CalendarDate weekStart) =>
-      CurrentKrProgressProvider._(argument: weekStart, from: this);
+  CurrentGoalProgressProvider call(CalendarDate weekStart) =>
+      CurrentGoalProgressProvider._(argument: weekStart, from: this);
 
   @override
-  String toString() => r'currentKrProgressProvider';
+  String toString() => r'currentGoalProgressProvider';
 }

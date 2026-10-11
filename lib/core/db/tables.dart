@@ -32,21 +32,24 @@ class Areas extends Table with SyncColumns {
   IntColumn get sortOrder => integer()();
 }
 
-@TableIndex(name: 'objectives_status', columns: {#status})
-class Objectives extends Table with SyncColumns {
+@TableIndex(name: 'goals_status', columns: {#status})
+class Goals extends Table with SyncColumns {
   TextColumn get title => text()();
   TextColumn get description => text().withDefault(const Constant(''))();
   TextColumn get startDate => text().map(const CalendarDateConverter())();
   TextColumn get endDate => text().map(const CalendarDateConverter())();
-  TextColumn get status => text().map(
-    const DbEnumConverter<ObjectiveStatus>(ObjectiveStatus.values),
-  )();
+  TextColumn get status =>
+      text().map(const DbEnumConverter<GoalStatus>(GoalStatus.values))();
   IntColumn get sortOrder => integer()();
+
+  /// `#RRGGBB`, the planet's color; null picks one by position.
+  TextColumn get color => text().nullable()();
 }
 
-@TableIndex(name: 'key_results_objective_id', columns: {#objectiveId})
-class KeyResults extends Table with SyncColumns {
-  TextColumn get objectiveId => text()();
+/// A way to track a goal's progress (measures spec).
+@TableIndex(name: 'measures_goal_id', columns: {#goalId})
+class Measures extends Table with SyncColumns {
+  TextColumn get goalId => text()();
   TextColumn get title => text()();
   TextColumn get description => text().withDefault(const Constant(''))();
   TextColumn get measureType =>
@@ -65,21 +68,17 @@ class KeyResults extends Table with SyncColumns {
   /// Numeric: what the − / + buttons change the current value by.
   RealColumn get step => real().withDefault(const Constant(1))();
   TextColumn get habitId => text().nullable()();
-
-  /// Falls back to the objective's end date when null.
-  TextColumn get deadline =>
-      text().map(const CalendarDateConverter()).nullable()();
   IntColumn get sortOrder => integer()();
 }
 
 @TableIndex(name: 'projects_status', columns: {#status})
-@TableIndex(name: 'projects_key_result_id', columns: {#keyResultId})
+@TableIndex(name: 'projects_goal_id', columns: {#goalId})
 @TableIndex(name: 'projects_area_id', columns: {#areaId})
 class Projects extends Table with SyncColumns {
   TextColumn get title => text()();
   TextColumn get description => text().withDefault(const Constant(''))();
   TextColumn get areaId => text().nullable()();
-  TextColumn get keyResultId => text().nullable()();
+  TextColumn get goalId => text().nullable()();
   TextColumn get status =>
       text().map(const DbEnumConverter<ProjectStatus>(ProjectStatus.values))();
   IntColumn get importance =>
@@ -88,17 +87,18 @@ class Projects extends Table with SyncColumns {
   TextColumn get deadline =>
       text().map(const CalendarDateConverter()).nullable()();
   TextColumn get nextStepTaskId => text().nullable()();
+
+  /// UTC; set while the status is completed.
+  DateTimeColumn get completedAt => dateTime().nullable()();
 }
 
 @TableIndex(name: 'tasks_project_id', columns: {#projectId})
-@TableIndex(name: 'tasks_key_result_id', columns: {#keyResultId})
-@TableIndex(name: 'tasks_objective_id', columns: {#objectiveId})
+@TableIndex(name: 'tasks_goal_id', columns: {#goalId})
 class Tasks extends Table with SyncColumns {
-  /// At most one of [projectId], [keyResultId] and [objectiveId] is set;
-  /// none means a standalone task.
+  /// At most one of [projectId] and [goalId] is set; none means a
+  /// standalone task.
   TextColumn get projectId => text().nullable()();
-  TextColumn get keyResultId => text().nullable()();
-  TextColumn get objectiveId => text().nullable()();
+  TextColumn get goalId => text().nullable()();
   TextColumn get title => text()();
   TextColumn get notes => text().withDefault(const Constant(''))();
   TextColumn get dueDate =>
@@ -110,8 +110,10 @@ class Tasks extends Table with SyncColumns {
 
 class Habits extends Table with SyncColumns {
   TextColumn get title => text()();
+
+  /// Either, both or neither of [projectId] and [goalId].
   TextColumn get projectId => text().nullable()();
-  TextColumn get keyResultId => text().nullable()();
+  TextColumn get goalId => text().nullable()();
   TextColumn get scheduleType =>
       text().map(const DbEnumConverter<ScheduleType>(ScheduleType.values))();
 
@@ -142,7 +144,7 @@ class HabitChecks extends Table with SyncColumns {
 @TableIndex(name: 'log_entries_task_id', columns: {#taskId})
 class LogEntries extends Table with SyncColumns {
   TextColumn get projectId => text().nullable()();
-  TextColumn get keyResultId => text().nullable()();
+  TextColumn get goalId => text().nullable()();
   TextColumn get taskId => text().nullable()();
   DateTimeColumn get occurredAt => dateTime()();
   IntColumn get durationMinutes => integer().nullable()();
@@ -163,15 +165,15 @@ class WeeklyReviews extends Table with SyncColumns {
   DateTimeColumn get completedAt => dateTime().nullable()();
 }
 
-/// A KR's progress when a weekly review was saved, so the next review can
-/// show the change (week-summary spec).
+/// A measure's progress when a weekly review was saved, so the next review
+/// can show the change (week-summary spec).
 @TableIndex(
-  name: 'review_kr_snapshots_weekly_review_id',
+  name: 'review_measure_snapshots_weekly_review_id',
   columns: {#weeklyReviewId},
 )
-class ReviewKrSnapshots extends Table with SyncColumns {
+class ReviewMeasureSnapshots extends Table with SyncColumns {
   TextColumn get weeklyReviewId => text()();
-  TextColumn get keyResultId => text()();
+  TextColumn get measureId => text()();
 
   /// 0–1.
   RealColumn get progress => real()();

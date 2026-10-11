@@ -18,7 +18,7 @@ class LogRepository extends Repository {
   /// their own transaction.
   Future<LogEntry> add({
     String? projectId,
-    String? keyResultId,
+    String? goalId,
     String? taskId,
     int? durationMinutes,
     String note = '',
@@ -34,7 +34,7 @@ class LogRepository extends Repository {
             createdAt: now,
             updatedAt: now,
             projectId: Value(projectId),
-            keyResultId: Value(keyResultId),
+            goalId: Value(goalId),
             taskId: Value(taskId),
             occurredAt: occurredAt ?? now,
             durationMinutes: Value(durationMinutes),
@@ -45,16 +45,16 @@ class LogRepository extends Repository {
   }
 
   /// Logs work by hand (quick log, "Log work") on a project or a task; a
-  /// task's entry also carries the task's project or KR.
+  /// task's entry also carries the task's project or goal.
   Future<LogEntry> createManual({
     String? projectId,
-    String? keyResultId,
+    String? goalId,
     String? taskId,
     int? durationMinutes,
     String note = '',
   }) => add(
     projectId: projectId,
-    keyResultId: keyResultId,
+    goalId: goalId,
     taskId: taskId,
     durationMinutes: durationMinutes,
     note: note,
@@ -91,15 +91,36 @@ class LogRepository extends Repository {
             ]))
           .watch();
 
-  /// The key result's entries, most recent first.
-  Stream<List<LogEntry>> watchForKeyResult(String keyResultId) =>
-      (db.select(db.logEntries)
-            ..where((e) => alive(e) & e.keyResultId.equals(keyResultId))
-            ..orderBy([
-              (e) => OrderingTerm.desc(e.occurredAt),
-              (e) => OrderingTerm.desc(e.createdAt),
-            ]))
-          .watch();
+  /// Work on the goal (goals spec, "Work on a goal"), most recent first:
+  /// entries on the goal itself, on one of its projects, or on a task of
+  /// the goal or of one of its projects.
+  Stream<List<LogEntry>> watchForGoal(String goalId) {
+    final projects = db.selectOnly(db.projects)
+      ..addColumns([db.projects.id])
+      ..where(db.projects.goalId.equals(goalId) & alive(db.projects));
+    final projectsAgain = db.selectOnly(db.projects)
+      ..addColumns([db.projects.id])
+      ..where(db.projects.goalId.equals(goalId) & alive(db.projects));
+    final tasks = db.selectOnly(db.tasks)
+      ..addColumns([db.tasks.id])
+      ..where(
+        db.tasks.goalId.equals(goalId) |
+            db.tasks.projectId.isInQuery(projectsAgain),
+      );
+    return (db.select(db.logEntries)
+          ..where(
+            (e) =>
+                alive(e) &
+                (e.goalId.equals(goalId) |
+                    e.projectId.isInQuery(projects) |
+                    e.taskId.isInQuery(tasks)),
+          )
+          ..orderBy([
+            (e) => OrderingTerm.desc(e.occurredAt),
+            (e) => OrderingTerm.desc(e.createdAt),
+          ]))
+        .watch();
+  }
 
   /// The time of each task's most recent entry, by task ID.
   Stream<Map<String, DateTime>> watchLastLoggedAtTasks() {
@@ -165,7 +186,7 @@ Stream<List<LogEntry>> taskLog(Ref ref, String taskId) =>
 Stream<Map<String, DateTime>> lastLoggedAtTasks(Ref ref) =>
     ref.watch(logRepositoryProvider).watchLastLoggedAtTasks();
 
-/// A key result's log entries, most recent first.
+/// The work on a goal, most recent first.
 @riverpod
-Stream<List<LogEntry>> keyResultLog(Ref ref, String keyResultId) =>
-    ref.watch(logRepositoryProvider).watchForKeyResult(keyResultId);
+Stream<List<LogEntry>> goalLog(Ref ref, String goalId) =>
+    ref.watch(logRepositoryProvider).watchForGoal(goalId);

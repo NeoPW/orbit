@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/db/app_database.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/space/planets.dart';
+import '../../../core/space/space_colors.dart';
 import '../../../core/time/today.dart';
 import '../../../core/widgets/animated_items.dart';
 import '../../../core/widgets/async_body.dart';
@@ -14,12 +16,10 @@ import '../../../core/widgets/section_heading.dart';
 import '../../areas/data/area_repository.dart';
 import '../../habits/data/habit_repository.dart';
 import '../../habits/domain/habit_schedule.dart';
-import '../../key_results/data/key_result_repository.dart';
 import '../../log/data/log_repository.dart';
 import '../../log/ui/log_entry_tile.dart';
 import '../../log/ui/log_work_dialog.dart';
-import '../../key_results/domain/kr_deadline.dart';
-import '../../objectives/data/objective_repository.dart';
+import '../../goals/data/goal_repository.dart';
 import '../../settings/data/settings_repository.dart';
 import '../../tasks/data/task_repository.dart';
 import '../../tasks/ui/task_form.dart';
@@ -115,7 +115,7 @@ class ProjectDetailBody extends ConsumerWidget {
 }
 
 /// Title, status chip (tap to change), area, importance, deadline badge,
-/// description and key result.
+/// description and the goal it serves.
 class _Header extends ConsumerWidget {
   const _Header({required this.project});
 
@@ -125,24 +125,13 @@ class _Header extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final areas = ref.watch(areasProvider).value ?? const <Area>[];
-    final keyResults =
-        ref.watch(keyResultsProvider).value ?? const <KeyResult>[];
-    final objectives =
-        ref.watch(objectivesProvider).value ?? const <Objective>[];
+    final goals = ref.watch(goalsProvider).value ?? const <Goal>[];
     final today = ref.watch(todayProvider);
     final leadDays = ref.watch(appSettingsProvider).value?.deadlineLeadDays;
 
     final area = areas.where((a) => a.id == project.areaId).firstOrNull;
-    final kr = keyResults.where((k) => k.id == project.keyResultId).firstOrNull;
-    final objective = kr == null
-        ? null
-        : objectives.where((o) => o.id == kr.objectiveId).firstOrNull;
-    final effective = effectiveProjectDeadline(
-      project.deadline,
-      kr == null || objective == null
-          ? null
-          : effectiveKrDeadline(kr.deadline, objective.endDate),
-    );
+    final goal = goals.where((g) => g.id == project.goalId).firstOrNull;
+    final effective = effectiveProjectDeadline(project.deadline, goal?.endDate);
 
     return Card(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -185,12 +174,12 @@ class _Header extends ConsumerWidget {
               const SizedBox(height: 12),
               Text(project.description),
             ],
-            if (kr != null) ...[
+            if (goal != null) ...[
               const SizedBox(height: 12),
               ActionChip(
-                avatar: const Icon(Icons.track_changes, size: 18),
-                label: Text('Key result · ${kr.title}'),
-                onPressed: () => context.push(Routes.keyResult(kr.id)),
+                avatar: Planet(color: colorOfGoal(goal), size: 18, glow: 0),
+                label: Text('Goal · ${goal.title}'),
+                onPressed: () => context.push(Routes.goal(goal.id)),
               ),
             ],
           ],

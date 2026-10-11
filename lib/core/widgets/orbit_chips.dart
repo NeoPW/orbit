@@ -77,7 +77,7 @@ class DeadlineChip extends StatelessWidget {
   final CalendarDate today;
   final int leadDays;
 
-  /// Marks a deadline taken over from the key result.
+  /// Marks a deadline taken over from the goal.
   final bool inherited;
 
   @override
@@ -93,9 +93,9 @@ class DeadlineChip extends StatelessWidget {
     };
     final text = deadlineBadgeText(badge);
     return Tooltip(
-      message: inherited ? '$text (from key result)' : text,
+      message: inherited ? '$text (from the goal)' : text,
       child: _Pill(
-        label: inherited ? '$text · KR' : text,
+        label: inherited ? '$text · goal' : text,
         background: background,
         foreground: foreground,
         icon: Icons.event_outlined,

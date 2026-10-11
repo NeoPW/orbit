@@ -13,7 +13,7 @@ part 'task_repository.g.dart';
 /// An open task together with its project.
 typedef TaskWithProject = ({Task task, Project project});
 
-/// Tasks: standalone or assigned to one project, key result or objective.
+/// Tasks: standalone or assigned to one project or goal.
 /// Completing a task logs it (source task).
 class TaskRepository extends Repository {
   TaskRepository(super.db, super.clock, super.newId)
@@ -82,16 +82,13 @@ class TaskRepository extends Repository {
   )..where((t) => t.id.equals(id) & alive(t))).watchSingleOrNull();
 
   /// Open tasks that are not part of a project (standalone or assigned to a
-  /// KR or objective): due date first (none last), then oldest first.
+  /// goal): due date first (none last), then oldest first.
   Stream<List<Task>> watchOpenOutsideProjects() =>
       (_open()..where((t) => t.projectId.isNull())).watch();
 
-  /// Open tasks assigned to a KR or an objective.
+  /// Open tasks assigned to a goal.
   Stream<List<Task>> watchOpenAssigned() =>
-      (_open()..where(
-            (t) => t.keyResultId.isNotNull() | t.objectiveId.isNotNull(),
-          ))
-          .watch();
+      (_open()..where((t) => t.goalId.isNotNull())).watch();
 
   /// Adds an open task. [projectId] is a shorthand for [InProject];
   /// [assignment] wins when both are given.
@@ -114,8 +111,7 @@ class TaskRepository extends Repository {
             createdAt: now,
             updatedAt: now,
             projectId: Value(to.projectId),
-            keyResultId: Value(to.keyResultId),
-            objectiveId: Value(to.objectiveId),
+            goalId: Value(to.goalId),
             title: title.trim(),
             notes: Value(notes.trim()),
             dueDate: Value(dueDate),
@@ -146,12 +142,9 @@ class TaskRepository extends Repository {
             projectId: assignment == null
                 ? const Value.absent()
                 : Value(assignment.projectId),
-            keyResultId: assignment == null
+            goalId: assignment == null
                 ? const Value.absent()
-                : Value(assignment.keyResultId),
-            objectiveId: assignment == null
-                ? const Value.absent()
-                : Value(assignment.objectiveId),
+                : Value(assignment.goalId),
           ),
         );
         final oldProject = previous?.projectId;
@@ -191,7 +184,7 @@ class TaskRepository extends Repository {
     );
     final entry = await _logs.add(
       projectId: task.projectId,
-      keyResultId: task.keyResultId,
+      goalId: task.goalId,
       taskId: task.id,
       note: task.title,
       source: LogSource.task,
@@ -262,7 +255,7 @@ Stream<Task?> task(Ref ref, String id) =>
 Stream<List<Task>> tasksOutsideProjects(Ref ref) =>
     ref.watch(taskRepositoryProvider).watchOpenOutsideProjects();
 
-/// Open tasks assigned to a KR or objective, for Plan.
+/// Open tasks assigned to a goal, for Plan.
 @riverpod
 Stream<List<Task>> assignedTasks(Ref ref) =>
     ref.watch(taskRepositoryProvider).watchOpenAssigned();

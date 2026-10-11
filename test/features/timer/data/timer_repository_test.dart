@@ -54,18 +54,17 @@ void main() {
     expect((await timers.stop())!.durationMinutes, 1);
   });
 
-  test('a task timer logs on the task and its KR', () async {
-    final o = await r.objective();
-    final kr = await r.numericKr(o.id);
+  test('a task timer logs on the task and its goal', () async {
+    final g = await r.goal();
     final task = await r.tasks.create(
       title: 'Book physio',
-      assignment: ForKeyResult(kr.id),
+      assignment: ForGoal(g.id),
     );
     await timers.start(TimerForTask(task.id));
     wait(const Duration(minutes: 10));
     final entry = (await timers.stop())!;
     expect(entry.taskId, task.id);
-    expect(entry.keyResultId, kr.id);
+    expect(entry.goalId, g.id);
     expect(entry.projectId, isNull);
   });
 

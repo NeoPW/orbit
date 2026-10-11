@@ -18,15 +18,15 @@ part 'app_database.drift.dart';
 @DriftDatabase(
   tables: [
     Areas,
-    Objectives,
-    KeyResults,
+    Goals,
+    Measures,
     Projects,
     Tasks,
     Habits,
     HabitChecks,
     LogEntries,
     WeeklyReviews,
-    ReviewKrSnapshots,
+    ReviewMeasureSnapshots,
     Timers,
     Settings,
   ],
@@ -35,7 +35,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -66,8 +66,101 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(schema.timers);
         await m.addColumn(schema.keyResults, schema.keyResults.step);
       },
+      // v6: colors of objectives and KRs.
+      from5To6: (m, schema) async {
+        await m.addColumn(schema.objectives, schema.objectives.color);
+        await m.addColumn(schema.keyResults, schema.keyResults.color);
+      },
+      // v7: objectives become goals, key results measures (local-database
+      // spec). IDs and timestamps stay, so synced devices agree.
+      from6To7: _goalsAndMeasures,
     ),
   );
+
+  Future<void> _goalsAndMeasures(Migrator m, Schema7 schema) async {
+    await m.createTable(schema.goals);
+    await m.createTable(schema.measures);
+    await m.createTable(schema.reviewMeasureSnapshots);
+    await m.createIndex(schema.goalsStatus);
+    await m.createIndex(schema.measuresGoalId);
+    await m.createIndex(schema.reviewMeasureSnapshotsWeeklyReviewId);
+
+    const sync = 'id, created_at, updated_at, deleted_at';
+    await customStatement(
+      'INSERT INTO goals ($sync, title, description, start_date, end_date, '
+      'status, sort_order, color) '
+      'SELECT $sync, title, description, start_date, end_date, status, '
+      'sort_order, color FROM objectives',
+    );
+    await customStatement(
+      'INSERT INTO measures ($sync, goal_id, title, description, '
+      'measure_type, start_value, target_value, current_value, unit, step, '
+      'habit_id, sort_order) '
+      'SELECT $sync, objective_id, title, description, measure_type, '
+      'start_value, target_value, current_value, unit, step, habit_id, '
+      'sort_order FROM key_results',
+    );
+    await customStatement(
+      'INSERT INTO review_measure_snapshots ($sync, weekly_review_id, '
+      'measure_id, progress) '
+      'SELECT $sync, weekly_review_id, key_result_id, progress '
+      'FROM review_kr_snapshots',
+    );
+
+    // Rebuilding a table re-creates its indexes; these name dropped columns.
+    for (final index in [
+      'projects_key_result_id',
+      'tasks_key_result_id',
+      'tasks_objective_id',
+    ]) {
+      await customStatement('DROP INDEX IF EXISTS $index');
+    }
+    // The goal of a row's key result, read from the old table.
+    const krGoal =
+        '(SELECT k.objective_id FROM key_results k '
+        'WHERE k.id = key_result_id)';
+    await m.alterTable(
+      TableMigration(
+        schema.projects,
+        newColumns: [schema.projects.goalId, schema.projects.completedAt],
+        columnTransformer: {
+          schema.projects.goalId: const CustomExpression<String>(krGoal),
+          schema.projects.completedAt: const CustomExpression<String>(
+            "CASE WHEN status = 'completed' THEN updated_at END",
+          ),
+        },
+      ),
+    );
+    await m.alterTable(
+      TableMigration(
+        schema.tasks,
+        newColumns: [schema.tasks.goalId],
+        columnTransformer: {
+          schema.tasks.goalId: const CustomExpression<String>(
+            'COALESCE(objective_id, $krGoal)',
+          ),
+        },
+      ),
+    );
+    for (final (table, goalId) in [
+      (schema.habits, schema.habits.goalId),
+      (schema.logEntries, schema.logEntries.goalId),
+    ]) {
+      await m.alterTable(
+        TableMigration(
+          table,
+          newColumns: [goalId],
+          columnTransformer: {goalId: const CustomExpression<String>(krGoal)},
+        ),
+      );
+    }
+    await m.createIndex(schema.projectsGoalId);
+    await m.createIndex(schema.tasksGoalId);
+
+    await m.deleteTable('review_kr_snapshots');
+    await m.deleteTable('key_results');
+    await m.deleteTable('objectives');
+  }
 
   /// Runs once, when the database file is created.
   Future<void> _seedDefaultAreas() async {

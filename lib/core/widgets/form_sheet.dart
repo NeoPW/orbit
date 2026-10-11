@@ -17,6 +17,8 @@ Future<FormResult?> showFormSheet(
   if (!TwoPane.isWide(context)) {
     return showModalBottomSheet<FormResult>(
       context: context,
+      // Above the tab bar, which would otherwise cover the sheet's bottom.
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
@@ -60,6 +62,14 @@ Future<FormResult?> showFormSheet(
   );
 }
 
+/// The space a bottom sheet's content keeps free at its bottom: the
+/// on-screen keyboard, else the system navigation bar (a bottom sheet only
+/// avoids the system bars at the top). [MediaQuery.paddingOf] already
+/// leaves out what the keyboard covers, so the two add up correctly.
+double sheetBottomInset(BuildContext context) =>
+    MediaQuery.viewInsetsOf(context).bottom +
+    MediaQuery.paddingOf(context).bottom;
+
 /// The width of the side sheet on wide screens.
 const sideSheetWidth = 480.0;
 
@@ -91,13 +101,13 @@ class FormSheetFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final bottomInset = sheetBottomInset(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: Row(
             children: [
               Expanded(

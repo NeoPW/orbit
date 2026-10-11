@@ -259,12 +259,12 @@ final class CompletedReviewsProvider
 
 String _$completedReviewsHash() => r'379ceb936a96e1036b8d5e27864d1a666fd2ed17';
 
-/// Latest earlier snapshot per KR, for weeks before [weekStart].
+/// Latest earlier snapshot per measure, for weeks before [weekStart].
 
 @ProviderFor(latestSnapshotsBefore)
 final latestSnapshotsBeforeProvider = LatestSnapshotsBeforeFamily._();
 
-/// Latest earlier snapshot per KR, for weeks before [weekStart].
+/// Latest earlier snapshot per measure, for weeks before [weekStart].
 
 final class LatestSnapshotsBeforeProvider
     extends
@@ -276,7 +276,7 @@ final class LatestSnapshotsBeforeProvider
     with
         $FutureModifier<Map<String, double>>,
         $StreamProvider<Map<String, double>> {
-  /// Latest earlier snapshot per KR, for weeks before [weekStart].
+  /// Latest earlier snapshot per measure, for weeks before [weekStart].
   LatestSnapshotsBeforeProvider._({
     required LatestSnapshotsBeforeFamily super.from,
     required CalendarDate super.argument,
@@ -324,7 +324,7 @@ final class LatestSnapshotsBeforeProvider
 String _$latestSnapshotsBeforeHash() =>
     r'0d74d6ddde2d645bea0caeb36e69c5aa1c851e9d';
 
-/// Latest earlier snapshot per KR, for weeks before [weekStart].
+/// Latest earlier snapshot per measure, for weeks before [weekStart].
 
 final class LatestSnapshotsBeforeFamily extends $Family
     with $FunctionalFamilyOverride<Stream<Map<String, double>>, CalendarDate> {
@@ -337,7 +337,7 @@ final class LatestSnapshotsBeforeFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Latest earlier snapshot per KR, for weeks before [weekStart].
+  /// Latest earlier snapshot per measure, for weeks before [weekStart].
 
   LatestSnapshotsBeforeProvider call(CalendarDate weekStart) =>
       LatestSnapshotsBeforeProvider._(argument: weekStart, from: this);
@@ -346,13 +346,13 @@ final class LatestSnapshotsBeforeFamily extends $Family
   String toString() => r'latestSnapshotsBeforeProvider';
 }
 
-/// The KR snapshots of the week's completed review, or null (see
+/// The measure snapshots of the week's completed review, or null (see
 /// [ReviewRepository.watchSnapshotsOfCompletedWeek]).
 
 @ProviderFor(weekReviewSnapshots)
 final weekReviewSnapshotsProvider = WeekReviewSnapshotsFamily._();
 
-/// The KR snapshots of the week's completed review, or null (see
+/// The measure snapshots of the week's completed review, or null (see
 /// [ReviewRepository.watchSnapshotsOfCompletedWeek]).
 
 final class WeekReviewSnapshotsProvider
@@ -365,7 +365,7 @@ final class WeekReviewSnapshotsProvider
     with
         $FutureModifier<Map<String, double>?>,
         $StreamProvider<Map<String, double>?> {
-  /// The KR snapshots of the week's completed review, or null (see
+  /// The measure snapshots of the week's completed review, or null (see
   /// [ReviewRepository.watchSnapshotsOfCompletedWeek]).
   WeekReviewSnapshotsProvider._({
     required WeekReviewSnapshotsFamily super.from,
@@ -414,7 +414,7 @@ final class WeekReviewSnapshotsProvider
 String _$weekReviewSnapshotsHash() =>
     r'31baeddbf72a23da72990f5f09bf470cc4d2baa7';
 
-/// The KR snapshots of the week's completed review, or null (see
+/// The measure snapshots of the week's completed review, or null (see
 /// [ReviewRepository.watchSnapshotsOfCompletedWeek]).
 
 final class WeekReviewSnapshotsFamily extends $Family
@@ -428,7 +428,7 @@ final class WeekReviewSnapshotsFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// The KR snapshots of the week's completed review, or null (see
+  /// The measure snapshots of the week's completed review, or null (see
   /// [ReviewRepository.watchSnapshotsOfCompletedWeek]).
 
   WeekReviewSnapshotsProvider call(CalendarDate weekStart) =>

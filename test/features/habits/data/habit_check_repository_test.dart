@@ -14,7 +14,7 @@ void main() {
   Future<Habit> runHabit() => r.habits.create(
     title: 'Run',
     projectId: 'p1',
-    keyResultId: 'kr1',
+    goalId: 'g1',
     scheduleType: ScheduleType.daily,
   );
 
@@ -27,7 +27,7 @@ void main() {
     final entry = await r.rawLogEntry(check.logEntryId!);
     expect(entry.source, LogSource.habit);
     expect(entry.projectId, 'p1');
-    expect(entry.keyResultId, 'kr1');
+    expect(entry.goalId, 'g1');
     expect(entry.note, 'Run');
     expect(entry.durationMinutes, isNull);
     expect(await r.logs.watchForProject('p1').first, hasLength(1));

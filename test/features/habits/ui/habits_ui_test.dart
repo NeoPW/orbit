@@ -84,7 +84,7 @@ void main() {
       final habit = (await habits()).single;
       expect(habit.title, 'Meditate');
       expect(habit.projectId, isNull);
-      expect(habit.keyResultId, isNull);
+      expect(habit.goalId, isNull);
       expect(habit.scheduleType, ScheduleType.daily);
       expect(habit.active, isTrue);
     });
@@ -132,14 +132,6 @@ void main() {
       await tester.enterText(field('Times per week'), '3');
       await save(tester);
       expect((await habits()).single.timesPerWeek, 3);
-    });
-
-    testApp('the reminder field explains the default time', (tester) async {
-      await pumpSheet(tester, (c) => showHabitForm(c), db: db);
-      expect(
-        find.text('Without a time, the default reminder time is used.'),
-        findsOneWidget,
-      );
     });
 
     testApp('links a project and sets a reminder time', (tester) async {

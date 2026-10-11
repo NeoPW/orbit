@@ -6,6 +6,7 @@ import 'core/messages/message_host.dart';
 import 'core/notifications/notification_scheduler.dart';
 import 'core/router/router.dart';
 import 'core/router/routes.dart';
+import 'core/space/space_background.dart';
 import 'core/theme/app_theme.dart';
 import 'features/account/ui/sync_scope.dart';
 import 'features/reminders/ui/reminder_sync_scope.dart';
@@ -43,13 +44,15 @@ class _OrbitAppState extends ConsumerState<OrbitApp> {
     return MaterialApp.router(
       title: 'Orbit',
       debugShowCheckedModeBanner: false,
-      theme: lightTheme,
-      darkTheme: darkTheme,
-      themeMode: ThemeMode.system,
+      // Dark only: the app lives in space.
+      theme: darkTheme,
+      themeMode: ThemeMode.dark,
       routerConfig: _router,
       builder: (context, child) => ReminderSyncScope(
         child: TimerNotificationScope(
-          child: SyncScope(child: MessageHost(child: child!)),
+          child: SyncScope(
+            child: SpaceBackground(child: MessageHost(child: child!)),
+          ),
         ),
       ),
     );

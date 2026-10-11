@@ -1,57 +1,58 @@
 import '../../../core/db/app_database.dart';
-import '../../key_results/domain/kr_deadline.dart';
-import '../../key_results/domain/kr_progress.dart';
+import '../../goals/domain/goal_progress.dart';
+import '../../goals/domain/measure_progress.dart';
 import '../../projects/domain/project_deadline.dart';
 
-/// The Plan tab's Overview: active objectives → KRs → active projects and
-/// assigned open tasks, and the active projects without a KR (plan-overview
-/// spec).
+/// The Plan tab's Overview: the active goals with their measures, active
+/// projects and assigned open tasks, and the active projects without an
+/// active goal (plan-overview spec).
 class PlanOverview {
-  const PlanOverview({
-    required this.objectives,
-    required this.projectsWithoutKr,
-  });
+  const PlanOverview({required this.goals, required this.projectsWithoutGoal});
 
-  final List<ObjectivePlan> objectives;
-  final List<ProjectEntry> projectsWithoutKr;
+  final List<GoalPlan> goals;
+  final List<ProjectEntry> projectsWithoutGoal;
 }
 
-class ObjectivePlan {
-  const ObjectivePlan({
-    required this.objective,
-    required this.keyResults,
+class GoalPlan {
+  const GoalPlan({
+    required this.goal,
+    required this.measures,
+    this.projects = const [],
     this.tasks = const [],
   });
 
-  final Objective objective;
-  final List<KeyResultPlan> keyResults;
+  final Goal goal;
 
-  /// Open tasks assigned to the objective itself.
+  /// In sort order.
+  final List<MeasurePlan> measures;
+
+  /// Active projects serving the goal, in Plan order.
+  final List<ProjectEntry> projects;
+
+  /// Open tasks assigned to the goal.
   final List<Task> tasks;
+
+  /// The average of the measures, null without measures.
+  double? get progress => goalProgress(measures.map((m) => m.progress));
+
+  /// Every measure reached (the planet's ring).
+  bool get allReached => allMeasuresReached(measures.map((m) => m.progress));
 }
 
-class KeyResultPlan {
-  const KeyResultPlan({
-    required this.keyResult,
-    required this.effectiveDeadline,
+class MeasurePlan {
+  const MeasurePlan({
+    required this.measure,
     required this.progress,
     this.habitCheckIns = 0,
-    required this.projects,
-    this.tasks = const [],
   });
 
-  final KeyResult keyResult;
-  final CalendarDate effectiveDeadline;
+  final Measure measure;
 
   /// 0–1.
   final double progress;
 
-  /// Check-ins counted towards a habit KR; 0 for other KRs.
+  /// Check-ins counted towards a habit measure; 0 for other measures.
   final int habitCheckIns;
-  final List<ProjectEntry> projects;
-
-  /// Open tasks assigned to the KR.
-  final List<Task> tasks;
 }
 
 /// A project as shown in the Plan tab.
@@ -60,7 +61,7 @@ class ProjectEntry {
     required this.project,
     required this.area,
     required this.deadline,
-    this.keyResult,
+    this.goal,
   });
 
   final Project project;
@@ -71,9 +72,9 @@ class ProjectEntry {
   /// Null when there is no deadline anywhere.
   final EffectiveDeadline? deadline;
 
-  /// The linked KR, when it is shown outside its objective (its objective
-  /// is not active). Null for entries listed under their KR.
-  final KeyResult? keyResult;
+  /// The goal it serves, when it is shown outside that goal (the goal is not
+  /// active). Null for entries listed under their goal.
+  final Goal? goal;
 }
 
 /// Plan-tab ordering: importance (highest first), then effective deadline
@@ -112,59 +113,62 @@ int compareTasksForPlan(Task a, Task b) {
   return a.title.toLowerCase().compareTo(b.title.toLowerCase());
 }
 
+/// The measures of [goal] in sort order with their progress.
+/// [habitCheckIns] holds the check-ins counted towards each habit measure.
+List<MeasurePlan> measurePlans(
+  Goal goal,
+  Iterable<Measure> measures, {
+  Map<String, int> habitCheckIns = const {},
+}) => [
+  for (final measure
+      in measures.where((m) => m.goalId == goal.id).toList()
+        ..sort(_bySortOrder((m) => m.sortOrder, (m) => m.createdAt)))
+    MeasurePlan(
+      measure: measure,
+      progress: measureProgress(
+        measure,
+        habitCheckIns: habitCheckIns[measure.id] ?? 0,
+      ),
+      habitCheckIns: habitCheckIns[measure.id] ?? 0,
+    ),
+];
+
 /// Builds the Overview from non-deleted rows.
 ///
-/// [objectives] and [keyResults] may include non-active objectives and their
-/// KRs: they are needed for active projects linked to a KR of a non-active
-/// objective, which are listed under "without KR" with their KR. Only
-/// projects with status active are used from [projects]. [habitCheckIns]
-/// holds the check-ins counted towards each habit KR, by KR ID. Open tasks
-/// in [tasks] are listed under the KR or objective they are assigned to;
-/// others are ignored.
+/// [goals] may include non-active goals: active projects serving them are
+/// listed under "without a goal" with the goal's title. Only projects with
+/// status active are used from [projects]. Open tasks in [tasks] are listed
+/// under the goal they are assigned to; others are ignored.
 PlanOverview buildPlanOverview({
-  required List<Objective> objectives,
-  required List<KeyResult> keyResults,
+  required List<Goal> goals,
+  required List<Measure> measures,
   required List<Project> projects,
   required List<Area> areas,
   Map<String, int> habitCheckIns = const {},
   List<Task> tasks = const [],
 }) {
-  final objectivesById = {for (final o in objectives) o.id: o};
+  final goalsById = {for (final g in goals) g.id: g};
   final areasById = {for (final a in areas) a.id: a};
-  final krsById = {
-    for (final kr in keyResults)
-      if (objectivesById.containsKey(kr.objectiveId)) kr.id: kr,
-  };
 
-  CalendarDate krDeadline(KeyResult kr) =>
-      effectiveKrDeadline(kr.deadline, objectivesById[kr.objectiveId]!.endDate);
-
-  final projectsByKr = <String, List<ProjectEntry>>{};
-  final withoutKr = <ProjectEntry>[];
+  final projectsByGoal = <String, List<ProjectEntry>>{};
+  final withoutGoal = <ProjectEntry>[];
 
   for (final project in projects) {
     if (project.status != ProjectStatus.active) continue;
-    final kr = krsById[project.keyResultId];
+    final goal = goalsById[project.goalId];
     final area = areasById[project.areaId];
-    final deadline = effectiveProjectDeadline(
-      project.deadline,
-      kr == null ? null : krDeadline(kr),
-    );
-    final underActiveObjective =
-        kr != null &&
-        objectivesById[kr.objectiveId]!.status == ObjectiveStatus.active;
-
-    if (underActiveObjective) {
-      projectsByKr
-          .putIfAbsent(kr.id, () => [])
+    final deadline = effectiveProjectDeadline(project.deadline, goal?.endDate);
+    if (goal != null && goal.status == GoalStatus.active) {
+      projectsByGoal
+          .putIfAbsent(goal.id, () => [])
           .add(ProjectEntry(project: project, area: area, deadline: deadline));
     } else {
-      withoutKr.add(
+      withoutGoal.add(
         ProjectEntry(
           project: project,
           area: area,
           deadline: deadline,
-          keyResult: kr,
+          goal: goal,
         ),
       );
     }
@@ -172,46 +176,22 @@ PlanOverview buildPlanOverview({
 
   final openTasks = tasks.where((t) => t.status == TaskStatus.open).toList()
     ..sort(compareTasksForPlan);
-  List<Task> tasksFor(bool Function(Task) assigned) =>
-      openTasks.where(assigned).toList();
 
-  final activeObjectives =
-      objectives.where((o) => o.status == ObjectiveStatus.active).toList()
-        ..sort(_bySortOrder((o) => o.sortOrder, (o) => o.createdAt));
-
-  final objectivePlans = [
-    for (final objective in activeObjectives)
-      ObjectivePlan(
-        objective: objective,
-        tasks: tasksFor((t) => t.objectiveId == objective.id),
-        keyResults: [
-          for (final kr
-              in krsById.values
-                  .where((kr) => kr.objectiveId == objective.id)
-                  .toList()
-                ..sort(_bySortOrder((k) => k.sortOrder, (k) => k.createdAt)))
-            KeyResultPlan(
-              keyResult: kr,
-              effectiveDeadline: krDeadline(kr),
-              progress: krProgress(
-                kr.measureType,
-                start: kr.startValue,
-                target: kr.targetValue,
-                current: kr.currentValue,
-                habitCheckIns: habitCheckIns[kr.id] ?? 0,
-              ),
-              habitCheckIns: habitCheckIns[kr.id] ?? 0,
-              projects: (projectsByKr[kr.id] ?? [])
-                ..sort(compareProjectsForPlan),
-              tasks: tasksFor((t) => t.keyResultId == kr.id),
-            ),
-        ],
-      ),
-  ];
+  final activeGoals = goals.where((g) => g.status == GoalStatus.active).toList()
+    ..sort(_bySortOrder((g) => g.sortOrder, (g) => g.createdAt));
 
   return PlanOverview(
-    objectives: objectivePlans,
-    projectsWithoutKr: withoutKr..sort(compareProjectsForPlan),
+    goals: [
+      for (final goal in activeGoals)
+        GoalPlan(
+          goal: goal,
+          measures: measurePlans(goal, measures, habitCheckIns: habitCheckIns),
+          projects: (projectsByGoal[goal.id] ?? [])
+            ..sort(compareProjectsForPlan),
+          tasks: openTasks.where((t) => t.goalId == goal.id).toList(),
+        ),
+    ],
+    projectsWithoutGoal: withoutGoal..sort(compareProjectsForPlan),
   );
 }
 

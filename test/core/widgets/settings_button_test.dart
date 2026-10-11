@@ -32,15 +32,4 @@ void main() {
       expect(find.widgetWithText(AppBar, title), findsOneWidget);
     });
   }
-
-  testApp('the Plan menu no longer lists Settings', (tester) async {
-    await pumpApp(tester, db: db, location: Routes.plan);
-    await tester.tap(find.byTooltip('More'));
-    await tester.pumpAndSettle();
-    expect(find.text('Archive'), findsOneWidget);
-    expect(
-      find.widgetWithText(PopupMenuItem<String>, 'Settings'),
-      findsNothing,
-    );
-  });
 }

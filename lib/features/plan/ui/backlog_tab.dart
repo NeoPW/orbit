@@ -9,9 +9,7 @@ import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/max_width_body.dart';
 import '../../account/ui/sync_refresh.dart';
 import '../../areas/data/area_repository.dart';
-import '../../key_results/data/key_result_repository.dart';
-import '../../key_results/domain/kr_deadline.dart';
-import '../../objectives/data/objective_repository.dart';
+import '../../goals/data/goal_repository.dart';
 import '../../projects/data/area_filter.dart';
 import '../../projects/data/project_repository.dart';
 import '../../projects/domain/project_deadline.dart';
@@ -38,25 +36,14 @@ class _BacklogTabState extends ConsumerState<BacklogTab> {
         ref.watch(appSettingsProvider).value?.deadlineLeadDays ?? 7;
     final areas = ref.watch(areasProvider).value ?? const <Area>[];
     final areasById = {for (final a in areas) a.id: a};
-    final objectivesById = {
-      for (final o in ref.watch(objectivesProvider).value ?? <Objective>[])
-        o.id: o,
-    };
-    final krsById = {
-      for (final k in ref.watch(keyResultsProvider).value ?? <KeyResult>[])
-        k.id: k,
+    final goalsById = {
+      for (final g in ref.watch(goalsProvider).value ?? <Goal>[]) g.id: g,
     };
 
-    EffectiveDeadline? deadlineOf(Project project) {
-      final kr = krsById[project.keyResultId];
-      final objective = kr == null ? null : objectivesById[kr.objectiveId];
-      return effectiveProjectDeadline(
-        project.deadline,
-        kr == null || objective == null
-            ? null
-            : effectiveKrDeadline(kr.deadline, objective.endDate),
-      );
-    }
+    EffectiveDeadline? deadlineOf(Project project) => effectiveProjectDeadline(
+      project.deadline,
+      goalsById[project.goalId]?.endDate,
+    );
 
     Widget chip(String label, AreaFilter filter) => ChoiceChip(
       label: Text(label),

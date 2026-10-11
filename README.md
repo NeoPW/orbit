@@ -55,6 +55,8 @@ Every change to the local drift tables (`lib/core/db/tables.dart`) must update `
 
 **After an update that changes `supabase/schema.sql`** (for example schema version 4: task assignment and work logged on tasks; schema version 5: the work timer and the KR step), run the file again in the SQL Editor before syncing with the new app version. New tables are created with `create table if not exists` and new columns are added with `add column if not exists`, so existing data stays. Until then, sync fails quietly and is retried; nothing local is lost.
 
+**Schema version 7 (goals and measures)** also moves data on the server: objectives become goals and key results measures, with the same IDs, and the links of projects, tasks, habits and log entries move to the goals. Run the script **before** opening the new app version on any device, and back up your tables first (Table Editor → export as CSV). Afterwards, devices still on the old version can no longer sync; update them too. Their local data stays and syncs after the update.
+
 ### 2. Your user
 
 - **Authentication → Users → Add user → Create new user:** your email and password, with **Auto Confirm User** on.

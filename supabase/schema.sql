@@ -57,8 +57,10 @@ create trigger areas_sync_guard
   before insert or update on public.areas
   for each row execute function public.sync_guard();
 
--- objectives
-create table if not exists public.objectives (
+-- Added in schema version 7: goals and measures replace objectives and
+-- key results (moved by the block at the end of this script).
+-- goals
+create table if not exists public.goals (
   id uuid primary key,
   user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
   created_at timestamptz not null,
@@ -70,31 +72,32 @@ create table if not exists public.objectives (
   end_date date not null,
   status text not null,
   sort_order integer not null,
+  color text,
   server_updated_at timestamptz not null default clock_timestamp()
 );
-create index if not exists objectives_user_server_updated
-  on public.objectives (user_id, server_updated_at);
-alter table public.objectives enable row level security;
-drop policy if exists "Owner only" on public.objectives;
-create policy "Owner only" on public.objectives
+create index if not exists goals_user_server_updated
+  on public.goals (user_id, server_updated_at);
+alter table public.goals enable row level security;
+drop policy if exists "Owner only" on public.goals;
+create policy "Owner only" on public.goals
   for all to authenticated
   using (user_id = (select auth.uid()))
   with check (user_id = (select auth.uid()));
-revoke all on public.objectives from anon;
-grant select, insert, update on public.objectives to authenticated;
-drop trigger if exists objectives_sync_guard on public.objectives;
-create trigger objectives_sync_guard
-  before insert or update on public.objectives
+revoke all on public.goals from anon;
+grant select, insert, update on public.goals to authenticated;
+drop trigger if exists goals_sync_guard on public.goals;
+create trigger goals_sync_guard
+  before insert or update on public.goals
   for each row execute function public.sync_guard();
 
--- key_results
-create table if not exists public.key_results (
+-- measures
+create table if not exists public.measures (
   id uuid primary key,
   user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
   created_at timestamptz not null,
   updated_at timestamptz not null,
   deleted_at timestamptz,
-  objective_id uuid not null,
+  goal_id uuid not null,
   title text not null,
   description text not null default '',
   measure_type text not null,
@@ -104,25 +107,22 @@ create table if not exists public.key_results (
   unit text,
   step double precision not null default 1,
   habit_id uuid,
-  deadline date,
   sort_order integer not null,
   server_updated_at timestamptz not null default clock_timestamp()
 );
--- Added in schema version 5 (step of the KR's − / + buttons).
-alter table public.key_results add column if not exists step double precision not null default 1;
-create index if not exists key_results_user_server_updated
-  on public.key_results (user_id, server_updated_at);
-alter table public.key_results enable row level security;
-drop policy if exists "Owner only" on public.key_results;
-create policy "Owner only" on public.key_results
+create index if not exists measures_user_server_updated
+  on public.measures (user_id, server_updated_at);
+alter table public.measures enable row level security;
+drop policy if exists "Owner only" on public.measures;
+create policy "Owner only" on public.measures
   for all to authenticated
   using (user_id = (select auth.uid()))
   with check (user_id = (select auth.uid()));
-revoke all on public.key_results from anon;
-grant select, insert, update on public.key_results to authenticated;
-drop trigger if exists key_results_sync_guard on public.key_results;
-create trigger key_results_sync_guard
-  before insert or update on public.key_results
+revoke all on public.measures from anon;
+grant select, insert, update on public.measures to authenticated;
+drop trigger if exists measures_sync_guard on public.measures;
+create trigger measures_sync_guard
+  before insert or update on public.measures
   for each row execute function public.sync_guard();
 
 -- projects
@@ -135,13 +135,17 @@ create table if not exists public.projects (
   title text not null,
   description text not null default '',
   area_id uuid,
-  key_result_id uuid,
+  goal_id uuid,
   status text not null,
   importance integer not null check (importance between 1 and 5),
   deadline date,
   next_step_task_id uuid,
+  completed_at timestamptz,
   server_updated_at timestamptz not null default clock_timestamp()
 );
+-- Added in schema version 7.
+alter table public.projects add column if not exists goal_id uuid;
+alter table public.projects add column if not exists completed_at timestamptz;
 create index if not exists projects_user_server_updated
   on public.projects (user_id, server_updated_at);
 alter table public.projects enable row level security;
@@ -165,8 +169,7 @@ create table if not exists public.tasks (
   updated_at timestamptz not null,
   deleted_at timestamptz,
   project_id uuid,
-  key_result_id uuid,
-  objective_id uuid,
+  goal_id uuid,
   title text not null,
   notes text not null default '',
   due_date date,
@@ -174,9 +177,8 @@ create table if not exists public.tasks (
   completed_at timestamptz,
   server_updated_at timestamptz not null default clock_timestamp()
 );
--- Added in schema version 4 (tasks assigned to a KR or objective).
-alter table public.tasks add column if not exists key_result_id uuid;
-alter table public.tasks add column if not exists objective_id uuid;
+-- Added in schema version 7 (tasks assigned to a goal).
+alter table public.tasks add column if not exists goal_id uuid;
 create index if not exists tasks_user_server_updated
   on public.tasks (user_id, server_updated_at);
 alter table public.tasks enable row level security;
@@ -201,7 +203,7 @@ create table if not exists public.habits (
   deleted_at timestamptz,
   title text not null,
   project_id uuid,
-  key_result_id uuid,
+  goal_id uuid,
   schedule_type text not null,
   weekdays text,
   times_per_week integer,
@@ -209,6 +211,8 @@ create table if not exists public.habits (
   active boolean not null default true,
   server_updated_at timestamptz not null default clock_timestamp()
 );
+-- Added in schema version 7.
+alter table public.habits add column if not exists goal_id uuid;
 create index if not exists habits_user_server_updated
   on public.habits (user_id, server_updated_at);
 alter table public.habits enable row level security;
@@ -259,7 +263,7 @@ create table if not exists public.log_entries (
   updated_at timestamptz not null,
   deleted_at timestamptz,
   project_id uuid,
-  key_result_id uuid,
+  goal_id uuid,
   task_id uuid,
   occurred_at timestamptz not null,
   duration_minutes integer,
@@ -269,6 +273,8 @@ create table if not exists public.log_entries (
 );
 -- Added in schema version 4 (work logged on a task).
 alter table public.log_entries add column if not exists task_id uuid;
+-- Added in schema version 7.
+alter table public.log_entries add column if not exists goal_id uuid;
 create index if not exists log_entries_user_server_updated
   on public.log_entries (user_id, server_updated_at);
 alter table public.log_entries enable row level security;
@@ -313,31 +319,31 @@ create trigger weekly_reviews_sync_guard
   before insert or update on public.weekly_reviews
   for each row execute function public.sync_guard();
 
--- review_kr_snapshots
-create table if not exists public.review_kr_snapshots (
+-- review_measure_snapshots
+create table if not exists public.review_measure_snapshots (
   id uuid primary key,
   user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
   created_at timestamptz not null,
   updated_at timestamptz not null,
   deleted_at timestamptz,
   weekly_review_id uuid not null,
-  key_result_id uuid not null,
+  measure_id uuid not null,
   progress double precision not null,
   server_updated_at timestamptz not null default clock_timestamp()
 );
-create index if not exists review_kr_snapshots_user_server_updated
-  on public.review_kr_snapshots (user_id, server_updated_at);
-alter table public.review_kr_snapshots enable row level security;
-drop policy if exists "Owner only" on public.review_kr_snapshots;
-create policy "Owner only" on public.review_kr_snapshots
+create index if not exists review_measure_snapshots_user_server_updated
+  on public.review_measure_snapshots (user_id, server_updated_at);
+alter table public.review_measure_snapshots enable row level security;
+drop policy if exists "Owner only" on public.review_measure_snapshots;
+create policy "Owner only" on public.review_measure_snapshots
   for all to authenticated
   using (user_id = (select auth.uid()))
   with check (user_id = (select auth.uid()));
-revoke all on public.review_kr_snapshots from anon;
-grant select, insert, update on public.review_kr_snapshots to authenticated;
-drop trigger if exists review_kr_snapshots_sync_guard on public.review_kr_snapshots;
-create trigger review_kr_snapshots_sync_guard
-  before insert or update on public.review_kr_snapshots
+revoke all on public.review_measure_snapshots from anon;
+grant select, insert, update on public.review_measure_snapshots to authenticated;
+drop trigger if exists review_measure_snapshots_sync_guard on public.review_measure_snapshots;
+create trigger review_measure_snapshots_sync_guard
+  before insert or update on public.review_measure_snapshots
   for each row execute function public.sync_guard();
 
 -- timers (added in schema version 5; at most one row, with a fixed ID)
@@ -366,3 +372,76 @@ drop trigger if exists timers_sync_guard on public.timers;
 create trigger timers_sync_guard
   before insert or update on public.timers
   for each row execute function public.sync_guard();
+
+-- Schema version 7: move objectives and key results to goals and measures.
+-- Runs only while the old tables exist, keeping every ID and timestamp, as
+-- the app does on each device. The sync guards are paused for the link
+-- updates: they would ignore an update that keeps updated_at.
+do $$
+begin
+  if to_regclass('public.objectives') is null then
+    return;
+  end if;
+
+  insert into public.goals (id, user_id, created_at, updated_at, deleted_at,
+    title, description, start_date, end_date, status, sort_order, color)
+  select id, user_id, created_at, updated_at, deleted_at,
+    title, description, start_date, end_date, status, sort_order, color
+  from public.objectives
+  on conflict (id) do nothing;
+
+  insert into public.measures (id, user_id, created_at, updated_at,
+    deleted_at, goal_id, title, description, measure_type, start_value,
+    target_value, current_value, unit, step, habit_id, sort_order)
+  select id, user_id, created_at, updated_at, deleted_at, objective_id,
+    title, description, measure_type, start_value, target_value,
+    current_value, unit, step, habit_id, sort_order
+  from public.key_results
+  on conflict (id) do nothing;
+
+  if to_regclass('public.review_kr_snapshots') is not null then
+    insert into public.review_measure_snapshots (id, user_id, created_at,
+      updated_at, deleted_at, weekly_review_id, measure_id, progress)
+    select id, user_id, created_at, updated_at, deleted_at,
+      weekly_review_id, key_result_id, progress
+    from public.review_kr_snapshots
+    on conflict (id) do nothing;
+  end if;
+
+  alter table public.projects disable trigger projects_sync_guard;
+  update public.projects p set goal_id = k.objective_id
+    from public.key_results k
+    where k.id = p.key_result_id and p.goal_id is null;
+  update public.projects set completed_at = updated_at
+    where status = 'completed' and completed_at is null;
+  alter table public.projects enable trigger projects_sync_guard;
+
+  alter table public.tasks disable trigger tasks_sync_guard;
+  update public.tasks t set goal_id = coalesce(t.objective_id,
+      (select k.objective_id from public.key_results k
+       where k.id = t.key_result_id))
+    where t.goal_id is null;
+  alter table public.tasks enable trigger tasks_sync_guard;
+
+  alter table public.habits disable trigger habits_sync_guard;
+  update public.habits h set goal_id = k.objective_id
+    from public.key_results k
+    where k.id = h.key_result_id and h.goal_id is null;
+  alter table public.habits enable trigger habits_sync_guard;
+
+  alter table public.log_entries disable trigger log_entries_sync_guard;
+  update public.log_entries l set goal_id = k.objective_id
+    from public.key_results k
+    where k.id = l.key_result_id and l.goal_id is null;
+  alter table public.log_entries enable trigger log_entries_sync_guard;
+
+  alter table public.projects drop column if exists key_result_id;
+  alter table public.tasks drop column if exists key_result_id;
+  alter table public.tasks drop column if exists objective_id;
+  alter table public.habits drop column if exists key_result_id;
+  alter table public.log_entries drop column if exists key_result_id;
+  drop table if exists public.review_kr_snapshots;
+  drop table public.key_results;
+  drop table public.objectives;
+end;
+$$;

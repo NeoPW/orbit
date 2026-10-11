@@ -464,12 +464,11 @@ class AreasCompanion extends UpdateCompanion<Area> {
   }
 }
 
-class $ObjectivesTable extends Objectives
-    with TableInfo<$ObjectivesTable, Objective> {
+class $GoalsTable extends Goals with TableInfo<$GoalsTable, Goal> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $ObjectivesTable(this.attachedDatabase, [this._alias]);
+  $GoalsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
@@ -541,7 +540,7 @@ class $ObjectivesTable extends Objectives
         false,
         type: DriftSqlType.string,
         requiredDuringInsert: true,
-      ).withConverter<CalendarDate>($ObjectivesTable.$converterstartDate);
+      ).withConverter<CalendarDate>($GoalsTable.$converterstartDate);
   @override
   late final GeneratedColumnWithTypeConverter<CalendarDate, String> endDate =
       GeneratedColumn<String>(
@@ -550,16 +549,16 @@ class $ObjectivesTable extends Objectives
         false,
         type: DriftSqlType.string,
         requiredDuringInsert: true,
-      ).withConverter<CalendarDate>($ObjectivesTable.$converterendDate);
+      ).withConverter<CalendarDate>($GoalsTable.$converterendDate);
   @override
-  late final GeneratedColumnWithTypeConverter<ObjectiveStatus, String> status =
+  late final GeneratedColumnWithTypeConverter<GoalStatus, String> status =
       GeneratedColumn<String>(
         'status',
         aliasedName,
         false,
         type: DriftSqlType.string,
         requiredDuringInsert: true,
-      ).withConverter<ObjectiveStatus>($ObjectivesTable.$converterstatus);
+      ).withConverter<GoalStatus>($GoalsTable.$converterstatus);
   static const VerificationMeta _sortOrderMeta = const VerificationMeta(
     'sortOrder',
   );
@@ -570,6 +569,15 @@ class $ObjectivesTable extends Objectives
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: true,
+  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
   );
   @override
   List<GeneratedColumn> get $columns => [
@@ -583,15 +591,16 @@ class $ObjectivesTable extends Objectives
     endDate,
     status,
     sortOrder,
+    color,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'objectives';
+  static const String $name = 'goals';
   @override
   VerificationContext validateIntegrity(
-    Insertable<Objective> instance, {
+    Insertable<Goal> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -648,15 +657,21 @@ class $ObjectivesTable extends Objectives
     } else if (isInserting) {
       context.missing(_sortOrderMeta);
     }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    }
     return context;
   }
 
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Objective map(Map<String, dynamic> data, {String? tablePrefix}) {
+  Goal map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Objective(
+    return Goal(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -681,19 +696,19 @@ class $ObjectivesTable extends Objectives
         DriftSqlType.string,
         data['${effectivePrefix}description'],
       )!,
-      startDate: $ObjectivesTable.$converterstartDate.fromSql(
+      startDate: $GoalsTable.$converterstartDate.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
           data['${effectivePrefix}start_date'],
         )!,
       ),
-      endDate: $ObjectivesTable.$converterendDate.fromSql(
+      endDate: $GoalsTable.$converterendDate.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
           data['${effectivePrefix}end_date'],
         )!,
       ),
-      status: $ObjectivesTable.$converterstatus.fromSql(
+      status: $GoalsTable.$converterstatus.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
           data['${effectivePrefix}status'],
@@ -703,23 +718,27 @@ class $ObjectivesTable extends Objectives
         DriftSqlType.int,
         data['${effectivePrefix}sort_order'],
       )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      ),
     );
   }
 
   @override
-  $ObjectivesTable createAlias(String alias) {
-    return $ObjectivesTable(attachedDatabase, alias);
+  $GoalsTable createAlias(String alias) {
+    return $GoalsTable(attachedDatabase, alias);
   }
 
   static TypeConverter<CalendarDate, String> $converterstartDate =
       const CalendarDateConverter();
   static TypeConverter<CalendarDate, String> $converterendDate =
       const CalendarDateConverter();
-  static TypeConverter<ObjectiveStatus, String> $converterstatus =
-      const DbEnumConverter<ObjectiveStatus>(ObjectiveStatus.values);
+  static TypeConverter<GoalStatus, String> $converterstatus =
+      const DbEnumConverter<GoalStatus>(GoalStatus.values);
 }
 
-class Objective extends DataClass implements Insertable<Objective> {
+class Goal extends DataClass implements Insertable<Goal> {
   /// UUID v4, generated on the client.
   final String id;
 
@@ -735,9 +754,12 @@ class Objective extends DataClass implements Insertable<Objective> {
   final String description;
   final CalendarDate startDate;
   final CalendarDate endDate;
-  final ObjectiveStatus status;
+  final GoalStatus status;
   final int sortOrder;
-  const Objective({
+
+  /// `#RRGGBB`, the planet's color; null picks one by position.
+  final String? color;
+  const Goal({
     required this.id,
     required this.createdAt,
     required this.updatedAt,
@@ -748,6 +770,7 @@ class Objective extends DataClass implements Insertable<Objective> {
     required this.endDate,
     required this.status,
     required this.sortOrder,
+    this.color,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -762,25 +785,28 @@ class Objective extends DataClass implements Insertable<Objective> {
     map['description'] = Variable<String>(description);
     {
       map['start_date'] = Variable<String>(
-        $ObjectivesTable.$converterstartDate.toSql(startDate),
+        $GoalsTable.$converterstartDate.toSql(startDate),
       );
     }
     {
       map['end_date'] = Variable<String>(
-        $ObjectivesTable.$converterendDate.toSql(endDate),
+        $GoalsTable.$converterendDate.toSql(endDate),
       );
     }
     {
       map['status'] = Variable<String>(
-        $ObjectivesTable.$converterstatus.toSql(status),
+        $GoalsTable.$converterstatus.toSql(status),
       );
     }
     map['sort_order'] = Variable<int>(sortOrder);
+    if (!nullToAbsent || color != null) {
+      map['color'] = Variable<String>(color);
+    }
     return map;
   }
 
-  ObjectivesCompanion toCompanion(bool nullToAbsent) {
-    return ObjectivesCompanion(
+  GoalsCompanion toCompanion(bool nullToAbsent) {
+    return GoalsCompanion(
       id: Value(id),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -793,15 +819,18 @@ class Objective extends DataClass implements Insertable<Objective> {
       endDate: Value(endDate),
       status: Value(status),
       sortOrder: Value(sortOrder),
+      color: color == null && nullToAbsent
+          ? const Value.absent()
+          : Value(color),
     );
   }
 
-  factory Objective.fromJson(
+  factory Goal.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Objective(
+    return Goal(
       id: serializer.fromJson<String>(json['id']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -810,8 +839,9 @@ class Objective extends DataClass implements Insertable<Objective> {
       description: serializer.fromJson<String>(json['description']),
       startDate: serializer.fromJson<CalendarDate>(json['startDate']),
       endDate: serializer.fromJson<CalendarDate>(json['endDate']),
-      status: serializer.fromJson<ObjectiveStatus>(json['status']),
+      status: serializer.fromJson<GoalStatus>(json['status']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      color: serializer.fromJson<String?>(json['color']),
     );
   }
   @override
@@ -826,12 +856,13 @@ class Objective extends DataClass implements Insertable<Objective> {
       'description': serializer.toJson<String>(description),
       'startDate': serializer.toJson<CalendarDate>(startDate),
       'endDate': serializer.toJson<CalendarDate>(endDate),
-      'status': serializer.toJson<ObjectiveStatus>(status),
+      'status': serializer.toJson<GoalStatus>(status),
       'sortOrder': serializer.toJson<int>(sortOrder),
+      'color': serializer.toJson<String?>(color),
     };
   }
 
-  Objective copyWith({
+  Goal copyWith({
     String? id,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -840,9 +871,10 @@ class Objective extends DataClass implements Insertable<Objective> {
     String? description,
     CalendarDate? startDate,
     CalendarDate? endDate,
-    ObjectiveStatus? status,
+    GoalStatus? status,
     int? sortOrder,
-  }) => Objective(
+    Value<String?> color = const Value.absent(),
+  }) => Goal(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -853,9 +885,10 @@ class Objective extends DataClass implements Insertable<Objective> {
     endDate: endDate ?? this.endDate,
     status: status ?? this.status,
     sortOrder: sortOrder ?? this.sortOrder,
+    color: color.present ? color.value : this.color,
   );
-  Objective copyWithCompanion(ObjectivesCompanion data) {
-    return Objective(
+  Goal copyWithCompanion(GoalsCompanion data) {
+    return Goal(
       id: data.id.present ? data.id.value : this.id,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -868,12 +901,13 @@ class Objective extends DataClass implements Insertable<Objective> {
       endDate: data.endDate.present ? data.endDate.value : this.endDate,
       status: data.status.present ? data.status.value : this.status,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      color: data.color.present ? data.color.value : this.color,
     );
   }
 
   @override
   String toString() {
-    return (StringBuffer('Objective(')
+    return (StringBuffer('Goal(')
           ..write('id: $id, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -883,7 +917,8 @@ class Objective extends DataClass implements Insertable<Objective> {
           ..write('startDate: $startDate, ')
           ..write('endDate: $endDate, ')
           ..write('status: $status, ')
-          ..write('sortOrder: $sortOrder')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('color: $color')
           ..write(')'))
         .toString();
   }
@@ -900,11 +935,12 @@ class Objective extends DataClass implements Insertable<Objective> {
     endDate,
     status,
     sortOrder,
+    color,
   );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Objective &&
+      (other is Goal &&
           other.id == this.id &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
@@ -914,10 +950,11 @@ class Objective extends DataClass implements Insertable<Objective> {
           other.startDate == this.startDate &&
           other.endDate == this.endDate &&
           other.status == this.status &&
-          other.sortOrder == this.sortOrder);
+          other.sortOrder == this.sortOrder &&
+          other.color == this.color);
 }
 
-class ObjectivesCompanion extends UpdateCompanion<Objective> {
+class GoalsCompanion extends UpdateCompanion<Goal> {
   final Value<String> id;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -926,10 +963,11 @@ class ObjectivesCompanion extends UpdateCompanion<Objective> {
   final Value<String> description;
   final Value<CalendarDate> startDate;
   final Value<CalendarDate> endDate;
-  final Value<ObjectiveStatus> status;
+  final Value<GoalStatus> status;
   final Value<int> sortOrder;
+  final Value<String?> color;
   final Value<int> rowid;
-  const ObjectivesCompanion({
+  const GoalsCompanion({
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -940,9 +978,10 @@ class ObjectivesCompanion extends UpdateCompanion<Objective> {
     this.endDate = const Value.absent(),
     this.status = const Value.absent(),
     this.sortOrder = const Value.absent(),
+    this.color = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  ObjectivesCompanion.insert({
+  GoalsCompanion.insert({
     required String id,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -951,8 +990,9 @@ class ObjectivesCompanion extends UpdateCompanion<Objective> {
     this.description = const Value.absent(),
     required CalendarDate startDate,
     required CalendarDate endDate,
-    required ObjectiveStatus status,
+    required GoalStatus status,
     required int sortOrder,
+    this.color = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        createdAt = Value(createdAt),
@@ -962,7 +1002,7 @@ class ObjectivesCompanion extends UpdateCompanion<Objective> {
        endDate = Value(endDate),
        status = Value(status),
        sortOrder = Value(sortOrder);
-  static Insertable<Objective> custom({
+  static Insertable<Goal> custom({
     Expression<String>? id,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -973,6 +1013,7 @@ class ObjectivesCompanion extends UpdateCompanion<Objective> {
     Expression<String>? endDate,
     Expression<String>? status,
     Expression<int>? sortOrder,
+    Expression<String>? color,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -986,11 +1027,12 @@ class ObjectivesCompanion extends UpdateCompanion<Objective> {
       if (endDate != null) 'end_date': endDate,
       if (status != null) 'status': status,
       if (sortOrder != null) 'sort_order': sortOrder,
+      if (color != null) 'color': color,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
-  ObjectivesCompanion copyWith({
+  GoalsCompanion copyWith({
     Value<String>? id,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -999,11 +1041,12 @@ class ObjectivesCompanion extends UpdateCompanion<Objective> {
     Value<String>? description,
     Value<CalendarDate>? startDate,
     Value<CalendarDate>? endDate,
-    Value<ObjectiveStatus>? status,
+    Value<GoalStatus>? status,
     Value<int>? sortOrder,
+    Value<String?>? color,
     Value<int>? rowid,
   }) {
-    return ObjectivesCompanion(
+    return GoalsCompanion(
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -1014,6 +1057,7 @@ class ObjectivesCompanion extends UpdateCompanion<Objective> {
       endDate: endDate ?? this.endDate,
       status: status ?? this.status,
       sortOrder: sortOrder ?? this.sortOrder,
+      color: color ?? this.color,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1041,21 +1085,24 @@ class ObjectivesCompanion extends UpdateCompanion<Objective> {
     }
     if (startDate.present) {
       map['start_date'] = Variable<String>(
-        $ObjectivesTable.$converterstartDate.toSql(startDate.value),
+        $GoalsTable.$converterstartDate.toSql(startDate.value),
       );
     }
     if (endDate.present) {
       map['end_date'] = Variable<String>(
-        $ObjectivesTable.$converterendDate.toSql(endDate.value),
+        $GoalsTable.$converterendDate.toSql(endDate.value),
       );
     }
     if (status.present) {
       map['status'] = Variable<String>(
-        $ObjectivesTable.$converterstatus.toSql(status.value),
+        $GoalsTable.$converterstatus.toSql(status.value),
       );
     }
     if (sortOrder.present) {
       map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -1065,7 +1112,7 @@ class ObjectivesCompanion extends UpdateCompanion<Objective> {
 
   @override
   String toString() {
-    return (StringBuffer('ObjectivesCompanion(')
+    return (StringBuffer('GoalsCompanion(')
           ..write('id: $id, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -1076,18 +1123,18 @@ class ObjectivesCompanion extends UpdateCompanion<Objective> {
           ..write('endDate: $endDate, ')
           ..write('status: $status, ')
           ..write('sortOrder: $sortOrder, ')
+          ..write('color: $color, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
 }
 
-class $KeyResultsTable extends KeyResults
-    with TableInfo<$KeyResultsTable, KeyResult> {
+class $MeasuresTable extends Measures with TableInfo<$MeasuresTable, Measure> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $KeyResultsTable(this.attachedDatabase, [this._alias]);
+  $MeasuresTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
@@ -1130,12 +1177,10 @@ class $KeyResultsTable extends KeyResults
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _objectiveIdMeta = const VerificationMeta(
-    'objectiveId',
-  );
+  static const VerificationMeta _goalIdMeta = const VerificationMeta('goalId');
   @override
-  late final GeneratedColumn<String> objectiveId = GeneratedColumn<String>(
-    'objective_id',
+  late final GeneratedColumn<String> goalId = GeneratedColumn<String>(
+    'goal_id',
     aliasedName,
     false,
     type: DriftSqlType.string,
@@ -1170,7 +1215,7 @@ class $KeyResultsTable extends KeyResults
         false,
         type: DriftSqlType.string,
         requiredDuringInsert: true,
-      ).withConverter<MeasureType>($KeyResultsTable.$convertermeasureType);
+      ).withConverter<MeasureType>($MeasuresTable.$convertermeasureType);
   static const VerificationMeta _startValueMeta = const VerificationMeta(
     'startValue',
   );
@@ -1234,15 +1279,6 @@ class $KeyResultsTable extends KeyResults
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  @override
-  late final GeneratedColumnWithTypeConverter<CalendarDate?, String> deadline =
-      GeneratedColumn<String>(
-        'deadline',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      ).withConverter<CalendarDate?>($KeyResultsTable.$converterdeadlinen);
   static const VerificationMeta _sortOrderMeta = const VerificationMeta(
     'sortOrder',
   );
@@ -1260,7 +1296,7 @@ class $KeyResultsTable extends KeyResults
     createdAt,
     updatedAt,
     deletedAt,
-    objectiveId,
+    goalId,
     title,
     description,
     measureType,
@@ -1270,17 +1306,16 @@ class $KeyResultsTable extends KeyResults
     unit,
     step,
     habitId,
-    deadline,
     sortOrder,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'key_results';
+  static const String $name = 'measures';
   @override
   VerificationContext validateIntegrity(
-    Insertable<KeyResult> instance, {
+    Insertable<Measure> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -1312,16 +1347,13 @@ class $KeyResultsTable extends KeyResults
         deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
       );
     }
-    if (data.containsKey('objective_id')) {
+    if (data.containsKey('goal_id')) {
       context.handle(
-        _objectiveIdMeta,
-        objectiveId.isAcceptableOrUnknown(
-          data['objective_id']!,
-          _objectiveIdMeta,
-        ),
+        _goalIdMeta,
+        goalId.isAcceptableOrUnknown(data['goal_id']!, _goalIdMeta),
       );
     } else if (isInserting) {
-      context.missing(_objectiveIdMeta);
+      context.missing(_goalIdMeta);
     }
     if (data.containsKey('title')) {
       context.handle(
@@ -1396,9 +1428,9 @@ class $KeyResultsTable extends KeyResults
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  KeyResult map(Map<String, dynamic> data, {String? tablePrefix}) {
+  Measure map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return KeyResult(
+    return Measure(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -1415,9 +1447,9 @@ class $KeyResultsTable extends KeyResults
         DriftSqlType.dateTime,
         data['${effectivePrefix}deleted_at'],
       ),
-      objectiveId: attachedDatabase.typeMapping.read(
+      goalId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}objective_id'],
+        data['${effectivePrefix}goal_id'],
       )!,
       title: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -1427,7 +1459,7 @@ class $KeyResultsTable extends KeyResults
         DriftSqlType.string,
         data['${effectivePrefix}description'],
       )!,
-      measureType: $KeyResultsTable.$convertermeasureType.fromSql(
+      measureType: $MeasuresTable.$convertermeasureType.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
           data['${effectivePrefix}measure_type'],
@@ -1457,12 +1489,6 @@ class $KeyResultsTable extends KeyResults
         DriftSqlType.string,
         data['${effectivePrefix}habit_id'],
       ),
-      deadline: $KeyResultsTable.$converterdeadlinen.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}deadline'],
-        ),
-      ),
       sortOrder: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}sort_order'],
@@ -1471,19 +1497,15 @@ class $KeyResultsTable extends KeyResults
   }
 
   @override
-  $KeyResultsTable createAlias(String alias) {
-    return $KeyResultsTable(attachedDatabase, alias);
+  $MeasuresTable createAlias(String alias) {
+    return $MeasuresTable(attachedDatabase, alias);
   }
 
   static TypeConverter<MeasureType, String> $convertermeasureType =
       const DbEnumConverter<MeasureType>(MeasureType.values);
-  static TypeConverter<CalendarDate, String> $converterdeadline =
-      const CalendarDateConverter();
-  static TypeConverter<CalendarDate?, String?> $converterdeadlinen =
-      NullAwareTypeConverter.wrap($converterdeadline);
 }
 
-class KeyResult extends DataClass implements Insertable<KeyResult> {
+class Measure extends DataClass implements Insertable<Measure> {
   /// UUID v4, generated on the client.
   final String id;
 
@@ -1495,7 +1517,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
 
   /// UTC, set when the row is soft-deleted.
   final DateTime? deletedAt;
-  final String objectiveId;
+  final String goalId;
   final String title;
   final String description;
   final MeasureType measureType;
@@ -1513,16 +1535,13 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
   /// Numeric: what the − / + buttons change the current value by.
   final double step;
   final String? habitId;
-
-  /// Falls back to the objective's end date when null.
-  final CalendarDate? deadline;
   final int sortOrder;
-  const KeyResult({
+  const Measure({
     required this.id,
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
-    required this.objectiveId,
+    required this.goalId,
     required this.title,
     required this.description,
     required this.measureType,
@@ -1532,7 +1551,6 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
     this.unit,
     required this.step,
     this.habitId,
-    this.deadline,
     required this.sortOrder,
   });
   @override
@@ -1544,12 +1562,12 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
     if (!nullToAbsent || deletedAt != null) {
       map['deleted_at'] = Variable<DateTime>(deletedAt);
     }
-    map['objective_id'] = Variable<String>(objectiveId);
+    map['goal_id'] = Variable<String>(goalId);
     map['title'] = Variable<String>(title);
     map['description'] = Variable<String>(description);
     {
       map['measure_type'] = Variable<String>(
-        $KeyResultsTable.$convertermeasureType.toSql(measureType),
+        $MeasuresTable.$convertermeasureType.toSql(measureType),
       );
     }
     if (!nullToAbsent || startValue != null) {
@@ -1568,24 +1586,19 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
     if (!nullToAbsent || habitId != null) {
       map['habit_id'] = Variable<String>(habitId);
     }
-    if (!nullToAbsent || deadline != null) {
-      map['deadline'] = Variable<String>(
-        $KeyResultsTable.$converterdeadlinen.toSql(deadline),
-      );
-    }
     map['sort_order'] = Variable<int>(sortOrder);
     return map;
   }
 
-  KeyResultsCompanion toCompanion(bool nullToAbsent) {
-    return KeyResultsCompanion(
+  MeasuresCompanion toCompanion(bool nullToAbsent) {
+    return MeasuresCompanion(
       id: Value(id),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
       deletedAt: deletedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(deletedAt),
-      objectiveId: Value(objectiveId),
+      goalId: Value(goalId),
       title: Value(title),
       description: Value(description),
       measureType: Value(measureType),
@@ -1603,24 +1616,21 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
       habitId: habitId == null && nullToAbsent
           ? const Value.absent()
           : Value(habitId),
-      deadline: deadline == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deadline),
       sortOrder: Value(sortOrder),
     );
   }
 
-  factory KeyResult.fromJson(
+  factory Measure.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return KeyResult(
+    return Measure(
       id: serializer.fromJson<String>(json['id']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
-      objectiveId: serializer.fromJson<String>(json['objectiveId']),
+      goalId: serializer.fromJson<String>(json['goalId']),
       title: serializer.fromJson<String>(json['title']),
       description: serializer.fromJson<String>(json['description']),
       measureType: serializer.fromJson<MeasureType>(json['measureType']),
@@ -1630,7 +1640,6 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
       unit: serializer.fromJson<String?>(json['unit']),
       step: serializer.fromJson<double>(json['step']),
       habitId: serializer.fromJson<String?>(json['habitId']),
-      deadline: serializer.fromJson<CalendarDate?>(json['deadline']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
     );
   }
@@ -1642,7 +1651,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
-      'objectiveId': serializer.toJson<String>(objectiveId),
+      'goalId': serializer.toJson<String>(goalId),
       'title': serializer.toJson<String>(title),
       'description': serializer.toJson<String>(description),
       'measureType': serializer.toJson<MeasureType>(measureType),
@@ -1652,17 +1661,16 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
       'unit': serializer.toJson<String?>(unit),
       'step': serializer.toJson<double>(step),
       'habitId': serializer.toJson<String?>(habitId),
-      'deadline': serializer.toJson<CalendarDate?>(deadline),
       'sortOrder': serializer.toJson<int>(sortOrder),
     };
   }
 
-  KeyResult copyWith({
+  Measure copyWith({
     String? id,
     DateTime? createdAt,
     DateTime? updatedAt,
     Value<DateTime?> deletedAt = const Value.absent(),
-    String? objectiveId,
+    String? goalId,
     String? title,
     String? description,
     MeasureType? measureType,
@@ -1672,14 +1680,13 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
     Value<String?> unit = const Value.absent(),
     double? step,
     Value<String?> habitId = const Value.absent(),
-    Value<CalendarDate?> deadline = const Value.absent(),
     int? sortOrder,
-  }) => KeyResult(
+  }) => Measure(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
-    objectiveId: objectiveId ?? this.objectiveId,
+    goalId: goalId ?? this.goalId,
     title: title ?? this.title,
     description: description ?? this.description,
     measureType: measureType ?? this.measureType,
@@ -1689,18 +1696,15 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
     unit: unit.present ? unit.value : this.unit,
     step: step ?? this.step,
     habitId: habitId.present ? habitId.value : this.habitId,
-    deadline: deadline.present ? deadline.value : this.deadline,
     sortOrder: sortOrder ?? this.sortOrder,
   );
-  KeyResult copyWithCompanion(KeyResultsCompanion data) {
-    return KeyResult(
+  Measure copyWithCompanion(MeasuresCompanion data) {
+    return Measure(
       id: data.id.present ? data.id.value : this.id,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
-      objectiveId: data.objectiveId.present
-          ? data.objectiveId.value
-          : this.objectiveId,
+      goalId: data.goalId.present ? data.goalId.value : this.goalId,
       title: data.title.present ? data.title.value : this.title,
       description: data.description.present
           ? data.description.value
@@ -1720,19 +1724,18 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
       unit: data.unit.present ? data.unit.value : this.unit,
       step: data.step.present ? data.step.value : this.step,
       habitId: data.habitId.present ? data.habitId.value : this.habitId,
-      deadline: data.deadline.present ? data.deadline.value : this.deadline,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
     );
   }
 
   @override
   String toString() {
-    return (StringBuffer('KeyResult(')
+    return (StringBuffer('Measure(')
           ..write('id: $id, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt, ')
-          ..write('objectiveId: $objectiveId, ')
+          ..write('goalId: $goalId, ')
           ..write('title: $title, ')
           ..write('description: $description, ')
           ..write('measureType: $measureType, ')
@@ -1742,7 +1745,6 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
           ..write('unit: $unit, ')
           ..write('step: $step, ')
           ..write('habitId: $habitId, ')
-          ..write('deadline: $deadline, ')
           ..write('sortOrder: $sortOrder')
           ..write(')'))
         .toString();
@@ -1754,7 +1756,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
     createdAt,
     updatedAt,
     deletedAt,
-    objectiveId,
+    goalId,
     title,
     description,
     measureType,
@@ -1764,18 +1766,17 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
     unit,
     step,
     habitId,
-    deadline,
     sortOrder,
   );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is KeyResult &&
+      (other is Measure &&
           other.id == this.id &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
           other.deletedAt == this.deletedAt &&
-          other.objectiveId == this.objectiveId &&
+          other.goalId == this.goalId &&
           other.title == this.title &&
           other.description == this.description &&
           other.measureType == this.measureType &&
@@ -1785,16 +1786,15 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
           other.unit == this.unit &&
           other.step == this.step &&
           other.habitId == this.habitId &&
-          other.deadline == this.deadline &&
           other.sortOrder == this.sortOrder);
 }
 
-class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
+class MeasuresCompanion extends UpdateCompanion<Measure> {
   final Value<String> id;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<DateTime?> deletedAt;
-  final Value<String> objectiveId;
+  final Value<String> goalId;
   final Value<String> title;
   final Value<String> description;
   final Value<MeasureType> measureType;
@@ -1804,15 +1804,14 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
   final Value<String?> unit;
   final Value<double> step;
   final Value<String?> habitId;
-  final Value<CalendarDate?> deadline;
   final Value<int> sortOrder;
   final Value<int> rowid;
-  const KeyResultsCompanion({
+  const MeasuresCompanion({
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
-    this.objectiveId = const Value.absent(),
+    this.goalId = const Value.absent(),
     this.title = const Value.absent(),
     this.description = const Value.absent(),
     this.measureType = const Value.absent(),
@@ -1822,16 +1821,15 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
     this.unit = const Value.absent(),
     this.step = const Value.absent(),
     this.habitId = const Value.absent(),
-    this.deadline = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  KeyResultsCompanion.insert({
+  MeasuresCompanion.insert({
     required String id,
     required DateTime createdAt,
     required DateTime updatedAt,
     this.deletedAt = const Value.absent(),
-    required String objectiveId,
+    required String goalId,
     required String title,
     this.description = const Value.absent(),
     required MeasureType measureType,
@@ -1841,22 +1839,21 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
     this.unit = const Value.absent(),
     this.step = const Value.absent(),
     this.habitId = const Value.absent(),
-    this.deadline = const Value.absent(),
     required int sortOrder,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        createdAt = Value(createdAt),
        updatedAt = Value(updatedAt),
-       objectiveId = Value(objectiveId),
+       goalId = Value(goalId),
        title = Value(title),
        measureType = Value(measureType),
        sortOrder = Value(sortOrder);
-  static Insertable<KeyResult> custom({
+  static Insertable<Measure> custom({
     Expression<String>? id,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? deletedAt,
-    Expression<String>? objectiveId,
+    Expression<String>? goalId,
     Expression<String>? title,
     Expression<String>? description,
     Expression<String>? measureType,
@@ -1866,7 +1863,6 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
     Expression<String>? unit,
     Expression<double>? step,
     Expression<String>? habitId,
-    Expression<String>? deadline,
     Expression<int>? sortOrder,
     Expression<int>? rowid,
   }) {
@@ -1875,7 +1871,7 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (deletedAt != null) 'deleted_at': deletedAt,
-      if (objectiveId != null) 'objective_id': objectiveId,
+      if (goalId != null) 'goal_id': goalId,
       if (title != null) 'title': title,
       if (description != null) 'description': description,
       if (measureType != null) 'measure_type': measureType,
@@ -1885,18 +1881,17 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
       if (unit != null) 'unit': unit,
       if (step != null) 'step': step,
       if (habitId != null) 'habit_id': habitId,
-      if (deadline != null) 'deadline': deadline,
       if (sortOrder != null) 'sort_order': sortOrder,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
-  KeyResultsCompanion copyWith({
+  MeasuresCompanion copyWith({
     Value<String>? id,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<DateTime?>? deletedAt,
-    Value<String>? objectiveId,
+    Value<String>? goalId,
     Value<String>? title,
     Value<String>? description,
     Value<MeasureType>? measureType,
@@ -1906,16 +1901,15 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
     Value<String?>? unit,
     Value<double>? step,
     Value<String?>? habitId,
-    Value<CalendarDate?>? deadline,
     Value<int>? sortOrder,
     Value<int>? rowid,
   }) {
-    return KeyResultsCompanion(
+    return MeasuresCompanion(
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
-      objectiveId: objectiveId ?? this.objectiveId,
+      goalId: goalId ?? this.goalId,
       title: title ?? this.title,
       description: description ?? this.description,
       measureType: measureType ?? this.measureType,
@@ -1925,7 +1919,6 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
       unit: unit ?? this.unit,
       step: step ?? this.step,
       habitId: habitId ?? this.habitId,
-      deadline: deadline ?? this.deadline,
       sortOrder: sortOrder ?? this.sortOrder,
       rowid: rowid ?? this.rowid,
     );
@@ -1946,8 +1939,8 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
     if (deletedAt.present) {
       map['deleted_at'] = Variable<DateTime>(deletedAt.value);
     }
-    if (objectiveId.present) {
-      map['objective_id'] = Variable<String>(objectiveId.value);
+    if (goalId.present) {
+      map['goal_id'] = Variable<String>(goalId.value);
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
@@ -1957,7 +1950,7 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
     }
     if (measureType.present) {
       map['measure_type'] = Variable<String>(
-        $KeyResultsTable.$convertermeasureType.toSql(measureType.value),
+        $MeasuresTable.$convertermeasureType.toSql(measureType.value),
       );
     }
     if (startValue.present) {
@@ -1978,11 +1971,6 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
     if (habitId.present) {
       map['habit_id'] = Variable<String>(habitId.value);
     }
-    if (deadline.present) {
-      map['deadline'] = Variable<String>(
-        $KeyResultsTable.$converterdeadlinen.toSql(deadline.value),
-      );
-    }
     if (sortOrder.present) {
       map['sort_order'] = Variable<int>(sortOrder.value);
     }
@@ -1994,12 +1982,12 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
 
   @override
   String toString() {
-    return (StringBuffer('KeyResultsCompanion(')
+    return (StringBuffer('MeasuresCompanion(')
           ..write('id: $id, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt, ')
-          ..write('objectiveId: $objectiveId, ')
+          ..write('goalId: $goalId, ')
           ..write('title: $title, ')
           ..write('description: $description, ')
           ..write('measureType: $measureType, ')
@@ -2009,7 +1997,6 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
           ..write('unit: $unit, ')
           ..write('step: $step, ')
           ..write('habitId: $habitId, ')
-          ..write('deadline: $deadline, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -2094,12 +2081,10 @@ class $ProjectsTable extends Projects with TableInfo<$ProjectsTable, Project> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _keyResultIdMeta = const VerificationMeta(
-    'keyResultId',
-  );
+  static const VerificationMeta _goalIdMeta = const VerificationMeta('goalId');
   @override
-  late final GeneratedColumn<String> keyResultId = GeneratedColumn<String>(
-    'key_result_id',
+  late final GeneratedColumn<String> goalId = GeneratedColumn<String>(
+    'goal_id',
     aliasedName,
     true,
     type: DriftSqlType.string,
@@ -2146,6 +2131,17 @@ class $ProjectsTable extends Projects with TableInfo<$ProjectsTable, Project> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _completedAtMeta = const VerificationMeta(
+    'completedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
+    'completed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2155,11 +2151,12 @@ class $ProjectsTable extends Projects with TableInfo<$ProjectsTable, Project> {
     title,
     description,
     areaId,
-    keyResultId,
+    goalId,
     status,
     importance,
     deadline,
     nextStepTaskId,
+    completedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2223,13 +2220,10 @@ class $ProjectsTable extends Projects with TableInfo<$ProjectsTable, Project> {
         areaId.isAcceptableOrUnknown(data['area_id']!, _areaIdMeta),
       );
     }
-    if (data.containsKey('key_result_id')) {
+    if (data.containsKey('goal_id')) {
       context.handle(
-        _keyResultIdMeta,
-        keyResultId.isAcceptableOrUnknown(
-          data['key_result_id']!,
-          _keyResultIdMeta,
-        ),
+        _goalIdMeta,
+        goalId.isAcceptableOrUnknown(data['goal_id']!, _goalIdMeta),
       );
     }
     if (data.containsKey('importance')) {
@@ -2246,6 +2240,15 @@ class $ProjectsTable extends Projects with TableInfo<$ProjectsTable, Project> {
         nextStepTaskId.isAcceptableOrUnknown(
           data['next_step_task_id']!,
           _nextStepTaskIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('completed_at')) {
+      context.handle(
+        _completedAtMeta,
+        completedAt.isAcceptableOrUnknown(
+          data['completed_at']!,
+          _completedAtMeta,
         ),
       );
     }
@@ -2286,9 +2289,9 @@ class $ProjectsTable extends Projects with TableInfo<$ProjectsTable, Project> {
         DriftSqlType.string,
         data['${effectivePrefix}area_id'],
       ),
-      keyResultId: attachedDatabase.typeMapping.read(
+      goalId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}key_result_id'],
+        data['${effectivePrefix}goal_id'],
       ),
       status: $ProjectsTable.$converterstatus.fromSql(
         attachedDatabase.typeMapping.read(
@@ -2309,6 +2312,10 @@ class $ProjectsTable extends Projects with TableInfo<$ProjectsTable, Project> {
       nextStepTaskId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}next_step_task_id'],
+      ),
+      completedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}completed_at'],
       ),
     );
   }
@@ -2341,11 +2348,14 @@ class Project extends DataClass implements Insertable<Project> {
   final String title;
   final String description;
   final String? areaId;
-  final String? keyResultId;
+  final String? goalId;
   final ProjectStatus status;
   final int importance;
   final CalendarDate? deadline;
   final String? nextStepTaskId;
+
+  /// UTC; set while the status is completed.
+  final DateTime? completedAt;
   const Project({
     required this.id,
     required this.createdAt,
@@ -2354,11 +2364,12 @@ class Project extends DataClass implements Insertable<Project> {
     required this.title,
     required this.description,
     this.areaId,
-    this.keyResultId,
+    this.goalId,
     required this.status,
     required this.importance,
     this.deadline,
     this.nextStepTaskId,
+    this.completedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2374,8 +2385,8 @@ class Project extends DataClass implements Insertable<Project> {
     if (!nullToAbsent || areaId != null) {
       map['area_id'] = Variable<String>(areaId);
     }
-    if (!nullToAbsent || keyResultId != null) {
-      map['key_result_id'] = Variable<String>(keyResultId);
+    if (!nullToAbsent || goalId != null) {
+      map['goal_id'] = Variable<String>(goalId);
     }
     {
       map['status'] = Variable<String>(
@@ -2390,6 +2401,9 @@ class Project extends DataClass implements Insertable<Project> {
     }
     if (!nullToAbsent || nextStepTaskId != null) {
       map['next_step_task_id'] = Variable<String>(nextStepTaskId);
+    }
+    if (!nullToAbsent || completedAt != null) {
+      map['completed_at'] = Variable<DateTime>(completedAt);
     }
     return map;
   }
@@ -2407,9 +2421,9 @@ class Project extends DataClass implements Insertable<Project> {
       areaId: areaId == null && nullToAbsent
           ? const Value.absent()
           : Value(areaId),
-      keyResultId: keyResultId == null && nullToAbsent
+      goalId: goalId == null && nullToAbsent
           ? const Value.absent()
-          : Value(keyResultId),
+          : Value(goalId),
       status: Value(status),
       importance: Value(importance),
       deadline: deadline == null && nullToAbsent
@@ -2418,6 +2432,9 @@ class Project extends DataClass implements Insertable<Project> {
       nextStepTaskId: nextStepTaskId == null && nullToAbsent
           ? const Value.absent()
           : Value(nextStepTaskId),
+      completedAt: completedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(completedAt),
     );
   }
 
@@ -2434,11 +2451,12 @@ class Project extends DataClass implements Insertable<Project> {
       title: serializer.fromJson<String>(json['title']),
       description: serializer.fromJson<String>(json['description']),
       areaId: serializer.fromJson<String?>(json['areaId']),
-      keyResultId: serializer.fromJson<String?>(json['keyResultId']),
+      goalId: serializer.fromJson<String?>(json['goalId']),
       status: serializer.fromJson<ProjectStatus>(json['status']),
       importance: serializer.fromJson<int>(json['importance']),
       deadline: serializer.fromJson<CalendarDate?>(json['deadline']),
       nextStepTaskId: serializer.fromJson<String?>(json['nextStepTaskId']),
+      completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
     );
   }
   @override
@@ -2452,11 +2470,12 @@ class Project extends DataClass implements Insertable<Project> {
       'title': serializer.toJson<String>(title),
       'description': serializer.toJson<String>(description),
       'areaId': serializer.toJson<String?>(areaId),
-      'keyResultId': serializer.toJson<String?>(keyResultId),
+      'goalId': serializer.toJson<String?>(goalId),
       'status': serializer.toJson<ProjectStatus>(status),
       'importance': serializer.toJson<int>(importance),
       'deadline': serializer.toJson<CalendarDate?>(deadline),
       'nextStepTaskId': serializer.toJson<String?>(nextStepTaskId),
+      'completedAt': serializer.toJson<DateTime?>(completedAt),
     };
   }
 
@@ -2468,11 +2487,12 @@ class Project extends DataClass implements Insertable<Project> {
     String? title,
     String? description,
     Value<String?> areaId = const Value.absent(),
-    Value<String?> keyResultId = const Value.absent(),
+    Value<String?> goalId = const Value.absent(),
     ProjectStatus? status,
     int? importance,
     Value<CalendarDate?> deadline = const Value.absent(),
     Value<String?> nextStepTaskId = const Value.absent(),
+    Value<DateTime?> completedAt = const Value.absent(),
   }) => Project(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -2481,13 +2501,14 @@ class Project extends DataClass implements Insertable<Project> {
     title: title ?? this.title,
     description: description ?? this.description,
     areaId: areaId.present ? areaId.value : this.areaId,
-    keyResultId: keyResultId.present ? keyResultId.value : this.keyResultId,
+    goalId: goalId.present ? goalId.value : this.goalId,
     status: status ?? this.status,
     importance: importance ?? this.importance,
     deadline: deadline.present ? deadline.value : this.deadline,
     nextStepTaskId: nextStepTaskId.present
         ? nextStepTaskId.value
         : this.nextStepTaskId,
+    completedAt: completedAt.present ? completedAt.value : this.completedAt,
   );
   Project copyWithCompanion(ProjectsCompanion data) {
     return Project(
@@ -2500,9 +2521,7 @@ class Project extends DataClass implements Insertable<Project> {
           ? data.description.value
           : this.description,
       areaId: data.areaId.present ? data.areaId.value : this.areaId,
-      keyResultId: data.keyResultId.present
-          ? data.keyResultId.value
-          : this.keyResultId,
+      goalId: data.goalId.present ? data.goalId.value : this.goalId,
       status: data.status.present ? data.status.value : this.status,
       importance: data.importance.present
           ? data.importance.value
@@ -2511,6 +2530,9 @@ class Project extends DataClass implements Insertable<Project> {
       nextStepTaskId: data.nextStepTaskId.present
           ? data.nextStepTaskId.value
           : this.nextStepTaskId,
+      completedAt: data.completedAt.present
+          ? data.completedAt.value
+          : this.completedAt,
     );
   }
 
@@ -2524,11 +2546,12 @@ class Project extends DataClass implements Insertable<Project> {
           ..write('title: $title, ')
           ..write('description: $description, ')
           ..write('areaId: $areaId, ')
-          ..write('keyResultId: $keyResultId, ')
+          ..write('goalId: $goalId, ')
           ..write('status: $status, ')
           ..write('importance: $importance, ')
           ..write('deadline: $deadline, ')
-          ..write('nextStepTaskId: $nextStepTaskId')
+          ..write('nextStepTaskId: $nextStepTaskId, ')
+          ..write('completedAt: $completedAt')
           ..write(')'))
         .toString();
   }
@@ -2542,11 +2565,12 @@ class Project extends DataClass implements Insertable<Project> {
     title,
     description,
     areaId,
-    keyResultId,
+    goalId,
     status,
     importance,
     deadline,
     nextStepTaskId,
+    completedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -2559,11 +2583,12 @@ class Project extends DataClass implements Insertable<Project> {
           other.title == this.title &&
           other.description == this.description &&
           other.areaId == this.areaId &&
-          other.keyResultId == this.keyResultId &&
+          other.goalId == this.goalId &&
           other.status == this.status &&
           other.importance == this.importance &&
           other.deadline == this.deadline &&
-          other.nextStepTaskId == this.nextStepTaskId);
+          other.nextStepTaskId == this.nextStepTaskId &&
+          other.completedAt == this.completedAt);
 }
 
 class ProjectsCompanion extends UpdateCompanion<Project> {
@@ -2574,11 +2599,12 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
   final Value<String> title;
   final Value<String> description;
   final Value<String?> areaId;
-  final Value<String?> keyResultId;
+  final Value<String?> goalId;
   final Value<ProjectStatus> status;
   final Value<int> importance;
   final Value<CalendarDate?> deadline;
   final Value<String?> nextStepTaskId;
+  final Value<DateTime?> completedAt;
   final Value<int> rowid;
   const ProjectsCompanion({
     this.id = const Value.absent(),
@@ -2588,11 +2614,12 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     this.title = const Value.absent(),
     this.description = const Value.absent(),
     this.areaId = const Value.absent(),
-    this.keyResultId = const Value.absent(),
+    this.goalId = const Value.absent(),
     this.status = const Value.absent(),
     this.importance = const Value.absent(),
     this.deadline = const Value.absent(),
     this.nextStepTaskId = const Value.absent(),
+    this.completedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ProjectsCompanion.insert({
@@ -2603,11 +2630,12 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     required String title,
     this.description = const Value.absent(),
     this.areaId = const Value.absent(),
-    this.keyResultId = const Value.absent(),
+    this.goalId = const Value.absent(),
     required ProjectStatus status,
     required int importance,
     this.deadline = const Value.absent(),
     this.nextStepTaskId = const Value.absent(),
+    this.completedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        createdAt = Value(createdAt),
@@ -2623,11 +2651,12 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     Expression<String>? title,
     Expression<String>? description,
     Expression<String>? areaId,
-    Expression<String>? keyResultId,
+    Expression<String>? goalId,
     Expression<String>? status,
     Expression<int>? importance,
     Expression<String>? deadline,
     Expression<String>? nextStepTaskId,
+    Expression<DateTime>? completedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2638,11 +2667,12 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
       if (title != null) 'title': title,
       if (description != null) 'description': description,
       if (areaId != null) 'area_id': areaId,
-      if (keyResultId != null) 'key_result_id': keyResultId,
+      if (goalId != null) 'goal_id': goalId,
       if (status != null) 'status': status,
       if (importance != null) 'importance': importance,
       if (deadline != null) 'deadline': deadline,
       if (nextStepTaskId != null) 'next_step_task_id': nextStepTaskId,
+      if (completedAt != null) 'completed_at': completedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2655,11 +2685,12 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     Value<String>? title,
     Value<String>? description,
     Value<String?>? areaId,
-    Value<String?>? keyResultId,
+    Value<String?>? goalId,
     Value<ProjectStatus>? status,
     Value<int>? importance,
     Value<CalendarDate?>? deadline,
     Value<String?>? nextStepTaskId,
+    Value<DateTime?>? completedAt,
     Value<int>? rowid,
   }) {
     return ProjectsCompanion(
@@ -2670,11 +2701,12 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
       title: title ?? this.title,
       description: description ?? this.description,
       areaId: areaId ?? this.areaId,
-      keyResultId: keyResultId ?? this.keyResultId,
+      goalId: goalId ?? this.goalId,
       status: status ?? this.status,
       importance: importance ?? this.importance,
       deadline: deadline ?? this.deadline,
       nextStepTaskId: nextStepTaskId ?? this.nextStepTaskId,
+      completedAt: completedAt ?? this.completedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2703,8 +2735,8 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     if (areaId.present) {
       map['area_id'] = Variable<String>(areaId.value);
     }
-    if (keyResultId.present) {
-      map['key_result_id'] = Variable<String>(keyResultId.value);
+    if (goalId.present) {
+      map['goal_id'] = Variable<String>(goalId.value);
     }
     if (status.present) {
       map['status'] = Variable<String>(
@@ -2722,6 +2754,9 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
     if (nextStepTaskId.present) {
       map['next_step_task_id'] = Variable<String>(nextStepTaskId.value);
     }
+    if (completedAt.present) {
+      map['completed_at'] = Variable<DateTime>(completedAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2738,11 +2773,12 @@ class ProjectsCompanion extends UpdateCompanion<Project> {
           ..write('title: $title, ')
           ..write('description: $description, ')
           ..write('areaId: $areaId, ')
-          ..write('keyResultId: $keyResultId, ')
+          ..write('goalId: $goalId, ')
           ..write('status: $status, ')
           ..write('importance: $importance, ')
           ..write('deadline: $deadline, ')
           ..write('nextStepTaskId: $nextStepTaskId, ')
+          ..write('completedAt: $completedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2807,23 +2843,10 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _keyResultIdMeta = const VerificationMeta(
-    'keyResultId',
-  );
+  static const VerificationMeta _goalIdMeta = const VerificationMeta('goalId');
   @override
-  late final GeneratedColumn<String> keyResultId = GeneratedColumn<String>(
-    'key_result_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _objectiveIdMeta = const VerificationMeta(
-    'objectiveId',
-  );
-  @override
-  late final GeneratedColumn<String> objectiveId = GeneratedColumn<String>(
-    'objective_id',
+  late final GeneratedColumn<String> goalId = GeneratedColumn<String>(
+    'goal_id',
     aliasedName,
     true,
     type: DriftSqlType.string,
@@ -2884,8 +2907,7 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     updatedAt,
     deletedAt,
     projectId,
-    keyResultId,
-    objectiveId,
+    goalId,
     title,
     notes,
     dueDate,
@@ -2937,22 +2959,10 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         projectId.isAcceptableOrUnknown(data['project_id']!, _projectIdMeta),
       );
     }
-    if (data.containsKey('key_result_id')) {
+    if (data.containsKey('goal_id')) {
       context.handle(
-        _keyResultIdMeta,
-        keyResultId.isAcceptableOrUnknown(
-          data['key_result_id']!,
-          _keyResultIdMeta,
-        ),
-      );
-    }
-    if (data.containsKey('objective_id')) {
-      context.handle(
-        _objectiveIdMeta,
-        objectiveId.isAcceptableOrUnknown(
-          data['objective_id']!,
-          _objectiveIdMeta,
-        ),
+        _goalIdMeta,
+        goalId.isAcceptableOrUnknown(data['goal_id']!, _goalIdMeta),
       );
     }
     if (data.containsKey('title')) {
@@ -3007,13 +3017,9 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         DriftSqlType.string,
         data['${effectivePrefix}project_id'],
       ),
-      keyResultId: attachedDatabase.typeMapping.read(
+      goalId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}key_result_id'],
-      ),
-      objectiveId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}objective_id'],
+        data['${effectivePrefix}goal_id'],
       ),
       title: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -3068,11 +3074,10 @@ class Task extends DataClass implements Insertable<Task> {
   /// UTC, set when the row is soft-deleted.
   final DateTime? deletedAt;
 
-  /// At most one of [projectId], [keyResultId] and [objectiveId] is set;
-  /// none means a standalone task.
+  /// At most one of [projectId] and [goalId] is set; none means a
+  /// standalone task.
   final String? projectId;
-  final String? keyResultId;
-  final String? objectiveId;
+  final String? goalId;
   final String title;
   final String notes;
   final CalendarDate? dueDate;
@@ -3084,8 +3089,7 @@ class Task extends DataClass implements Insertable<Task> {
     required this.updatedAt,
     this.deletedAt,
     this.projectId,
-    this.keyResultId,
-    this.objectiveId,
+    this.goalId,
     required this.title,
     required this.notes,
     this.dueDate,
@@ -3104,11 +3108,8 @@ class Task extends DataClass implements Insertable<Task> {
     if (!nullToAbsent || projectId != null) {
       map['project_id'] = Variable<String>(projectId);
     }
-    if (!nullToAbsent || keyResultId != null) {
-      map['key_result_id'] = Variable<String>(keyResultId);
-    }
-    if (!nullToAbsent || objectiveId != null) {
-      map['objective_id'] = Variable<String>(objectiveId);
+    if (!nullToAbsent || goalId != null) {
+      map['goal_id'] = Variable<String>(goalId);
     }
     map['title'] = Variable<String>(title);
     map['notes'] = Variable<String>(notes);
@@ -3139,12 +3140,9 @@ class Task extends DataClass implements Insertable<Task> {
       projectId: projectId == null && nullToAbsent
           ? const Value.absent()
           : Value(projectId),
-      keyResultId: keyResultId == null && nullToAbsent
+      goalId: goalId == null && nullToAbsent
           ? const Value.absent()
-          : Value(keyResultId),
-      objectiveId: objectiveId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(objectiveId),
+          : Value(goalId),
       title: Value(title),
       notes: Value(notes),
       dueDate: dueDate == null && nullToAbsent
@@ -3168,8 +3166,7 @@ class Task extends DataClass implements Insertable<Task> {
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       projectId: serializer.fromJson<String?>(json['projectId']),
-      keyResultId: serializer.fromJson<String?>(json['keyResultId']),
-      objectiveId: serializer.fromJson<String?>(json['objectiveId']),
+      goalId: serializer.fromJson<String?>(json['goalId']),
       title: serializer.fromJson<String>(json['title']),
       notes: serializer.fromJson<String>(json['notes']),
       dueDate: serializer.fromJson<CalendarDate?>(json['dueDate']),
@@ -3186,8 +3183,7 @@ class Task extends DataClass implements Insertable<Task> {
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'projectId': serializer.toJson<String?>(projectId),
-      'keyResultId': serializer.toJson<String?>(keyResultId),
-      'objectiveId': serializer.toJson<String?>(objectiveId),
+      'goalId': serializer.toJson<String?>(goalId),
       'title': serializer.toJson<String>(title),
       'notes': serializer.toJson<String>(notes),
       'dueDate': serializer.toJson<CalendarDate?>(dueDate),
@@ -3202,8 +3198,7 @@ class Task extends DataClass implements Insertable<Task> {
     DateTime? updatedAt,
     Value<DateTime?> deletedAt = const Value.absent(),
     Value<String?> projectId = const Value.absent(),
-    Value<String?> keyResultId = const Value.absent(),
-    Value<String?> objectiveId = const Value.absent(),
+    Value<String?> goalId = const Value.absent(),
     String? title,
     String? notes,
     Value<CalendarDate?> dueDate = const Value.absent(),
@@ -3215,8 +3210,7 @@ class Task extends DataClass implements Insertable<Task> {
     updatedAt: updatedAt ?? this.updatedAt,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
     projectId: projectId.present ? projectId.value : this.projectId,
-    keyResultId: keyResultId.present ? keyResultId.value : this.keyResultId,
-    objectiveId: objectiveId.present ? objectiveId.value : this.objectiveId,
+    goalId: goalId.present ? goalId.value : this.goalId,
     title: title ?? this.title,
     notes: notes ?? this.notes,
     dueDate: dueDate.present ? dueDate.value : this.dueDate,
@@ -3230,12 +3224,7 @@ class Task extends DataClass implements Insertable<Task> {
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
       projectId: data.projectId.present ? data.projectId.value : this.projectId,
-      keyResultId: data.keyResultId.present
-          ? data.keyResultId.value
-          : this.keyResultId,
-      objectiveId: data.objectiveId.present
-          ? data.objectiveId.value
-          : this.objectiveId,
+      goalId: data.goalId.present ? data.goalId.value : this.goalId,
       title: data.title.present ? data.title.value : this.title,
       notes: data.notes.present ? data.notes.value : this.notes,
       dueDate: data.dueDate.present ? data.dueDate.value : this.dueDate,
@@ -3254,8 +3243,7 @@ class Task extends DataClass implements Insertable<Task> {
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('projectId: $projectId, ')
-          ..write('keyResultId: $keyResultId, ')
-          ..write('objectiveId: $objectiveId, ')
+          ..write('goalId: $goalId, ')
           ..write('title: $title, ')
           ..write('notes: $notes, ')
           ..write('dueDate: $dueDate, ')
@@ -3272,8 +3260,7 @@ class Task extends DataClass implements Insertable<Task> {
     updatedAt,
     deletedAt,
     projectId,
-    keyResultId,
-    objectiveId,
+    goalId,
     title,
     notes,
     dueDate,
@@ -3289,8 +3276,7 @@ class Task extends DataClass implements Insertable<Task> {
           other.updatedAt == this.updatedAt &&
           other.deletedAt == this.deletedAt &&
           other.projectId == this.projectId &&
-          other.keyResultId == this.keyResultId &&
-          other.objectiveId == this.objectiveId &&
+          other.goalId == this.goalId &&
           other.title == this.title &&
           other.notes == this.notes &&
           other.dueDate == this.dueDate &&
@@ -3304,8 +3290,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
   final Value<DateTime> updatedAt;
   final Value<DateTime?> deletedAt;
   final Value<String?> projectId;
-  final Value<String?> keyResultId;
-  final Value<String?> objectiveId;
+  final Value<String?> goalId;
   final Value<String> title;
   final Value<String> notes;
   final Value<CalendarDate?> dueDate;
@@ -3318,8 +3303,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.updatedAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
     this.projectId = const Value.absent(),
-    this.keyResultId = const Value.absent(),
-    this.objectiveId = const Value.absent(),
+    this.goalId = const Value.absent(),
     this.title = const Value.absent(),
     this.notes = const Value.absent(),
     this.dueDate = const Value.absent(),
@@ -3333,8 +3317,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     required DateTime updatedAt,
     this.deletedAt = const Value.absent(),
     this.projectId = const Value.absent(),
-    this.keyResultId = const Value.absent(),
-    this.objectiveId = const Value.absent(),
+    this.goalId = const Value.absent(),
     required String title,
     this.notes = const Value.absent(),
     this.dueDate = const Value.absent(),
@@ -3352,8 +3335,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? deletedAt,
     Expression<String>? projectId,
-    Expression<String>? keyResultId,
-    Expression<String>? objectiveId,
+    Expression<String>? goalId,
     Expression<String>? title,
     Expression<String>? notes,
     Expression<String>? dueDate,
@@ -3367,8 +3349,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
       if (updatedAt != null) 'updated_at': updatedAt,
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (projectId != null) 'project_id': projectId,
-      if (keyResultId != null) 'key_result_id': keyResultId,
-      if (objectiveId != null) 'objective_id': objectiveId,
+      if (goalId != null) 'goal_id': goalId,
       if (title != null) 'title': title,
       if (notes != null) 'notes': notes,
       if (dueDate != null) 'due_date': dueDate,
@@ -3384,8 +3365,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Value<DateTime>? updatedAt,
     Value<DateTime?>? deletedAt,
     Value<String?>? projectId,
-    Value<String?>? keyResultId,
-    Value<String?>? objectiveId,
+    Value<String?>? goalId,
     Value<String>? title,
     Value<String>? notes,
     Value<CalendarDate?>? dueDate,
@@ -3399,8 +3379,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
       projectId: projectId ?? this.projectId,
-      keyResultId: keyResultId ?? this.keyResultId,
-      objectiveId: objectiveId ?? this.objectiveId,
+      goalId: goalId ?? this.goalId,
       title: title ?? this.title,
       notes: notes ?? this.notes,
       dueDate: dueDate ?? this.dueDate,
@@ -3428,11 +3407,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
     if (projectId.present) {
       map['project_id'] = Variable<String>(projectId.value);
     }
-    if (keyResultId.present) {
-      map['key_result_id'] = Variable<String>(keyResultId.value);
-    }
-    if (objectiveId.present) {
-      map['objective_id'] = Variable<String>(objectiveId.value);
+    if (goalId.present) {
+      map['goal_id'] = Variable<String>(goalId.value);
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
@@ -3467,8 +3443,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('projectId: $projectId, ')
-          ..write('keyResultId: $keyResultId, ')
-          ..write('objectiveId: $objectiveId, ')
+          ..write('goalId: $goalId, ')
           ..write('title: $title, ')
           ..write('notes: $notes, ')
           ..write('dueDate: $dueDate, ')
@@ -3547,12 +3522,10 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _keyResultIdMeta = const VerificationMeta(
-    'keyResultId',
-  );
+  static const VerificationMeta _goalIdMeta = const VerificationMeta('goalId');
   @override
-  late final GeneratedColumn<String> keyResultId = GeneratedColumn<String>(
-    'key_result_id',
+  late final GeneratedColumn<String> goalId = GeneratedColumn<String>(
+    'goal_id',
     aliasedName,
     true,
     type: DriftSqlType.string,
@@ -3619,7 +3592,7 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
     deletedAt,
     title,
     projectId,
-    keyResultId,
+    goalId,
     scheduleType,
     weekdays,
     timesPerWeek,
@@ -3679,13 +3652,10 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
         projectId.isAcceptableOrUnknown(data['project_id']!, _projectIdMeta),
       );
     }
-    if (data.containsKey('key_result_id')) {
+    if (data.containsKey('goal_id')) {
       context.handle(
-        _keyResultIdMeta,
-        keyResultId.isAcceptableOrUnknown(
-          data['key_result_id']!,
-          _keyResultIdMeta,
-        ),
+        _goalIdMeta,
+        goalId.isAcceptableOrUnknown(data['goal_id']!, _goalIdMeta),
       );
     }
     if (data.containsKey('times_per_week')) {
@@ -3745,9 +3715,9 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
         DriftSqlType.string,
         data['${effectivePrefix}project_id'],
       ),
-      keyResultId: attachedDatabase.typeMapping.read(
+      goalId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}key_result_id'],
+        data['${effectivePrefix}goal_id'],
       ),
       scheduleType: $HabitsTable.$converterscheduleType.fromSql(
         attachedDatabase.typeMapping.read(
@@ -3802,8 +3772,10 @@ class Habit extends DataClass implements Insertable<Habit> {
   /// UTC, set when the row is soft-deleted.
   final DateTime? deletedAt;
   final String title;
+
+  /// Either, both or neither of [projectId] and [goalId].
   final String? projectId;
-  final String? keyResultId;
+  final String? goalId;
   final ScheduleType scheduleType;
 
   /// ISO weekdays for [ScheduleType.weekdays].
@@ -3822,7 +3794,7 @@ class Habit extends DataClass implements Insertable<Habit> {
     this.deletedAt,
     required this.title,
     this.projectId,
-    this.keyResultId,
+    this.goalId,
     required this.scheduleType,
     this.weekdays,
     this.timesPerWeek,
@@ -3842,8 +3814,8 @@ class Habit extends DataClass implements Insertable<Habit> {
     if (!nullToAbsent || projectId != null) {
       map['project_id'] = Variable<String>(projectId);
     }
-    if (!nullToAbsent || keyResultId != null) {
-      map['key_result_id'] = Variable<String>(keyResultId);
+    if (!nullToAbsent || goalId != null) {
+      map['goal_id'] = Variable<String>(goalId);
     }
     {
       map['schedule_type'] = Variable<String>(
@@ -3877,9 +3849,9 @@ class Habit extends DataClass implements Insertable<Habit> {
       projectId: projectId == null && nullToAbsent
           ? const Value.absent()
           : Value(projectId),
-      keyResultId: keyResultId == null && nullToAbsent
+      goalId: goalId == null && nullToAbsent
           ? const Value.absent()
-          : Value(keyResultId),
+          : Value(goalId),
       scheduleType: Value(scheduleType),
       weekdays: weekdays == null && nullToAbsent
           ? const Value.absent()
@@ -3906,7 +3878,7 @@ class Habit extends DataClass implements Insertable<Habit> {
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       title: serializer.fromJson<String>(json['title']),
       projectId: serializer.fromJson<String?>(json['projectId']),
-      keyResultId: serializer.fromJson<String?>(json['keyResultId']),
+      goalId: serializer.fromJson<String?>(json['goalId']),
       scheduleType: serializer.fromJson<ScheduleType>(json['scheduleType']),
       weekdays: serializer.fromJson<Set<int>?>(json['weekdays']),
       timesPerWeek: serializer.fromJson<int?>(json['timesPerWeek']),
@@ -3924,7 +3896,7 @@ class Habit extends DataClass implements Insertable<Habit> {
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'title': serializer.toJson<String>(title),
       'projectId': serializer.toJson<String?>(projectId),
-      'keyResultId': serializer.toJson<String?>(keyResultId),
+      'goalId': serializer.toJson<String?>(goalId),
       'scheduleType': serializer.toJson<ScheduleType>(scheduleType),
       'weekdays': serializer.toJson<Set<int>?>(weekdays),
       'timesPerWeek': serializer.toJson<int?>(timesPerWeek),
@@ -3940,7 +3912,7 @@ class Habit extends DataClass implements Insertable<Habit> {
     Value<DateTime?> deletedAt = const Value.absent(),
     String? title,
     Value<String?> projectId = const Value.absent(),
-    Value<String?> keyResultId = const Value.absent(),
+    Value<String?> goalId = const Value.absent(),
     ScheduleType? scheduleType,
     Value<Set<int>?> weekdays = const Value.absent(),
     Value<int?> timesPerWeek = const Value.absent(),
@@ -3953,7 +3925,7 @@ class Habit extends DataClass implements Insertable<Habit> {
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
     title: title ?? this.title,
     projectId: projectId.present ? projectId.value : this.projectId,
-    keyResultId: keyResultId.present ? keyResultId.value : this.keyResultId,
+    goalId: goalId.present ? goalId.value : this.goalId,
     scheduleType: scheduleType ?? this.scheduleType,
     weekdays: weekdays.present ? weekdays.value : this.weekdays,
     timesPerWeek: timesPerWeek.present ? timesPerWeek.value : this.timesPerWeek,
@@ -3968,9 +3940,7 @@ class Habit extends DataClass implements Insertable<Habit> {
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
       title: data.title.present ? data.title.value : this.title,
       projectId: data.projectId.present ? data.projectId.value : this.projectId,
-      keyResultId: data.keyResultId.present
-          ? data.keyResultId.value
-          : this.keyResultId,
+      goalId: data.goalId.present ? data.goalId.value : this.goalId,
       scheduleType: data.scheduleType.present
           ? data.scheduleType.value
           : this.scheduleType,
@@ -3994,7 +3964,7 @@ class Habit extends DataClass implements Insertable<Habit> {
           ..write('deletedAt: $deletedAt, ')
           ..write('title: $title, ')
           ..write('projectId: $projectId, ')
-          ..write('keyResultId: $keyResultId, ')
+          ..write('goalId: $goalId, ')
           ..write('scheduleType: $scheduleType, ')
           ..write('weekdays: $weekdays, ')
           ..write('timesPerWeek: $timesPerWeek, ')
@@ -4012,7 +3982,7 @@ class Habit extends DataClass implements Insertable<Habit> {
     deletedAt,
     title,
     projectId,
-    keyResultId,
+    goalId,
     scheduleType,
     weekdays,
     timesPerWeek,
@@ -4029,7 +3999,7 @@ class Habit extends DataClass implements Insertable<Habit> {
           other.deletedAt == this.deletedAt &&
           other.title == this.title &&
           other.projectId == this.projectId &&
-          other.keyResultId == this.keyResultId &&
+          other.goalId == this.goalId &&
           other.scheduleType == this.scheduleType &&
           other.weekdays == this.weekdays &&
           other.timesPerWeek == this.timesPerWeek &&
@@ -4044,7 +4014,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
   final Value<DateTime?> deletedAt;
   final Value<String> title;
   final Value<String?> projectId;
-  final Value<String?> keyResultId;
+  final Value<String?> goalId;
   final Value<ScheduleType> scheduleType;
   final Value<Set<int>?> weekdays;
   final Value<int?> timesPerWeek;
@@ -4058,7 +4028,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     this.deletedAt = const Value.absent(),
     this.title = const Value.absent(),
     this.projectId = const Value.absent(),
-    this.keyResultId = const Value.absent(),
+    this.goalId = const Value.absent(),
     this.scheduleType = const Value.absent(),
     this.weekdays = const Value.absent(),
     this.timesPerWeek = const Value.absent(),
@@ -4073,7 +4043,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     this.deletedAt = const Value.absent(),
     required String title,
     this.projectId = const Value.absent(),
-    this.keyResultId = const Value.absent(),
+    this.goalId = const Value.absent(),
     required ScheduleType scheduleType,
     this.weekdays = const Value.absent(),
     this.timesPerWeek = const Value.absent(),
@@ -4092,7 +4062,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     Expression<DateTime>? deletedAt,
     Expression<String>? title,
     Expression<String>? projectId,
-    Expression<String>? keyResultId,
+    Expression<String>? goalId,
     Expression<String>? scheduleType,
     Expression<String>? weekdays,
     Expression<int>? timesPerWeek,
@@ -4107,7 +4077,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (title != null) 'title': title,
       if (projectId != null) 'project_id': projectId,
-      if (keyResultId != null) 'key_result_id': keyResultId,
+      if (goalId != null) 'goal_id': goalId,
       if (scheduleType != null) 'schedule_type': scheduleType,
       if (weekdays != null) 'weekdays': weekdays,
       if (timesPerWeek != null) 'times_per_week': timesPerWeek,
@@ -4124,7 +4094,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     Value<DateTime?>? deletedAt,
     Value<String>? title,
     Value<String?>? projectId,
-    Value<String?>? keyResultId,
+    Value<String?>? goalId,
     Value<ScheduleType>? scheduleType,
     Value<Set<int>?>? weekdays,
     Value<int?>? timesPerWeek,
@@ -4139,7 +4109,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
       deletedAt: deletedAt ?? this.deletedAt,
       title: title ?? this.title,
       projectId: projectId ?? this.projectId,
-      keyResultId: keyResultId ?? this.keyResultId,
+      goalId: goalId ?? this.goalId,
       scheduleType: scheduleType ?? this.scheduleType,
       weekdays: weekdays ?? this.weekdays,
       timesPerWeek: timesPerWeek ?? this.timesPerWeek,
@@ -4170,8 +4140,8 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     if (projectId.present) {
       map['project_id'] = Variable<String>(projectId.value);
     }
-    if (keyResultId.present) {
-      map['key_result_id'] = Variable<String>(keyResultId.value);
+    if (goalId.present) {
+      map['goal_id'] = Variable<String>(goalId.value);
     }
     if (scheduleType.present) {
       map['schedule_type'] = Variable<String>(
@@ -4207,7 +4177,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
           ..write('deletedAt: $deletedAt, ')
           ..write('title: $title, ')
           ..write('projectId: $projectId, ')
-          ..write('keyResultId: $keyResultId, ')
+          ..write('goalId: $goalId, ')
           ..write('scheduleType: $scheduleType, ')
           ..write('weekdays: $weekdays, ')
           ..write('timesPerWeek: $timesPerWeek, ')
@@ -4761,12 +4731,10 @@ class $LogEntriesTable extends LogEntries
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _keyResultIdMeta = const VerificationMeta(
-    'keyResultId',
-  );
+  static const VerificationMeta _goalIdMeta = const VerificationMeta('goalId');
   @override
-  late final GeneratedColumn<String> keyResultId = GeneratedColumn<String>(
-    'key_result_id',
+  late final GeneratedColumn<String> goalId = GeneratedColumn<String>(
+    'goal_id',
     aliasedName,
     true,
     type: DriftSqlType.string,
@@ -4829,7 +4797,7 @@ class $LogEntriesTable extends LogEntries
     updatedAt,
     deletedAt,
     projectId,
-    keyResultId,
+    goalId,
     taskId,
     occurredAt,
     durationMinutes,
@@ -4881,13 +4849,10 @@ class $LogEntriesTable extends LogEntries
         projectId.isAcceptableOrUnknown(data['project_id']!, _projectIdMeta),
       );
     }
-    if (data.containsKey('key_result_id')) {
+    if (data.containsKey('goal_id')) {
       context.handle(
-        _keyResultIdMeta,
-        keyResultId.isAcceptableOrUnknown(
-          data['key_result_id']!,
-          _keyResultIdMeta,
-        ),
+        _goalIdMeta,
+        goalId.isAcceptableOrUnknown(data['goal_id']!, _goalIdMeta),
       );
     }
     if (data.containsKey('task_id')) {
@@ -4948,9 +4913,9 @@ class $LogEntriesTable extends LogEntries
         DriftSqlType.string,
         data['${effectivePrefix}project_id'],
       ),
-      keyResultId: attachedDatabase.typeMapping.read(
+      goalId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}key_result_id'],
+        data['${effectivePrefix}goal_id'],
       ),
       taskId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -4999,7 +4964,7 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
   /// UTC, set when the row is soft-deleted.
   final DateTime? deletedAt;
   final String? projectId;
-  final String? keyResultId;
+  final String? goalId;
   final String? taskId;
   final DateTime occurredAt;
   final int? durationMinutes;
@@ -5011,7 +4976,7 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
     required this.updatedAt,
     this.deletedAt,
     this.projectId,
-    this.keyResultId,
+    this.goalId,
     this.taskId,
     required this.occurredAt,
     this.durationMinutes,
@@ -5030,8 +4995,8 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
     if (!nullToAbsent || projectId != null) {
       map['project_id'] = Variable<String>(projectId);
     }
-    if (!nullToAbsent || keyResultId != null) {
-      map['key_result_id'] = Variable<String>(keyResultId);
+    if (!nullToAbsent || goalId != null) {
+      map['goal_id'] = Variable<String>(goalId);
     }
     if (!nullToAbsent || taskId != null) {
       map['task_id'] = Variable<String>(taskId);
@@ -5060,9 +5025,9 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
       projectId: projectId == null && nullToAbsent
           ? const Value.absent()
           : Value(projectId),
-      keyResultId: keyResultId == null && nullToAbsent
+      goalId: goalId == null && nullToAbsent
           ? const Value.absent()
-          : Value(keyResultId),
+          : Value(goalId),
       taskId: taskId == null && nullToAbsent
           ? const Value.absent()
           : Value(taskId),
@@ -5086,7 +5051,7 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       projectId: serializer.fromJson<String?>(json['projectId']),
-      keyResultId: serializer.fromJson<String?>(json['keyResultId']),
+      goalId: serializer.fromJson<String?>(json['goalId']),
       taskId: serializer.fromJson<String?>(json['taskId']),
       occurredAt: serializer.fromJson<DateTime>(json['occurredAt']),
       durationMinutes: serializer.fromJson<int?>(json['durationMinutes']),
@@ -5103,7 +5068,7 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'projectId': serializer.toJson<String?>(projectId),
-      'keyResultId': serializer.toJson<String?>(keyResultId),
+      'goalId': serializer.toJson<String?>(goalId),
       'taskId': serializer.toJson<String?>(taskId),
       'occurredAt': serializer.toJson<DateTime>(occurredAt),
       'durationMinutes': serializer.toJson<int?>(durationMinutes),
@@ -5118,7 +5083,7 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
     DateTime? updatedAt,
     Value<DateTime?> deletedAt = const Value.absent(),
     Value<String?> projectId = const Value.absent(),
-    Value<String?> keyResultId = const Value.absent(),
+    Value<String?> goalId = const Value.absent(),
     Value<String?> taskId = const Value.absent(),
     DateTime? occurredAt,
     Value<int?> durationMinutes = const Value.absent(),
@@ -5130,7 +5095,7 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
     updatedAt: updatedAt ?? this.updatedAt,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
     projectId: projectId.present ? projectId.value : this.projectId,
-    keyResultId: keyResultId.present ? keyResultId.value : this.keyResultId,
+    goalId: goalId.present ? goalId.value : this.goalId,
     taskId: taskId.present ? taskId.value : this.taskId,
     occurredAt: occurredAt ?? this.occurredAt,
     durationMinutes: durationMinutes.present
@@ -5146,9 +5111,7 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
       projectId: data.projectId.present ? data.projectId.value : this.projectId,
-      keyResultId: data.keyResultId.present
-          ? data.keyResultId.value
-          : this.keyResultId,
+      goalId: data.goalId.present ? data.goalId.value : this.goalId,
       taskId: data.taskId.present ? data.taskId.value : this.taskId,
       occurredAt: data.occurredAt.present
           ? data.occurredAt.value
@@ -5169,7 +5132,7 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('projectId: $projectId, ')
-          ..write('keyResultId: $keyResultId, ')
+          ..write('goalId: $goalId, ')
           ..write('taskId: $taskId, ')
           ..write('occurredAt: $occurredAt, ')
           ..write('durationMinutes: $durationMinutes, ')
@@ -5186,7 +5149,7 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
     updatedAt,
     deletedAt,
     projectId,
-    keyResultId,
+    goalId,
     taskId,
     occurredAt,
     durationMinutes,
@@ -5202,7 +5165,7 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
           other.updatedAt == this.updatedAt &&
           other.deletedAt == this.deletedAt &&
           other.projectId == this.projectId &&
-          other.keyResultId == this.keyResultId &&
+          other.goalId == this.goalId &&
           other.taskId == this.taskId &&
           other.occurredAt == this.occurredAt &&
           other.durationMinutes == this.durationMinutes &&
@@ -5216,7 +5179,7 @@ class LogEntriesCompanion extends UpdateCompanion<LogEntry> {
   final Value<DateTime> updatedAt;
   final Value<DateTime?> deletedAt;
   final Value<String?> projectId;
-  final Value<String?> keyResultId;
+  final Value<String?> goalId;
   final Value<String?> taskId;
   final Value<DateTime> occurredAt;
   final Value<int?> durationMinutes;
@@ -5229,7 +5192,7 @@ class LogEntriesCompanion extends UpdateCompanion<LogEntry> {
     this.updatedAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
     this.projectId = const Value.absent(),
-    this.keyResultId = const Value.absent(),
+    this.goalId = const Value.absent(),
     this.taskId = const Value.absent(),
     this.occurredAt = const Value.absent(),
     this.durationMinutes = const Value.absent(),
@@ -5243,7 +5206,7 @@ class LogEntriesCompanion extends UpdateCompanion<LogEntry> {
     required DateTime updatedAt,
     this.deletedAt = const Value.absent(),
     this.projectId = const Value.absent(),
-    this.keyResultId = const Value.absent(),
+    this.goalId = const Value.absent(),
     this.taskId = const Value.absent(),
     required DateTime occurredAt,
     this.durationMinutes = const Value.absent(),
@@ -5261,7 +5224,7 @@ class LogEntriesCompanion extends UpdateCompanion<LogEntry> {
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? deletedAt,
     Expression<String>? projectId,
-    Expression<String>? keyResultId,
+    Expression<String>? goalId,
     Expression<String>? taskId,
     Expression<DateTime>? occurredAt,
     Expression<int>? durationMinutes,
@@ -5275,7 +5238,7 @@ class LogEntriesCompanion extends UpdateCompanion<LogEntry> {
       if (updatedAt != null) 'updated_at': updatedAt,
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (projectId != null) 'project_id': projectId,
-      if (keyResultId != null) 'key_result_id': keyResultId,
+      if (goalId != null) 'goal_id': goalId,
       if (taskId != null) 'task_id': taskId,
       if (occurredAt != null) 'occurred_at': occurredAt,
       if (durationMinutes != null) 'duration_minutes': durationMinutes,
@@ -5291,7 +5254,7 @@ class LogEntriesCompanion extends UpdateCompanion<LogEntry> {
     Value<DateTime>? updatedAt,
     Value<DateTime?>? deletedAt,
     Value<String?>? projectId,
-    Value<String?>? keyResultId,
+    Value<String?>? goalId,
     Value<String?>? taskId,
     Value<DateTime>? occurredAt,
     Value<int?>? durationMinutes,
@@ -5305,7 +5268,7 @@ class LogEntriesCompanion extends UpdateCompanion<LogEntry> {
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
       projectId: projectId ?? this.projectId,
-      keyResultId: keyResultId ?? this.keyResultId,
+      goalId: goalId ?? this.goalId,
       taskId: taskId ?? this.taskId,
       occurredAt: occurredAt ?? this.occurredAt,
       durationMinutes: durationMinutes ?? this.durationMinutes,
@@ -5333,8 +5296,8 @@ class LogEntriesCompanion extends UpdateCompanion<LogEntry> {
     if (projectId.present) {
       map['project_id'] = Variable<String>(projectId.value);
     }
-    if (keyResultId.present) {
-      map['key_result_id'] = Variable<String>(keyResultId.value);
+    if (goalId.present) {
+      map['goal_id'] = Variable<String>(goalId.value);
     }
     if (taskId.present) {
       map['task_id'] = Variable<String>(taskId.value);
@@ -5367,7 +5330,7 @@ class LogEntriesCompanion extends UpdateCompanion<LogEntry> {
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('projectId: $projectId, ')
-          ..write('keyResultId: $keyResultId, ')
+          ..write('goalId: $goalId, ')
           ..write('taskId: $taskId, ')
           ..write('occurredAt: $occurredAt, ')
           ..write('durationMinutes: $durationMinutes, ')
@@ -5960,12 +5923,12 @@ class WeeklyReviewsCompanion extends UpdateCompanion<WeeklyReview> {
   }
 }
 
-class $ReviewKrSnapshotsTable extends ReviewKrSnapshots
-    with TableInfo<$ReviewKrSnapshotsTable, ReviewKrSnapshot> {
+class $ReviewMeasureSnapshotsTable extends ReviewMeasureSnapshots
+    with TableInfo<$ReviewMeasureSnapshotsTable, ReviewMeasureSnapshot> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $ReviewKrSnapshotsTable(this.attachedDatabase, [this._alias]);
+  $ReviewMeasureSnapshotsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
@@ -6019,12 +5982,12 @@ class $ReviewKrSnapshotsTable extends ReviewKrSnapshots
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _keyResultIdMeta = const VerificationMeta(
-    'keyResultId',
+  static const VerificationMeta _measureIdMeta = const VerificationMeta(
+    'measureId',
   );
   @override
-  late final GeneratedColumn<String> keyResultId = GeneratedColumn<String>(
-    'key_result_id',
+  late final GeneratedColumn<String> measureId = GeneratedColumn<String>(
+    'measure_id',
     aliasedName,
     false,
     type: DriftSqlType.string,
@@ -6048,17 +6011,17 @@ class $ReviewKrSnapshotsTable extends ReviewKrSnapshots
     updatedAt,
     deletedAt,
     weeklyReviewId,
-    keyResultId,
+    measureId,
     progress,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'review_kr_snapshots';
+  static const String $name = 'review_measure_snapshots';
   @override
   VerificationContext validateIntegrity(
-    Insertable<ReviewKrSnapshot> instance, {
+    Insertable<ReviewMeasureSnapshot> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -6101,16 +6064,13 @@ class $ReviewKrSnapshotsTable extends ReviewKrSnapshots
     } else if (isInserting) {
       context.missing(_weeklyReviewIdMeta);
     }
-    if (data.containsKey('key_result_id')) {
+    if (data.containsKey('measure_id')) {
       context.handle(
-        _keyResultIdMeta,
-        keyResultId.isAcceptableOrUnknown(
-          data['key_result_id']!,
-          _keyResultIdMeta,
-        ),
+        _measureIdMeta,
+        measureId.isAcceptableOrUnknown(data['measure_id']!, _measureIdMeta),
       );
     } else if (isInserting) {
-      context.missing(_keyResultIdMeta);
+      context.missing(_measureIdMeta);
     }
     if (data.containsKey('progress')) {
       context.handle(
@@ -6126,9 +6086,9 @@ class $ReviewKrSnapshotsTable extends ReviewKrSnapshots
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  ReviewKrSnapshot map(Map<String, dynamic> data, {String? tablePrefix}) {
+  ReviewMeasureSnapshot map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return ReviewKrSnapshot(
+    return ReviewMeasureSnapshot(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -6149,9 +6109,9 @@ class $ReviewKrSnapshotsTable extends ReviewKrSnapshots
         DriftSqlType.string,
         data['${effectivePrefix}weekly_review_id'],
       )!,
-      keyResultId: attachedDatabase.typeMapping.read(
+      measureId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}key_result_id'],
+        data['${effectivePrefix}measure_id'],
       )!,
       progress: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
@@ -6161,13 +6121,13 @@ class $ReviewKrSnapshotsTable extends ReviewKrSnapshots
   }
 
   @override
-  $ReviewKrSnapshotsTable createAlias(String alias) {
-    return $ReviewKrSnapshotsTable(attachedDatabase, alias);
+  $ReviewMeasureSnapshotsTable createAlias(String alias) {
+    return $ReviewMeasureSnapshotsTable(attachedDatabase, alias);
   }
 }
 
-class ReviewKrSnapshot extends DataClass
-    implements Insertable<ReviewKrSnapshot> {
+class ReviewMeasureSnapshot extends DataClass
+    implements Insertable<ReviewMeasureSnapshot> {
   /// UUID v4, generated on the client.
   final String id;
 
@@ -6180,17 +6140,17 @@ class ReviewKrSnapshot extends DataClass
   /// UTC, set when the row is soft-deleted.
   final DateTime? deletedAt;
   final String weeklyReviewId;
-  final String keyResultId;
+  final String measureId;
 
   /// 0–1.
   final double progress;
-  const ReviewKrSnapshot({
+  const ReviewMeasureSnapshot({
     required this.id,
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
     required this.weeklyReviewId,
-    required this.keyResultId,
+    required this.measureId,
     required this.progress,
   });
   @override
@@ -6203,13 +6163,13 @@ class ReviewKrSnapshot extends DataClass
       map['deleted_at'] = Variable<DateTime>(deletedAt);
     }
     map['weekly_review_id'] = Variable<String>(weeklyReviewId);
-    map['key_result_id'] = Variable<String>(keyResultId);
+    map['measure_id'] = Variable<String>(measureId);
     map['progress'] = Variable<double>(progress);
     return map;
   }
 
-  ReviewKrSnapshotsCompanion toCompanion(bool nullToAbsent) {
-    return ReviewKrSnapshotsCompanion(
+  ReviewMeasureSnapshotsCompanion toCompanion(bool nullToAbsent) {
+    return ReviewMeasureSnapshotsCompanion(
       id: Value(id),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -6217,23 +6177,23 @@ class ReviewKrSnapshot extends DataClass
           ? const Value.absent()
           : Value(deletedAt),
       weeklyReviewId: Value(weeklyReviewId),
-      keyResultId: Value(keyResultId),
+      measureId: Value(measureId),
       progress: Value(progress),
     );
   }
 
-  factory ReviewKrSnapshot.fromJson(
+  factory ReviewMeasureSnapshot.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return ReviewKrSnapshot(
+    return ReviewMeasureSnapshot(
       id: serializer.fromJson<String>(json['id']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       weeklyReviewId: serializer.fromJson<String>(json['weeklyReviewId']),
-      keyResultId: serializer.fromJson<String>(json['keyResultId']),
+      measureId: serializer.fromJson<String>(json['measureId']),
       progress: serializer.fromJson<double>(json['progress']),
     );
   }
@@ -6246,30 +6206,32 @@ class ReviewKrSnapshot extends DataClass
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'weeklyReviewId': serializer.toJson<String>(weeklyReviewId),
-      'keyResultId': serializer.toJson<String>(keyResultId),
+      'measureId': serializer.toJson<String>(measureId),
       'progress': serializer.toJson<double>(progress),
     };
   }
 
-  ReviewKrSnapshot copyWith({
+  ReviewMeasureSnapshot copyWith({
     String? id,
     DateTime? createdAt,
     DateTime? updatedAt,
     Value<DateTime?> deletedAt = const Value.absent(),
     String? weeklyReviewId,
-    String? keyResultId,
+    String? measureId,
     double? progress,
-  }) => ReviewKrSnapshot(
+  }) => ReviewMeasureSnapshot(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
     weeklyReviewId: weeklyReviewId ?? this.weeklyReviewId,
-    keyResultId: keyResultId ?? this.keyResultId,
+    measureId: measureId ?? this.measureId,
     progress: progress ?? this.progress,
   );
-  ReviewKrSnapshot copyWithCompanion(ReviewKrSnapshotsCompanion data) {
-    return ReviewKrSnapshot(
+  ReviewMeasureSnapshot copyWithCompanion(
+    ReviewMeasureSnapshotsCompanion data,
+  ) {
+    return ReviewMeasureSnapshot(
       id: data.id.present ? data.id.value : this.id,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -6277,22 +6239,20 @@ class ReviewKrSnapshot extends DataClass
       weeklyReviewId: data.weeklyReviewId.present
           ? data.weeklyReviewId.value
           : this.weeklyReviewId,
-      keyResultId: data.keyResultId.present
-          ? data.keyResultId.value
-          : this.keyResultId,
+      measureId: data.measureId.present ? data.measureId.value : this.measureId,
       progress: data.progress.present ? data.progress.value : this.progress,
     );
   }
 
   @override
   String toString() {
-    return (StringBuffer('ReviewKrSnapshot(')
+    return (StringBuffer('ReviewMeasureSnapshot(')
           ..write('id: $id, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('weeklyReviewId: $weeklyReviewId, ')
-          ..write('keyResultId: $keyResultId, ')
+          ..write('measureId: $measureId, ')
           ..write('progress: $progress')
           ..write(')'))
         .toString();
@@ -6305,63 +6265,64 @@ class ReviewKrSnapshot extends DataClass
     updatedAt,
     deletedAt,
     weeklyReviewId,
-    keyResultId,
+    measureId,
     progress,
   );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is ReviewKrSnapshot &&
+      (other is ReviewMeasureSnapshot &&
           other.id == this.id &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
           other.deletedAt == this.deletedAt &&
           other.weeklyReviewId == this.weeklyReviewId &&
-          other.keyResultId == this.keyResultId &&
+          other.measureId == this.measureId &&
           other.progress == this.progress);
 }
 
-class ReviewKrSnapshotsCompanion extends UpdateCompanion<ReviewKrSnapshot> {
+class ReviewMeasureSnapshotsCompanion
+    extends UpdateCompanion<ReviewMeasureSnapshot> {
   final Value<String> id;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<DateTime?> deletedAt;
   final Value<String> weeklyReviewId;
-  final Value<String> keyResultId;
+  final Value<String> measureId;
   final Value<double> progress;
   final Value<int> rowid;
-  const ReviewKrSnapshotsCompanion({
+  const ReviewMeasureSnapshotsCompanion({
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
     this.weeklyReviewId = const Value.absent(),
-    this.keyResultId = const Value.absent(),
+    this.measureId = const Value.absent(),
     this.progress = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  ReviewKrSnapshotsCompanion.insert({
+  ReviewMeasureSnapshotsCompanion.insert({
     required String id,
     required DateTime createdAt,
     required DateTime updatedAt,
     this.deletedAt = const Value.absent(),
     required String weeklyReviewId,
-    required String keyResultId,
+    required String measureId,
     required double progress,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        createdAt = Value(createdAt),
        updatedAt = Value(updatedAt),
        weeklyReviewId = Value(weeklyReviewId),
-       keyResultId = Value(keyResultId),
+       measureId = Value(measureId),
        progress = Value(progress);
-  static Insertable<ReviewKrSnapshot> custom({
+  static Insertable<ReviewMeasureSnapshot> custom({
     Expression<String>? id,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? deletedAt,
     Expression<String>? weeklyReviewId,
-    Expression<String>? keyResultId,
+    Expression<String>? measureId,
     Expression<double>? progress,
     Expression<int>? rowid,
   }) {
@@ -6371,29 +6332,29 @@ class ReviewKrSnapshotsCompanion extends UpdateCompanion<ReviewKrSnapshot> {
       if (updatedAt != null) 'updated_at': updatedAt,
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (weeklyReviewId != null) 'weekly_review_id': weeklyReviewId,
-      if (keyResultId != null) 'key_result_id': keyResultId,
+      if (measureId != null) 'measure_id': measureId,
       if (progress != null) 'progress': progress,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
-  ReviewKrSnapshotsCompanion copyWith({
+  ReviewMeasureSnapshotsCompanion copyWith({
     Value<String>? id,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<DateTime?>? deletedAt,
     Value<String>? weeklyReviewId,
-    Value<String>? keyResultId,
+    Value<String>? measureId,
     Value<double>? progress,
     Value<int>? rowid,
   }) {
-    return ReviewKrSnapshotsCompanion(
+    return ReviewMeasureSnapshotsCompanion(
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
       weeklyReviewId: weeklyReviewId ?? this.weeklyReviewId,
-      keyResultId: keyResultId ?? this.keyResultId,
+      measureId: measureId ?? this.measureId,
       progress: progress ?? this.progress,
       rowid: rowid ?? this.rowid,
     );
@@ -6417,8 +6378,8 @@ class ReviewKrSnapshotsCompanion extends UpdateCompanion<ReviewKrSnapshot> {
     if (weeklyReviewId.present) {
       map['weekly_review_id'] = Variable<String>(weeklyReviewId.value);
     }
-    if (keyResultId.present) {
-      map['key_result_id'] = Variable<String>(keyResultId.value);
+    if (measureId.present) {
+      map['measure_id'] = Variable<String>(measureId.value);
     }
     if (progress.present) {
       map['progress'] = Variable<double>(progress.value);
@@ -6431,13 +6392,13 @@ class ReviewKrSnapshotsCompanion extends UpdateCompanion<ReviewKrSnapshot> {
 
   @override
   String toString() {
-    return (StringBuffer('ReviewKrSnapshotsCompanion(')
+    return (StringBuffer('ReviewMeasureSnapshotsCompanion(')
           ..write('id: $id, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('weeklyReviewId: $weeklyReviewId, ')
-          ..write('keyResultId: $keyResultId, ')
+          ..write('measureId: $measureId, ')
           ..write('progress: $progress, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -7130,33 +7091,33 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $AreasTable areas = $AreasTable(this);
-  late final $ObjectivesTable objectives = $ObjectivesTable(this);
-  late final $KeyResultsTable keyResults = $KeyResultsTable(this);
+  late final $GoalsTable goals = $GoalsTable(this);
+  late final $MeasuresTable measures = $MeasuresTable(this);
   late final $ProjectsTable projects = $ProjectsTable(this);
   late final $TasksTable tasks = $TasksTable(this);
   late final $HabitsTable habits = $HabitsTable(this);
   late final $HabitChecksTable habitChecks = $HabitChecksTable(this);
   late final $LogEntriesTable logEntries = $LogEntriesTable(this);
   late final $WeeklyReviewsTable weeklyReviews = $WeeklyReviewsTable(this);
-  late final $ReviewKrSnapshotsTable reviewKrSnapshots =
-      $ReviewKrSnapshotsTable(this);
+  late final $ReviewMeasureSnapshotsTable reviewMeasureSnapshots =
+      $ReviewMeasureSnapshotsTable(this);
   late final $TimersTable timers = $TimersTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
-  late final Index objectivesStatus = Index(
-    'objectives_status',
-    'CREATE INDEX objectives_status ON objectives (status)',
+  late final Index goalsStatus = Index(
+    'goals_status',
+    'CREATE INDEX goals_status ON goals (status)',
   );
-  late final Index keyResultsObjectiveId = Index(
-    'key_results_objective_id',
-    'CREATE INDEX key_results_objective_id ON key_results (objective_id)',
+  late final Index measuresGoalId = Index(
+    'measures_goal_id',
+    'CREATE INDEX measures_goal_id ON measures (goal_id)',
   );
   late final Index projectsStatus = Index(
     'projects_status',
     'CREATE INDEX projects_status ON projects (status)',
   );
-  late final Index projectsKeyResultId = Index(
-    'projects_key_result_id',
-    'CREATE INDEX projects_key_result_id ON projects (key_result_id)',
+  late final Index projectsGoalId = Index(
+    'projects_goal_id',
+    'CREATE INDEX projects_goal_id ON projects (goal_id)',
   );
   late final Index projectsAreaId = Index(
     'projects_area_id',
@@ -7166,13 +7127,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'tasks_project_id',
     'CREATE INDEX tasks_project_id ON tasks (project_id)',
   );
-  late final Index tasksKeyResultId = Index(
-    'tasks_key_result_id',
-    'CREATE INDEX tasks_key_result_id ON tasks (key_result_id)',
-  );
-  late final Index tasksObjectiveId = Index(
-    'tasks_objective_id',
-    'CREATE INDEX tasks_objective_id ON tasks (objective_id)',
+  late final Index tasksGoalId = Index(
+    'tasks_goal_id',
+    'CREATE INDEX tasks_goal_id ON tasks (goal_id)',
   );
   late final Index logEntriesOccurredAt = Index(
     'log_entries_occurred_at',
@@ -7182,9 +7139,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'log_entries_task_id',
     'CREATE INDEX log_entries_task_id ON log_entries (task_id)',
   );
-  late final Index reviewKrSnapshotsWeeklyReviewId = Index(
-    'review_kr_snapshots_weekly_review_id',
-    'CREATE INDEX review_kr_snapshots_weekly_review_id ON review_kr_snapshots (weekly_review_id)',
+  late final Index reviewMeasureSnapshotsWeeklyReviewId = Index(
+    'review_measure_snapshots_weekly_review_id',
+    'CREATE INDEX review_measure_snapshots_weekly_review_id ON review_measure_snapshots (weekly_review_id)',
   );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -7192,28 +7149,27 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     areas,
-    objectives,
-    keyResults,
+    goals,
+    measures,
     projects,
     tasks,
     habits,
     habitChecks,
     logEntries,
     weeklyReviews,
-    reviewKrSnapshots,
+    reviewMeasureSnapshots,
     timers,
     settings,
-    objectivesStatus,
-    keyResultsObjectiveId,
+    goalsStatus,
+    measuresGoalId,
     projectsStatus,
-    projectsKeyResultId,
+    projectsGoalId,
     projectsAreaId,
     tasksProjectId,
-    tasksKeyResultId,
-    tasksObjectiveId,
+    tasksGoalId,
     logEntriesOccurredAt,
     logEntriesTaskId,
-    reviewKrSnapshotsWeeklyReviewId,
+    reviewMeasureSnapshotsWeeklyReviewId,
   ];
   @override
   DriftDatabaseOptions get options =>
@@ -7458,7 +7414,7 @@ typedef $$AreasTableProcessedTableManager =
       Area,
       PrefetchHooks Function()
     >;
-typedef $$ObjectivesTableCreateCompanionBuilder = ObjectivesCompanion Function({
+typedef $$GoalsTableCreateCompanionBuilder = GoalsCompanion Function({
   required String id,
   required DateTime createdAt,
   required DateTime updatedAt,
@@ -7467,11 +7423,12 @@ typedef $$ObjectivesTableCreateCompanionBuilder = ObjectivesCompanion Function({
   Value<String> description,
   required CalendarDate startDate,
   required CalendarDate endDate,
-  required ObjectiveStatus status,
+  required GoalStatus status,
   required int sortOrder,
+  Value<String?> color,
   Value<int> rowid,
 });
-typedef $$ObjectivesTableUpdateCompanionBuilder = ObjectivesCompanion Function({
+typedef $$GoalsTableUpdateCompanionBuilder = GoalsCompanion Function({
   Value<String> id,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
@@ -7480,14 +7437,14 @@ typedef $$ObjectivesTableUpdateCompanionBuilder = ObjectivesCompanion Function({
   Value<String> description,
   Value<CalendarDate> startDate,
   Value<CalendarDate> endDate,
-  Value<ObjectiveStatus> status,
+  Value<GoalStatus> status,
   Value<int> sortOrder,
+  Value<String?> color,
   Value<int> rowid,
 });
 
-class $$ObjectivesTableFilterComposer
-    extends Composer<_$AppDatabase, $ObjectivesTable> {
-  $$ObjectivesTableFilterComposer({
+class $$GoalsTableFilterComposer extends Composer<_$AppDatabase, $GoalsTable> {
+  $$GoalsTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -7536,21 +7493,26 @@ class $$ObjectivesTableFilterComposer
     builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
-  ColumnWithTypeConverterFilters<ObjectiveStatus, ObjectiveStatus, String>
-  get status => $composableBuilder(
-    column: $table.status,
-    builder: (column) => ColumnWithTypeConverterFilters(column),
-  );
+  ColumnWithTypeConverterFilters<GoalStatus, GoalStatus, String> get status =>
+      $composableBuilder(
+        column: $table.status,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 
   ColumnFilters<int> get sortOrder => $composableBuilder(
     column: $table.sortOrder,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
-class $$ObjectivesTableOrderingComposer
-    extends Composer<_$AppDatabase, $ObjectivesTable> {
-  $$ObjectivesTableOrderingComposer({
+class $$GoalsTableOrderingComposer
+    extends Composer<_$AppDatabase, $GoalsTable> {
+  $$GoalsTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -7606,11 +7568,16 @@ class $$ObjectivesTableOrderingComposer
     column: $table.sortOrder,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
-class $$ObjectivesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $ObjectivesTable> {
-  $$ObjectivesTableAnnotationComposer({
+class $$GoalsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GoalsTable> {
+  $$GoalsTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -7643,42 +7610,42 @@ class $$ObjectivesTableAnnotationComposer
   GeneratedColumnWithTypeConverter<CalendarDate, String> get endDate =>
       $composableBuilder(column: $table.endDate, builder: (column) => column);
 
-  GeneratedColumnWithTypeConverter<ObjectiveStatus, String> get status =>
+  GeneratedColumnWithTypeConverter<GoalStatus, String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
 
   GeneratedColumn<int> get sortOrder =>
       $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<String> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
 }
 
-class $$ObjectivesTableTableManager
+class $$GoalsTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $ObjectivesTable,
-          Objective,
-          $$ObjectivesTableFilterComposer,
-          $$ObjectivesTableOrderingComposer,
-          $$ObjectivesTableAnnotationComposer,
-          $$ObjectivesTableCreateCompanionBuilder,
-          $$ObjectivesTableUpdateCompanionBuilder,
-          (
-            Objective,
-            BaseReferences<_$AppDatabase, $ObjectivesTable, Objective>,
-          ),
-          Objective,
+          $GoalsTable,
+          Goal,
+          $$GoalsTableFilterComposer,
+          $$GoalsTableOrderingComposer,
+          $$GoalsTableAnnotationComposer,
+          $$GoalsTableCreateCompanionBuilder,
+          $$GoalsTableUpdateCompanionBuilder,
+          (Goal, BaseReferences<_$AppDatabase, $GoalsTable, Goal>),
+          Goal,
           PrefetchHooks Function()
         > {
-  $$ObjectivesTableTableManager(_$AppDatabase db, $ObjectivesTable table)
+  $$GoalsTableTableManager(_$AppDatabase db, $GoalsTable table)
     : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$ObjectivesTableFilterComposer($db: db, $table: table),
+              $$GoalsTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$ObjectivesTableOrderingComposer($db: db, $table: table),
+              $$GoalsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$ObjectivesTableAnnotationComposer($db: db, $table: table),
+              $$GoalsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
@@ -7689,10 +7656,11 @@ class $$ObjectivesTableTableManager
                 Value<String> description = const Value.absent(),
                 Value<CalendarDate> startDate = const Value.absent(),
                 Value<CalendarDate> endDate = const Value.absent(),
-                Value<ObjectiveStatus> status = const Value.absent(),
+                Value<GoalStatus> status = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
+                Value<String?> color = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => ObjectivesCompanion(
+              }) => GoalsCompanion(
                 id: id,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -7703,6 +7671,7 @@ class $$ObjectivesTableTableManager
                 endDate: endDate,
                 status: status,
                 sortOrder: sortOrder,
+                color: color,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -7715,10 +7684,11 @@ class $$ObjectivesTableTableManager
                 Value<String> description = const Value.absent(),
                 required CalendarDate startDate,
                 required CalendarDate endDate,
-                required ObjectiveStatus status,
+                required GoalStatus status,
                 required int sortOrder,
+                Value<String?> color = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => ObjectivesCompanion.insert(
+              }) => GoalsCompanion.insert(
                 id: id,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -7729,13 +7699,14 @@ class $$ObjectivesTableTableManager
                 endDate: endDate,
                 status: status,
                 sortOrder: sortOrder,
+                color: color,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable<$ObjectivesTable, Objective>(table),
-                  BaseReferences<_$AppDatabase, $ObjectivesTable, Objective>(
+                  e.readTable<$GoalsTable, Goal>(table),
+                  BaseReferences<_$AppDatabase, $GoalsTable, Goal>(
                     db,
                     table,
                     e,
@@ -7748,26 +7719,26 @@ class $$ObjectivesTableTableManager
       );
 }
 
-typedef $$ObjectivesTableProcessedTableManager =
+typedef $$GoalsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $ObjectivesTable,
-      Objective,
-      $$ObjectivesTableFilterComposer,
-      $$ObjectivesTableOrderingComposer,
-      $$ObjectivesTableAnnotationComposer,
-      $$ObjectivesTableCreateCompanionBuilder,
-      $$ObjectivesTableUpdateCompanionBuilder,
-      (Objective, BaseReferences<_$AppDatabase, $ObjectivesTable, Objective>),
-      Objective,
+      $GoalsTable,
+      Goal,
+      $$GoalsTableFilterComposer,
+      $$GoalsTableOrderingComposer,
+      $$GoalsTableAnnotationComposer,
+      $$GoalsTableCreateCompanionBuilder,
+      $$GoalsTableUpdateCompanionBuilder,
+      (Goal, BaseReferences<_$AppDatabase, $GoalsTable, Goal>),
+      Goal,
       PrefetchHooks Function()
     >;
-typedef $$KeyResultsTableCreateCompanionBuilder = KeyResultsCompanion Function({
+typedef $$MeasuresTableCreateCompanionBuilder = MeasuresCompanion Function({
   required String id,
   required DateTime createdAt,
   required DateTime updatedAt,
   Value<DateTime?> deletedAt,
-  required String objectiveId,
+  required String goalId,
   required String title,
   Value<String> description,
   required MeasureType measureType,
@@ -7777,16 +7748,15 @@ typedef $$KeyResultsTableCreateCompanionBuilder = KeyResultsCompanion Function({
   Value<String?> unit,
   Value<double> step,
   Value<String?> habitId,
-  Value<CalendarDate?> deadline,
   required int sortOrder,
   Value<int> rowid,
 });
-typedef $$KeyResultsTableUpdateCompanionBuilder = KeyResultsCompanion Function({
+typedef $$MeasuresTableUpdateCompanionBuilder = MeasuresCompanion Function({
   Value<String> id,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
   Value<DateTime?> deletedAt,
-  Value<String> objectiveId,
+  Value<String> goalId,
   Value<String> title,
   Value<String> description,
   Value<MeasureType> measureType,
@@ -7796,14 +7766,13 @@ typedef $$KeyResultsTableUpdateCompanionBuilder = KeyResultsCompanion Function({
   Value<String?> unit,
   Value<double> step,
   Value<String?> habitId,
-  Value<CalendarDate?> deadline,
   Value<int> sortOrder,
   Value<int> rowid,
 });
 
-class $$KeyResultsTableFilterComposer
-    extends Composer<_$AppDatabase, $KeyResultsTable> {
-  $$KeyResultsTableFilterComposer({
+class $$MeasuresTableFilterComposer
+    extends Composer<_$AppDatabase, $MeasuresTable> {
+  $$MeasuresTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -7830,8 +7799,8 @@ class $$KeyResultsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get objectiveId => $composableBuilder(
-    column: $table.objectiveId,
+  ColumnFilters<String> get goalId => $composableBuilder(
+    column: $table.goalId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7881,21 +7850,15 @@ class $$KeyResultsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnWithTypeConverterFilters<CalendarDate?, CalendarDate, String>
-  get deadline => $composableBuilder(
-    column: $table.deadline,
-    builder: (column) => ColumnWithTypeConverterFilters(column),
-  );
-
   ColumnFilters<int> get sortOrder => $composableBuilder(
     column: $table.sortOrder,
     builder: (column) => ColumnFilters(column),
   );
 }
 
-class $$KeyResultsTableOrderingComposer
-    extends Composer<_$AppDatabase, $KeyResultsTable> {
-  $$KeyResultsTableOrderingComposer({
+class $$MeasuresTableOrderingComposer
+    extends Composer<_$AppDatabase, $MeasuresTable> {
+  $$MeasuresTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -7922,8 +7885,8 @@ class $$KeyResultsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get objectiveId => $composableBuilder(
-    column: $table.objectiveId,
+  ColumnOrderings<String> get goalId => $composableBuilder(
+    column: $table.goalId,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -7972,20 +7935,15 @@ class $$KeyResultsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get deadline => $composableBuilder(
-    column: $table.deadline,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<int> get sortOrder => $composableBuilder(
     column: $table.sortOrder,
     builder: (column) => ColumnOrderings(column),
   );
 }
 
-class $$KeyResultsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $KeyResultsTable> {
-  $$KeyResultsTableAnnotationComposer({
+class $$MeasuresTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MeasuresTable> {
+  $$MeasuresTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -8004,10 +7962,8 @@ class $$KeyResultsTableAnnotationComposer
   GeneratedColumn<DateTime> get deletedAt =>
       $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 
-  GeneratedColumn<String> get objectiveId => $composableBuilder(
-    column: $table.objectiveId,
-    builder: (column) => column,
-  );
+  GeneratedColumn<String> get goalId =>
+      $composableBuilder(column: $table.goalId, builder: (column) => column);
 
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
@@ -8047,49 +8003,43 @@ class $$KeyResultsTableAnnotationComposer
   GeneratedColumn<String> get habitId =>
       $composableBuilder(column: $table.habitId, builder: (column) => column);
 
-  GeneratedColumnWithTypeConverter<CalendarDate?, String> get deadline =>
-      $composableBuilder(column: $table.deadline, builder: (column) => column);
-
   GeneratedColumn<int> get sortOrder =>
       $composableBuilder(column: $table.sortOrder, builder: (column) => column);
 }
 
-class $$KeyResultsTableTableManager
+class $$MeasuresTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $KeyResultsTable,
-          KeyResult,
-          $$KeyResultsTableFilterComposer,
-          $$KeyResultsTableOrderingComposer,
-          $$KeyResultsTableAnnotationComposer,
-          $$KeyResultsTableCreateCompanionBuilder,
-          $$KeyResultsTableUpdateCompanionBuilder,
-          (
-            KeyResult,
-            BaseReferences<_$AppDatabase, $KeyResultsTable, KeyResult>,
-          ),
-          KeyResult,
+          $MeasuresTable,
+          Measure,
+          $$MeasuresTableFilterComposer,
+          $$MeasuresTableOrderingComposer,
+          $$MeasuresTableAnnotationComposer,
+          $$MeasuresTableCreateCompanionBuilder,
+          $$MeasuresTableUpdateCompanionBuilder,
+          (Measure, BaseReferences<_$AppDatabase, $MeasuresTable, Measure>),
+          Measure,
           PrefetchHooks Function()
         > {
-  $$KeyResultsTableTableManager(_$AppDatabase db, $KeyResultsTable table)
+  $$MeasuresTableTableManager(_$AppDatabase db, $MeasuresTable table)
     : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$KeyResultsTableFilterComposer($db: db, $table: table),
+              $$MeasuresTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$KeyResultsTableOrderingComposer($db: db, $table: table),
+              $$MeasuresTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$KeyResultsTableAnnotationComposer($db: db, $table: table),
+              $$MeasuresTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
-                Value<String> objectiveId = const Value.absent(),
+                Value<String> goalId = const Value.absent(),
                 Value<String> title = const Value.absent(),
                 Value<String> description = const Value.absent(),
                 Value<MeasureType> measureType = const Value.absent(),
@@ -8099,15 +8049,14 @@ class $$KeyResultsTableTableManager
                 Value<String?> unit = const Value.absent(),
                 Value<double> step = const Value.absent(),
                 Value<String?> habitId = const Value.absent(),
-                Value<CalendarDate?> deadline = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => KeyResultsCompanion(
+              }) => MeasuresCompanion(
                 id: id,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
-                objectiveId: objectiveId,
+                goalId: goalId,
                 title: title,
                 description: description,
                 measureType: measureType,
@@ -8117,7 +8066,6 @@ class $$KeyResultsTableTableManager
                 unit: unit,
                 step: step,
                 habitId: habitId,
-                deadline: deadline,
                 sortOrder: sortOrder,
                 rowid: rowid,
               ),
@@ -8127,7 +8075,7 @@ class $$KeyResultsTableTableManager
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<DateTime?> deletedAt = const Value.absent(),
-                required String objectiveId,
+                required String goalId,
                 required String title,
                 Value<String> description = const Value.absent(),
                 required MeasureType measureType,
@@ -8137,15 +8085,14 @@ class $$KeyResultsTableTableManager
                 Value<String?> unit = const Value.absent(),
                 Value<double> step = const Value.absent(),
                 Value<String?> habitId = const Value.absent(),
-                Value<CalendarDate?> deadline = const Value.absent(),
                 required int sortOrder,
                 Value<int> rowid = const Value.absent(),
-              }) => KeyResultsCompanion.insert(
+              }) => MeasuresCompanion.insert(
                 id: id,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
-                objectiveId: objectiveId,
+                goalId: goalId,
                 title: title,
                 description: description,
                 measureType: measureType,
@@ -8155,15 +8102,14 @@ class $$KeyResultsTableTableManager
                 unit: unit,
                 step: step,
                 habitId: habitId,
-                deadline: deadline,
                 sortOrder: sortOrder,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable<$KeyResultsTable, KeyResult>(table),
-                  BaseReferences<_$AppDatabase, $KeyResultsTable, KeyResult>(
+                  e.readTable<$MeasuresTable, Measure>(table),
+                  BaseReferences<_$AppDatabase, $MeasuresTable, Measure>(
                     db,
                     table,
                     e,
@@ -8176,18 +8122,18 @@ class $$KeyResultsTableTableManager
       );
 }
 
-typedef $$KeyResultsTableProcessedTableManager =
+typedef $$MeasuresTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $KeyResultsTable,
-      KeyResult,
-      $$KeyResultsTableFilterComposer,
-      $$KeyResultsTableOrderingComposer,
-      $$KeyResultsTableAnnotationComposer,
-      $$KeyResultsTableCreateCompanionBuilder,
-      $$KeyResultsTableUpdateCompanionBuilder,
-      (KeyResult, BaseReferences<_$AppDatabase, $KeyResultsTable, KeyResult>),
-      KeyResult,
+      $MeasuresTable,
+      Measure,
+      $$MeasuresTableFilterComposer,
+      $$MeasuresTableOrderingComposer,
+      $$MeasuresTableAnnotationComposer,
+      $$MeasuresTableCreateCompanionBuilder,
+      $$MeasuresTableUpdateCompanionBuilder,
+      (Measure, BaseReferences<_$AppDatabase, $MeasuresTable, Measure>),
+      Measure,
       PrefetchHooks Function()
     >;
 typedef $$ProjectsTableCreateCompanionBuilder = ProjectsCompanion Function({
@@ -8198,11 +8144,12 @@ typedef $$ProjectsTableCreateCompanionBuilder = ProjectsCompanion Function({
   required String title,
   Value<String> description,
   Value<String?> areaId,
-  Value<String?> keyResultId,
+  Value<String?> goalId,
   required ProjectStatus status,
   required int importance,
   Value<CalendarDate?> deadline,
   Value<String?> nextStepTaskId,
+  Value<DateTime?> completedAt,
   Value<int> rowid,
 });
 typedef $$ProjectsTableUpdateCompanionBuilder = ProjectsCompanion Function({
@@ -8213,11 +8160,12 @@ typedef $$ProjectsTableUpdateCompanionBuilder = ProjectsCompanion Function({
   Value<String> title,
   Value<String> description,
   Value<String?> areaId,
-  Value<String?> keyResultId,
+  Value<String?> goalId,
   Value<ProjectStatus> status,
   Value<int> importance,
   Value<CalendarDate?> deadline,
   Value<String?> nextStepTaskId,
+  Value<DateTime?> completedAt,
   Value<int> rowid,
 });
 
@@ -8265,8 +8213,8 @@ class $$ProjectsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get keyResultId => $composableBuilder(
-    column: $table.keyResultId,
+  ColumnFilters<String> get goalId => $composableBuilder(
+    column: $table.goalId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8289,6 +8237,11 @@ class $$ProjectsTableFilterComposer
 
   ColumnFilters<String> get nextStepTaskId => $composableBuilder(
     column: $table.nextStepTaskId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -8337,8 +8290,8 @@ class $$ProjectsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get keyResultId => $composableBuilder(
-    column: $table.keyResultId,
+  ColumnOrderings<String> get goalId => $composableBuilder(
+    column: $table.goalId,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -8359,6 +8312,11 @@ class $$ProjectsTableOrderingComposer
 
   ColumnOrderings<String> get nextStepTaskId => $composableBuilder(
     column: $table.nextStepTaskId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
     builder: (column) => ColumnOrderings(column),
   );
 }
@@ -8395,10 +8353,8 @@ class $$ProjectsTableAnnotationComposer
   GeneratedColumn<String> get areaId =>
       $composableBuilder(column: $table.areaId, builder: (column) => column);
 
-  GeneratedColumn<String> get keyResultId => $composableBuilder(
-    column: $table.keyResultId,
-    builder: (column) => column,
-  );
+  GeneratedColumn<String> get goalId =>
+      $composableBuilder(column: $table.goalId, builder: (column) => column);
 
   GeneratedColumnWithTypeConverter<ProjectStatus, String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
@@ -8413,6 +8369,11 @@ class $$ProjectsTableAnnotationComposer
 
   GeneratedColumn<String> get nextStepTaskId => $composableBuilder(
     column: $table.nextStepTaskId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
     builder: (column) => column,
   );
 }
@@ -8452,11 +8413,12 @@ class $$ProjectsTableTableManager
                 Value<String> title = const Value.absent(),
                 Value<String> description = const Value.absent(),
                 Value<String?> areaId = const Value.absent(),
-                Value<String?> keyResultId = const Value.absent(),
+                Value<String?> goalId = const Value.absent(),
                 Value<ProjectStatus> status = const Value.absent(),
                 Value<int> importance = const Value.absent(),
                 Value<CalendarDate?> deadline = const Value.absent(),
                 Value<String?> nextStepTaskId = const Value.absent(),
+                Value<DateTime?> completedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProjectsCompanion(
                 id: id,
@@ -8466,11 +8428,12 @@ class $$ProjectsTableTableManager
                 title: title,
                 description: description,
                 areaId: areaId,
-                keyResultId: keyResultId,
+                goalId: goalId,
                 status: status,
                 importance: importance,
                 deadline: deadline,
                 nextStepTaskId: nextStepTaskId,
+                completedAt: completedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -8482,11 +8445,12 @@ class $$ProjectsTableTableManager
                 required String title,
                 Value<String> description = const Value.absent(),
                 Value<String?> areaId = const Value.absent(),
-                Value<String?> keyResultId = const Value.absent(),
+                Value<String?> goalId = const Value.absent(),
                 required ProjectStatus status,
                 required int importance,
                 Value<CalendarDate?> deadline = const Value.absent(),
                 Value<String?> nextStepTaskId = const Value.absent(),
+                Value<DateTime?> completedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProjectsCompanion.insert(
                 id: id,
@@ -8496,11 +8460,12 @@ class $$ProjectsTableTableManager
                 title: title,
                 description: description,
                 areaId: areaId,
-                keyResultId: keyResultId,
+                goalId: goalId,
                 status: status,
                 importance: importance,
                 deadline: deadline,
                 nextStepTaskId: nextStepTaskId,
+                completedAt: completedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -8540,8 +8505,7 @@ typedef $$TasksTableCreateCompanionBuilder = TasksCompanion Function({
   required DateTime updatedAt,
   Value<DateTime?> deletedAt,
   Value<String?> projectId,
-  Value<String?> keyResultId,
-  Value<String?> objectiveId,
+  Value<String?> goalId,
   required String title,
   Value<String> notes,
   Value<CalendarDate?> dueDate,
@@ -8555,8 +8519,7 @@ typedef $$TasksTableUpdateCompanionBuilder = TasksCompanion Function({
   Value<DateTime> updatedAt,
   Value<DateTime?> deletedAt,
   Value<String?> projectId,
-  Value<String?> keyResultId,
-  Value<String?> objectiveId,
+  Value<String?> goalId,
   Value<String> title,
   Value<String> notes,
   Value<CalendarDate?> dueDate,
@@ -8598,13 +8561,8 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get keyResultId => $composableBuilder(
-    column: $table.keyResultId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get objectiveId => $composableBuilder(
-    column: $table.objectiveId,
+  ColumnFilters<String> get goalId => $composableBuilder(
+    column: $table.goalId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8670,13 +8628,8 @@ class $$TasksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get keyResultId => $composableBuilder(
-    column: $table.keyResultId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get objectiveId => $composableBuilder(
-    column: $table.objectiveId,
+  ColumnOrderings<String> get goalId => $composableBuilder(
+    column: $table.goalId,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -8730,15 +8683,8 @@ class $$TasksTableAnnotationComposer
   GeneratedColumn<String> get projectId =>
       $composableBuilder(column: $table.projectId, builder: (column) => column);
 
-  GeneratedColumn<String> get keyResultId => $composableBuilder(
-    column: $table.keyResultId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get objectiveId => $composableBuilder(
-    column: $table.objectiveId,
-    builder: (column) => column,
-  );
+  GeneratedColumn<String> get goalId =>
+      $composableBuilder(column: $table.goalId, builder: (column) => column);
 
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
@@ -8791,8 +8737,7 @@ class $$TasksTableTableManager
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String?> projectId = const Value.absent(),
-                Value<String?> keyResultId = const Value.absent(),
-                Value<String?> objectiveId = const Value.absent(),
+                Value<String?> goalId = const Value.absent(),
                 Value<String> title = const Value.absent(),
                 Value<String> notes = const Value.absent(),
                 Value<CalendarDate?> dueDate = const Value.absent(),
@@ -8805,8 +8750,7 @@ class $$TasksTableTableManager
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
                 projectId: projectId,
-                keyResultId: keyResultId,
-                objectiveId: objectiveId,
+                goalId: goalId,
                 title: title,
                 notes: notes,
                 dueDate: dueDate,
@@ -8821,8 +8765,7 @@ class $$TasksTableTableManager
                 required DateTime updatedAt,
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String?> projectId = const Value.absent(),
-                Value<String?> keyResultId = const Value.absent(),
-                Value<String?> objectiveId = const Value.absent(),
+                Value<String?> goalId = const Value.absent(),
                 required String title,
                 Value<String> notes = const Value.absent(),
                 Value<CalendarDate?> dueDate = const Value.absent(),
@@ -8835,8 +8778,7 @@ class $$TasksTableTableManager
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
                 projectId: projectId,
-                keyResultId: keyResultId,
-                objectiveId: objectiveId,
+                goalId: goalId,
                 title: title,
                 notes: notes,
                 dueDate: dueDate,
@@ -8882,7 +8824,7 @@ typedef $$HabitsTableCreateCompanionBuilder = HabitsCompanion Function({
   Value<DateTime?> deletedAt,
   required String title,
   Value<String?> projectId,
-  Value<String?> keyResultId,
+  Value<String?> goalId,
   required ScheduleType scheduleType,
   Value<Set<int>?> weekdays,
   Value<int?> timesPerWeek,
@@ -8897,7 +8839,7 @@ typedef $$HabitsTableUpdateCompanionBuilder = HabitsCompanion Function({
   Value<DateTime?> deletedAt,
   Value<String> title,
   Value<String?> projectId,
-  Value<String?> keyResultId,
+  Value<String?> goalId,
   Value<ScheduleType> scheduleType,
   Value<Set<int>?> weekdays,
   Value<int?> timesPerWeek,
@@ -8945,8 +8887,8 @@ class $$HabitsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get keyResultId => $composableBuilder(
-    column: $table.keyResultId,
+  ColumnFilters<String> get goalId => $composableBuilder(
+    column: $table.goalId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9017,8 +8959,8 @@ class $$HabitsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get keyResultId => $composableBuilder(
-    column: $table.keyResultId,
+  ColumnOrderings<String> get goalId => $composableBuilder(
+    column: $table.goalId,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -9075,10 +9017,8 @@ class $$HabitsTableAnnotationComposer
   GeneratedColumn<String> get projectId =>
       $composableBuilder(column: $table.projectId, builder: (column) => column);
 
-  GeneratedColumn<String> get keyResultId => $composableBuilder(
-    column: $table.keyResultId,
-    builder: (column) => column,
-  );
+  GeneratedColumn<String> get goalId =>
+      $composableBuilder(column: $table.goalId, builder: (column) => column);
 
   GeneratedColumnWithTypeConverter<ScheduleType, String> get scheduleType =>
       $composableBuilder(
@@ -9137,7 +9077,7 @@ class $$HabitsTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String> title = const Value.absent(),
                 Value<String?> projectId = const Value.absent(),
-                Value<String?> keyResultId = const Value.absent(),
+                Value<String?> goalId = const Value.absent(),
                 Value<ScheduleType> scheduleType = const Value.absent(),
                 Value<Set<int>?> weekdays = const Value.absent(),
                 Value<int?> timesPerWeek = const Value.absent(),
@@ -9151,7 +9091,7 @@ class $$HabitsTableTableManager
                 deletedAt: deletedAt,
                 title: title,
                 projectId: projectId,
-                keyResultId: keyResultId,
+                goalId: goalId,
                 scheduleType: scheduleType,
                 weekdays: weekdays,
                 timesPerWeek: timesPerWeek,
@@ -9167,7 +9107,7 @@ class $$HabitsTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 required String title,
                 Value<String?> projectId = const Value.absent(),
-                Value<String?> keyResultId = const Value.absent(),
+                Value<String?> goalId = const Value.absent(),
                 required ScheduleType scheduleType,
                 Value<Set<int>?> weekdays = const Value.absent(),
                 Value<int?> timesPerWeek = const Value.absent(),
@@ -9181,7 +9121,7 @@ class $$HabitsTableTableManager
                 deletedAt: deletedAt,
                 title: title,
                 projectId: projectId,
-                keyResultId: keyResultId,
+                goalId: goalId,
                 scheduleType: scheduleType,
                 weekdays: weekdays,
                 timesPerWeek: timesPerWeek,
@@ -9476,7 +9416,7 @@ typedef $$LogEntriesTableCreateCompanionBuilder = LogEntriesCompanion Function({
   required DateTime updatedAt,
   Value<DateTime?> deletedAt,
   Value<String?> projectId,
-  Value<String?> keyResultId,
+  Value<String?> goalId,
   Value<String?> taskId,
   required DateTime occurredAt,
   Value<int?> durationMinutes,
@@ -9490,7 +9430,7 @@ typedef $$LogEntriesTableUpdateCompanionBuilder = LogEntriesCompanion Function({
   Value<DateTime> updatedAt,
   Value<DateTime?> deletedAt,
   Value<String?> projectId,
-  Value<String?> keyResultId,
+  Value<String?> goalId,
   Value<String?> taskId,
   Value<DateTime> occurredAt,
   Value<int?> durationMinutes,
@@ -9533,8 +9473,8 @@ class $$LogEntriesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get keyResultId => $composableBuilder(
-    column: $table.keyResultId,
+  ColumnFilters<String> get goalId => $composableBuilder(
+    column: $table.goalId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9599,8 +9539,8 @@ class $$LogEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get keyResultId => $composableBuilder(
-    column: $table.keyResultId,
+  ColumnOrderings<String> get goalId => $composableBuilder(
+    column: $table.goalId,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -9654,10 +9594,8 @@ class $$LogEntriesTableAnnotationComposer
   GeneratedColumn<String> get projectId =>
       $composableBuilder(column: $table.projectId, builder: (column) => column);
 
-  GeneratedColumn<String> get keyResultId => $composableBuilder(
-    column: $table.keyResultId,
-    builder: (column) => column,
-  );
+  GeneratedColumn<String> get goalId =>
+      $composableBuilder(column: $table.goalId, builder: (column) => column);
 
   GeneratedColumn<String> get taskId =>
       $composableBuilder(column: $table.taskId, builder: (column) => column);
@@ -9712,7 +9650,7 @@ class $$LogEntriesTableTableManager
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String?> projectId = const Value.absent(),
-                Value<String?> keyResultId = const Value.absent(),
+                Value<String?> goalId = const Value.absent(),
                 Value<String?> taskId = const Value.absent(),
                 Value<DateTime> occurredAt = const Value.absent(),
                 Value<int?> durationMinutes = const Value.absent(),
@@ -9725,7 +9663,7 @@ class $$LogEntriesTableTableManager
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
                 projectId: projectId,
-                keyResultId: keyResultId,
+                goalId: goalId,
                 taskId: taskId,
                 occurredAt: occurredAt,
                 durationMinutes: durationMinutes,
@@ -9740,7 +9678,7 @@ class $$LogEntriesTableTableManager
                 required DateTime updatedAt,
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String?> projectId = const Value.absent(),
-                Value<String?> keyResultId = const Value.absent(),
+                Value<String?> goalId = const Value.absent(),
                 Value<String?> taskId = const Value.absent(),
                 required DateTime occurredAt,
                 Value<int?> durationMinutes = const Value.absent(),
@@ -9753,7 +9691,7 @@ class $$LogEntriesTableTableManager
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
                 projectId: projectId,
-                keyResultId: keyResultId,
+                goalId: goalId,
                 taskId: taskId,
                 occurredAt: occurredAt,
                 durationMinutes: durationMinutes,
@@ -10084,32 +10022,32 @@ typedef $$WeeklyReviewsTableProcessedTableManager =
       WeeklyReview,
       PrefetchHooks Function()
     >;
-typedef $$ReviewKrSnapshotsTableCreateCompanionBuilder =
-    ReviewKrSnapshotsCompanion Function({
+typedef $$ReviewMeasureSnapshotsTableCreateCompanionBuilder =
+    ReviewMeasureSnapshotsCompanion Function({
       required String id,
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<DateTime?> deletedAt,
       required String weeklyReviewId,
-      required String keyResultId,
+      required String measureId,
       required double progress,
       Value<int> rowid,
     });
-typedef $$ReviewKrSnapshotsTableUpdateCompanionBuilder =
-    ReviewKrSnapshotsCompanion Function({
+typedef $$ReviewMeasureSnapshotsTableUpdateCompanionBuilder =
+    ReviewMeasureSnapshotsCompanion Function({
       Value<String> id,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<DateTime?> deletedAt,
       Value<String> weeklyReviewId,
-      Value<String> keyResultId,
+      Value<String> measureId,
       Value<double> progress,
       Value<int> rowid,
     });
 
-class $$ReviewKrSnapshotsTableFilterComposer
-    extends Composer<_$AppDatabase, $ReviewKrSnapshotsTable> {
-  $$ReviewKrSnapshotsTableFilterComposer({
+class $$ReviewMeasureSnapshotsTableFilterComposer
+    extends Composer<_$AppDatabase, $ReviewMeasureSnapshotsTable> {
+  $$ReviewMeasureSnapshotsTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -10141,8 +10079,8 @@ class $$ReviewKrSnapshotsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get keyResultId => $composableBuilder(
-    column: $table.keyResultId,
+  ColumnFilters<String> get measureId => $composableBuilder(
+    column: $table.measureId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10152,9 +10090,9 @@ class $$ReviewKrSnapshotsTableFilterComposer
   );
 }
 
-class $$ReviewKrSnapshotsTableOrderingComposer
-    extends Composer<_$AppDatabase, $ReviewKrSnapshotsTable> {
-  $$ReviewKrSnapshotsTableOrderingComposer({
+class $$ReviewMeasureSnapshotsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ReviewMeasureSnapshotsTable> {
+  $$ReviewMeasureSnapshotsTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -10186,8 +10124,8 @@ class $$ReviewKrSnapshotsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get keyResultId => $composableBuilder(
-    column: $table.keyResultId,
+  ColumnOrderings<String> get measureId => $composableBuilder(
+    column: $table.measureId,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -10197,9 +10135,9 @@ class $$ReviewKrSnapshotsTableOrderingComposer
   );
 }
 
-class $$ReviewKrSnapshotsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $ReviewKrSnapshotsTable> {
-  $$ReviewKrSnapshotsTableAnnotationComposer({
+class $$ReviewMeasureSnapshotsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ReviewMeasureSnapshotsTable> {
+  $$ReviewMeasureSnapshotsTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -10223,50 +10161,54 @@ class $$ReviewKrSnapshotsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get keyResultId => $composableBuilder(
-    column: $table.keyResultId,
-    builder: (column) => column,
-  );
+  GeneratedColumn<String> get measureId =>
+      $composableBuilder(column: $table.measureId, builder: (column) => column);
 
   GeneratedColumn<double> get progress =>
       $composableBuilder(column: $table.progress, builder: (column) => column);
 }
 
-class $$ReviewKrSnapshotsTableTableManager
+class $$ReviewMeasureSnapshotsTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $ReviewKrSnapshotsTable,
-          ReviewKrSnapshot,
-          $$ReviewKrSnapshotsTableFilterComposer,
-          $$ReviewKrSnapshotsTableOrderingComposer,
-          $$ReviewKrSnapshotsTableAnnotationComposer,
-          $$ReviewKrSnapshotsTableCreateCompanionBuilder,
-          $$ReviewKrSnapshotsTableUpdateCompanionBuilder,
+          $ReviewMeasureSnapshotsTable,
+          ReviewMeasureSnapshot,
+          $$ReviewMeasureSnapshotsTableFilterComposer,
+          $$ReviewMeasureSnapshotsTableOrderingComposer,
+          $$ReviewMeasureSnapshotsTableAnnotationComposer,
+          $$ReviewMeasureSnapshotsTableCreateCompanionBuilder,
+          $$ReviewMeasureSnapshotsTableUpdateCompanionBuilder,
           (
-            ReviewKrSnapshot,
+            ReviewMeasureSnapshot,
             BaseReferences<
               _$AppDatabase,
-              $ReviewKrSnapshotsTable,
-              ReviewKrSnapshot
+              $ReviewMeasureSnapshotsTable,
+              ReviewMeasureSnapshot
             >,
           ),
-          ReviewKrSnapshot,
+          ReviewMeasureSnapshot,
           PrefetchHooks Function()
         > {
-  $$ReviewKrSnapshotsTableTableManager(
+  $$ReviewMeasureSnapshotsTableTableManager(
     _$AppDatabase db,
-    $ReviewKrSnapshotsTable table,
+    $ReviewMeasureSnapshotsTable table,
   ) : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$ReviewKrSnapshotsTableFilterComposer($db: db, $table: table),
+              $$ReviewMeasureSnapshotsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
           createOrderingComposer: () =>
-              $$ReviewKrSnapshotsTableOrderingComposer($db: db, $table: table),
+              $$ReviewMeasureSnapshotsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
           createComputedFieldComposer: () =>
-              $$ReviewKrSnapshotsTableAnnotationComposer(
+              $$ReviewMeasureSnapshotsTableAnnotationComposer(
                 $db: db,
                 $table: table,
               ),
@@ -10277,16 +10219,16 @@ class $$ReviewKrSnapshotsTableTableManager
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<String> weeklyReviewId = const Value.absent(),
-                Value<String> keyResultId = const Value.absent(),
+                Value<String> measureId = const Value.absent(),
                 Value<double> progress = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => ReviewKrSnapshotsCompanion(
+              }) => ReviewMeasureSnapshotsCompanion(
                 id: id,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
                 weeklyReviewId: weeklyReviewId,
-                keyResultId: keyResultId,
+                measureId: measureId,
                 progress: progress,
                 rowid: rowid,
               ),
@@ -10297,27 +10239,30 @@ class $$ReviewKrSnapshotsTableTableManager
                 required DateTime updatedAt,
                 Value<DateTime?> deletedAt = const Value.absent(),
                 required String weeklyReviewId,
-                required String keyResultId,
+                required String measureId,
                 required double progress,
                 Value<int> rowid = const Value.absent(),
-              }) => ReviewKrSnapshotsCompanion.insert(
+              }) => ReviewMeasureSnapshotsCompanion.insert(
                 id: id,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deletedAt: deletedAt,
                 weeklyReviewId: weeklyReviewId,
-                keyResultId: keyResultId,
+                measureId: measureId,
                 progress: progress,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable<$ReviewKrSnapshotsTable, ReviewKrSnapshot>(table),
+                  e.readTable<
+                    $ReviewMeasureSnapshotsTable,
+                    ReviewMeasureSnapshot
+                  >(table),
                   BaseReferences<
                     _$AppDatabase,
-                    $ReviewKrSnapshotsTable,
-                    ReviewKrSnapshot
+                    $ReviewMeasureSnapshotsTable,
+                    ReviewMeasureSnapshot
                   >(db, table, e),
                 ),
               )
@@ -10327,25 +10272,25 @@ class $$ReviewKrSnapshotsTableTableManager
       );
 }
 
-typedef $$ReviewKrSnapshotsTableProcessedTableManager =
+typedef $$ReviewMeasureSnapshotsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $ReviewKrSnapshotsTable,
-      ReviewKrSnapshot,
-      $$ReviewKrSnapshotsTableFilterComposer,
-      $$ReviewKrSnapshotsTableOrderingComposer,
-      $$ReviewKrSnapshotsTableAnnotationComposer,
-      $$ReviewKrSnapshotsTableCreateCompanionBuilder,
-      $$ReviewKrSnapshotsTableUpdateCompanionBuilder,
+      $ReviewMeasureSnapshotsTable,
+      ReviewMeasureSnapshot,
+      $$ReviewMeasureSnapshotsTableFilterComposer,
+      $$ReviewMeasureSnapshotsTableOrderingComposer,
+      $$ReviewMeasureSnapshotsTableAnnotationComposer,
+      $$ReviewMeasureSnapshotsTableCreateCompanionBuilder,
+      $$ReviewMeasureSnapshotsTableUpdateCompanionBuilder,
       (
-        ReviewKrSnapshot,
+        ReviewMeasureSnapshot,
         BaseReferences<
           _$AppDatabase,
-          $ReviewKrSnapshotsTable,
-          ReviewKrSnapshot
+          $ReviewMeasureSnapshotsTable,
+          ReviewMeasureSnapshot
         >,
       ),
-      ReviewKrSnapshot,
+      ReviewMeasureSnapshot,
       PrefetchHooks Function()
     >;
 typedef $$TimersTableCreateCompanionBuilder = TimersCompanion Function({
@@ -10730,10 +10675,10 @@ class $AppDatabaseManager {
   $AppDatabaseManager(this._db);
   $$AreasTableTableManager get areas =>
       $$AreasTableTableManager(_db, _db.areas);
-  $$ObjectivesTableTableManager get objectives =>
-      $$ObjectivesTableTableManager(_db, _db.objectives);
-  $$KeyResultsTableTableManager get keyResults =>
-      $$KeyResultsTableTableManager(_db, _db.keyResults);
+  $$GoalsTableTableManager get goals =>
+      $$GoalsTableTableManager(_db, _db.goals);
+  $$MeasuresTableTableManager get measures =>
+      $$MeasuresTableTableManager(_db, _db.measures);
   $$ProjectsTableTableManager get projects =>
       $$ProjectsTableTableManager(_db, _db.projects);
   $$TasksTableTableManager get tasks =>
@@ -10746,8 +10691,11 @@ class $AppDatabaseManager {
       $$LogEntriesTableTableManager(_db, _db.logEntries);
   $$WeeklyReviewsTableTableManager get weeklyReviews =>
       $$WeeklyReviewsTableTableManager(_db, _db.weeklyReviews);
-  $$ReviewKrSnapshotsTableTableManager get reviewKrSnapshots =>
-      $$ReviewKrSnapshotsTableTableManager(_db, _db.reviewKrSnapshots);
+  $$ReviewMeasureSnapshotsTableTableManager get reviewMeasureSnapshots =>
+      $$ReviewMeasureSnapshotsTableTableManager(
+        _db,
+        _db.reviewMeasureSnapshots,
+      );
   $$TimersTableTableManager get timers =>
       $$TimersTableTableManager(_db, _db.timers);
   $$SettingsTableTableManager get settings =>

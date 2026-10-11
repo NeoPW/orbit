@@ -17,12 +17,10 @@ abstract final class Routes {
   static const areas = '/plan/areas';
   static const habits = '/plan/habits';
   static const settings = '/settings';
+  static const spaceImages = '/settings/space-images';
 
-  /// Objective page, reachable from Plan, the Archive and task pages.
-  static String objective(String id) => '/objectives/$id';
-
-  /// Key result page, reachable from Plan, reminders and other pages.
-  static String keyResult(String id) => '/key-results/$id';
+  /// Goal page, reachable from Plan, Home, the Archive and other pages.
+  static String goal(String id) => '/goals/$id';
 
   /// Task page, reachable from every tab and from reminders.
   static String task(String id) => '/tasks/$id';

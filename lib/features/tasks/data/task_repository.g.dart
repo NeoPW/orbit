@@ -343,12 +343,12 @@ final class TasksOutsideProjectsProvider
 String _$tasksOutsideProjectsHash() =>
     r'6d75fc06a6ea98f91857f3868b5739b652570ddc';
 
-/// Open tasks assigned to a KR or objective, for Plan.
+/// Open tasks assigned to a goal, for Plan.
 
 @ProviderFor(assignedTasks)
 final assignedTasksProvider = AssignedTasksProvider._();
 
-/// Open tasks assigned to a KR or objective, for Plan.
+/// Open tasks assigned to a goal, for Plan.
 
 final class AssignedTasksProvider
     extends
@@ -358,7 +358,7 @@ final class AssignedTasksProvider
           Stream<List<Task>>
         >
     with $FutureModifier<List<Task>>, $StreamProvider<List<Task>> {
-  /// Open tasks assigned to a KR or objective, for Plan.
+  /// Open tasks assigned to a goal, for Plan.
   AssignedTasksProvider._()
     : super(
         from: null,

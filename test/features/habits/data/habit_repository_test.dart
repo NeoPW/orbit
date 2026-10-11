@@ -15,7 +15,7 @@ void main() {
     );
     expect(h.title, 'Meditate');
     expect(h.projectId, isNull);
-    expect(h.keyResultId, isNull);
+    expect(h.goalId, isNull);
     expect(h.active, isTrue);
   });
 
@@ -75,14 +75,14 @@ void main() {
     expect(again.map((h) => h.title), ['a', 'B', 'A inactive', 'z']);
   });
 
-  test('delete unlinks habit KRs', () async {
-    final o = await r.objective();
+  test('delete unlinks habit measures', () async {
+    final g = await r.goal();
     final h = await r.habits.create(
       title: 'Run',
       scheduleType: ScheduleType.daily,
     );
-    final kr = await r.keyResults.create(
-      objectiveId: o.id,
+    final m = await r.measures.create(
+      goalId: g.id,
       title: 'Run 40 times',
       measureType: MeasureType.habit,
       targetValue: 40,
@@ -92,7 +92,7 @@ void main() {
     await r.habits.delete(h.id);
 
     expect(await r.habits.get(h.id), isNull);
-    final stored = await r.keyResults.get(kr.id);
+    final stored = await r.measures.get(m.id);
     expect(stored, isNotNull);
     expect(stored!.habitId, isNull);
   });

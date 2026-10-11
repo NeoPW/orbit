@@ -44,7 +44,7 @@ class HomeHabitsSection extends ConsumerWidget {
   }
 }
 
-/// A habit due today: title, its project or KR, filled when checked.
+/// A habit due today: title, its project or goal, filled when checked.
 class HabitChip extends StatelessWidget {
   const HabitChip({super.key, required this.item, required this.onTap});
 

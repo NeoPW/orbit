@@ -10,16 +10,10 @@ void main() {
   List<UpcomingDeadline> build({
     List<({Task task, Project project})> tasks = const [],
     List<Project> projects = const [],
-    List<KeyResult> keyResults = const [],
-    List<Objective> objectives = const [],
-    Map<String, int> habitCheckIns = const {},
     int leadDays = 7,
   }) => buildUpcomingDeadlines(
     tasks: tasks,
     projects: projects,
-    keyResults: keyResults,
-    objectives: objectives,
-    habitCheckIns: habitCheckIns,
     today: today,
     leadDays: leadDays,
   );
@@ -51,15 +45,9 @@ void main() {
     expect(items, isEmpty);
   });
 
-  test('inherited deadlines are not listed, only the KR', () {
-    final items = build(
-      objectives: [objective('o')],
-      keyResults: [
-        keyResult('kr', objectiveId: 'o', deadline: today.addDays(1)),
-      ],
-      projects: [project('p', keyResultId: 'kr')],
-    );
-    expect(items.map((i) => i.kind), [DeadlineKind.keyResult]);
+  test('inherited deadlines are not listed', () {
+    final items = build(projects: [project('p', goalId: 'g')]);
+    expect(items, isEmpty);
   });
 
   test('tasks of paused projects are not listed', () {
@@ -83,31 +71,6 @@ void main() {
         ),
       ],
       projects: [project('b', status: ProjectStatus.backlog, deadline: today)],
-    );
-    expect(items, isEmpty);
-  });
-
-  test('a reached KR is not listed', () {
-    final items = build(
-      objectives: [objective('o')],
-      keyResults: [
-        keyResult(
-          'kr',
-          objectiveId: 'o',
-          current: 100,
-          deadline: today.addDays(1),
-        ),
-      ],
-    );
-    expect(items, isEmpty);
-  });
-
-  test('KRs of non-active objectives are not listed', () {
-    final items = build(
-      objectives: [objective('o', status: ObjectiveStatus.completed)],
-      keyResults: [
-        keyResult('kr', objectiveId: 'o', deadline: today.addDays(1)),
-      ],
     );
     expect(items, isEmpty);
   });
@@ -155,39 +118,28 @@ void main() {
     final items = deadlineCandidates(
       tasks: const [],
       projects: [project('p', deadline: CalendarDate(2027, 3, 1))],
-      keyResults: const [],
-      objectives: const [],
-      habitCheckIns: const {},
       today: today,
     );
     expect(items.single.date, CalendarDate(2027, 3, 1));
     expect(items.single.overdue, isFalse);
   });
 
-  group('items with their own card on Home', () {
-    test('an active project is not repeated under deadlines', () {
-      final items = build(projects: [project('p', deadline: today.addDays(1))]);
-      expect(items, isEmpty);
-    });
+  test('Project not repeated: an active project is listed too', () {
+    final items = build(projects: [project('p', deadline: today.addDays(1))]);
+    expect(items.single.kind, DeadlineKind.project);
+  });
 
-    test('a task outside projects is a candidate but not listed', () {
-      final standalone = task(
-        't',
-        title: 'Tax return',
-        dueDate: today.addDays(1),
-      );
-      final candidates = deadlineCandidates(
-        tasks: const [],
-        tasksOutsideProjects: [standalone],
-        projects: const [],
-        keyResults: const [],
-        objectives: const [],
-        habitCheckIns: const {},
-        today: today,
-      );
-      expect(candidates.single.title, 'Tax return');
-      expect(candidates.single.hasOwnCard, isTrue);
-      expect(build(), isEmpty);
-    });
+  test('Overdue task outside projects is listed and marked', () {
+    final items = buildUpcomingDeadlines(
+      tasks: const [],
+      tasksOutsideProjects: [
+        task('t', title: 'Tax return', dueDate: today.addDays(-4)),
+      ],
+      projects: const [],
+      today: today,
+      leadDays: 7,
+    );
+    expect(items.single.title, 'Tax return');
+    expect(items.single.overdue, isTrue);
   });
 }

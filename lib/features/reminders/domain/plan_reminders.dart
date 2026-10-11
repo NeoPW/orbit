@@ -26,7 +26,7 @@ List<PlannedReminder> planReminders({
   required List<Habit> habits,
   required List<HabitCheck> checks,
   required Map<String, Project> projects,
-  required Map<String, KeyResult> keyResults,
+  required Map<String, Goal> goals,
   required List<UpcomingDeadline> deadlines,
   required DateTime now,
   Set<CalendarDate> completedReviewWeeks = const {},
@@ -60,8 +60,7 @@ List<PlannedReminder> planReminders({
         parseTimeOfDay(habit.reminderTime ?? '') ??
         settings.defaultReminderTime;
     final label =
-        projects[habit.projectId]?.title ??
-        keyResults[habit.keyResultId]?.title;
+        projects[habit.projectId]?.title ?? goals[habit.goalId]?.title;
     for (var day = today; !day.isAfter(lastDay); day = day.addDays(1)) {
       final when = at(day, time);
       if (!when.isAfter(now) || checkedOn.contains((habit.id, day))) continue;
@@ -88,11 +87,9 @@ List<PlannedReminder> planReminders({
     final kind = switch (item.kind) {
       DeadlineKind.task => 'Task',
       DeadlineKind.project => 'Project',
-      DeadlineKind.keyResult => 'Key result',
     };
     final context = [kind, ?item.projectTitle].join(' · ');
     final route = switch (item.kind) {
-      DeadlineKind.keyResult => Routes.keyResult(item.id),
       DeadlineKind.task => Routes.task(item.id),
       DeadlineKind.project => Routes.projectDetail(item.id),
     };

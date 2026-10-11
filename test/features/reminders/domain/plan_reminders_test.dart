@@ -16,7 +16,7 @@ List<PlannedReminder> plan({
   List<Habit> habits = const [],
   List<HabitCheck> checks = const [],
   List<Project> projects = const [],
-  List<KeyResult> keyResults = const [],
+  List<Goal> goals = const [],
   List<UpcomingDeadline> deadlines = const [],
   Set<CalendarDate> completedReviewWeeks = const {},
   DateTime? now,
@@ -27,7 +27,7 @@ List<PlannedReminder> plan({
     habits: habits,
     checks: checks,
     projects: {for (final p in projects) p.id: p},
-    keyResults: {for (final k in keyResults) k.id: k},
+    goals: {for (final g in goals) g.id: g},
     deadlines: deadlines,
     completedReviewWeeks: completedReviewWeeks,
     now: now ?? monday,
@@ -42,16 +42,11 @@ List<UpcomingDeadline> candidates({
   List<({Task task, Project project})> tasks = const [],
   List<Task> outside = const [],
   List<Project> projects = const [],
-  List<KeyResult> keyResults = const [],
-  List<Objective> objectives = const [],
   required DateTime now,
 }) => deadlineCandidates(
   tasks: tasks,
   tasksOutsideProjects: outside,
   projects: projects,
-  keyResults: keyResults,
-  objectives: objectives,
-  habitCheckIns: const {},
   today: CalendarDate(now.year, now.month, now.day),
 );
 
@@ -131,15 +126,15 @@ void main() {
       expect(reminders.first.at, DateTime(2026, 10, 6, 7, 30));
     });
 
-    test('labeled with the project, else the KR', () {
+    test('labeled with the project, else the goal', () {
       final reminders = plan(
         habits: [
           habit('a', title: 'Run', projectId: 'p'),
-          habit('b', title: 'Read', keyResultId: 'kr'),
+          habit('b', title: 'Read', goalId: 'g'),
           habit('c', title: 'Breathe'),
         ],
         projects: [project('p', title: 'Marathon')],
-        keyResults: [keyResult('kr', objectiveId: 'o', title: '20 books')],
+        goals: [goal('g', title: '20 books')],
         now: DateTime(2026, 10, 5, 6),
       );
       final bodies = {for (final r in reminders.take(3)) r.title: r.body};
@@ -214,9 +209,7 @@ void main() {
       final now = DateTime(2026, 10, 12, 6);
       final reminders = plan(
         deadlines: candidates(
-          projects: [project('p', keyResultId: 'kr')],
-          objectives: [objective('o')],
-          keyResults: [keyResult('kr', objectiveId: 'o')],
+          projects: [project('p', goalId: 'g')],
           now: now,
         ),
         now: now,
@@ -241,26 +234,6 @@ void main() {
       ]);
       expect(reminders.first.route, '/tasks/s');
       expect(reminders.first.body, 'Task · Due in 7 days');
-    });
-
-    test('KR reminders open the KR page', () {
-      final now = DateTime(2026, 10, 12, 6);
-      final reminders = plan(
-        deadlines: candidates(
-          objectives: [objective('o')],
-          keyResults: [
-            keyResult(
-              'kr',
-              objectiveId: 'o',
-              deadline: CalendarDate(2026, 10, 14),
-            ),
-          ],
-          now: now,
-        ),
-        now: now,
-      );
-      expect(reminders.single.route, '/key-results/kr');
-      expect(reminders.single.body, 'Key result · Due today');
     });
 
     test('beyond the 14-day horizon nothing is scheduled', () {

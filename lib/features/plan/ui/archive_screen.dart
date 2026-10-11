@@ -12,7 +12,7 @@ import '../../../core/widgets/orbit_chips.dart';
 import '../../projects/ui/project_labels.dart';
 import '../data/plan_providers.dart';
 
-/// Completed/archived objectives and completed projects. Tapping one opens
+/// Completed/archived goals and completed projects. Tapping one opens
 /// its page, where the status can be changed back.
 class ArchiveScreen extends ConsumerWidget {
   const ArchiveScreen({super.key});
@@ -34,17 +34,13 @@ class ArchiveScreen extends ConsumerWidget {
                   children: [
                     for (final item in items)
                       switch (item) {
-                        ArchivedObjective(:final objective) => ListTile(
+                        ArchivedGoal(:final goal) => ListTile(
                           leading: const Icon(Icons.flag_outlined),
-                          title: Text(objective.title),
+                          title: Text(goal.title),
                           subtitle: Text(
-                            formatDateRange(
-                              objective.startDate,
-                              objective.endDate,
-                            ),
+                            formatDateRange(goal.startDate, goal.endDate),
                           ),
-                          trailing:
-                              objective.status == ObjectiveStatus.completed
+                          trailing: goal.status == GoalStatus.completed
                               ? StatusChip<void>(
                                   label: 'Completed',
                                   color: colors.secondary,
@@ -53,8 +49,7 @@ class ArchiveScreen extends ConsumerWidget {
                                   label: 'Archived',
                                   color: colors.onSurfaceVariant,
                                 ),
-                          onTap: () =>
-                              context.push(Routes.objective(objective.id)),
+                          onTap: () => context.push(Routes.goal(goal.id)),
                         ),
                         ArchivedProject(:final project) => ListTile(
                           leading: const Icon(Icons.folder_outlined),

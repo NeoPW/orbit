@@ -12,11 +12,10 @@ import '../../../core/widgets/form_sheet.dart';
 import '../../../core/widgets/max_width_body.dart';
 import '../../../core/widgets/orbit_chips.dart';
 import '../../../core/widgets/section_heading.dart';
-import '../../key_results/data/key_result_repository.dart';
 import '../../log/data/log_repository.dart';
 import '../../log/ui/log_entry_tile.dart';
 import '../../log/ui/log_work_dialog.dart';
-import '../../objectives/data/objective_repository.dart';
+import '../../goals/data/goal_repository.dart';
 import '../../projects/data/project_repository.dart';
 import '../../settings/data/settings_repository.dart';
 import '../data/task_repository.dart';
@@ -147,15 +146,9 @@ class _Header extends ConsumerWidget {
     final info = describeAssignment(
       assignment,
       projects: projects,
-      keyResults: {
-        for (final k
-            in ref.watch(keyResultsProvider).value ?? const <KeyResult>[])
-          k.id: k,
-      },
-      objectives: {
-        for (final o
-            in ref.watch(objectivesProvider).value ?? const <Objective>[])
-          o.id: o,
+      goals: {
+        for (final g in ref.watch(goalsProvider).value ?? const <Goal>[])
+          g.id: g,
       },
     );
     final isNextStep = projects[task.projectId]?.nextStepTaskId == task.id;
@@ -207,8 +200,7 @@ class _Header extends ConsumerWidget {
                 label: Text('${info.kind} · ${info.title}'),
                 onPressed: () => context.push(switch (assignment) {
                   InProject(:final id) => Routes.projectDetail(id),
-                  ForKeyResult(:final id) => Routes.keyResult(id),
-                  ForObjective(:final id) => Routes.objective(id),
+                  ForGoal(:final id) => Routes.goal(id),
                   Standalone() => Routes.home,
                 }),
               ),
@@ -261,7 +253,7 @@ class _Actions extends ConsumerWidget {
             onPressed: () => showLogWorkDialog(
               context,
               projectId: task.projectId,
-              keyResultId: task.keyResultId,
+              goalId: task.goalId,
               taskId: task.id,
             ),
             icon: const Icon(Icons.more_time),

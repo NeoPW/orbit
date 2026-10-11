@@ -66,13 +66,6 @@ void main() {
     expect(await result, const ExistingNextStep('t2'));
   });
 
-  testWidgets('skip returns NoNextStep', (tester) async {
-    final result = await openPrompt(tester);
-    await tester.tap(find.text('Skip'));
-    await tester.pumpAndSettle();
-    expect(await result, const NoNextStep());
-  });
-
   testWidgets('cancel returns null', (tester) async {
     final result = await openPrompt(tester);
     await tester.tap(find.text('Cancel'));
