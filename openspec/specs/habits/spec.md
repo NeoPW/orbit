@@ -2,12 +2,12 @@
 
 ## Purpose
 
-Lets the user define recurring habits, optionally linked to a project and/or key result, with a schedule and an optional reminder time. Habits that are due can be checked off for today, which logs the work.
+Lets the user define recurring habits, optionally linked to a project and/or goal, with a schedule and an optional reminder time. Habits that are due can be checked off for today, which logs the work.
 
 ## Requirements
 
 ### Requirement: Habit list
-The app SHALL provide a Habits screen, reachable from the Plan tab's More sheet, listing all habits with their title, linked project and/or KR (left out when there is none), a schedule summary, and whether they are active. Tapping a habit SHALL open its edit form in a sheet.
+The app SHALL provide a Habits screen, reachable from the Plan tab's More sheet, listing all habits with their title, linked project and/or goal (left out when there is none), a schedule summary, and whether they are active. Tapping a habit SHALL open its edit form in a sheet.
 
 #### Scenario: Open habits
 - **WHEN** the user opens Habits from the Plan tab
@@ -18,15 +18,19 @@ The app SHALL provide a Habits screen, reachable from the Plan tab's More sheet,
 - **THEN** its edit form opens in a sheet over the Habits screen
 
 ### Requirement: Create habit
-The user SHALL be able to create a habit with a title (required), an optional link to a project and/or a KR, a schedule type (`daily`, `weekdays` or `times_per_week`), an optional reminder time and an active flag (default on). Only projects that are not completed and KRs of active objectives SHALL be offered for linking.
+The user SHALL be able to create a habit with a title (required), an optional link to a project and/or a goal, a schedule type (`daily`, `weekdays` or `times_per_week`), an optional reminder time and an active flag (default on). Only projects that are not completed and active goals SHALL be offered for linking.
 
 #### Scenario: Create daily habit
 - **WHEN** the user creates a habit "Stretch" linked to a project with schedule daily
 - **THEN** the habit appears in the Habits list as active with schedule "Daily"
 
 #### Scenario: No link
-- **WHEN** the user saves a habit "Meditate" without a project and without a KR
+- **WHEN** the user saves a habit "Meditate" without a project and without a goal
 - **THEN** the habit is saved and appears in the Habits list without any link shown
+
+#### Scenario: Link to a goal
+- **WHEN** the user creates a habit "Read" linked to the goal "Learn Spanish"
+- **THEN** the habit is listed on the page of "Learn Spanish"
 
 ### Requirement: Schedule fields depend on schedule type
 For `weekdays` the user SHALL pick at least one weekday (Monday first). For `times_per_week` the user SHALL enter a whole number from 1 to 7. For `daily` no extra field is shown.
@@ -61,13 +65,6 @@ The user SHALL be able to edit every field of a habit, including switching it in
 - **WHEN** the user switches a habit's active flag off and saves
 - **THEN** the habit is shown as inactive in the Habits list
 
-### Requirement: Delete habit
-The user SHALL be able to delete a habit after confirming. A habit KR that was linked to the deleted habit SHALL keep existing without a linked habit.
-
-#### Scenario: Delete habit linked to KR
-- **WHEN** the user deletes a habit that a habit KR is linked to, and confirms
-- **THEN** the habit is gone and the KR has no linked habit
-
 ### Requirement: Habit due today
 An active habit SHALL be due on a date when: for `daily`, always; for `weekdays`, the date's weekday is one of its weekdays; for `times_per_week`, it has fewer check-ins than `times_per_week` in that date's week, where weeks start on Monday. Inactive habits SHALL never be due.
 
@@ -92,11 +89,15 @@ An active habit SHALL be due on a date when: for `daily`, always; for `weekdays`
 - **THEN** it is not due
 
 ### Requirement: Check habit
-Checking a habit for today SHALL create a habit check for the habit and today's local date, and a log entry with source `habit`, the habit's linked project and KR (if any), the current time, no duration and the habit's title as note. A habit SHALL have at most one check per date.
+Checking a habit for today SHALL create a habit check for the habit and today's local date, and a log entry with source `habit`, the habit's linked project and goal (if any), the current time, no duration and the habit's title as note. A habit SHALL have at most one check per date.
 
 #### Scenario: Check habit
 - **WHEN** the user checks the habit "Run" linked to project "Marathon"
 - **THEN** a check for today exists and a log entry "Run" from source habit is listed for "Marathon"
+
+#### Scenario: Check a goal's habit
+- **WHEN** the user checks the habit "Read" linked to the goal "Learn Spanish"
+- **THEN** the log entry belongs to "Learn Spanish" and counts as work on it
 
 #### Scenario: No duplicate check
 - **WHEN** a habit is already checked today and a check is requested again
@@ -108,3 +109,10 @@ Unchecking a habit for today SHALL remove today's habit check and the log entry 
 #### Scenario: Uncheck
 - **WHEN** the user unchecks a habit that was checked today
 - **THEN** the check and its log entry are gone
+
+### Requirement: Delete a habit
+The user SHALL be able to delete a habit after confirming. A habit measure that was linked to the deleted habit SHALL keep existing without a linked habit.
+
+#### Scenario: Delete habit linked to a measure
+- **WHEN** the user deletes a habit that a habit measure is linked to, and confirms
+- **THEN** the habit is gone and the measure has no linked habit

@@ -25,7 +25,7 @@ At most one timer SHALL run at a time. Starting a timer while another one runs S
 - **THEN** a 30-minute timer entry for "Thesis" is logged and a timer for "Garden" runs
 
 ### Requirement: Stop a timer
-Stopping a timer SHALL create a log entry with source `timer`, the timer's start time as its time, the elapsed whole minutes as its duration (at least 1), and the timer's project, or its task together with the task's project or KR. Stopping SHALL end the timer and confirm the entry.
+Stopping a timer SHALL create a log entry with source `timer`, the timer's start time as its time, the elapsed whole minutes as its duration (at least 1), and the timer's project, or its task together with the task's project or goal. Stopping SHALL end the timer and confirm the entry.
 
 #### Scenario: Stop after 45 minutes
 - **WHEN** a timer for "Thesis" started at 09:00 is stopped at 09:45
@@ -36,8 +36,8 @@ Stopping a timer SHALL create a log entry with source `timer`, the timer's start
 - **THEN** the entry has a duration of 1 minute
 
 #### Scenario: Timer for a task
-- **WHEN** a timer for the task "Book physio", assigned to the KR "Run 100 km", is stopped
-- **THEN** the entry belongs to the task and the KR and is listed on the task page
+- **WHEN** a timer for the task "Book physio", assigned to the goal "Get fit", is stopped
+- **THEN** the entry belongs to the task and the goal and is listed on the task page
 
 ### Requirement: Discard a timer
 The user SHALL be able to discard a running timer. Discarding SHALL end the timer without creating a log entry.

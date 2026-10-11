@@ -1,8 +1,9 @@
 schema: spec-driven
 
 context: |
-  Project: personal, local-first app for tracking objectives, key results,
-  projects, tasks, habits and work done, with a guided weekly review.
+  Project: personal, local-first project and work tracker: goals (with
+  measures tracking their progress), projects, tasks, habits and work done,
+  with a guided weekly review.
   Single user. The full product spec is in docs/SPEC.md; read the relevant
   sections before writing any artifact.
 
@@ -34,16 +35,20 @@ context: |
     domain/ as plain Dart functions with unit tests, no Flutter imports
   - Dates: store timestamps in UTC; habit and review dates are local
     calendar dates; weeks start on Monday
-  - Material 3, light and dark theme with the Orbit palette and the
-    bundled Inter font (lib/core/theme/); use theme colors and the
-    OrbitColors extension, never hard-coded colors
+  - Material 3, dark only, with the Orbit palette, bundled Inter (body)
+    and Space Grotesk (headings) (lib/core/theme/); use theme colors and
+    the OrbitColors extension, never hard-coded colors (goal and area
+    colors come from the data and lib/core/space/space_colors.dart)
+  - Space visuals (planets, solar system, background) live in
+    lib/core/space/ and are static: no continuous animation
   - Responsive layout: bottom navigation on narrow screens (phone),
     navigation rail on wide screens (browser on PC); Plan shows two panes
     from 1000 px on (TwoPane)
 
   UI conventions (visual-design spec):
   - Show metadata with the shared widgets in lib/core/widgets/
-    (StatusChip, AreaChip, DeadlineChip, ImportanceDots, OrbitRing)
+    (StatusChip, AreaChip, DeadlineChip, ImportanceDots, OrbitRing,
+    GoalPlanet)
     instead of text lines
   - Leave unset values out; no placeholder texts like "No area",
     "No deadline" or "Importance 3" (choices in pickers are fine)
@@ -65,13 +70,18 @@ context: |
 rules:
   proposal:
     - Reference the relevant sections of docs/SPEC.md
+    - Keep the change small (about 5 delta specs and 15 tasks at most); if it is bigger, split it into several changes and propose them one at a time
     - State explicitly what is out of scope for this change
   specs:
     - Use WHEN/THEN scenarios that can be turned into tests
+    - Keep requirements small and focused, so a MODIFIED delta copies little text
   design:
+    - Write a design only for real decisions (schema, migrations, architecture); skip it for UI-only changes and keep it short
     - List new packages with a one-line justification
     - Describe database schema changes and migrations explicitly
   tasks:
     - Keep tasks small enough to verify individually
+    - Name the files each task touches
     - Include tasks for tests and for running flutter analyze
+    - Test each spec scenario once, at the lowest level that shows it; no tests for layout order, framework behavior or trivial getters
     - Include a task to verify the change on Android and in Chrome

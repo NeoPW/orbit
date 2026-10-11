@@ -41,7 +41,7 @@ Checking a habit SHALL cancel its reminder for that date. Unchecking it before t
 - **THEN** the 18:00 reminder is scheduled again
 
 ### Requirement: Deadline reminders
-For each open task (of an active project, or outside projects), each active project with an own deadline and each KR of an active objective with progress below 1 and an own deadline, the app SHALL schedule two notifications at the default reminder time: one on the date the deadline enters the lead time (deadline minus lead time days), showing "Due in N days", and one on the deadline date, showing "Due today". Reminders whose time has already passed SHALL NOT be scheduled.
+For each open task (of an active project, or outside projects) and each active project with an own deadline, the app SHALL schedule two notifications at the default reminder time: one on the date the deadline enters the lead time (deadline minus lead time days), showing "Due in N days", and one on the deadline date, showing "Due today". Reminders whose time has already passed SHALL NOT be scheduled.
 
 #### Scenario: Task due date
 - **WHEN** the lead time is 7 days, the default reminder time is 08:00 and an open task of an active project is due 2026-10-20
@@ -56,7 +56,7 @@ For each open task (of an active project, or outside projects), each active proj
 - **THEN** its reminders are no longer scheduled
 
 #### Scenario: Inherited deadline
-- **WHEN** an active project has no own deadline and inherits one from its KR
+- **WHEN** an active project has no own deadline and inherits one from its goal
 - **THEN** no reminder is scheduled for the project itself
 
 #### Scenario: Standalone task
@@ -64,7 +64,7 @@ For each open task (of an active project, or outside projects), each active proj
 - **THEN** its reminders are scheduled like those of a project task
 
 ### Requirement: Reminders stay up to date
-The scheduled reminders SHALL reflect the current habits, habit checks, tasks, projects, key results, objectives, weekly reviews and settings: they SHALL be recomputed after any change to them, when the app starts and when it returns to the foreground. Reminders SHALL be scheduled for the next 14 days.
+The scheduled reminders SHALL reflect the current habits, habit checks, tasks, projects, goals, weekly reviews and settings: they SHALL be recomputed after any change to them, when the app starts and when it returns to the foreground. Reminders SHALL be scheduled for the next 14 days.
 
 #### Scenario: Deadline moved
 - **WHEN** a project's deadline is changed from 2026-10-20 to 2026-10-25
@@ -82,8 +82,12 @@ The scheduled reminders SHALL reflect the current habits, habit checks, tasks, p
 - **WHEN** the review day is changed from Sunday to Monday
 - **THEN** the review reminders move to Mondays
 
+#### Scenario: Former KR reminders
+- **WHEN** the app is updated while deadline reminders of key results are scheduled
+- **THEN** those reminders are removed at the next recompute
+
 ### Requirement: Open from a reminder
-Tapping a notification SHALL open the app on the related screen: Home for a habit reminder and the running timer, the task page for a task reminder, the project detail for a project reminder, the KR page for a KR reminder, and the weekly review for a weekly review reminder. This SHALL also work when the app was not running.
+Tapping a notification SHALL open the app on the related screen: Home for a habit reminder and the running timer, the task page for a task reminder, the project detail for a project reminder, and the weekly review for a weekly review reminder. This SHALL also work when the app was not running.
 
 #### Scenario: Tap a task reminder
 - **WHEN** the user taps the reminder of the task "Book venue"
@@ -98,8 +102,8 @@ Tapping a notification SHALL open the app on the related screen: Home for a habi
 - **THEN** the guided weekly review opens
 
 #### Scenario: Tap a KR reminder
-- **WHEN** the user taps the deadline reminder of the KR "Run 100 km"
-- **THEN** the KR page of "Run 100 km" opens
+- **WHEN** the user taps a deadline reminder of the key result "Run 100 km" that was shown before the update
+- **THEN** the goal page of the goal it now belongs to opens
 
 ### Requirement: Android only
 Reminders SHALL only be scheduled on Android. In the browser the app SHALL NOT schedule or request notifications.

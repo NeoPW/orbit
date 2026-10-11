@@ -7,10 +7,10 @@ Gives each project a detail screen to get back into it quickly: its fields and e
 ## Requirements
 
 ### Requirement: Open project detail
-Tapping a project on Home, in the Plan tab's Overview or in the Backlog SHALL open its project detail. The detail SHALL have its own URL so a browser reload reopens it.
+Tapping a project on Home, in the Plan tab's Overview, on a goal page or in the Backlog SHALL open its project detail. The detail SHALL have its own URL so a browser reload reopens it.
 
 #### Scenario: From Plan Overview
-- **WHEN** the user taps a project under a KR in the Plan tab
+- **WHEN** the user taps a project under a goal in the Plan tab
 - **THEN** that project's detail opens
 
 #### Scenario: Reload in browser
@@ -18,11 +18,15 @@ Tapping a project on Home, in the Plan tab's Overview or in the Backlog SHALL op
 - **THEN** the same project detail is shown
 
 ### Requirement: Project information
-The project detail SHALL start with a header showing the title, a status chip, the area chip, the importance as dots and the deadline badge (marked when the effective deadline is inherited from the KR), followed by the description and the linked KR. Values that are not set SHALL be left out. An edit action in the top bar SHALL open the project's edit form.
+The project detail SHALL start with a header showing the title, a status chip, the area chip, the importance as dots and the deadline badge (marked when the effective deadline is inherited from the goal), followed by the description and the goal it serves in the goal's color. Tapping the goal SHALL open its page. Values that are not set SHALL be left out. An edit action in the top bar SHALL open the project's edit form.
 
 #### Scenario: Inherited deadline
-- **WHEN** a project without own deadline is linked to a KR due 2026-11-15
-- **THEN** the detail shows a deadline badge for 15-11-2026 marked as inherited from the key result
+- **WHEN** a project without own deadline serves a goal ending 2026-12-31
+- **THEN** the detail shows a deadline badge for 31-12-2026 marked as inherited from the goal
+
+#### Scenario: Open the goal
+- **WHEN** the user taps the goal "Get job" on the detail of "Create app"
+- **THEN** the goal page of "Get job" opens
 
 #### Scenario: Edit
 - **WHEN** the user uses the edit action and changes the importance to 5

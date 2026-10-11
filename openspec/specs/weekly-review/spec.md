@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Lets the user review a week: see it at a glance, walk through projects and key results, score it, reflect and plan the next week, and look back at earlier reviews and the current plan.
+Lets the user review a week: see it at a glance, walk through projects and goals, score it, reflect and plan the next week, and look back at earlier reviews and the current plan.
 
 ## Requirements
 
@@ -45,14 +45,14 @@ The Review tab SHALL show, from top to bottom: the plan for this week from the m
 - **THEN** the Review tab shows the week 12-10-2026 – 18-10-2026 with today's work, while the review button still refers to the week 05-10-2026 – 11-10-2026
 
 ### Requirement: Guided review steps
-The weekly review SHALL lead through six steps in order: 1 look back (the week summary), 2 projects, 3 key results, 4 score and reflection, 5 plan for next week, 6 save. Each step SHALL fill the screen, with a progress bar and the step's name at the top and Back / Next buttons at the bottom. The user SHALL be able to go back and forth between steps and leave the review at any time.
+The weekly review SHALL lead through six steps in order: 1 look back (the week summary), 2 projects, 3 goals, 4 score and reflection, 5 plan for next week, 6 save. Each step SHALL fill the screen, with a progress bar and the step's name at the top and Back / Next buttons at the bottom. The user SHALL be able to go back and forth between steps and leave the review at any time.
 
 #### Scenario: Step order
 - **WHEN** the user starts the weekly review and moves forward
-- **THEN** the steps appear in the order look back, projects, key results, score, plan, save
+- **THEN** the steps appear in the order look back, projects, goals, score, plan, save
 
 #### Scenario: Progress
-- **WHEN** the user is on the key results step
+- **WHEN** the user is on the goals step
 - **THEN** the progress bar shows step 3 of 6
 
 ### Requirement: Projects step
@@ -65,17 +65,6 @@ The projects step SHALL list every active project with its next step. For each, 
 #### Scenario: New next step
 - **WHEN** the user sets "Order seeds" as next step of "Garden"
 - **THEN** "Order seeds" is the project's next step
-
-### Requirement: Key results step
-The key results step SHALL list the numeric and boolean KRs of active objectives with their current progress, and SHALL let the user change a numeric KR's current value and a boolean KR's achieved state. Changes SHALL be applied immediately. Habit KRs SHALL be shown with their progress but not be editable.
-
-#### Scenario: Update a numeric value
-- **WHEN** the user changes "Run 100 km" from 40 to 55
-- **THEN** the KR's current value is 55 and its progress updates
-
-#### Scenario: Habit KR read-only
-- **WHEN** an active objective has a habit KR
-- **THEN** it is shown with its progress and no input
 
 ### Requirement: Score, reflection and plan
 The score step SHALL ask for a score from 1 to 10 and a free-text reflection; the plan step SHALL ask for a free-text plan for next week. A review SHALL NOT be saved as completed without a score.
@@ -92,11 +81,11 @@ Score, reflection and plan SHALL be stored as a draft review for the review week
 - **THEN** score 7 and the reflection are still filled in and the button reads "Continue weekly review"
 
 ### Requirement: Save the review
-Saving SHALL mark the review as completed (setting its completion time) and SHALL store, for every KR of an active objective, a snapshot of its progress at that moment. Saving an already completed review again SHALL update it and replace its snapshots.
+Saving SHALL mark the review as completed (setting its completion time) and SHALL store, for every measure of an active goal, a snapshot of its progress at that moment. Saving an already completed review again SHALL update it and replace its snapshots.
 
 #### Scenario: Save
 - **WHEN** the user saves a review with score 8
-- **THEN** the review is completed with score 8 and a snapshot exists for each KR of an active objective
+- **THEN** the review is completed with score 8 and a snapshot exists for each measure of an active goal
 
 #### Scenario: Edit a completed review
 - **WHEN** the user edits the completed review of the review week, changes the score to 6 and saves
@@ -123,3 +112,18 @@ The Review tab SHALL end with a "Last week" button that opens a page with the su
 #### Scenario: Open last week
 - **WHEN** today is Wednesday 2026-10-07 and the user taps "Last week"
 - **THEN** a page "Week 28-09-2026 – 04-10-2026" with that week's summary opens
+
+### Requirement: Goals step
+The goals step SHALL list every active goal with its progress and, below it, its measures. The user SHALL be able to change a numeric measure's current value and a boolean measure's achieved state; changes SHALL be applied immediately. Habit measures SHALL be shown with their progress but not be editable.
+
+#### Scenario: Update a numeric value
+- **WHEN** the user changes "Run 100 km" from 40 to 55 in the goals step
+- **THEN** the measure's current value is 55 and the progress of its goal updates
+
+#### Scenario: Habit measure read-only
+- **WHEN** an active goal has a habit measure
+- **THEN** it is shown with its progress and no input
+
+#### Scenario: Goal without measures
+- **WHEN** an active goal has no measures
+- **THEN** it is listed without a percentage and without inputs
