@@ -231,4 +231,34 @@ void main() {
       expect((await reload(p.id)).nextStepTaskId, isNull);
     });
   });
+
+  group('completion date', () {
+    test('completing sets it, reopening clears it', () async {
+      final p = await r.projects.create(title: 'Garden');
+      expect(p.completedAt, isNull);
+      await r.projects.setStatus(p.id, ProjectStatus.completed);
+      final done = await r.rawProject(p.id);
+      expect(done.completedAt, isNotNull);
+      expect(done.completedAt, done.updatedAt);
+
+      await r.projects.setStatus(p.id, ProjectStatus.active);
+      expect((await r.rawProject(p.id)).completedAt, isNull);
+    });
+
+    test('saving a completed project keeps its completion date', () async {
+      final p = await r.projects.create(title: 'Garden');
+      await r.projects.setStatus(p.id, ProjectStatus.completed);
+      final done = await r.rawProject(p.id);
+      await r.projects.save(done.copyWith(title: 'Garden 2'), nextStep: '');
+      expect((await r.rawProject(p.id)).completedAt, done.completedAt);
+    });
+
+    test('a project created as completed has one', () async {
+      final p = await r.projects.create(
+        title: 'Old',
+        status: ProjectStatus.completed,
+      );
+      expect(p.completedAt, isNotNull);
+    });
+  });
 }

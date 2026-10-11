@@ -68,51 +68,51 @@ void main() {
     expect(summary.work.single.minutes, 30);
   });
 
-  group('KRs of a reviewed week', () {
+  group('goals of a reviewed week', () {
     test(
       'a completed review shows its snapshots, not today\'s value',
       () async {
-        final o = await r.objective();
-        final kr = await r.numericKr(o.id);
-        await r.keyResults.setProgressValue(kr.id, 70);
+        final g = await r.goal();
+        final m = await r.numericMeasure(g.id);
+        await r.measures.setProgressValue(m.id, 70);
         await r.reviews.complete(
           week,
           score: 7,
           reflection: '',
           plan: '',
-          snapshots: {kr.id: 0.4},
+          snapshots: {m.id: 0.4},
         );
 
         final reviewed = await valueWhere(
           container,
           weekSummaryProvider(week),
-          (s) => s.keyResults.isNotEmpty,
+          (s) => s.goals.isNotEmpty,
         );
-        expect(reviewed.keyResults.single.progress, 0.4);
+        expect(reviewed.goals.single.progress, 0.4);
 
         // The next week has no completed review: today's value, +30 since.
         final next = await valueWhere(
           container,
           weekSummaryProvider(week.addDays(7)),
-          (s) => s.keyResults.isNotEmpty,
+          (s) => s.goals.isNotEmpty,
         );
-        expect(next.keyResults.single.progress, 0.7);
-        expect(next.keyResults.single.change, 30);
+        expect(next.goals.single.progress, 0.7);
+        expect(next.goals.single.change, 30);
 
         // The review flow always works on the live values.
         final live = await valueWhere(
           container,
-          currentKrProgressProvider(week),
-          (krs) => krs.isNotEmpty,
+          currentGoalProgressProvider(week),
+          (goals) => goals.isNotEmpty,
         );
         expect(live.single.progress, 0.7);
       },
     );
 
-    test('a KR deleted since the review is left out', () async {
-      final o = await r.objective();
-      final kept = await r.numericKr(o.id, title: 'Kept');
-      final gone = await r.numericKr(o.id, title: 'Gone');
+    test('a measure deleted since the review is left out', () async {
+      final g = await r.goal();
+      final kept = await r.numericMeasure(g.id, title: 'Kept');
+      final gone = await r.numericMeasure(g.id, title: 'Gone');
       await r.reviews.complete(
         week,
         score: 7,
@@ -120,14 +120,16 @@ void main() {
         plan: '',
         snapshots: {kept.id: 0.2, gone.id: 0.5},
       );
-      await r.keyResults.delete(gone.id);
+      await r.measures.delete(gone.id);
 
       final summary = await valueWhere(
         container,
         weekSummaryProvider(week),
-        (s) => s.keyResults.isNotEmpty,
+        (s) => s.goals.isNotEmpty,
       );
-      expect(summary.keyResults.map((k) => k.keyResult.title), ['Kept']);
+      expect(summary.goals.single.measures.map((m) => m.measure.title), [
+        'Kept',
+      ]);
     });
   });
 }

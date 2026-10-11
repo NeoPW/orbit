@@ -58,7 +58,7 @@ final class PlanOverviewProvider
   }
 }
 
-String _$planOverviewHash() => r'6a144a4a79ca3643075a3ed2e3a2148c7403ca07';
+String _$planOverviewHash() => r'8a59634ef6515c9f2ef29ffbecfca15203cb2f75';
 
 /// The item in Plan's detail pane (visual-design spec, "Two panes on wide
 /// screens"); kept while switching tabs.
@@ -122,14 +122,14 @@ abstract class _$PlanSelection extends $Notifier<PlanItem?> {
   }
 }
 
-/// Completed/archived objectives and completed projects, most recently
-/// updated first.
+/// Completed/archived goals and completed projects, most recently updated
+/// first.
 
 @ProviderFor(archive)
 final archiveProvider = ArchiveProvider._();
 
-/// Completed/archived objectives and completed projects, most recently
-/// updated first.
+/// Completed/archived goals and completed projects, most recently updated
+/// first.
 
 final class ArchiveProvider
     extends
@@ -139,8 +139,8 @@ final class ArchiveProvider
           AsyncValue<List<ArchiveItem>>
         >
     with $Provider<AsyncValue<List<ArchiveItem>>> {
-  /// Completed/archived objectives and completed projects, most recently
-  /// updated first.
+  /// Completed/archived goals and completed projects, most recently updated
+  /// first.
   ArchiveProvider._()
     : super(
         from: null,
@@ -177,4 +177,4 @@ final class ArchiveProvider
   }
 }
 
-String _$archiveHash() => r'e1a77205215c51fe8af5e997a07c33c29e4ed211';
+String _$archiveHash() => r'59330d351ca3b080ad5c9d51f1c57e0d6bb739db';

@@ -3,11 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:orbit/core/db/app_database.dart';
 import 'package:orbit/core/router/routes.dart';
+import 'package:orbit/core/space/solar_system.dart';
 import 'package:orbit/core/widgets/form_sheet.dart';
 import 'package:orbit/core/widgets/orbit_chips.dart';
-import 'package:orbit/features/key_results/ui/key_result_screen.dart';
-import 'package:orbit/features/key_results/ui/key_result_tile.dart';
-import 'package:orbit/features/objectives/ui/objective_screen.dart';
+import 'package:orbit/features/goals/ui/goal_screen.dart';
+import 'package:orbit/features/goals/ui/measure_tile.dart';
 import 'package:orbit/features/projects/ui/project_detail_screen.dart';
 import 'package:orbit/features/projects/ui/project_tile.dart';
 import 'package:orbit/features/tasks/domain/task_assignment.dart';
@@ -20,6 +20,10 @@ import '../../../helpers/test_db.dart';
 /// The URL the router reports to the browser.
 String location(WidgetTester tester, ({AppDatabase db, GoRouter router}) app) =>
     app.router.routeInformationProvider.value.uri.path;
+
+/// A goal's title on its card, not its planet's label.
+Finder inCard(String text) =>
+    find.descendant(of: find.byType(Card), matching: find.text(text));
 
 void main() {
   late AppDatabase db;
@@ -54,7 +58,7 @@ void main() {
       });
     }
 
-    for (final entry in ['New objective', 'New project', 'New habit']) {
+    for (final entry in ['New goal', 'New project', 'New habit']) {
       testApp('create menu entry $entry opens its form in a sheet', (
         tester,
       ) async {
@@ -77,30 +81,34 @@ void main() {
   });
 
   group('Overview', () {
-    testApp('shows objective → KR → project', (tester) async {
-      final o = await seed.objective(title: 'Get fit');
-      final kr = await seed.kr(o.id, title: 'Run 100 km');
-      await seed.kr(o.id, title: 'Swim 10 km');
-      await seed.projects.create(title: 'Marathon plan', keyResultId: kr.id);
+    testApp('shows goal → measures → projects', (tester) async {
+      final g = await seed.goal(title: 'Get fit');
+      await seed.measure(g.id, title: 'Run 100 km');
+      await seed.measure(g.id, title: 'Swim 10 km');
+      await seed.projects.create(title: 'Marathon plan', goalId: g.id);
       await seed.projects.create(title: 'Tax return');
-      await pumpApp(tester, db: db, location: Routes.plan);
+      await pumpApp(tester, db: db, location: Routes.plan, height: 1400);
 
-      expect(find.text('Get fit'), findsOneWidget);
+      expect(inCard('Get fit'), findsOneWidget);
       expect(find.text('01-10-2026 – 31-12-2026'), findsOneWidget);
-      expect(find.byType(KeyResultTile), findsNWidgets(2));
+      expect(find.text('20 %'), findsOneWidget);
+      // Measures collapsed by default.
+      expect(find.byType(MeasureTile), findsNothing);
+      await tester.tap(find.text('2 measures'));
+      await tester.pumpAndSettle();
+      expect(find.byType(MeasureTile), findsNWidgets(2));
       expect(find.text('20 / 100 km'), findsNWidgets(2));
 
-      // The project is listed right after its KR, before the next KR.
-      final run = tester.getTopLeft(find.text('Run 100 km')).dy;
-      final marathon = tester.getTopLeft(find.text('Marathon plan')).dy;
+      // The goal's projects follow its measures.
       final swim = tester.getTopLeft(find.text('Swim 10 km')).dy;
-      expect(run < marathon && marathon < swim, isTrue);
+      final marathon = tester.getTopLeft(find.text('Marathon plan')).dy;
+      expect(swim < marathon, isTrue);
 
-      final withoutKr = tester
-          .getTopLeft(find.text('Projects without a KR'))
+      final withoutGoal = tester
+          .getTopLeft(find.text('Projects without a goal'))
           .dy;
       final tax = tester.getTopLeft(find.text('Tax return')).dy;
-      expect(withoutKr < tax, isTrue);
+      expect(withoutGoal < tax, isTrue);
       expect(find.byType(ProjectTile), findsNWidgets(2));
     });
 
@@ -113,30 +121,18 @@ void main() {
       expect(find.textContaining('Importance'), findsNothing);
     });
 
-    testApp('tasks under a KR and an objective open their page', (
-      tester,
-    ) async {
-      final o = await seed.objective(title: 'Get fit');
-      final kr = await seed.kr(o.id, title: 'Run 100 km');
-      await seed.kr(o.id, title: 'Swim 10 km');
+    testApp('tasks under a goal open their page', (tester) async {
+      final g = await seed.goal(title: 'Get fit');
       final physio = await seed.tasks.create(
         title: 'Book physio',
-        assignment: ForKeyResult(kr.id),
-      );
-      await seed.tasks.create(
-        title: 'Buy shoes',
-        assignment: ForObjective(o.id),
+        assignment: ForGoal(g.id),
       );
       await seed.tasks.create(title: 'Standalone chore');
       final app = await pumpApp(tester, db: db, location: Routes.plan);
 
-      final objective = tester.getTopLeft(find.text('Get fit')).dy;
-      final shoes = tester.getTopLeft(find.text('Buy shoes')).dy;
-      final run = tester.getTopLeft(find.text('Run 100 km')).dy;
+      final goal = tester.getTopLeft(inCard('Get fit')).dy;
       final book = tester.getTopLeft(find.text('Book physio')).dy;
-      final swim = tester.getTopLeft(find.text('Swim 10 km')).dy;
-      expect(objective < shoes && shoes < run, isTrue);
-      expect(run < book && book < swim, isTrue);
+      expect(goal < book, isTrue);
       expect(find.text('Standalone chore'), findsNothing);
 
       await tester.tap(find.text('Book physio'));
@@ -144,67 +140,95 @@ void main() {
       expect(location(tester, app), Routes.task(physio.id));
     });
 
-    testApp('empty state offers to create an objective', (tester) async {
+    testApp('empty state offers to create a goal', (tester) async {
       final app = await pumpApp(tester, db: db, location: Routes.plan);
-      expect(find.text('No active objectives'), findsOneWidget);
-      await tester.tap(find.text('Create objective'));
+      expect(find.text('No active goals'), findsOneWidget);
+      expect(find.byType(SolarSystem), findsNothing);
+      await tester.tap(find.text('Create goal'));
       await tester.pumpAndSettle();
-      expect(find.widgetWithText(FormSheetFrame, 'New objective'), findsOne);
+      expect(find.widgetWithText(FormSheetFrame, 'New goal'), findsOne);
       expect(location(tester, app), Routes.plan);
     });
 
-    testApp('objective without KRs shows a hint and Add key result', (
+    testApp('the full solar system sits above the goals; a planet opens', (
       tester,
     ) async {
-      final o = await seed.objective();
+      final g = await seed.goal(title: 'Get fit');
       final app = await pumpApp(tester, db: db, location: Routes.plan);
-      expect(find.text('No key results yet'), findsOneWidget);
-      await tester.tap(find.text('Add key result'));
+      final system = tester.widget<SolarSystem>(find.byType(SolarSystem));
+      expect(system.compact, isFalse);
+      expect(system.planets.single.label, 'Get fit');
+      expect(
+        tester.getBottomLeft(find.byType(SolarSystem)).dy,
+        lessThan(tester.getTopLeft(find.text('01-10-2026 – 31-12-2026')).dy),
+      );
+      await tester.tap(find.bySemanticsLabel('Get fit').first);
       await tester.pumpAndSettle();
-      expect(find.widgetWithText(FormSheetFrame, 'New key result'), findsOne);
+      expect(location(tester, app), Routes.goal(g.id));
+    });
+
+    testApp('a goal without measures offers Add measure', (tester) async {
+      final g = await seed.goal();
+      final app = await pumpApp(tester, db: db, location: Routes.plan);
+      expect(find.textContaining('%'), findsNothing);
+      await tester.tap(find.text('Add measure'));
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(FormSheetFrame, 'New measure'), findsOne);
       expect(
         find.descendant(
           of: find.byType(FormSheetFrame),
-          matching: find.text(o.title),
+          matching: find.text(g.title),
         ),
         findsOneWidget,
       );
       expect(location(tester, app), Routes.plan);
     });
 
-    testApp('tapping a KR opens its page; Edit there opens the form', (
-      tester,
-    ) async {
-      final o = await seed.objective();
-      final kr = await seed.kr(o.id, title: 'Run 100 km');
+    testApp('Add a measure from the Plan tab', (tester) async {
+      final g = await seed.goal();
+      await seed.measure(g.id);
+      await pumpApp(tester, db: db, location: Routes.plan);
+      await tester.tap(find.text('1 measure'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add measure'));
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(FormSheetFrame, 'New measure'), findsOne);
+    });
+
+    testApp('tapping a measure opens the page of its goal', (tester) async {
+      final g = await seed.goal();
+      await seed.measure(g.id, title: 'Run 100 km');
       final app = await pumpApp(tester, db: db, location: Routes.plan);
+      await tester.tap(find.text('1 measure'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Run 100 km'));
       await tester.pumpAndSettle();
-      expect(location(tester, app), Routes.keyResult(kr.id));
-      expect(find.byType(KeyResultPageBody), findsOneWidget);
-      expect(find.text('Edit key result'), findsNothing);
+      expect(location(tester, app), Routes.goal(g.id));
+      expect(find.byType(GoalPageBody), findsOneWidget);
+    });
 
-      await tester.tap(find.byTooltip('Edit key result'));
+    testApp('tapping a goal opens its page; Edit there opens the form', (
+      tester,
+    ) async {
+      final g = await seed.goal();
+      final app = await pumpApp(tester, db: db, location: Routes.plan);
+      await tester.tap(inCard('Get fit'));
       await tester.pumpAndSettle();
-      expect(find.text('Edit key result'), findsOneWidget);
+      expect(location(tester, app), Routes.goal(g.id));
+      expect(find.byType(GoalPageBody), findsOneWidget);
+      expect(find.text('Edit goal'), findsNothing);
+
+      await tester.tap(find.byTooltip('Edit goal'));
+      await tester.pumpAndSettle();
+      expect(find.text('Edit goal'), findsOneWidget);
       expect(find.byType(BottomSheet), findsOneWidget);
     });
 
-    testApp('tapping an objective opens its page', (tester) async {
-      final o = await seed.objective();
-      final app = await pumpApp(tester, db: db, location: Routes.plan);
-      await tester.tap(find.text('Get fit'));
-      await tester.pumpAndSettle();
-      expect(location(tester, app), Routes.objective(o.id));
-      expect(find.byType(ObjectivePageBody), findsOneWidget);
-    });
-
     testApp('tapping a project opens its detail', (tester) async {
-      final o = await seed.objective();
-      final kr = await seed.kr(o.id);
+      final g = await seed.goal();
       final p = await seed.projects.create(
         title: 'Marathon plan',
-        keyResultId: kr.id,
+        goalId: g.id,
       );
       final app = await pumpApp(tester, db: db, location: Routes.plan);
       await tester.tap(find.text('Marathon plan'));
@@ -219,11 +243,10 @@ void main() {
     testApp('saving a form updates the Overview without reload', (
       tester,
     ) async {
-      final o = await seed.objective();
-      final kr = await seed.kr(o.id);
+      final g = await seed.goal();
       final p = await seed.projects.create(
         title: 'Marathon plan',
-        keyResultId: kr.id,
+        goalId: g.id,
       );
       final app = await pumpApp(tester, db: db, location: Routes.plan);
       app.router.push(Routes.projectDetail(p.id));
@@ -264,11 +287,11 @@ void main() {
     });
 
     testApp('activating moves the project to Overview', (tester) async {
-      final o = await seed.objective();
-      final kr = await seed.kr(o.id, title: 'Run 100 km');
+      final g = await seed.goal();
+      await seed.measure(g.id, title: 'Run 100 km');
       await seed.projects.create(
         title: 'Marathon plan',
-        keyResultId: kr.id,
+        goalId: g.id,
         status: ProjectStatus.backlog,
       );
       await seed.projects.create(title: 'Active one');
@@ -287,7 +310,7 @@ void main() {
 
       await tester.tap(find.widgetWithText(Tab, 'Overview'));
       await tester.pumpAndSettle();
-      final run = tester.getTopLeft(find.text('Run 100 km')).dy;
+      final run = tester.getTopLeft(find.text('1 measure')).dy;
       final marathon = tester.getTopLeft(find.text('Marathon plan')).dy;
       expect(marathon > run, isTrue);
     });
@@ -365,13 +388,9 @@ void main() {
       expect(find.byType(ProjectDetailBody), findsNothing);
     });
 
-    testApp('at 1400 px a task under a KR opens in the pane', (tester) async {
-      final o = await seed.objective();
-      final kr = await seed.kr(o.id, title: 'Run 100 km');
-      await seed.tasks.create(
-        title: 'Book physio',
-        assignment: ForKeyResult(kr.id),
-      );
+    testApp('at 1400 px a task of a goal opens in the pane', (tester) async {
+      final g = await seed.goal();
+      await seed.tasks.create(title: 'Book physio', assignment: ForGoal(g.id));
       final app = await pumpApp(
         tester,
         db: db,
@@ -383,35 +402,38 @@ void main() {
 
       expect(location(tester, app), Routes.plan);
       expect(find.byType(TaskPageBody), findsOneWidget);
-      expect(find.text('Key result · Run 100 km'), findsOneWidget);
+      expect(find.text('Goal · Get fit'), findsOneWidget);
     });
 
-    testApp('at 1400 px a KR and an objective open in the pane', (
+    testApp('at 1400 px a goal opens in the pane, also from a measure', (
       tester,
     ) async {
-      final o = await seed.objective();
-      await seed.kr(o.id, title: 'Run 100 km');
+      final g = await seed.goal();
+      await seed.measure(g.id, title: 'Run 100 km');
       final app = await pumpApp(
         tester,
         db: db,
         location: Routes.plan,
         width: 1400,
       );
-      await tester.tap(find.text('Run 100 km'));
+      await tester.tap(find.text('1 measure'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(MeasureTile));
       await tester.pumpAndSettle();
       expect(location(tester, app), Routes.plan);
-      final pane = find.byType(KeyResultPageBody);
+      final pane = find.byType(GoalPageBody);
       expect(pane, findsOneWidget);
       expect(
         tester.getTopLeft(pane).dx,
-        greaterThan(tester.getTopRight(find.byType(KeyResultTile)).dx),
+        greaterThan(tester.getTopRight(find.byType(MeasureTile)).dx),
       );
 
+      await tester.tap(find.byTooltip('Close'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Get fit').first);
       await tester.pumpAndSettle();
       expect(location(tester, app), Routes.plan);
-      expect(find.byType(ObjectivePageBody), findsOneWidget);
-      expect(find.byType(KeyResultPageBody), findsNothing);
+      expect(find.byType(GoalPageBody), findsOneWidget);
     });
 
     testApp('at 400 px a project opens as its own page', (tester) async {
@@ -426,17 +448,15 @@ void main() {
   });
 
   group('Archive', () {
-    testApp('an archived objective opens its page and can be restored', (
+    testApp('an archived goal opens its page and can be restored', (
       tester,
     ) async {
-      final o = await seed.objective(title: 'Old goal');
-      await seed.objectives.update(
-        o.copyWith(status: ObjectiveStatus.archived),
-      );
+      final o = await seed.goal(title: 'Old goal');
+      await seed.goals.update(o.copyWith(status: GoalStatus.archived));
       final app = await pumpApp(tester, db: db, location: Routes.archive);
       await tester.tap(find.text('Old goal'));
       await tester.pumpAndSettle();
-      expect(location(tester, app), Routes.objective(o.id));
+      expect(location(tester, app), Routes.goal(o.id));
       await tester.tap(find.byTooltip('Change status'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Active'));
@@ -444,7 +464,7 @@ void main() {
       app.router.pop();
       await tester.pumpAndSettle();
       expect(find.text('Old goal'), findsNothing);
-      expect((await seed.objectives.get(o.id))!.status, ObjectiveStatus.active);
+      expect((await seed.goals.get(o.id))!.status, GoalStatus.active);
     });
 
     testApp('restoring a project to active removes it from the Archive', (
@@ -454,11 +474,9 @@ void main() {
         title: 'Old project',
         status: ProjectStatus.completed,
       );
-      final o = await seed.objective(title: 'Old goal');
-      await seed.objectives.update(
-        o.copyWith(status: ObjectiveStatus.archived),
-      );
-      await seed.objective(title: 'Current goal');
+      final o = await seed.goal(title: 'Old goal');
+      await seed.goals.update(o.copyWith(status: GoalStatus.archived));
+      await seed.goal(title: 'Current goal');
       final app = await pumpApp(tester, db: db, location: Routes.archive);
 
       expect(find.text('Old project'), findsOneWidget);

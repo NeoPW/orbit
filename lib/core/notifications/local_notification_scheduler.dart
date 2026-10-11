@@ -35,7 +35,7 @@ class LocalNotificationScheduler implements NotificationScheduler {
     ReminderKind.deadline: AndroidNotificationDetails(
       'deadline_reminders',
       'Deadline reminders',
-      channelDescription: 'Tasks, projects and key results coming due',
+      channelDescription: 'Tasks and projects coming due',
       importance: Importance.high,
       priority: Priority.high,
     ),

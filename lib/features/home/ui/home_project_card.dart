@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/routes.dart';
+import '../../../core/space/planets.dart';
+import '../../../core/space/space_colors.dart';
 import '../../../core/time/today.dart';
 import '../../../core/widgets/area_dot.dart';
 import '../../../core/widgets/orbit_chips.dart';
@@ -10,10 +12,10 @@ import '../../settings/data/settings_repository.dart';
 import '../../tasks/ui/complete_task.dart';
 import '../data/home_providers.dart';
 
-/// An active project on Home: an area accent, title, deadline badge, area
-/// and importance, and the next step as a checkbox row. Ticking the next
-/// step completes it (via the next-step prompt); tapping elsewhere opens
-/// the project detail.
+/// An active project on Home: an area accent, title, deadline badge, area,
+/// the goal it serves and importance, and the next step as a checkbox row.
+/// Ticking the next step completes it (via the next-step prompt); tapping
+/// elsewhere opens the project detail.
 class HomeProjectCard extends ConsumerWidget {
   const HomeProjectCard({super.key, required this.item});
 
@@ -74,6 +76,24 @@ class HomeProjectCard extends ConsumerWidget {
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           if (area != null) AreaChip(area: area),
+                          if (item.goal case final goal?)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Planet(
+                                  color: colorOfGoal(goal),
+                                  size: 14,
+                                  glow: 0,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  goal.title,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: colors.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ImportanceDots(value: item.project.importance),
                         ],
                       ),

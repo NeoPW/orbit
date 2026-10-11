@@ -40,7 +40,7 @@ class HabitCheckRepository extends Repository {
 
         final entry = await _logs.add(
           projectId: habit.projectId,
-          keyResultId: habit.keyResultId,
+          goalId: habit.goalId,
           note: habit.title,
           source: LogSource.habit,
         );

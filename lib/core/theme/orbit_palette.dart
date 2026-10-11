@@ -39,42 +39,6 @@ abstract final class OrbitPalette {
     shadow: Colors.black,
     scrim: Colors.black,
   );
-
-  static const light = ColorScheme(
-    brightness: Brightness.light,
-    primary: Color(0xFF4A57D6),
-    onPrimary: Color(0xFFFFFFFF),
-    primaryContainer: Color(0xFFDDE1FF),
-    onPrimaryContainer: Color(0xFF121A6B),
-    secondary: Color(0xFF0A8FA3),
-    onSecondary: Color(0xFFFFFFFF),
-    secondaryContainer: Color(0xFFC6F3F8),
-    onSecondaryContainer: Color(0xFF00363D),
-    tertiary: Color(0xFFB86E00),
-    onTertiary: Color(0xFFFFFFFF),
-    tertiaryContainer: Color(0xFFFFE1B8),
-    onTertiaryContainer: Color(0xFF3D2600),
-    error: Color(0xFFC93C3C),
-    onError: Color(0xFFFFFFFF),
-    errorContainer: Color(0xFFFFDAD6),
-    onErrorContainer: Color(0xFF410002),
-    surface: Color(0xFFF4F5FB),
-    onSurface: Color(0xFF141936),
-    onSurfaceVariant: Color(0xFF525A82),
-    surfaceContainerLowest: Color(0xFFFFFFFF),
-    surfaceContainerLow: Color(0xFFFAFBFE),
-    surfaceContainer: Color(0xFFFFFFFF),
-    surfaceContainerHigh: Color(0xFFECEEF8),
-    surfaceContainerHighest: Color(0xFFE3E6F3),
-    outline: Color(0xFF8088AE),
-    outlineVariant: Color(0xFFD9DCEC),
-    inverseSurface: Color(0xFF141936),
-    onInverseSurface: Color(0xFFF4F5FB),
-    inversePrimary: Color(0xFF8F9DFF),
-    surfaceTint: Colors.transparent,
-    shadow: Colors.black,
-    scrim: Colors.black,
-  );
 }
 
 /// Orbit colors that have no Material role: urgency, overdue and the
@@ -97,14 +61,6 @@ class OrbitColors extends ThemeExtension<OrbitColors> {
     ringTrack: Color(0xFF242E5E),
   );
 
-  static const light = OrbitColors(
-    urgent: Color(0xFFB86E00),
-    onUrgent: Color(0xFFFFFFFF),
-    overdue: Color(0xFFC93C3C),
-    onOverdue: Color(0xFFFFFFFF),
-    ringTrack: Color(0xFFE3E6F3),
-  );
-
   /// Deadlines within the lead time.
   final Color urgent;
   final Color onUrgent;
@@ -115,8 +71,7 @@ class OrbitColors extends ThemeExtension<OrbitColors> {
   final Color ringTrack;
 
   static OrbitColors of(BuildContext context) =>
-      Theme.of(context).extension<OrbitColors>() ??
-      (Theme.of(context).brightness == Brightness.dark ? dark : light);
+      Theme.of(context).extension<OrbitColors>() ?? dark;
 
   @override
   OrbitColors copyWith({

@@ -11,8 +11,8 @@ void main() {
 
   final week = CalendarDate(2026, 10, 5);
 
-  Future<List<ReviewKrSnapshot>> liveSnapshots() => (r.db.select(
-    r.db.reviewKrSnapshots,
+  Future<List<ReviewMeasureSnapshot>> liveSnapshots() => (r.db.select(
+    r.db.reviewMeasureSnapshots,
   )..where((s) => s.deletedAt.isNull())).get();
 
   group('drafts', () {
@@ -64,20 +64,20 @@ void main() {
         week,
         score: 8,
         plan: 'Chapter 3',
-        snapshots: {'kr1': 0.4, 'kr2': 1},
+        snapshots: {'m1': 0.4, 'm2': 1},
       );
       expect(review.completedAt, isNotNull);
       final snapshots = await liveSnapshots();
       expect(
-        {for (final s in snapshots) s.keyResultId: s.progress},
-        {'kr1': 0.4, 'kr2': 1.0},
+        {for (final s in snapshots) s.measureId: s.progress},
+        {'m1': 0.4, 'm2': 1.0},
       );
       expect(snapshots.every((s) => s.weeklyReviewId == review.id), isTrue);
     });
 
     test('saving again replaces the snapshots', () async {
-      await r.reviews.complete(week, score: 8, snapshots: {'kr1': 0.4});
-      await r.reviews.complete(week, score: 6, snapshots: {'kr1': 0.5});
+      await r.reviews.complete(week, score: 8, snapshots: {'m1': 0.4});
+      await r.reviews.complete(week, score: 6, snapshots: {'m1': 0.5});
 
       final snapshots = await liveSnapshots();
       expect(snapshots.single.progress, 0.5);
@@ -102,18 +102,18 @@ void main() {
     await r.reviews.complete(
       CalendarDate(2026, 9, 21),
       score: 5,
-      snapshots: {'kr1': 0.1, 'kr2': 0.2},
+      snapshots: {'m1': 0.1, 'm2': 0.2},
     );
     await r.reviews.complete(
       CalendarDate(2026, 9, 28),
       score: 6,
-      snapshots: {'kr1': 0.3},
+      snapshots: {'m1': 0.3},
     );
     // The review week itself and drafts do not count.
-    await r.reviews.complete(week, score: 7, snapshots: {'kr1': 0.9});
+    await r.reviews.complete(week, score: 7, snapshots: {'m1': 0.9});
 
     final latest = await r.reviews.watchLatestSnapshotsBefore(week).first;
-    expect(latest, {'kr1': 0.3, 'kr2': 0.2});
+    expect(latest, {'m1': 0.3, 'm2': 0.2});
   });
 
   test('the ID is derived from the week', () async {

@@ -19,24 +19,18 @@ double contrast(Color a, Color b) {
 
 void main() {
   test('body text uses Inter, headings Space Grotesk', () {
-    for (final theme in [lightTheme, darkTheme]) {
-      expect(theme.textTheme.bodyMedium!.fontFamily, appFontFamily);
-      expect(theme.textTheme.titleMedium!.fontFamily, 'Inter');
-      expect(theme.textTheme.titleLarge!.fontFamily, displayFontFamily);
-    }
+    expect(darkTheme.textTheme.bodyMedium!.fontFamily, appFontFamily);
+    expect(darkTheme.textTheme.titleMedium!.fontFamily, 'Inter');
+    expect(darkTheme.textTheme.titleLarge!.fontFamily, displayFontFamily);
   });
 
-  test('both themes carry the Orbit colors', () {
+  test('the theme carries the Orbit colors and is dark', () {
     expect(darkTheme.colorScheme.surface, OrbitPalette.dark.surface);
-    expect(lightTheme.colorScheme.primary, OrbitPalette.light.primary);
+    expect(darkTheme.colorScheme.brightness, Brightness.dark);
     expect(darkTheme.extension<OrbitColors>(), OrbitColors.dark);
-    expect(lightTheme.extension<OrbitColors>(), OrbitColors.light);
   });
 
-  for (final (name, scheme) in [
-    ('dark', OrbitPalette.dark),
-    ('light', OrbitPalette.light),
-  ]) {
+  for (final (name, scheme) in [('dark', OrbitPalette.dark)]) {
     test('$name: body text contrast is at least 4.5:1', () {
       for (final background in [scheme.surface, scheme.surfaceContainer]) {
         for (final text in [scheme.onSurface, scheme.onSurfaceVariant]) {

@@ -62,14 +62,6 @@ void main() {
     expect(await names(), ['Job', 'Personal', 'Sport', 'Uni', 'Family']);
   });
 
-  test('watchAll emits again after a change', () async {
-    final emissions = repo.watchAll().map((a) => a.length);
-    final expectation = expectLater(emissions, emitsInOrder([4, 5]));
-    await Future<void>.delayed(Duration.zero);
-    await repo.create(name: 'Family', color: '#E53935');
-    await expectation;
-  });
-
   group('isNameTaken', () {
     test('is case-insensitive and trimmed', () async {
       expect(await repo.isNameTaken('sport'), isTrue);

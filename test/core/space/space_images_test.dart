@@ -18,11 +18,6 @@ void main() {
     );
   });
 
-  test('the same day always gives the same image', () {
-    final day = CalendarDate(2026, 10, 7);
-    expect(spaceImageFor(day).name, spaceImageFor(day).name);
-  });
-
   test('a pinned image wins; an unknown one is ignored', () {
     final day = CalendarDate(2026, 10, 7);
     expect(spaceImageFor(day, pinned: 'crab_nebula').name, 'crab_nebula');

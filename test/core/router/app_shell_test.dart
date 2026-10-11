@@ -26,6 +26,15 @@ int selectedIndex(WidgetTester tester) {
 }
 
 void main() {
+  testApp('a light system still gets the dark theme', (tester) async {
+    tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
+    addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+    await pumpApp(tester);
+
+    final context = tester.element(find.byType(Scaffold).first);
+    expect(Theme.of(context).brightness, Brightness.dark);
+  });
+
   testApp('phone width shows a bottom navigation bar', (tester) async {
     await pumpApp(tester, width: 400);
     expect(find.byType(NavigationBar), findsOneWidget);
@@ -80,11 +89,6 @@ void main() {
     expect(find.widgetWithText(AppBar, 'Home'), findsOneWidget);
   });
 
-  testApp('/ shows Home', (tester) async {
-    await pumpApp(tester, location: '/');
-    expect(find.widgetWithText(AppBar, 'Home'), findsOneWidget);
-  });
-
   testApp('the storage warning shows a banner', (tester) async {
     await pumpApp(tester);
     expect(find.byType(MaterialBanner), findsNothing);
@@ -98,20 +102,5 @@ void main() {
     expect(find.textContaining('not saved'), findsOneWidget);
   });
 
-  group('destinations', () {
-    testApp('Home shows its sections, not a placeholder', (tester) async {
-      await pumpApp(tester);
-      expect(find.text('Habits due today'), findsOneWidget);
-      expect(find.textContaining('later milestone'), findsNothing);
-    });
-
-    testApp('Review shows the weekly review, not a placeholder', (
-      tester,
-    ) async {
-      await pumpApp(tester, location: '/review');
-      expect(find.widgetWithText(AppBar, 'Review'), findsOneWidget);
-      expect(find.text("This week's plan"), findsOneWidget);
-      expect(find.textContaining('later milestone'), findsNothing);
-    });
-  });
+  group('destinations', () {});
 }

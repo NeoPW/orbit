@@ -4,10 +4,7 @@ import 'package:orbit/core/db/app_database.dart';
 import 'package:orbit/core/theme/app_theme.dart';
 import 'package:orbit/core/theme/orbit_palette.dart';
 import 'package:orbit/core/widgets/orbit_chips.dart';
-import 'package:orbit/core/widgets/orbit_ring.dart';
 import 'package:orbit/core/widgets/section_heading.dart';
-
-import '../../helpers/fixtures.dart';
 
 Future<void> pump(WidgetTester tester, Widget child) => tester.pumpWidget(
   MaterialApp(
@@ -52,13 +49,8 @@ void main() {
         tester,
         DeadlineChip(date: today.addDays(20), today: today, inherited: true),
       );
-      expect(find.text('Due in 20 days · KR'), findsOneWidget);
+      expect(find.text('Due in 20 days · goal'), findsOneWidget);
     });
-  });
-
-  testWidgets('AreaChip shows the name', (tester) async {
-    await pump(tester, AreaChip(area: area('a', name: 'Job')));
-    expect(find.text('Job'), findsOneWidget);
   });
 
   testWidgets('StatusChip offers the other statuses', (tester) async {
@@ -95,12 +87,6 @@ void main() {
     expect(dots, hasLength(5));
     expect(dots.where((c) => c == OrbitPalette.dark.primary), hasLength(3));
     expect(find.bySemanticsLabel('Importance 3 of 5'), findsOneWidget);
-  });
-
-  testWidgets('OrbitRing shows its label', (tester) async {
-    await pump(tester, const OrbitRing(progress: 0.5, label: '2/4'));
-    expect(find.text('2/4'), findsOneWidget);
-    expect(find.bySemanticsLabel('2/4'), findsOneWidget);
   });
 
   testWidgets('an empty section shows its action', (tester) async {

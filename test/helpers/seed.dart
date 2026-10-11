@@ -1,9 +1,9 @@
 import 'package:orbit/core/db/app_database.dart';
 import 'package:orbit/features/habits/data/habit_check_repository.dart';
 import 'package:orbit/features/habits/data/habit_repository.dart';
-import 'package:orbit/features/key_results/data/key_result_repository.dart';
+import 'package:orbit/features/goals/data/goal_repository.dart';
+import 'package:orbit/features/goals/data/measure_repository.dart';
 import 'package:orbit/features/log/data/log_repository.dart';
-import 'package:orbit/features/objectives/data/objective_repository.dart';
 import 'package:orbit/features/projects/data/project_repository.dart';
 import 'package:orbit/features/tasks/data/task_repository.dart';
 import 'package:orbit/core/db/ids.dart';
@@ -11,8 +11,8 @@ import 'package:orbit/core/db/ids.dart';
 /// Writes test data straight through the repositories (real clock and IDs).
 class Seed {
   Seed(AppDatabase db)
-    : objectives = ObjectiveRepository(db, _now, uuidV4),
-      keyResults = KeyResultRepository(db, _now, uuidV4),
+    : goals = GoalRepository(db, _now, uuidV4),
+      measures = MeasureRepository(db, _now, uuidV4),
       projects = ProjectRepository(db, _now, uuidV4),
       habits = HabitRepository(db, _now, uuidV4),
       tasks = TaskRepository(db, _now, uuidV4),
@@ -21,26 +21,28 @@ class Seed {
 
   static DateTime _now() => DateTime.now().toUtc();
 
-  final ObjectiveRepository objectives;
-  final KeyResultRepository keyResults;
+  final GoalRepository goals;
+  final MeasureRepository measures;
   final ProjectRepository projects;
   final HabitRepository habits;
   final TaskRepository tasks;
   final LogRepository logs;
   final HabitCheckRepository habitChecks;
 
-  Future<Objective> objective({
+  Future<Goal> goal({
     String title = 'Get fit',
     CalendarDate? start,
     CalendarDate? end,
-  }) => objectives.create(
+    String? color,
+  }) => goals.create(
     title: title,
     startDate: start ?? CalendarDate(2026, 10, 1),
     endDate: end ?? CalendarDate(2026, 12, 31),
+    color: color,
   );
 
-  Future<KeyResult> kr(
-    String objectiveId, {
+  Future<Measure> measure(
+    String goalId, {
     String title = 'Run 100 km',
     MeasureType type = MeasureType.numeric,
     double? start = 0,
@@ -49,9 +51,8 @@ class Seed {
     String? unit = 'km',
     double step = 1,
     String? habitId,
-    CalendarDate? deadline,
-  }) => keyResults.create(
-    objectiveId: objectiveId,
+  }) => measures.create(
+    goalId: goalId,
     title: title,
     measureType: type,
     startValue: start,
@@ -60,6 +61,5 @@ class Seed {
     unit: unit,
     step: step,
     habitId: habitId,
-    deadline: deadline,
   );
 }

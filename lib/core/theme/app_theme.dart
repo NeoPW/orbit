@@ -8,7 +8,7 @@ const appFontFamily = 'Inter';
 /// The display font for titles, bundled (assets/fonts, variable weight).
 const displayFontFamily = 'SpaceGrotesk';
 
-final lightTheme = _theme(OrbitPalette.light, OrbitColors.light);
+/// The app's only theme: Orbit is dark only (visual-design spec).
 final darkTheme = _theme(OrbitPalette.dark, OrbitColors.dark);
 
 ThemeData _theme(ColorScheme colors, OrbitColors orbit) {

@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../features/areas/ui/areas_screen.dart';
 import '../../features/habits/ui/habits_screen.dart';
 import '../../features/home/ui/home_screen.dart';
-import '../../features/key_results/ui/key_result_screen.dart';
-import '../../features/objectives/ui/objective_screen.dart';
+import '../../features/goals/ui/goal_screen.dart';
+import '../../features/goals/ui/measure_redirect_screen.dart';
 import '../../features/plan/ui/archive_screen.dart';
 import '../../features/plan/ui/plan_screen.dart';
 import '../../features/projects/ui/project_detail_screen.dart';
@@ -19,18 +19,23 @@ import '../../features/tasks/ui/task_screen.dart';
 import 'app_shell.dart';
 import 'routes.dart';
 
-/// Where an outdated path leads (plan-overview spec, "Old form URL"): `/`
-/// to Home, and the former form URLs to the matching page. Null keeps the
-/// path.
+/// Where an outdated path leads (plan-overview spec, "Old form URL";
+/// app-shell spec, "Former objective and key result addresses"): `/` to
+/// Home, objective pages to the goal pages, and the former form URLs to the
+/// matching page. Key result pages stay: a screen looks up their goal.
+/// Null keeps the path.
 String? redirectOldPath(String path) {
   if (path == '/') return Routes.home;
   final segments = Uri(path: path).pathSegments;
+  if (segments.length == 2 && segments.first == 'objectives') {
+    return Routes.goal(segments.last);
+  }
   if (segments.length < 3 || segments.first != 'plan') return null;
   final [_, kind, id, ...rest] = segments;
   final isNew = id == 'new' || rest.isNotEmpty;
   return switch (kind) {
-    'objectives' => isNew ? Routes.plan : Routes.objective(id),
-    'key-results' => Routes.keyResult(id),
+    'objectives' => isNew ? Routes.plan : Routes.goal(id),
+    'key-results' => '/key-results/$id',
     'projects' => isNew ? Routes.plan : Routes.projectDetail(id),
     'habits' => Routes.habits,
     _ => null,
@@ -80,15 +85,16 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
       ),
       GoRoute(
         parentNavigatorKey: rootKey,
-        path: '/objectives/:id',
+        path: '/goals/:id',
         builder: (context, state) =>
-            ObjectiveScreen(objectiveId: state.pathParameters['id']!),
+            GoalScreen(goalId: state.pathParameters['id']!),
       ),
+      // Former key result pages (and their reminders) open the goal.
       GoRoute(
         parentNavigatorKey: rootKey,
         path: '/key-results/:id',
         builder: (context, state) =>
-            KeyResultScreen(keyResultId: state.pathParameters['id']!),
+            MeasureRedirectScreen(measureId: state.pathParameters['id']!),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(shell: shell),

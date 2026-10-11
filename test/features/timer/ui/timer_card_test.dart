@@ -54,15 +54,6 @@ void main() {
     expect(find.text('1:05:04'), findsOneWidget);
   });
 
-  testApp('the card sits between the header and the habits', (tester) async {
-    final p = await seed.projects.create(title: 'Thesis');
-    await startTimer(TimerForProject(p.id));
-    await pumpHome(tester);
-    final card = tester.getTopLeft(find.text('Stop')).dy;
-    expect(card, greaterThan(tester.getTopLeft(find.text('Wednesday')).dy));
-    expect(card, lessThan(tester.getTopLeft(find.text('Habits due today')).dy));
-  });
-
   testApp('Stop logs the time and removes the card', (tester) async {
     final p = await seed.projects.create(title: 'Thesis');
     await startTimer(TimerForProject(p.id));

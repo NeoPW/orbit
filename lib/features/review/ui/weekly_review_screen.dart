@@ -8,7 +8,8 @@ import '../../../core/router/routes.dart';
 import '../../../core/widgets/max_width_body.dart';
 import '../../../core/widgets/orbit_ring.dart';
 import '../../../core/widgets/section_heading.dart';
-import '../../key_results/data/key_result_repository.dart';
+import '../../../core/space/space_colors.dart';
+import '../../goals/data/measure_repository.dart';
 import '../../projects/data/project_repository.dart';
 import '../../projects/ui/project_labels.dart';
 import '../../tasks/data/task_repository.dart';
@@ -20,7 +21,7 @@ import 'week_format.dart';
 import 'week_summary_view.dart';
 
 /// The guided weekly review of the review week (weekly-review spec): look
-/// back, projects, key results, score, plan, save, one full-screen page
+/// back, projects, goals, score, plan, save, one full-screen page
 /// each with a progress bar and Back / Next. Score, reflection and plan are
 /// kept as a draft when changing pages and when leaving.
 class WeeklyReviewScreen extends ConsumerStatefulWidget {
@@ -31,14 +32,7 @@ class WeeklyReviewScreen extends ConsumerStatefulWidget {
 }
 
 /// The review's steps, in order.
-const stepNames = [
-  'Look back',
-  'Projects',
-  'Key results',
-  'Score',
-  'Plan',
-  'Save',
-];
+const stepNames = ['Look back', 'Projects', 'Goals', 'Score', 'Plan', 'Save'];
 
 class _WeeklyReviewState extends ConsumerState<WeeklyReviewScreen> {
   static const _scoreStep = 3;
@@ -122,14 +116,17 @@ class _WeeklyReviewState extends ConsumerState<WeeklyReviewScreen> {
       await _goTo(_scoreStep);
       return;
     }
-    final keyResults = ref.read(currentKrProgressProvider(_week)).value;
-    if (keyResults == null) return;
+    final goals = ref.read(currentGoalProgressProvider(_week)).value;
+    if (goals == null) return;
     await _reviews.complete(
       _week,
       score: score,
       reflection: _reflection.text,
       plan: _plan.text,
-      snapshots: {for (final kr in keyResults) kr.keyResult.id: kr.progress},
+      snapshots: {
+        for (final goal in goals)
+          for (final m in goal.measures) m.measure.id: m.progress,
+      },
     );
     _saved = true;
     if (!mounted) return;
@@ -142,13 +139,13 @@ class _WeeklyReviewState extends ConsumerState<WeeklyReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Kept alive for the whole review: the KR snapshots are taken from it.
-    ref.watch(currentKrProgressProvider(_week));
+    // Kept alive for the whole review: the snapshots are taken from it.
+    ref.watch(currentGoalProgressProvider(_week));
     final theme = Theme.of(context);
     final pages = [
       WeekSummaryView(weekStart: _week),
       const _ProjectsStep(),
-      _KeyResultsStep(week: _week),
+      _GoalsStep(week: _week),
       _scoreContent(),
       _planContent(),
       _saveContent(),
@@ -395,43 +392,71 @@ class _ProjectTile extends ConsumerWidget {
   }
 }
 
-/// The KRs of active objectives; numeric and boolean ones can be updated.
-class _KeyResultsStep extends ConsumerWidget {
-  const _KeyResultsStep({required this.week});
+/// The active goals with their measures (weekly-review spec, "Goals
+/// step"); number and yes/no measures can be updated, habit measures only
+/// show their progress.
+class _GoalsStep extends ConsumerWidget {
+  const _GoalsStep({required this.week});
 
   final CalendarDate week;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final items = ref.watch(currentKrProgressProvider(week)).value;
+    final theme = Theme.of(context);
+    final items = ref.watch(currentGoalProgressProvider(week)).value;
     if (items == null) return const LinearProgressIndicator();
     if (items.isEmpty) {
       return const SectionEmptyText(
-        'No key results',
-        icon: Icons.track_changes,
+        'No active goals',
+        icon: Icons.flag_outlined,
       );
     }
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final item in items)
-          _KeyResultInput(key: ValueKey(item.keyResult.id), item: item),
+        for (final goal in items) ...[
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    goal.goal.title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: colorOfGoal(goal.goal),
+                    ),
+                  ),
+                ),
+                if (goal.progress case final progress?)
+                  Text('${(progress * 100).round()} %'),
+              ],
+            ),
+          ),
+          for (final m in goal.measures)
+            _MeasureInput(
+              key: ValueKey(m.measure.id),
+              item: m,
+              color: colorOfGoal(goal.goal),
+            ),
+        ],
       ],
     );
   }
 }
 
-class _KeyResultInput extends ConsumerStatefulWidget {
-  const _KeyResultInput({super.key, required this.item});
+class _MeasureInput extends ConsumerStatefulWidget {
+  const _MeasureInput({super.key, required this.item, required this.color});
 
-  final KrProgressChange item;
+  final MeasureChange item;
+  final Color color;
 
   @override
-  ConsumerState<_KeyResultInput> createState() => _KeyResultInputState();
+  ConsumerState<_MeasureInput> createState() => _MeasureInputState();
 }
 
-class _KeyResultInputState extends ConsumerState<_KeyResultInput> {
+class _MeasureInputState extends ConsumerState<_MeasureInput> {
   late final _value = TextEditingController(
-    text: formatNumber(widget.item.keyResult.currentValue ?? 0),
+    text: formatNumber(widget.item.measure.currentValue ?? 0),
   );
 
   @override
@@ -444,14 +469,14 @@ class _KeyResultInputState extends ConsumerState<_KeyResultInput> {
     final value = double.tryParse(text.trim().replaceAll(',', '.'));
     if (value != null) {
       ref
-          .read(keyResultRepositoryProvider)
-          .setProgressValue(widget.item.keyResult.id, value);
+          .read(measureRepositoryProvider)
+          .setProgressValue(widget.item.measure.id, value);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final kr = widget.item.keyResult;
+    final measure = widget.item.measure;
     final percent = '${(widget.item.progress * 100).round()}%';
     return ListTile(
       contentPadding: EdgeInsets.zero,
@@ -459,26 +484,27 @@ class _KeyResultInputState extends ConsumerState<_KeyResultInput> {
         progress: widget.item.progress,
         size: 44,
         label: percent,
+        color: widget.color,
       ),
-      title: Text(kr.title),
-      trailing: switch (kr.measureType) {
+      title: Text(measure.title),
+      trailing: switch (measure.measureType) {
         MeasureType.numeric => SizedBox(
           width: 120,
           child: TextField(
             controller: _value,
             decoration: InputDecoration(
               labelText: 'Current',
-              suffixText: kr.unit,
+              suffixText: measure.unit,
             ),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             onChanged: _changed,
           ),
         ),
         MeasureType.boolean => Switch(
-          value: kr.currentValue == 1,
+          value: measure.currentValue == 1,
           onChanged: (achieved) => ref
-              .read(keyResultRepositoryProvider)
-              .setProgressValue(kr.id, achieved ? 1 : 0),
+              .read(measureRepositoryProvider)
+              .setProgressValue(measure.id, achieved ? 1 : 0),
         ),
         MeasureType.habit => null,
       },

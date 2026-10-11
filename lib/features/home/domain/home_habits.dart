@@ -12,7 +12,7 @@ class HomeHabit {
   final Habit habit;
   final bool checkedToday;
 
-  /// The linked project's title, else the KR's title, else null.
+  /// The linked project's title, else the goal's title, else null.
   final String? label;
 }
 
@@ -24,7 +24,7 @@ List<HomeHabit> buildHomeHabits({
   required List<Habit> habits,
   required List<HabitCheck> checks,
   required Map<String, Project> projects,
-  required Map<String, KeyResult> keyResults,
+  required Map<String, Goal> goals,
   required CalendarDate today,
 }) {
   final weekStart = today.weekStart;
@@ -51,9 +51,7 @@ List<HomeHabit> buildHomeHabits({
         HomeHabit(
           habit: habit,
           checkedToday: checkedToday.contains(habit.id),
-          label:
-              projects[habit.projectId]?.title ??
-              keyResults[habit.keyResultId]?.title,
+          label: projects[habit.projectId]?.title ?? goals[habit.goalId]?.title,
         ),
   ];
 }

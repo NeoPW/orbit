@@ -7,7 +7,7 @@ import '../../../core/widgets/settings_button.dart';
 import '../../../core/widgets/two_pane.dart';
 import '../../projects/ui/project_detail_screen.dart';
 import '../../tasks/ui/task_screen.dart';
-import '../../objectives/ui/objective_form.dart';
+import '../../goals/ui/goal_form.dart';
 import '../../projects/ui/project_form.dart';
 import '../../tasks/ui/task_form.dart';
 import '../data/plan_providers.dart';
@@ -15,8 +15,7 @@ import 'backlog_tab.dart';
 import 'more_sheet.dart';
 import 'overview_tab.dart';
 import '../../habits/ui/habit_form.dart';
-import '../../key_results/ui/key_result_screen.dart';
-import '../../objectives/ui/objective_screen.dart';
+import '../../goals/ui/goal_screen.dart';
 
 class PlanScreen extends ConsumerWidget {
   const PlanScreen({super.key});
@@ -34,9 +33,9 @@ class PlanScreen extends ConsumerWidget {
             for (final (label, icon, open)
                 in <(String, IconData, Future<void> Function())>[
                   (
-                    'New objective',
+                    'New goal',
                     Icons.flag_outlined,
-                    () => showObjectiveForm(context),
+                    () => showGoalForm(context),
                   ),
                   (
                     'New project',
@@ -116,14 +115,9 @@ class PlanScreen extends ConsumerWidget {
               taskId: id,
               onClose: close,
             ),
-            PlanObjective(:final id) => ObjectiveScreen(
+            PlanGoal(:final id) => GoalScreen(
               key: ValueKey(selection),
-              objectiveId: id,
-              onClose: close,
-            ),
-            PlanKeyResult(:final id) => KeyResultScreen(
-              key: ValueKey(selection),
-              keyResultId: id,
+              goalId: id,
               onClose: close,
             ),
           },

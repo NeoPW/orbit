@@ -7,12 +7,12 @@ abstract interface class DbEnum {
   String get dbValue;
 }
 
-enum ObjectiveStatus implements DbEnum {
+enum GoalStatus implements DbEnum {
   active('active'),
   completed('completed'),
   archived('archived');
 
-  const ObjectiveStatus(this.dbValue);
+  const GoalStatus(this.dbValue);
   @override
   final String dbValue;
 }

@@ -2,61 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/space/planets.dart';
 import 'package:orbit/core/space/space_colors.dart';
+import 'package:orbit/core/widgets/area_dot.dart';
 
-import '../../helpers/pump_app.dart';
+import '../../helpers/fixtures.dart';
 
 void main() {
-  const planets = [
-    SystemPlanet(label: 'Run', color: Colors.blue, progress: 1),
-    SystemPlanet(label: 'Swim', color: Colors.teal, progress: 0),
-  ];
-
-  testApp('a star system reads as progress and planet count', (tester) async {
-    await pumpInScaffold(
-      tester,
-      const StarSystem(color: Colors.amber, progress: 0.5, planets: planets),
-    );
-    expect(find.bySemanticsLabel('50 percent, 2 key results'), findsOneWidget);
-  });
-
-  testApp('the detailed system labels its planets; tapping opens one', (
-    tester,
-  ) async {
-    final tapped = <String>[];
-    await pumpInScaffold(
-      tester,
-      StarSystem.detailed(
-        color: Colors.amber,
-        progress: 0.5,
-        planets: [
-          for (final p in planets)
-            SystemPlanet(
-              label: p.label,
-              color: p.color,
-              progress: p.progress,
-              moons: const [Colors.red],
-              onTap: () => tapped.add(p.label),
-            ),
-        ],
-      ),
-    );
-    expect(find.text('Run'), findsOneWidget);
-    expect(find.text('Swim'), findsOneWidget);
-    await tester.tap(find.text('Swim'));
-    expect(tapped, ['Swim']);
-  });
-
-  test('neighboring objectives get different colors', () {
-    for (var i = 0; i < starColors.length; i++) {
-      expect(objectiveColor(i), isNot(objectiveColor(i + 1)));
+  test('neighboring goals get different automatic colors', () {
+    for (var i = 0; i < autoColors.length; i++) {
+      expect(goalColor(i), isNot(goalColor(i + 1)));
     }
   });
 
-  test('a system\'s KR colors differ from each other', () {
-    final colors = {
-      for (var i = 0; i < 4; i++) keyResultColor(starColors.first, i, 4),
-    };
-    expect(colors, hasLength(4));
+  test('an own color wins over the automatic one', () {
+    expect(colorOfGoal(goal('g', sortOrder: 1)), goalColor(1));
+    expect(colorOfGoal(goal('g', color: '#FF7A9C')), colorFromHex('#FF7A9C'));
+  });
+
+  test('planets are dimmer at low progress', () {
+    const color = Color(0xFF8F9DFF);
+    final low = planetShade(color, 0);
+    final high = planetShade(color, 1);
+    expect(high, color);
+    expect(low, isNot(color));
   });
 
   test('stable seeds do not depend on the run', () {

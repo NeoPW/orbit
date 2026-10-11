@@ -1,6 +1,6 @@
 /// A calendar date without a time of day or time zone.
 ///
-/// Used for objective dates, deadlines, due dates, habit check dates and
+/// Used for goal dates, deadlines, due dates, habit check dates and
 /// week starts, so the same date is read back regardless of the device's
 /// time zone. Timestamps use [DateTime] in UTC instead.
 class CalendarDate implements Comparable<CalendarDate> {

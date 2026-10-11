@@ -58,7 +58,7 @@ final class HomeHabitsProvider
   }
 }
 
-String _$homeHabitsHash() => r'367a4eda1df9c62c8d15b98012e83ece7bc68b70';
+String _$homeHabitsHash() => r'd49be21f24047a203c0401df16eac1e21e658885';
 
 /// Home's "Upcoming deadlines".
 
@@ -112,7 +112,7 @@ final class UpcomingDeadlinesProvider
   }
 }
 
-String _$upcomingDeadlinesHash() => r'060c6d2ca9afcb670c75d7589eb56a0b8677ea6b';
+String _$upcomingDeadlinesHash() => r'b5ec1c9ba17b3c4f63ae81f48e2ed5ee9a899fd2';
 
 /// Home's "Active projects", ordered by score.
 
@@ -166,7 +166,7 @@ final class HomeProjectsProvider
   }
 }
 
-String _$homeProjectsHash() => r'2045bcb96d23873c690cafb6c90d58dcaa51569d';
+String _$homeProjectsHash() => r'47142c1c0a454f7feeb0af7ea8cef1ef11c12b8c';
 
 /// Habits checked of due today, and open tasks due today or overdue.
 
@@ -273,4 +273,4 @@ final class HomeTasksProvider
   }
 }
 
-String _$homeTasksHash() => r'ecc199766f1cdcbcd998ad7e26b751f5c64cfdb9';
+String _$homeTasksHash() => r'6c3effdf453b72b4249805f0c81dc4ecec12505d';

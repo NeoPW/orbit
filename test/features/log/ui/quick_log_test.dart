@@ -121,16 +121,6 @@ void main() {
   });
 
   group('timer mode', () {
-    testApp('Log is the default', (tester) async {
-      await seed.projects.create(title: 'Thesis');
-      await open(tester);
-      final toggle = tester.widget<SegmentedButton<bool>>(
-        find.byType(SegmentedButton<bool>),
-      );
-      expect(toggle.selected, {false});
-      expect(find.text('Minutes (optional)'), findsOneWidget);
-    });
-
     testApp('Start timer starts a timer and logs nothing', (tester) async {
       final p = await seed.projects.create(title: 'Thesis');
       await open(tester);

@@ -48,11 +48,11 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
     super.dispose();
   }
 
-  /// Logs on a project, or on a task (with the task's KR).
+  /// Logs on a project, or on a task (with the task's goal).
   Future<void> _log({
     required String title,
     String? projectId,
-    String? keyResultId,
+    String? goalId,
     String? taskId,
   }) async {
     final error = durationErrorText(_duration.text);
@@ -66,7 +66,7 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
         .read(logRepositoryProvider)
         .createManual(
           projectId: projectId,
-          keyResultId: keyResultId,
+          goalId: goalId,
           taskId: taskId,
           durationMinutes: parseDuration(_duration.text),
           note: _note.text,
@@ -217,7 +217,7 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
                           ? _startTimer(task.title, TimerForTask(task.id))
                           : _log(
                               title: task.title,
-                              keyResultId: task.keyResultId,
+                              goalId: task.goalId,
                               taskId: task.id,
                             ),
                     ),

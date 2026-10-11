@@ -49,12 +49,12 @@ void main() {
         today: today,
       ),
     );
-    expect(find.text('Due 31-12-2026 · KR'), findsOneWidget);
+    expect(find.text('Due 31-12-2026 · goal'), findsOneWidget);
     expect(find.byType(AreaChip), findsNothing);
     expect(find.text('No area'), findsNothing);
   });
 
-  testWidgets('no deadline left out; status and KR title when asked', (
+  testWidgets('no deadline left out; status and goal title when asked', (
     tester,
   ) async {
     await pumpTile(
@@ -65,12 +65,12 @@ void main() {
         deadline: null,
         today: today,
         showStatus: true,
-        keyResultTitle: 'Run 100 km',
+        goalTitle: 'Get fit',
       ),
     );
     expect(find.byType(DeadlineChip), findsNothing);
     expect(find.text('No deadline'), findsNothing);
     expect(find.widgetWithText(StatusChip<void>, 'Paused'), findsOneWidget);
-    expect(find.text('Run 100 km'), findsOneWidget);
+    expect(find.text('Get fit'), findsOneWidget);
   });
 }

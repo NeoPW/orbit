@@ -82,7 +82,6 @@ class _TodayHeaderState extends ConsumerState<TodayHeader> {
                 OrbitRing(
                   progress: due == 0 ? 0 : done / due,
                   size: 64,
-                  strokeWidth: 5,
                   label: '$done/$due',
                   color: theme.colorScheme.secondary,
                 ),

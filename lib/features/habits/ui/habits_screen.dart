@@ -6,7 +6,7 @@ import '../../../core/widgets/async_body.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/max_width_body.dart';
 import '../../../core/widgets/orbit_chips.dart';
-import '../../key_results/data/key_result_repository.dart';
+import '../../goals/data/goal_repository.dart';
 import '../../projects/data/project_repository.dart';
 import '../data/habit_repository.dart';
 import '../domain/habit_schedule.dart';
@@ -22,9 +22,8 @@ class HabitsScreen extends ConsumerWidget {
       for (final p in ref.watch(allProjectsProvider).value ?? <Project>[])
         p.id: p,
     };
-    final keyResults = {
-      for (final k in ref.watch(keyResultsProvider).value ?? <KeyResult>[])
-        k.id: k,
+    final goals = {
+      for (final g in ref.watch(goalsProvider).value ?? <Goal>[]) g.id: g,
     };
 
     return Scaffold(
@@ -55,7 +54,7 @@ class HabitsScreen extends ConsumerWidget {
                         links: habitLinks(
                           habit,
                           projects: projects,
-                          keyResults: keyResults,
+                          goals: goals,
                         ),
                       ),
                   ],

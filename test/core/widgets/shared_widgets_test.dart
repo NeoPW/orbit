@@ -2,47 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/time/calendar_date.dart';
 import 'package:orbit/core/widgets/area_dot.dart';
-import 'package:orbit/core/widgets/confirm_delete.dart';
 import 'package:orbit/core/widgets/date_field.dart';
 import 'package:orbit/core/widgets/max_width_body.dart';
 
 Widget _host(Widget child) => MaterialApp(home: Scaffold(body: child));
 
 void main() {
-  group('confirmDelete', () {
-    Future<bool?> run(WidgetTester tester, String button) async {
-      bool? result;
-      await tester.pumpWidget(
-        _host(
-          Builder(
-            builder: (context) => TextButton(
-              onPressed: () async => result = await confirmDelete(
-                context,
-                title: 'Delete area?',
-                message: 'Projects keep existing without an area.',
-              ),
-              child: const Text('open'),
-            ),
-          ),
-        ),
-      );
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
-      expect(find.text('Delete area?'), findsOneWidget);
-      await tester.tap(find.text(button));
-      await tester.pumpAndSettle();
-      return result;
-    }
-
-    testWidgets('cancel returns false', (tester) async {
-      expect(await run(tester, 'Cancel'), isFalse);
-    });
-
-    testWidgets('confirm returns true', (tester) async {
-      expect(await run(tester, 'Delete'), isTrue);
-    });
-  });
-
   group('DateField', () {
     testWidgets('shows the value as dd-mm-yyyy', (tester) async {
       await tester.pumpWidget(

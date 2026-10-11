@@ -72,33 +72,35 @@ void main() {
     final areas = AreaRepository(db, () => DateTime.now().toUtc(), uuidV4);
     final work = await areas.create(name: 'Work', color: '#4FD8E8');
     final health = await areas.create(name: 'Health', color: '#FF8A65');
-    final fit = await seed.objective(title: 'Get fit');
-    final run = await seed.kr(fit.id, current: 64);
-    await seed.kr(fit.id, title: 'Swim 20 times', current: 20, target: 20);
-    await seed.kr(fit.id, title: 'Lift 3x a week', current: 5);
-    final thesis = await seed.objective(title: 'Finish thesis');
-    await seed.objectives.update(thesis.copyWith(color: const Value('#7CE38B')));
-    await seed.projects.create(
-      title: 'Marathon plan',
-      areaId: health.id,
-      keyResultId: run.id,
-      importance: 5,
-      nextStep: 'Book race',
-    );
-    final chapters = await seed.kr(
+    final fit = await seed.goal(title: 'Get fit');
+    await seed.measure(fit.id, current: 64);
+    await seed.measure(fit.id, title: 'Swim 20 times', current: 20, target: 20);
+    await seed.measure(fit.id, title: 'Lift 3x a week', current: 5);
+    final thesis = await seed.goal(title: 'Finish thesis', color: '#7CE38B');
+    await seed.measure(
       thesis.id,
       title: 'Write 6 chapters',
       current: 2,
       target: 6,
     );
+    await seed.goal(title: 'Learn Spanish');
+    await seed.projects.create(
+      title: 'Marathon plan',
+      areaId: health.id,
+      goalId: fit.id,
+      importance: 5,
+      nextStep: 'Book race',
+    );
     await seed.projects.create(
       title: 'Chapter 3',
       areaId: work.id,
-      keyResultId: chapters.id,
+      goalId: thesis.id,
       importance: 4,
       nextStep: 'Outline',
     );
+    await seed.projects.create(title: 'Literature', goalId: thesis.id);
     await seed.projects.create(title: 'Garden', importance: 2);
+    await seed.projects.create(title: 'Bier', areaId: work.id);
   });
 
   testApp('screenshots', (tester) async {
@@ -107,14 +109,14 @@ void main() {
     await tester.tap(find.text('Plan').last);
     await tester.pumpAndSettle();
     await shoot(tester, 'plan');
-    await tester.tap(find.text('Get fit'));
+    await tester.tap(find.text('Get fit').first);
     await tester.pumpAndSettle();
-    await shoot(tester, 'objective');
-    await tester.tap(find.byTooltip('Edit objective'));
+    await shoot(tester, 'goal');
+    await tester.tap(find.byTooltip('Edit goal'));
     await tester.pumpAndSettle();
     await tester.drag(find.byType(Scrollable).last, const Offset(0, -400));
     await tester.pumpAndSettle();
-    await shoot(tester, 'objective_form');
+    await shoot(tester, 'goal_form');
   });
 
   testApp('project', (tester) async {

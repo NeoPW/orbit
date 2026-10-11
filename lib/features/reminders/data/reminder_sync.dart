@@ -13,8 +13,7 @@ import '../../../core/time/today.dart';
 import '../../habits/data/habit_check_repository.dart';
 import '../../habits/data/habit_repository.dart';
 import '../../home/domain/upcoming_deadlines.dart';
-import '../../key_results/data/key_result_repository.dart';
-import '../../objectives/data/objective_repository.dart';
+import '../../goals/data/goal_repository.dart';
 import '../../projects/data/project_repository.dart';
 import '../../review/data/review_repository.dart';
 import '../../settings/data/settings_repository.dart';
@@ -31,7 +30,7 @@ class ReminderInputs {
     required this.habits,
     required this.checks,
     required this.projects,
-    required this.keyResults,
+    required this.goals,
     required this.deadlines,
     required this.completedReviewWeeks,
   });
@@ -40,7 +39,7 @@ class ReminderInputs {
   final List<Habit> habits;
   final List<HabitCheck> checks;
   final Map<String, Project> projects;
-  final Map<String, KeyResult> keyResults;
+  final Map<String, Goal> goals;
   final List<UpcomingDeadline> deadlines;
 
   /// Weeks (Monday) whose review is completed.
@@ -55,25 +54,12 @@ AsyncValue<ReminderInputs> reminderInputs(Ref ref) {
   final habits = ref.watch(habitsProvider);
   final checks = ref.watch(habitChecksSinceProvider(today.weekStart));
   final projects = ref.watch(allProjectsProvider);
-  final keyResults = ref.watch(keyResultsProvider);
-  final objectives = ref.watch(objectivesProvider);
+  final goals = ref.watch(goalsProvider);
   final tasks = ref.watch(dueTasksProvider);
   final outside = ref.watch(tasksOutsideProjectsProvider);
-  final checkIns = ref.watch(habitCheckInsProvider);
   final reviews = ref.watch(completedReviewsProvider);
   return combineAsync(
-    [
-      settings,
-      habits,
-      checks,
-      projects,
-      keyResults,
-      objectives,
-      tasks,
-      outside,
-      checkIns,
-      reviews,
-    ],
+    [settings, habits, checks, projects, goals, tasks, outside, reviews],
     () {
       final allProjects = projects.requireValue;
       return ReminderInputs(
@@ -81,14 +67,11 @@ AsyncValue<ReminderInputs> reminderInputs(Ref ref) {
         habits: habits.requireValue,
         checks: checks.requireValue,
         projects: {for (final p in allProjects) p.id: p},
-        keyResults: {for (final k in keyResults.requireValue) k.id: k},
+        goals: {for (final g in goals.requireValue) g.id: g},
         deadlines: deadlineCandidates(
           tasks: tasks.requireValue,
           tasksOutsideProjects: outside.requireValue,
           projects: allProjects,
-          keyResults: keyResults.requireValue,
-          objectives: objectives.requireValue,
-          habitCheckIns: checkIns.requireValue,
           today: today,
         ),
         completedReviewWeeks: {
@@ -138,7 +121,7 @@ class ReminderSync extends _$ReminderSync {
       habits: value.habits,
       checks: value.checks,
       projects: value.projects,
-      keyResults: value.keyResults,
+      goals: value.goals,
       deadlines: value.deadlines,
       completedReviewWeeks: value.completedReviewWeeks,
       now: ref.read(clockProvider)().toLocal(),

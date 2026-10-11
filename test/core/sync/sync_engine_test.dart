@@ -77,47 +77,90 @@ void main() {
       expect((await browser.projects.get(p.id))!.title, 'Thesis v2');
     });
 
-    test('a timer and a KR step reach the other device', () async {
-      final now = phone.clock();
-      await phone.db
-          .into(phone.db.timers)
-          .insert(
-            WorkTimer(
-              id: 'timer',
-              createdAt: now,
-              updatedAt: now,
-              projectId: 'p1',
-              startedAt: now,
-            ),
-          );
-      await phone.db
-          .into(phone.db.keyResults)
-          .insert(
-            KeyResult(
-              id: 'k1',
-              createdAt: now,
-              updatedAt: now,
-              objectiveId: 'o1',
-              title: 'Run 100 km',
-              description: '',
-              measureType: MeasureType.numeric,
-              startValue: 0,
-              targetValue: 100,
-              currentValue: 40,
-              step: 5,
-              sortOrder: 0,
-            ),
-          );
-      await phone.sync();
-      expect(remote.rows('timers').single['project_id'], 'p1');
-      expect(remote.rows('key_results').single['step'], 5);
+    test(
+      'a timer, a goal color and a measure step reach the other device',
+      () async {
+        final now = phone.clock();
+        await phone.db
+            .into(phone.db.timers)
+            .insert(
+              WorkTimer(
+                id: 'timer',
+                createdAt: now,
+                updatedAt: now,
+                projectId: 'p1',
+                startedAt: now,
+              ),
+            );
+        await phone.db
+            .into(phone.db.goals)
+            .insert(
+              Goal(
+                id: 'g1',
+                createdAt: now,
+                updatedAt: now,
+                title: 'Get fit',
+                description: '',
+                startDate: CalendarDate(2026, 10, 1),
+                endDate: CalendarDate(2026, 12, 31),
+                status: GoalStatus.active,
+                sortOrder: 0,
+                color: '#FF7A9C',
+              ),
+            );
+        await phone.db
+            .into(phone.db.measures)
+            .insert(
+              Measure(
+                id: 'm1',
+                createdAt: now,
+                updatedAt: now,
+                goalId: 'g1',
+                title: 'Run 100 km',
+                description: '',
+                measureType: MeasureType.numeric,
+                startValue: 0,
+                targetValue: 100,
+                currentValue: 40,
+                step: 5,
+                sortOrder: 0,
+              ),
+            );
+        await phone.sync();
+        expect(remote.rows('timers').single['project_id'], 'p1');
+        expect(remote.rows('goals').single['color'], '#FF7A9C');
+        expect(remote.rows('measures').single['step'], 5);
 
-      await browser.sync();
-      final timer = await browser.db.select(browser.db.timers).getSingle();
-      expect(timer.projectId, 'p1');
-      expect(timer.startedAt, now);
-      final kr = await browser.db.select(browser.db.keyResults).getSingle();
-      expect(kr.step, 5);
+        await browser.sync();
+        final timer = await browser.db.select(browser.db.timers).getSingle();
+        expect(timer.projectId, 'p1');
+        expect(timer.startedAt, now);
+        final goal = await browser.db.select(browser.db.goals).getSingle();
+        expect(goal.color, '#FF7A9C');
+        final measure = await browser.db
+            .select(browser.db.measures)
+            .getSingle();
+        expect(measure.step, 5);
+        expect(measure.goalId, 'g1');
+      },
+    );
+
+    test('a pulled copy with the same updated_at changes nothing', () async {
+      // The server migration adds rows the devices already moved locally.
+      final p = await phone.projects.create(title: 'Thesis');
+      await phone.sync();
+      final local = await phone.projects.get(p.id);
+      final row = Map<String, Object?>.of(remoteProject(p.id))
+        ..['title'] = 'Changed on the server'
+        ..['server_updated_at'] = DateTime.now()
+            .toUtc()
+            .add(const Duration(minutes: 5))
+            .toIso8601String();
+      remote.rows('projects')
+        ..clear()
+        ..add(row);
+      await phone.sync();
+      expect((await phone.projects.get(p.id))!.title, local!.title);
     });
 
     test('a delete propagates', () async {

@@ -4,8 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/db/app_database.dart';
 import '../../../core/widgets/confirm_delete.dart';
 import '../../../core/widgets/form_sheet.dart';
-import '../../key_results/data/key_result_repository.dart';
-import '../../objectives/data/objective_repository.dart';
+import '../../goals/data/goal_repository.dart';
 import '../../projects/data/project_repository.dart';
 import '../data/habit_repository.dart';
 import '../domain/habit_schedule.dart';
@@ -47,7 +46,7 @@ class _HabitFormState extends ConsumerState<_HabitForm> {
     text: _habit?.timesPerWeek?.toString() ?? '3',
   );
   late String? _projectId = _habit?.projectId;
-  late String? _keyResultId = _habit?.keyResultId;
+  late String? _goalId = _habit?.goalId;
   late ScheduleType _scheduleType = _habit?.scheduleType ?? ScheduleType.daily;
   late Set<int> _weekdays = {...?_habit?.weekdays};
   late String? _reminderTime = _habit?.reminderTime;
@@ -86,7 +85,7 @@ class _HabitFormState extends ConsumerState<_HabitForm> {
       await repo.create(
         title: _title.text,
         projectId: _projectId,
-        keyResultId: _keyResultId,
+        goalId: _goalId,
         scheduleType: _scheduleType,
         weekdays: _weekdays,
         timesPerWeek: timesPerWeek,
@@ -98,7 +97,7 @@ class _HabitFormState extends ConsumerState<_HabitForm> {
         habit.copyWith(
           title: _title.text,
           projectId: Value(_projectId),
-          keyResultId: Value(_keyResultId),
+          goalId: Value(_goalId),
           scheduleType: _scheduleType,
           weekdays: Value(_weekdays),
           timesPerWeek: Value(timesPerWeek),
@@ -116,7 +115,7 @@ class _HabitFormState extends ConsumerState<_HabitForm> {
       context,
       title: 'Delete habit?',
       message:
-          'This deletes "${habit.title}". Key results measured by it keep '
+          'This deletes "${habit.title}". Measures counting it keep '
           'existing without a linked habit.',
     );
     if (!confirmed) return;
@@ -185,23 +184,17 @@ class _HabitFormState extends ConsumerState<_HabitForm> {
   Widget build(BuildContext context) {
     final editing = _habit != null;
     final projects = ref.watch(allProjectsProvider).value ?? const <Project>[];
-    final objectives =
-        ref.watch(objectivesProvider).value ?? const <Objective>[];
-    final keyResults =
-        ref.watch(keyResultsProvider).value ?? const <KeyResult>[];
-    final objectivesById = {for (final o in objectives) o.id: o};
+    final goals = ref.watch(goalsProvider).value ?? const <Goal>[];
 
-    // Offer projects that are not completed and KRs of active objectives,
-    // plus the current links.
+    // Offer projects that are not completed and active goals, plus the
+    // current links.
     final projectOptions = [
       for (final p in projects)
         if (p.status != ProjectStatus.completed || p.id == _projectId) p,
     ];
-    final krOptions = [
-      for (final kr in keyResults)
-        if (objectivesById[kr.objectiveId]?.status == ObjectiveStatus.active ||
-            kr.id == _keyResultId)
-          kr,
+    final goalOptions = [
+      for (final g in goals)
+        if (g.status == GoalStatus.active || g.id == _goalId) g,
     ];
     final reminder = _reminderTime;
 
@@ -244,28 +237,24 @@ class _HabitFormState extends ConsumerState<_HabitForm> {
           onChanged: (id) => setState(() => _projectId = id),
         ),
         DropdownButtonFormField<String?>(
-          key: ValueKey('kr-${krOptions.length}'),
-          initialValue: krOptions.any((k) => k.id == _keyResultId)
-              ? _keyResultId
+          key: ValueKey('goal-${goalOptions.length}'),
+          initialValue: goalOptions.any((g) => g.id == _goalId)
+              ? _goalId
               : null,
           isExpanded: true,
           decoration: const InputDecoration(
-            labelText: 'Key result (optional)',
+            labelText: 'Goal (optional)',
             border: OutlineInputBorder(),
           ),
           items: [
-            const DropdownMenuItem(value: null, child: Text('No key result')),
-            for (final kr in krOptions)
+            const DropdownMenuItem(value: null, child: Text('No goal')),
+            for (final g in goalOptions)
               DropdownMenuItem(
-                value: kr.id,
-                child: Text(
-                  '${objectivesById[kr.objectiveId]?.title ?? ''} › '
-                  '${kr.title}',
-                  overflow: TextOverflow.ellipsis,
-                ),
+                value: g.id,
+                child: Text(g.title, overflow: TextOverflow.ellipsis),
               ),
           ],
-          onChanged: (id) => setState(() => _keyResultId = id),
+          onChanged: (id) => setState(() => _goalId = id),
         ),
         SegmentedButton<ScheduleType>(
           segments: const [

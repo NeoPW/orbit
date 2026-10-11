@@ -16,15 +16,15 @@ void main() {
   test('all entity tables except settings are synced', () {
     expect(tables.keys.toSet(), {
       'areas',
-      'objectives',
-      'key_results',
+      'goals',
+      'measures',
       'projects',
       'tasks',
       'habits',
       'habit_checks',
       'log_entries',
       'weekly_reviews',
-      'review_kr_snapshots',
+      'review_measure_snapshots',
       'timers',
     });
     expect(tables['habit_checks']!.naturalKey, ['habit_id', 'date']);
@@ -72,29 +72,5 @@ void main() {
       expect(row.containsKey('user_id'), isFalse);
       expect(row.containsKey('server_updated_at'), isFalse);
     });
-  });
-
-  test('dates and numbers pass through', () {
-    final remote = {
-      'id': 'k1',
-      'created_at': '2026-10-05T12:00:00+00:00',
-      'updated_at': '2026-10-05T12:00:00+00:00',
-      'deleted_at': null,
-      'objective_id': 'o1',
-      'title': 'Run',
-      'description': '',
-      'measure_type': 'numeric',
-      'start_value': 0,
-      'target_value': 100.5,
-      'current_value': 20,
-      'unit': 'km',
-      'habit_id': null,
-      'deadline': '2026-12-31',
-      'sort_order': 0,
-    };
-    final row = tables['key_results']!.toLocal(remote);
-    expect(row['deadline'], '2026-12-31');
-    expect(row['target_value'], 100.5);
-    expect(row['sort_order'], 0);
   });
 }

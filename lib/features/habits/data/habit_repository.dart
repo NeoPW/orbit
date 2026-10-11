@@ -27,12 +27,12 @@ class HabitRepository extends Repository {
   Future<Habit?> get(String id) =>
       (_query()..where((h) => h.id.equals(id))).getSingleOrNull();
 
-  /// Adds a habit. Links to a project and/or KR are optional. Schedule
+  /// Adds a habit. Links to a project and/or goal are optional. Schedule
   /// fields that do not apply to [scheduleType] are cleared.
   Future<Habit> create({
     required String title,
     String? projectId,
-    String? keyResultId,
+    String? goalId,
     required ScheduleType scheduleType,
     Set<int>? weekdays,
     int? timesPerWeek,
@@ -47,7 +47,7 @@ class HabitRepository extends Repository {
         updatedAt: now,
         title: title,
         projectId: projectId,
-        keyResultId: keyResultId,
+        goalId: goalId,
         scheduleType: scheduleType,
         weekdays: weekdays,
         timesPerWeek: timesPerWeek,
@@ -63,14 +63,10 @@ class HabitRepository extends Repository {
       .update(db.habits)
       .replace(_normalized(habit.copyWith(updatedAt: clock())));
 
-  /// Soft-deletes the habit; habit KRs linked to it keep existing without
-  /// a linked habit.
+  /// Soft-deletes the habit; habit measures linked to it keep existing
+  /// without a linked habit.
   Future<void> delete(String id) => db.transaction(() async {
-    await clearReference(
-      db.keyResults,
-      'habit_id',
-      (k) => k.habitId.equals(id),
-    );
+    await clearReference(db.measures, 'habit_id', (m) => m.habitId.equals(id));
     await softDeleteWhere(db.habits, (h) => h.id.equals(id));
   });
 

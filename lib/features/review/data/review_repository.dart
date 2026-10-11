@@ -8,7 +8,7 @@ import '../../../core/time/clock.dart' show clockProvider;
 
 part 'review_repository.g.dart';
 
-/// Weekly reviews (one per week) and the KR progress snapshots stored when
+/// Weekly reviews (one per week) and the measure progress snapshots stored when
 /// a review is saved.
 class ReviewRepository extends Repository {
   ReviewRepository(super.db, super.clock, super.newId);
@@ -35,13 +35,13 @@ class ReviewRepository extends Repository {
             ..orderBy([(r) => OrderingTerm.desc(r.weekStart)]))
           .watch();
 
-  /// For each KR, its progress in the most recent completed review of a
+  /// For each measure, its progress in the most recent completed review of a
   /// week before [weekStart].
   Stream<Map<String, double>> watchLatestSnapshotsBefore(
     CalendarDate weekStart,
   ) {
     final reviews = db.weeklyReviews;
-    final snapshots = db.reviewKrSnapshots;
+    final snapshots = db.reviewMeasureSnapshots;
     final query =
         db.select(snapshots).join([
             innerJoin(reviews, reviews.id.equalsExp(snapshots.weeklyReviewId)),
@@ -57,19 +57,19 @@ class ReviewRepository extends Repository {
       final latest = <String, double>{};
       for (final row in rows) {
         final snapshot = row.readTable(snapshots);
-        latest.putIfAbsent(snapshot.keyResultId, () => snapshot.progress);
+        latest.putIfAbsent(snapshot.measureId, () => snapshot.progress);
       }
       return latest;
     });
   }
 
-  /// The KR snapshots stored with the completed review of [weekStart], by
-  /// KR ID; null when that week has no completed review.
+  /// The measure snapshots stored with the completed review of [weekStart], by
+  /// measure ID; null when that week has no completed review.
   Stream<Map<String, double>?> watchSnapshotsOfCompletedWeek(
     CalendarDate weekStart,
   ) {
     final reviews = db.weeklyReviews;
-    final snapshots = db.reviewKrSnapshots;
+    final snapshots = db.reviewMeasureSnapshots;
     final query =
         db.select(reviews).join([
           leftOuterJoin(
@@ -86,7 +86,7 @@ class ReviewRepository extends Repository {
       return {
         for (final row in rows)
           if (row.readTableOrNull(snapshots) case final snapshot?)
-            snapshot.keyResultId: snapshot.progress,
+            snapshot.measureId: snapshot.progress,
       };
     });
   }
@@ -102,8 +102,8 @@ class ReviewRepository extends Repository {
     () => _upsert(weekStart, score, reflection, plan, completedAt: null),
   );
 
-  /// Saves the week's review as completed and replaces its KR snapshots
-  /// with [snapshots] (progress by KR ID).
+  /// Saves the week's review as completed and replaces its measure snapshots
+  /// with [snapshots] (progress by measure ID).
   Future<WeeklyReview> complete(
     CalendarDate weekStart, {
     required int score,
@@ -120,19 +120,19 @@ class ReviewRepository extends Repository {
       completedAt: now,
     );
     await softDeleteWhere(
-      db.reviewKrSnapshots,
+      db.reviewMeasureSnapshots,
       (s) => s.weeklyReviewId.equals(review.id),
     );
-    for (final MapEntry(key: krId, value: progress) in snapshots.entries) {
+    for (final MapEntry(key: measureId, value: progress) in snapshots.entries) {
       await db
-          .into(db.reviewKrSnapshots)
+          .into(db.reviewMeasureSnapshots)
           .insert(
-            ReviewKrSnapshotsCompanion.insert(
+            ReviewMeasureSnapshotsCompanion.insert(
               id: newId(),
               createdAt: now,
               updatedAt: now,
               weeklyReviewId: review.id,
-              keyResultId: krId,
+              measureId: measureId,
               progress: progress,
             ),
           );
@@ -207,14 +207,14 @@ Stream<WeeklyReview?> review(Ref ref, String id) =>
 Stream<List<WeeklyReview>> completedReviews(Ref ref) =>
     ref.watch(reviewRepositoryProvider).watchCompleted();
 
-/// Latest earlier snapshot per KR, for weeks before [weekStart].
+/// Latest earlier snapshot per measure, for weeks before [weekStart].
 @riverpod
 Stream<Map<String, double>> latestSnapshotsBefore(
   Ref ref,
   CalendarDate weekStart,
 ) => ref.watch(reviewRepositoryProvider).watchLatestSnapshotsBefore(weekStart);
 
-/// The KR snapshots of the week's completed review, or null (see
+/// The measure snapshots of the week's completed review, or null (see
 /// [ReviewRepository.watchSnapshotsOfCompletedWeek]).
 @riverpod
 Stream<Map<String, double>?> weekReviewSnapshots(

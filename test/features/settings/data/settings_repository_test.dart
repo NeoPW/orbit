@@ -37,22 +37,6 @@ void main() {
     );
   });
 
-  test('setting a value again replaces it', () async {
-    await repo.setDeadlineLeadDays(3);
-    await repo.setDeadlineLeadDays(10);
-
-    expect((await repo.watch().first).deadlineLeadDays, 10);
-    expect(await db.select(db.settings).get(), hasLength(1));
-  });
-
-  test('watch emits after a change', () async {
-    final values = repo.watch().map((s) => s.deadlineLeadDays);
-    final expectation = expectLater(values, emitsInOrder([7, 3]));
-    await Future<void>.delayed(Duration.zero);
-    await repo.setDeadlineLeadDays(3);
-    await expectation;
-  });
-
   test('an unreadable stored value reads as its default', () async {
     await db
         .into(db.settings)

@@ -15,7 +15,7 @@ import '../../../helpers/test_db.dart';
 final today = CalendarDate(2026, 10, 11);
 final week = CalendarDate(2026, 10, 5);
 
-const steps = ['Look back', 'Projects', 'Key results', 'Score', 'Plan', 'Save'];
+const steps = ['Look back', 'Projects', 'Goals', 'Score', 'Plan', 'Save'];
 
 /// Scrolls [finder] into view, then taps it.
 Future<void> tapVisible(WidgetTester tester, Finder finder) async {
@@ -85,7 +85,7 @@ void main() {
       .selected;
 
   group('steps', () {
-    testApp('in order: look back, projects, KRs, score, plan, save', (
+    testApp('in order: look back, projects, goals, score, plan, save', (
       tester,
     ) async {
       await openReview(tester);
@@ -100,18 +100,6 @@ void main() {
       }
       expect(find.text('Next'), findsNothing);
       expect(find.widgetWithText(FilledButton, 'Save'), findsOneWidget);
-    });
-
-    testApp('the progress bar shows step 3 of 6 on key results', (
-      tester,
-    ) async {
-      await openReview(tester);
-      await goToStep(tester, 'Key results');
-      expect(find.text('Step 3 of 6 · Key results'), findsOneWidget);
-      final bar = tester.widget<LinearProgressIndicator>(
-        find.byType(LinearProgressIndicator),
-      );
-      expect(bar.value, 3 / 6);
     });
 
     testApp('the score is saved as a draft when changing pages', (
@@ -176,26 +164,34 @@ void main() {
     });
   });
 
-  group('key results step', () {
+  group('goals step', () {
     testApp('updating a numeric value from 40 to 55', (tester) async {
-      final o = await seed.objective();
-      final kr = await seed.kr(o.id, title: 'Run 100 km', current: 40);
+      final g = await seed.goal();
+      final m = await seed.measure(g.id, title: 'Run 100 km', current: 40);
       await openReview(tester);
-      await goToStep(tester, 'Key results');
+      await goToStep(tester, 'Goals');
       await tester.enterText(find.widgetWithText(TextField, 'Current'), '55');
       await tester.pumpAndSettle();
 
       final stored = await (db.select(
-        db.keyResults,
-      )..where((k) => k.id.equals(kr.id))).getSingle();
+        db.measures,
+      )..where((x) => x.id.equals(m.id))).getSingle();
       expect(stored.currentValue, 55);
       expect(find.text('55%'), findsWidgets);
     });
 
-    testApp('habit KRs are shown read-only', (tester) async {
-      final o = await seed.objective();
-      await seed.kr(
-        o.id,
+    testApp('a goal without measures is listed without inputs', (tester) async {
+      await seed.goal(title: 'Learn Spanish');
+      await openReview(tester);
+      await goToStep(tester, 'Goals');
+      expect(find.text('Learn Spanish'), findsWidgets);
+      expect(find.widgetWithText(TextField, 'Current'), findsNothing);
+    });
+
+    testApp('habit measures are shown read-only', (tester) async {
+      final g = await seed.goal();
+      await seed.measure(
+        g.id,
         title: 'Run 20 times',
         type: MeasureType.habit,
         target: 20,
@@ -204,8 +200,8 @@ void main() {
         unit: null,
       );
       await openReview(tester);
-      await goToStep(tester, 'Key results');
-      // The last one is in the KR step; the first in the look-back summary.
+      await goToStep(tester, 'Goals');
+      // The step's tile; the look-back summary lists it without a tile.
       final tile = find.widgetWithText(ListTile, 'Run 20 times').last;
       expect(tile, findsOneWidget);
       expect(
@@ -254,8 +250,8 @@ void main() {
     });
 
     testApp('saving completes the review with snapshots', (tester) async {
-      final o = await seed.objective();
-      await seed.kr(o.id, title: 'Run 100 km', current: 40);
+      final g = await seed.goal();
+      await seed.measure(g.id, title: 'Run 100 km', current: 40);
       await openReview(tester);
       await goToStep(tester, 'Score');
       await tester.tap(find.widgetWithText(ChoiceChip, '8'));
@@ -276,7 +272,7 @@ void main() {
       final review = (await stored())!;
       expect(review.score, 8);
       expect(review.completedAt, isNotNull);
-      final snapshots = await db.select(db.reviewKrSnapshots).get();
+      final snapshots = await db.select(db.reviewMeasureSnapshots).get();
       expect(snapshots.single.progress, 0.4);
     });
   });

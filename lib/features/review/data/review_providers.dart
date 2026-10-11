@@ -5,9 +5,9 @@ import '../../../core/db/app_database.dart';
 import '../../../core/time/today.dart';
 import '../../habits/data/habit_check_repository.dart';
 import '../../habits/data/habit_repository.dart';
-import '../../key_results/data/key_result_repository.dart';
+import '../../goals/data/goal_repository.dart';
+import '../../goals/data/measure_repository.dart';
 import '../../log/data/log_repository.dart';
-import '../../objectives/data/objective_repository.dart';
 import '../../projects/data/project_repository.dart';
 import '../../tasks/data/task_repository.dart';
 import '../domain/week_summary.dart';
@@ -45,8 +45,8 @@ AsyncValue<WeekSummary> weekSummary(Ref ref, CalendarDate weekStart) {
   final checks = ref.watch(habitChecksSinceProvider(weekStart));
   final tasks = ref.watch(weekCompletedTasksProvider(weekStart));
   final projects = ref.watch(allProjectsProvider);
-  final keyResults = ref.watch(keyResultsProvider);
-  final objectives = ref.watch(objectivesProvider);
+  final goals = ref.watch(goalsProvider);
+  final measures = ref.watch(measuresProvider);
   final checkIns = ref.watch(habitCheckInsProvider);
   final snapshots = ref.watch(latestSnapshotsBeforeProvider(weekStart));
   final reviewed = ref.watch(weekReviewSnapshotsProvider(weekStart));
@@ -57,8 +57,8 @@ AsyncValue<WeekSummary> weekSummary(Ref ref, CalendarDate weekStart) {
       checks,
       tasks,
       projects,
-      keyResults,
-      objectives,
+      goals,
+      measures,
       checkIns,
       snapshots,
       reviewed,
@@ -70,8 +70,8 @@ AsyncValue<WeekSummary> weekSummary(Ref ref, CalendarDate weekStart) {
       checks: checks.requireValue,
       completedTasks: tasks.requireValue,
       projects: projects.requireValue,
-      keyResults: keyResults.requireValue,
-      objectives: objectives.requireValue,
+      goals: goals.requireValue,
+      measures: measures.requireValue,
       habitCheckIns: checkIns.requireValue,
       previousSnapshots: snapshots.requireValue,
       reviewSnapshots: reviewed.requireValue,
@@ -79,23 +79,23 @@ AsyncValue<WeekSummary> weekSummary(Ref ref, CalendarDate weekStart) {
   );
 }
 
-/// The KRs of active objectives with their current progress and the change
-/// since the latest review before [weekStart], live. The weekly review
-/// edits and saves these, also for a week already reviewed.
+/// The active goals with the current progress of their measures and the
+/// change since the latest review before [weekStart], live. The weekly
+/// review edits and saves these, also for a week already reviewed.
 @riverpod
-AsyncValue<List<KrProgressChange>> currentKrProgress(
+AsyncValue<List<GoalProgressChange>> currentGoalProgress(
   Ref ref,
   CalendarDate weekStart,
 ) {
-  final keyResults = ref.watch(keyResultsProvider);
-  final objectives = ref.watch(objectivesProvider);
+  final goals = ref.watch(goalsProvider);
+  final measures = ref.watch(measuresProvider);
   final checkIns = ref.watch(habitCheckInsProvider);
   final snapshots = ref.watch(latestSnapshotsBeforeProvider(weekStart));
   return combineAsync(
-    [keyResults, objectives, checkIns, snapshots],
-    () => krProgressChanges(
-      keyResults.requireValue,
-      objectives.requireValue,
+    [goals, measures, checkIns, snapshots],
+    () => goalProgressChanges(
+      goals.requireValue,
+      measures.requireValue,
       checkIns.requireValue,
       snapshots.requireValue,
     ),

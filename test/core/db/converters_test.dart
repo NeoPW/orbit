@@ -13,7 +13,7 @@ void _roundTrips<T extends Enum>(List<T> values) {
 void main() {
   group('DbEnumConverter', () {
     test('round-trips every value of every enum', () {
-      _roundTrips(ObjectiveStatus.values);
+      _roundTrips(GoalStatus.values);
       _roundTrips(ProjectStatus.values);
       _roundTrips(TaskStatus.values);
       _roundTrips(MeasureType.values);

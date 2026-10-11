@@ -310,14 +310,14 @@ final class LastLoggedAtTasksProvider
 
 String _$lastLoggedAtTasksHash() => r'd359414692c3eba9896a721e98968c9c86ecf4c7';
 
-/// A key result's log entries, most recent first.
+/// The work on a goal, most recent first.
 
-@ProviderFor(keyResultLog)
-final keyResultLogProvider = KeyResultLogFamily._();
+@ProviderFor(goalLog)
+final goalLogProvider = GoalLogFamily._();
 
-/// A key result's log entries, most recent first.
+/// The work on a goal, most recent first.
 
-final class KeyResultLogProvider
+final class GoalLogProvider
     extends
         $FunctionalProvider<
           AsyncValue<List<LogEntry>>,
@@ -325,24 +325,24 @@ final class KeyResultLogProvider
           Stream<List<LogEntry>>
         >
     with $FutureModifier<List<LogEntry>>, $StreamProvider<List<LogEntry>> {
-  /// A key result's log entries, most recent first.
-  KeyResultLogProvider._({
-    required KeyResultLogFamily super.from,
+  /// The work on a goal, most recent first.
+  GoalLogProvider._({
+    required GoalLogFamily super.from,
     required String super.argument,
   }) : super(
          retry: null,
-         name: r'keyResultLogProvider',
+         name: r'goalLogProvider',
          isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
 
   @override
-  String debugGetCreateSourceHash() => _$keyResultLogHash();
+  String debugGetCreateSourceHash() => _$goalLogHash();
 
   @override
   String toString() {
-    return r'keyResultLogProvider'
+    return r'goalLogProvider'
         ''
         '($argument)';
   }
@@ -356,12 +356,12 @@ final class KeyResultLogProvider
   @override
   Stream<List<LogEntry>> create(Ref ref) {
     final argument = this.argument as String;
-    return keyResultLog(ref, argument);
+    return goalLog(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is KeyResultLogProvider && other.argument == argument;
+    return other is GoalLogProvider && other.argument == argument;
   }
 
   @override
@@ -370,26 +370,26 @@ final class KeyResultLogProvider
   }
 }
 
-String _$keyResultLogHash() => r'28ea50bbee169c2ee647d1454db36657cc7660af';
+String _$goalLogHash() => r'31d01a7abcfa6ddfa74f70314f57b8f4c508453f';
 
-/// A key result's log entries, most recent first.
+/// The work on a goal, most recent first.
 
-final class KeyResultLogFamily extends $Family
+final class GoalLogFamily extends $Family
     with $FunctionalFamilyOverride<Stream<List<LogEntry>>, String> {
-  KeyResultLogFamily._()
+  GoalLogFamily._()
     : super(
         retry: null,
-        name: r'keyResultLogProvider',
+        name: r'goalLogProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
 
-  /// A key result's log entries, most recent first.
+  /// The work on a goal, most recent first.
 
-  KeyResultLogProvider call(String keyResultId) =>
-      KeyResultLogProvider._(argument: keyResultId, from: this);
+  GoalLogProvider call(String goalId) =>
+      GoalLogProvider._(argument: goalId, from: this);
 
   @override
-  String toString() => r'keyResultLogProvider';
+  String toString() => r'goalLogProvider';
 }

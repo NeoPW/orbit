@@ -40,8 +40,7 @@ void main() {
     final task = (await tasks()).single;
     expect(task.title, 'Tax return');
     expect(task.projectId, isNull);
-    expect(task.keyResultId, isNull);
-    expect(task.objectiveId, isNull);
+    expect(task.goalId, isNull);
     expect(find.text('Task "Tax return" created'), findsOneWidget);
   });
 

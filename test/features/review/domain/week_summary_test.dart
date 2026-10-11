@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbit/core/db/app_database.dart';
+import 'package:orbit/features/goals/domain/goal_work.dart';
 import 'package:orbit/features/review/domain/week_summary.dart';
 
 import '../../../helpers/fixtures.dart';
@@ -212,89 +213,198 @@ void main() {
     });
   });
 
-  group('krProgressChanges', () {
-    final objectives = [
-      objective('o'),
-      objective('old', status: ObjectiveStatus.completed),
+  group('goalProgressChanges', () {
+    final goals = [
+      goal('g', title: 'Get fit'),
+      goal('old', status: GoalStatus.completed),
     ];
 
     test('change since the previous snapshot in percentage points', () {
-      final changes = krProgressChanges(
-        [keyResult('kr', objectiveId: 'o', current: 55)],
-        objectives,
+      final changes = goalProgressChanges(
+        goals,
+        [measure('m', goalId: 'g', current: 55)],
         const {},
-        {'kr': 0.40},
+        {'m': 0.40},
       );
-      expect(changes.single.progress, 0.55);
-      expect(changes.single.change, 15);
+      final item = changes.single;
+      expect(item.progress, 0.55);
+      expect(item.change, 15);
+      expect(item.measures.single.change, 15);
     });
 
     test('no earlier snapshot: no change', () {
-      final changes = krProgressChanges(
-        [keyResult('kr', objectiveId: 'o', current: 55)],
-        objectives,
+      final changes = goalProgressChanges(
+        goals,
+        [measure('m', goalId: 'g', current: 55)],
         const {},
         const {},
       );
       expect(changes.single.change, isNull);
     });
 
-    test('KRs of non-active objectives are left out', () {
-      final changes = krProgressChanges(
-        [keyResult('kr', objectiveId: 'old')],
-        objectives,
+    test('the goal change only compares measures with a snapshot', () {
+      final changes = goalProgressChanges(
+        goals,
+        [
+          measure('a', goalId: 'g', current: 60),
+          measure('new', goalId: 'g', current: 0, sortOrder: 1),
+        ],
+        const {},
+        {'a': 0.40},
+      );
+      expect(changes.single.progress, 0.3);
+      expect(changes.single.change, 20);
+    });
+
+    test('goals that are not active are left out', () {
+      final changes = goalProgressChanges(
+        goals,
+        [measure('m', goalId: 'old')],
         const {},
         const {},
       );
+      expect(changes.map((c) => c.goal.id), ['g']);
+      expect(changes.single.measures, isEmpty);
+      expect(changes.single.progress, isNull);
+    });
+
+    test('carries the work on each goal', () {
+      final changes = goalProgressChanges(
+        goals,
+        const [],
+        const {},
+        const {},
+        work: {'g': const WorkTotal(3, 120)},
+      );
+      expect(changes.single.work, const WorkTotal(3, 120));
+    });
+  });
+
+  group('snapshotProgressChanges', () {
+    test('uses the stored progress in measure order with the change', () {
+      final a = measure('a', goalId: 'g', sortOrder: 0);
+      final b = measure('b', goalId: 'g', sortOrder: 1);
+      final changes = snapshotProgressChanges(
+        [goal('g')],
+        [b, a],
+        {'b': 0.5, 'a': 0.4},
+        {'a': 0.25},
+      );
+      final item = changes.single;
+      expect(item.measures.map((c) => c.measure.id), ['a', 'b']);
+      expect(item.measures.map((c) => c.progress), [0.4, 0.5]);
+      expect(item.measures.map((c) => c.change), [15, null]);
+      expect(item.progress, 0.45);
+    });
+
+    test('measures without a snapshot and their goals are left out', () {
+      final changes = snapshotProgressChanges(
+        [goal('g')],
+        [measure('a', goalId: 'g')],
+        {'deleted': 0.3},
+        const {},
+      );
       expect(changes, isEmpty);
+    });
+
+    test('a goal completed since the review still shows', () {
+      final changes = snapshotProgressChanges(
+        [goal('g', status: GoalStatus.completed)],
+        [measure('a', goalId: 'g')],
+        {'a': 0.3},
+        const {},
+      );
+      expect(changes.single.progress, 0.3);
+    });
+  });
+
+  group('finishedProjectsInWeek', () {
+    test('by local completion date, newest first, with the goal', () {
+      Project finished(String id, DateTime at, {String? goalId}) => project(
+        id,
+        status: ProjectStatus.completed,
+        goalId: goalId,
+        completedAt: at.toUtc(),
+      );
+      final finishedProjects = finishedProjectsInWeek(
+        [
+          finished('before', DateTime(2026, 10, 4, 23, 30)),
+          finished('first', DateTime(2026, 10, 5, 0, 30), goalId: 'g'),
+          finished('last', DateTime(2026, 10, 11, 23, 30)),
+          project('reopened', completedAt: local(7).toUtc()),
+        ],
+        {'g': goal('g', title: 'Get fit')},
+        week,
+      );
+      expect(finishedProjects.map((f) => f.project.id), ['last', 'first']);
+      expect(finishedProjects.last.goal!.title, 'Get fit');
+    });
+  });
+
+  group('workByGoal', () {
+    test('goals in order, then without a goal', () {
+      const work = [
+        ProjectWork(projectId: 'a', title: 'A', count: 1, minutes: 0),
+        ProjectWork(
+          projectId: 'b',
+          title: 'B',
+          count: 1,
+          minutes: 0,
+          goalId: 'g2',
+        ),
+        ProjectWork(projectId: null, title: 'No project', count: 1, minutes: 0),
+        ProjectWork(
+          projectId: 'c',
+          title: 'C',
+          count: 1,
+          minutes: 0,
+          goalId: 'g1',
+        ),
+      ];
+      final groups = workByGoal(work, [goal('g1'), goal('g2')]);
+      expect(groups.map((g) => g.goal?.id), ['g1', 'g2', null]);
+      expect(groups.last.projects.map((p) => p.title), ['A', 'No project']);
     });
   });
 
   test('buildWeekSummary combines all parts', () {
     final summary = buildWeekSummary(
       weekStart: week,
-      entries: [logEntry('1', projectId: 'p', at: local(6), minutes: 30)],
+      entries: [
+        logEntry('1', projectId: 'p', at: local(6), minutes: 30),
+        logEntry('2', goalId: 'g', at: local(6), minutes: 15),
+      ],
       habits: [habit('h').copyWith(createdAt: DateTime.utc(2026, 9, 1))],
       checks: [habitCheck('h', CalendarDate(2026, 10, 6))],
       completedTasks: [
         task(
           't',
-          projectId: 'p',
+          goalId: 'g',
           status: TaskStatus.done,
         ).copyWith(completedAt: Value(local(7).toUtc())),
       ],
-      projects: [project('p', title: 'Thesis')],
-      keyResults: [keyResult('kr', objectiveId: 'o', current: 20)],
-      objectives: [objective('o')],
+      projects: [
+        project('p', title: 'Thesis', goalId: 'g'),
+        project(
+          'done',
+          title: 'Garden',
+          status: ProjectStatus.completed,
+          completedAt: local(8).toUtc(),
+        ),
+      ],
+      goals: [goal('g', title: 'Graduate')],
+      measures: [measure('m', goalId: 'g', current: 20)],
       habitCheckIns: const {},
-      previousSnapshots: {'kr': 0.1},
+      previousSnapshots: {'m': 0.1},
     );
     expect(summary.weekStart, week);
-    expect(summary.work.single.title, 'Thesis');
+    expect(summary.work.map((w) => w.title), ['Thesis', 'No project']);
+    expect(summary.workGroups.first.goal!.title, 'Graduate');
     expect(summary.habits.single.done, 1);
-    expect(summary.tasks.single.task.id, 't');
-    expect(summary.keyResults.single.change, 10);
-  });
-
-  group('snapshotProgressChanges', () {
-    test('uses the stored progress in KR order with the change', () {
-      final a = keyResult('a', objectiveId: 'o', sortOrder: 0);
-      final b = keyResult('b', objectiveId: 'o', sortOrder: 1);
-      final changes = snapshotProgressChanges([a, b], {'b': 0.5, 'a': 0.4}, {
-        'a': 0.25,
-      });
-      expect(changes.map((c) => c.keyResult.id), ['a', 'b']);
-      expect(changes.map((c) => c.progress), [0.4, 0.5]);
-      expect(changes.map((c) => c.change), [15, null]);
-    });
-
-    test('KRs without a snapshot are left out', () {
-      final changes = snapshotProgressChanges(
-        [keyResult('a', objectiveId: 'o')],
-        {'deleted': 0.3},
-        const {},
-      );
-      expect(changes, isEmpty);
-    });
+    expect(summary.tasks.single.goal!.title, 'Graduate');
+    expect(summary.finishedProjects.single.project.title, 'Garden');
+    final goalChange = summary.goals.single;
+    expect(goalChange.change, 10);
+    expect(goalChange.work, const WorkTotal(2, 45));
   });
 }

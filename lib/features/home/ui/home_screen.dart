@@ -8,10 +8,10 @@ import '../../../core/widgets/settings_button.dart';
 import '../../account/ui/sync_refresh.dart';
 import '../../log/ui/quick_log_sheet.dart';
 import '../../tasks/ui/task_form.dart';
+import '../../plan/ui/work_solar_system.dart';
 import '../data/home_providers.dart';
 import 'home_habits_section.dart';
 import 'home_project_card.dart';
-import 'home_star_systems.dart';
 import 'home_tasks_section.dart';
 import 'today_header.dart';
 import 'upcoming_deadlines_section.dart';
@@ -61,7 +61,7 @@ class HomeScreen extends ConsumerWidget {
             padding: const EdgeInsets.only(bottom: 104),
             children: [
               const TodayHeader(),
-              const HomeStarSystems(),
+              const WorkSolarSystem(compact: true),
               const TimerCard(),
               const HomeHabitsSection(),
               const UpcomingDeadlinesSection(),

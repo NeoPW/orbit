@@ -12,14 +12,15 @@ Area area(String id, {String? name, int sortOrder = 0}) => Area(
   sortOrder: sortOrder,
 );
 
-Objective objective(
+Goal goal(
   String id, {
   String? title,
-  ObjectiveStatus status = ObjectiveStatus.active,
+  GoalStatus status = GoalStatus.active,
   CalendarDate? start,
   CalendarDate? end,
   int sortOrder = 0,
-}) => Objective(
+  String? color,
+}) => Goal(
   id: id,
   createdAt: _t0,
   updatedAt: _t0,
@@ -29,25 +30,25 @@ Objective objective(
   endDate: end ?? CalendarDate(2026, 12, 31),
   status: status,
   sortOrder: sortOrder,
+  color: color,
 );
 
-KeyResult keyResult(
+Measure measure(
   String id, {
-  required String objectiveId,
+  required String goalId,
   String? title,
   MeasureType measureType = MeasureType.numeric,
   double? start = 0,
   double? target = 100,
   double? current = 0,
   double step = 1,
-  CalendarDate? deadline,
   String? habitId,
   int sortOrder = 0,
-}) => KeyResult(
+}) => Measure(
   id: id,
   createdAt: _t0,
   updatedAt: _t0,
-  objectiveId: objectiveId,
+  goalId: goalId,
   title: title ?? id,
   description: '',
   measureType: measureType,
@@ -56,7 +57,6 @@ KeyResult keyResult(
   currentValue: current,
   step: step,
   habitId: habitId,
-  deadline: deadline,
   sortOrder: sortOrder,
 );
 
@@ -65,9 +65,10 @@ Project project(
   String? title,
   ProjectStatus status = ProjectStatus.active,
   int importance = 3,
-  String? keyResultId,
+  String? goalId,
   String? areaId,
   CalendarDate? deadline,
+  DateTime? completedAt,
 }) => Project(
   id: id,
   createdAt: _t0,
@@ -76,9 +77,10 @@ Project project(
   description: '',
   status: status,
   importance: importance,
-  keyResultId: keyResultId,
+  goalId: goalId,
   areaId: areaId,
   deadline: deadline,
+  completedAt: completedAt,
 );
 
 Habit habit(
@@ -89,14 +91,14 @@ Habit habit(
   int? timesPerWeek,
   bool active = true,
   String? projectId,
-  String? keyResultId,
+  String? goalId,
 }) => Habit(
   id: id,
   createdAt: _t0,
   updatedAt: _t0,
   title: title ?? id,
   projectId: projectId,
-  keyResultId: keyResultId,
+  goalId: goalId,
   scheduleType: scheduleType,
   weekdays: weekdays,
   timesPerWeek: timesPerWeek,
@@ -107,21 +109,21 @@ Task task(
   String id, {
   String? title,
   String? projectId,
-  String? keyResultId,
-  String? objectiveId,
+  String? goalId,
   CalendarDate? dueDate,
   TaskStatus status = TaskStatus.open,
+  DateTime? completedAt,
 }) => Task(
   id: id,
   createdAt: _t0,
   updatedAt: _t0,
   projectId: projectId,
-  keyResultId: keyResultId,
-  objectiveId: objectiveId,
+  goalId: goalId,
   title: title ?? id,
   notes: '',
   dueDate: dueDate,
   status: status,
+  completedAt: completedAt,
 );
 
 HabitCheck habitCheck(String habitId, CalendarDate date) => HabitCheck(
@@ -136,6 +138,8 @@ HabitCheck habitCheck(String habitId, CalendarDate date) => HabitCheck(
 LogEntry logEntry(
   String id, {
   String? projectId,
+  String? goalId,
+  String? taskId,
   required DateTime at,
   int? minutes,
   LogSource source = LogSource.manual,
@@ -144,6 +148,8 @@ LogEntry logEntry(
   createdAt: _t0,
   updatedAt: _t0,
   projectId: projectId,
+  goalId: goalId,
+  taskId: taskId,
   occurredAt: at.toUtc(),
   durationMinutes: minutes,
   note: '',

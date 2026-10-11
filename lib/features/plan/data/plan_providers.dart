@@ -3,8 +3,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/async.dart';
 import '../../../core/db/app_database.dart';
 import '../../areas/data/area_repository.dart';
-import '../../key_results/data/key_result_repository.dart';
-import '../../objectives/data/objective_repository.dart';
+import '../../goals/data/goal_repository.dart';
+import '../../goals/data/measure_repository.dart';
 import '../../projects/data/project_repository.dart';
 import '../../tasks/data/task_repository.dart';
 import '../domain/plan_overview.dart';
@@ -14,17 +14,17 @@ part 'plan_providers.g.dart';
 /// The Overview tab, updated after every relevant write.
 @riverpod
 AsyncValue<PlanOverview> planOverview(Ref ref) {
-  final objectives = ref.watch(objectivesProvider);
-  final keyResults = ref.watch(keyResultsProvider);
+  final goals = ref.watch(goalsProvider);
+  final measures = ref.watch(measuresProvider);
   final projects = ref.watch(activeProjectsProvider);
   final areas = ref.watch(areasProvider);
   final checkIns = ref.watch(habitCheckInsProvider);
   final tasks = ref.watch(assignedTasksProvider);
   return combineAsync(
-    [objectives, keyResults, projects, areas, checkIns, tasks],
+    [goals, measures, projects, areas, checkIns, tasks],
     () => buildPlanOverview(
-      objectives: objectives.requireValue,
-      keyResults: keyResults.requireValue,
+      goals: goals.requireValue,
+      measures: measures.requireValue,
       projects: projects.requireValue,
       areas: areas.requireValue,
       habitCheckIns: checkIns.requireValue,
@@ -33,7 +33,7 @@ AsyncValue<PlanOverview> planOverview(Ref ref) {
   );
 }
 
-/// An objective, KR, project or task shown in Plan's detail pane on wide
+/// A goal, project or task shown in Plan's detail pane on wide
 /// screens.
 sealed class PlanItem {
   const PlanItem(this.id);
@@ -56,12 +56,8 @@ class PlanTask extends PlanItem {
   const PlanTask(super.id);
 }
 
-class PlanObjective extends PlanItem {
-  const PlanObjective(super.id);
-}
-
-class PlanKeyResult extends PlanItem {
-  const PlanKeyResult(super.id);
+class PlanGoal extends PlanItem {
+  const PlanGoal(super.id);
 }
 
 /// The item in Plan's detail pane (visual-design spec, "Two panes on wide
@@ -81,13 +77,13 @@ sealed class ArchiveItem {
   DateTime get updatedAt;
 }
 
-class ArchivedObjective extends ArchiveItem {
-  const ArchivedObjective(this.objective);
+class ArchivedGoal extends ArchiveItem {
+  const ArchivedGoal(this.goal);
 
-  final Objective objective;
+  final Goal goal;
 
   @override
-  DateTime get updatedAt => objective.updatedAt;
+  DateTime get updatedAt => goal.updatedAt;
 }
 
 class ArchivedProject extends ArchiveItem {
@@ -99,16 +95,16 @@ class ArchivedProject extends ArchiveItem {
   DateTime get updatedAt => project.updatedAt;
 }
 
-/// Completed/archived objectives and completed projects, most recently
-/// updated first.
+/// Completed/archived goals and completed projects, most recently updated
+/// first.
 @riverpod
 AsyncValue<List<ArchiveItem>> archive(Ref ref) {
-  final objectives = ref.watch(objectivesProvider);
+  final goals = ref.watch(goalsProvider);
   final projects = ref.watch(completedProjectsProvider);
-  return combineAsync([objectives, projects], () {
+  return combineAsync([goals, projects], () {
     final items = <ArchiveItem>[
-      for (final o in objectives.requireValue)
-        if (o.status != ObjectiveStatus.active) ArchivedObjective(o),
+      for (final g in goals.requireValue)
+        if (g.status != GoalStatus.active) ArchivedGoal(g),
       for (final p in projects.requireValue) ArchivedProject(p),
     ];
     return items..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));

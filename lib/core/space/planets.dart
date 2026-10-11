@@ -2,14 +2,25 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+/// The structure on a planet's surface.
+enum PlanetSurface { bands, craters, patches }
+
+/// The surface for a planet with [seed], the same on every run.
+PlanetSurface surfaceOf(int seed) =>
+    PlanetSurface.values[seed % PlanetSurface.values.length];
+
 /// Paints a lit sphere: a highlight towards the top left, the night side
-/// towards the bottom right and a soft atmosphere around it.
+/// towards the bottom right and a soft atmosphere around it. With a
+/// [surface], the sphere gets bands, craters or patches laid out from
+/// [seed].
 void paintPlanet(
   Canvas canvas,
   Offset center,
   double radius,
   Color color, {
   double glow = 0.5,
+  PlanetSurface? surface,
+  int seed = 0,
 }) {
   if (glow > 0) {
     canvas.drawCircle(
@@ -25,6 +36,37 @@ void paintPlanet(
     );
   }
   final rect = Rect.fromCircle(center: center, radius: radius);
+  if (surface == null) {
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..shader = RadialGradient(
+          center: const Alignment(-0.4, -0.45),
+          radius: 1.15,
+          colors: [
+            Color.lerp(color, Colors.white, 0.55)!,
+            color,
+            Color.lerp(color, _night, 0.8)!,
+          ],
+          stops: const [0, 0.45, 1],
+        ).createShader(rect),
+    );
+    return;
+  }
+  canvas.save();
+  canvas.clipPath(Path()..addOval(rect));
+  canvas.drawCircle(center, radius, Paint()..color = color);
+  final random = Random(seed);
+  switch (surface) {
+    case PlanetSurface.bands:
+      _paintBands(canvas, center, radius, color, random);
+    case PlanetSurface.craters:
+      _paintCraters(canvas, center, radius, color, random);
+    case PlanetSurface.patches:
+      _paintPatches(canvas, center, radius, color, random);
+  }
+  // Light from the top left, night towards the bottom right.
   canvas.drawCircle(
     center,
     radius,
@@ -33,13 +75,177 @@ void paintPlanet(
         center: const Alignment(-0.4, -0.45),
         radius: 1.15,
         colors: [
-          Color.lerp(color, Colors.white, 0.55)!,
-          color,
-          Color.lerp(color, const Color(0xFF02030A), 0.8)!,
+          Colors.white.withValues(alpha: 0.4),
+          Colors.white.withValues(alpha: 0),
+          _night.withValues(alpha: 0.88),
         ],
         stops: const [0, 0.45, 1],
       ).createShader(rect),
   );
+  canvas.restore();
+  // A thin lit rim of atmosphere on the day side.
+  canvas.drawArc(
+    rect,
+    pi * 0.85,
+    pi * 0.8,
+    false,
+    Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = max(0.6, radius * 0.06)
+      ..color = Color.lerp(color, Colors.white, 0.6)!.withValues(alpha: 0.45),
+  );
+}
+
+const _night = Color(0xFF02030A);
+
+Color _lighter(Color color, double t) => Color.lerp(color, Colors.white, t)!;
+Color _darker(Color color, double t) => Color.lerp(color, _night, t)!;
+
+/// Gas-giant bands with wavy edges, sometimes with a storm.
+void _paintBands(
+  Canvas canvas,
+  Offset center,
+  double radius,
+  Color color,
+  Random random,
+) {
+  canvas.save();
+  canvas.translate(center.dx, center.dy);
+  canvas.rotate(-0.3 + random.nextDouble() * 0.25);
+  final phase = random.nextDouble() * 2 * pi;
+  double edge(double x, double y) =>
+      y + sin(x / radius * 4 + phase + y) * radius * 0.04;
+  var y = -radius * (0.9 + random.nextDouble() * 0.2);
+  while (y < radius) {
+    final height = radius * (0.1 + random.nextDouble() * 0.2);
+    final light = random.nextBool();
+    final path = Path()..moveTo(-radius * 1.2, edge(-radius * 1.2, y));
+    for (var x = -radius; x <= radius * 1.2; x += radius * 0.2) {
+      path.lineTo(x, edge(x, y));
+    }
+    for (var x = radius * 1.2; x >= -radius * 1.2; x -= radius * 0.2) {
+      path.lineTo(x, edge(x, y + height));
+    }
+    path.close();
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = (light ? _lighter(color, 0.35) : _darker(color, 0.35))
+            .withValues(alpha: 0.3 + random.nextDouble() * 0.35),
+    );
+    y += height + radius * (0.03 + random.nextDouble() * 0.12);
+  }
+  if (random.nextBool()) {
+    final storm = Rect.fromCenter(
+      center: Offset(radius * 0.25, radius * 0.3),
+      width: radius * 0.42,
+      height: radius * 0.22,
+    );
+    canvas.drawOval(storm, Paint()..color = _darker(color, 0.45));
+    canvas.drawOval(
+      storm.deflate(radius * 0.04),
+      Paint()..color = _lighter(color, 0.3).withValues(alpha: 0.8),
+    );
+  }
+  canvas.restore();
+}
+
+/// A rocky surface: mottled maria and craters with lit rims.
+void _paintCraters(
+  Canvas canvas,
+  Offset center,
+  double radius,
+  Color color,
+  Random random,
+) {
+  Offset somewhere(double spread) =>
+      center +
+      Offset(
+        (random.nextDouble() * 2 - 1) * radius * spread,
+        (random.nextDouble() * 2 - 1) * radius * spread,
+      );
+  for (var i = 0; i < 3; i++) {
+    canvas.drawCircle(
+      somewhere(0.7),
+      radius * (0.25 + random.nextDouble() * 0.25),
+      Paint()..color = _darker(color, 0.3).withValues(alpha: 0.35),
+    );
+  }
+  final count = radius < 6 ? 3 : 7;
+  for (var i = 0; i < count; i++) {
+    final at = somewhere(0.85);
+    final size = radius * (0.07 + random.nextDouble() * 0.15);
+    canvas.drawCircle(
+      at,
+      size,
+      Paint()..color = _darker(color, 0.45).withValues(alpha: 0.7),
+    );
+    // The rim catches the light on the far side from it.
+    canvas.drawArc(
+      Rect.fromCircle(center: at, radius: size),
+      -pi * 0.25,
+      pi,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = max(0.5, size * 0.3)
+        ..color = _lighter(color, 0.45).withValues(alpha: 0.6),
+    );
+  }
+}
+
+/// Continents in a shifted hue with wisps of cloud over them.
+void _paintPatches(
+  Canvas canvas,
+  Offset center,
+  double radius,
+  Color color,
+  Random random,
+) {
+  final hsl = HSLColor.fromColor(color);
+  final land = hsl
+      .withHue((hsl.hue + 35 + random.nextDouble() * 30) % 360)
+      .withLightness((hsl.lightness * 0.8).clamp(0.0, 1.0))
+      .toColor();
+  for (var i = 0; i < 4; i++) {
+    final at =
+        center +
+        Offset.fromDirection(
+          random.nextDouble() * 2 * pi,
+          radius * random.nextDouble() * 0.7,
+        );
+    final size = radius * (0.25 + random.nextDouble() * 0.3);
+    const corners = 9;
+    final points = [
+      for (var c = 0; c < corners; c++)
+        at +
+            Offset.fromDirection(
+              c * 2 * pi / corners,
+              size * (0.6 + random.nextDouble() * 0.5),
+            ),
+    ];
+    final path = Path()..moveTo(points.last.dx, points.last.dy);
+    for (var c = 0; c < corners; c++) {
+      final next = points[(c + 1) % corners];
+      final mid = Offset.lerp(points[c], next, 0.5)!;
+      path.quadraticBezierTo(points[c].dx, points[c].dy, mid.dx, mid.dy);
+    }
+    canvas.drawPath(path, Paint()..color = land.withValues(alpha: 0.75));
+  }
+  final cloud = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeWidth = max(0.6, radius * 0.08)
+    ..color = Colors.white.withValues(alpha: 0.3);
+  for (var i = 0; i < 3; i++) {
+    final y = center.dy + (random.nextDouble() * 2 - 1) * radius * 0.7;
+    final x = center.dx + (random.nextDouble() * 2 - 1) * radius * 0.5;
+    canvas.drawLine(
+      Offset(x - radius * 0.35, y),
+      Offset(x + radius * 0.35, y - radius * 0.06),
+      cloud,
+    );
+  }
 }
 
 /// Paints a star: a white-hot core in [color] with a corona around it.
@@ -113,403 +319,179 @@ class _PlanetPainter extends CustomPainter {
       old.color != color || old.glow != glow;
 }
 
-/// A planet of a [StarSystem]: a key result, with its projects as moons.
-class SystemPlanet {
-  const SystemPlanet({
-    required this.label,
-    required this.color,
-    required this.progress,
-    this.moons = const [],
-    this.onTap,
-  });
-
-  final String label;
-  final Color color;
-
-  /// 0–1. Brighter as it grows; a reached KR gets a ring.
-  final double progress;
-
-  /// One color per moon.
-  final List<Color> moons;
-  final VoidCallback? onTap;
-
-  @override
-  bool operator ==(Object other) =>
-      other is SystemPlanet &&
-      other.label == label &&
-      other.color == color &&
-      other.progress == progress &&
-      _listEquals(other.moons, moons);
-
-  @override
-  int get hashCode =>
-      Object.hash(label, color, progress, Object.hashAll(moons));
-}
-
-/// An objective as its own solar system: a star in the objective's color
-/// with its key results as planets and their projects as moons.
-///
-/// Compact (the default): a square icon of `size`, without labels or moons.
-/// [StarSystem.detailed]: as wide as it may be and [height] tall, with
-/// labeled, tappable planets and their moons.
-class StarSystem extends StatelessWidget {
-  const StarSystem({
-    super.key,
-    required this.color,
-    required this.progress,
-    required this.planets,
-    double size = 56,
-    this.seed = 0,
-  }) : height = size,
-       detailed = false;
-
-  const StarSystem.detailed({
-    super.key,
-    required this.color,
-    required this.progress,
-    required this.planets,
-    this.height = 220,
-    this.seed = 0,
-  }) : detailed = true;
-
-  final Color color;
-
-  /// 0–1, the objective's progress: the star burns brighter with it.
-  final double progress;
-  final List<SystemPlanet> planets;
-  final double height;
-  final bool detailed;
-
-  /// Varies the planets' positions per objective.
-  final int seed;
-
-  static const maxPlanets = 6;
-
-  @override
-  Widget build(BuildContext context) {
-    final percent = (progress.clamp(0.0, 1.0) * 100).round();
-    final count = planets.length;
-    final label = '$percent percent, $count key result${count == 1 ? '' : 's'}';
-    final shown = planets.take(maxPlanets).toList();
-    if (!detailed) {
-      return Semantics(
-        label: label,
-        child: SizedBox.square(
-          dimension: height,
-          child: CustomPaint(
-            painter: _SystemPainter(
-              geometry: _Geometry.compact(height, shown.length, seed),
-              star: color,
-              progress: progress.clamp(0.0, 1.0),
-              planets: shown,
-              moons: false,
-            ),
-          ),
-        ),
-      );
-    }
-    final theme = Theme.of(context);
-    return Semantics(
-      label: label,
-      container: true,
-      child: SizedBox(
-        height: height,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final geometry = _Geometry.detailed(
-              Size(constraints.maxWidth, height),
-              shown.length,
-              seed,
-            );
-            return Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _SystemPainter(
-                      geometry: geometry,
-                      star: color,
-                      progress: progress.clamp(0.0, 1.0),
-                      planets: shown,
-                      moons: true,
-                    ),
-                  ),
-                ),
-                for (var i = 0; i < shown.length; i++)
-                  _label(theme, shown[i], geometry.planet(i), geometry),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  /// The planet's tap target with its label below it.
-  Widget _label(
-    ThemeData theme,
-    SystemPlanet planet,
-    Offset at,
-    _Geometry geometry,
-  ) {
-    const width = 120.0;
-    final r = geometry.planetRadius;
-    return Positioned(
-      left: at.dx - width / 2,
-      top: at.dy - r * 1.6,
-      width: width,
-      child: Semantics(
-        container: true,
-        button: planet.onTap != null,
-        label: planet.label,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: planet.onTap,
-          child: ExcludeSemantics(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(height: r * 3.4),
-                Text(
-                  planet.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    shadows: const [
-                      Shadow(blurRadius: 6, color: Colors.black),
-                      Shadow(blurRadius: 2, color: Colors.black),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Where the star, orbits and planets of a system go.
-class _Geometry {
-  _Geometry({
-    required this.center,
-    required this.starRadius,
-    required this.planetRadius,
-    required this.orbits,
-    required this.tilt,
-    required this.angles,
-  });
-
-  /// A square icon: tilted, flat orbits.
-  factory _Geometry.compact(double size, int count, int seed) {
-    final extent = size / 2;
-    final planetRadius = size * 0.075;
-    final first = extent * 0.5;
-    final last = extent - planetRadius * 1.2;
-    return _Geometry(
-      center: Offset(extent, extent),
-      starRadius: size * 0.12,
-      planetRadius: planetRadius,
-      tilt: -0.42,
-      orbits: [
-        for (var i = 0; i < count; i++)
-          _orbit(first, last, i, count, flatten: 0.38),
-      ],
-      angles: _angles(count, seed),
-    );
-  }
-
-  /// A wide band: almost level orbits, room below each planet for its
-  /// label.
-  factory _Geometry.detailed(Size size, int count, int seed) {
-    final planetRadius = (size.height * 0.055).clamp(8.0, 14.0);
-    final starRadius = size.height * 0.09;
-    final maxX = size.width / 2 - 56;
-    final maxY = size.height / 2 - 28;
-    final first = starRadius * 3;
-    return _Geometry(
-      center: size.center(Offset.zero),
-      starRadius: starRadius,
-      planetRadius: planetRadius,
-      tilt: -0.08,
-      orbits: [
-        for (var i = 0; i < count; i++)
-          _orbit(first, max(first, maxX), i, count, flatten: maxY / maxX),
-      ],
-      angles: _angles(count, seed),
-    );
-  }
-
-  static Size _orbit(
-    double first,
-    double last,
-    int i,
-    int count, {
-    required double flatten,
-  }) {
-    final rx = count == 1
-        ? (first + last) / 2
-        : first + (last - first) * i / (count - 1);
-    return Size(rx, rx * flatten);
-  }
-
-  /// Spread around the star, so planets on neighboring orbits do not line
-  /// up.
-  static List<double> _angles(int count, int seed) => [
-    for (var i = 0; i < count; i++)
-      (seed * 0.37 + 0.6 + i * 2.39996) % (2 * pi),
-  ];
-
-  final Offset center;
-  final double starRadius;
-  final double planetRadius;
-
-  /// Half axes of each orbit's ellipse, before the tilt.
-  final List<Size> orbits;
-  final double tilt;
-  final List<double> angles;
-
-  Offset planet(int i) {
-    final a = angles[i];
-    final local = Offset(cos(a) * orbits[i].width, sin(a) * orbits[i].height);
-    return center +
-        Offset(
-          local.dx * cos(tilt) - local.dy * sin(tilt),
-          local.dx * sin(tilt) + local.dy * cos(tilt),
-        );
-  }
-
-  /// In front of the star (lower half of the orbit) or behind it.
-  bool inFront(int i) => sin(angles[i]) > 0;
-
-  @override
-  bool operator ==(Object other) =>
-      other is _Geometry &&
-      other.center == center &&
-      other.starRadius == starRadius &&
-      other.tilt == tilt &&
-      _listEquals(other.orbits, orbits) &&
-      _listEquals(other.angles, angles);
-
-  @override
-  int get hashCode => Object.hash(center, starRadius, orbits.length);
-}
-
-class _SystemPainter extends CustomPainter {
-  _SystemPainter({
-    required this.geometry,
-    required this.star,
-    required this.progress,
-    required this.planets,
-    required this.moons,
-  });
-
-  final _Geometry geometry;
-  final Color star;
-  final double progress;
-  final List<SystemPlanet> planets;
-  final bool moons;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final g = geometry;
-    final orbitPaint = Paint()
+/// Paints a ring around a planet at [center] with [radius]: the back half
+/// ([back] true) goes behind the planet, the front half in front of it.
+void paintRing(
+  Canvas canvas,
+  Offset center,
+  double radius,
+  Color color, {
+  required bool back,
+}) {
+  canvas.save();
+  canvas.translate(center.dx, center.dy);
+  canvas.rotate(-0.35);
+  canvas.drawArc(
+    Rect.fromCenter(center: Offset.zero, width: radius * 3.4, height: radius),
+    back ? pi : 0,
+    pi,
+    false,
+    Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = moons ? 1 : 0.8
-      ..color = star.withValues(alpha: 0.22);
-    for (final orbit in g.orbits) {
-      canvas.save();
-      canvas.translate(g.center.dx, g.center.dy);
-      canvas.rotate(g.tilt);
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset.zero,
-          width: orbit.width * 2,
-          height: orbit.height * 2,
-        ),
-        orbitPaint,
-      );
-      canvas.restore();
-    }
-    // Planets behind the star first, so the star covers them.
-    for (var i = 0; i < planets.length; i++) {
-      if (!g.inFront(i)) _planet(canvas, i);
-    }
-    paintStar(
-      canvas,
-      g.center,
-      g.starRadius,
-      star,
-      intensity: 0.35 + 0.65 * progress,
-    );
-    for (var i = 0; i < planets.length; i++) {
-      if (g.inFront(i)) _planet(canvas, i);
-    }
-  }
+      ..strokeWidth = max(1, radius * 0.25)
+      ..color = Color.lerp(
+        color,
+        Colors.white,
+        0.4,
+      )!.withValues(alpha: back ? 0.4 : 0.85),
+  );
+  canvas.restore();
+}
 
-  void _planet(Canvas canvas, int i) {
-    final planet = planets[i];
-    final at = geometry.planet(i);
-    final r = geometry.planetRadius;
-    final p = planet.progress.clamp(0.0, 1.0);
-    final dim = Color.lerp(planet.color, const Color(0xFF3A3F5C), 0.65)!;
-    final color = Color.lerp(dim, planet.color, 0.25 + 0.75 * p)!;
-    final done = p >= 1;
-    if (done) _ring(canvas, at, r, color, back: true);
-    paintPlanet(canvas, at, r, color, glow: 0.2 + 0.6 * p);
-    if (done) _ring(canvas, at, r, color, back: false);
-    if (!moons) return;
-    final count = min(planet.moons.length, 6);
-    for (var m = 0; m < count; m++) {
-      final angle = -pi / 2 + 0.5 + m * 2 * pi / count;
-      final orbit = r * 2.2;
-      paintPlanet(
-        canvas,
-        at + Offset(cos(angle) * orbit, sin(angle) * orbit * 0.6),
-        max(3.0, r * 0.45),
-        planet.moons[m],
-        glow: 0.4,
-      );
-    }
-  }
+/// The color a goal's planet is drawn in: dimmer at low [progress] (null
+/// for a goal without measures, drawn at medium brightness).
+Color planetShade(Color color, double? progress) {
+  final dim = Color.lerp(color, const Color(0xFF3A3F5C), 0.6)!;
+  return Color.lerp(dim, color, 0.3 + 0.7 * (progress ?? 0.5))!;
+}
 
-  void _ring(
-    Canvas canvas,
-    Offset center,
-    double r,
-    Color color, {
-    required bool back,
-  }) {
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    canvas.rotate(-0.35);
-    canvas.drawArc(
-      Rect.fromCenter(center: Offset.zero, width: r * 3.4, height: r),
-      back ? pi : 0,
-      pi,
-      false,
+/// Paints a goal's planet with its [moons] (project area colors) around it,
+/// and a ring when [ringed].
+void paintGoalPlanet(
+  Canvas canvas,
+  Offset center,
+  double radius,
+  Color color, {
+  double? progress,
+  bool ringed = false,
+  List<Color> moons = const [],
+  int seed = 0,
+}) {
+  final shade = planetShade(color, progress);
+  final count = min(moons.length, 6);
+  final orbit = Size(radius * 2, radius * 2 * 0.62);
+  final moonRadius = max(3.2, radius * 0.4);
+  if (count > 0) {
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: center,
+        width: orbit.width * 2,
+        height: orbit.height * 2,
+      ),
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = max(1, r * 0.25)
-        ..color = Color.lerp(
-          color,
-          Colors.white,
-          0.4,
-        )!.withValues(alpha: back ? 0.4 : 0.85),
+        ..strokeWidth = 0.6
+        ..color = Colors.white.withValues(alpha: 0.12),
     );
-    canvas.restore();
+  }
+  // Moons on the far side of the orbit go behind the planet.
+  void paintMoons({required bool far}) {
+    for (var i = 0; i < count; i++) {
+      final angle = seed * 0.37 - pi / 2 + 0.5 + i * 2 * pi / count;
+      if ((sin(angle) < 0) != far) continue;
+      paintPlanet(
+        canvas,
+        center + Offset(cos(angle) * orbit.width, sin(angle) * orbit.height),
+        moonRadius,
+        moons[i],
+        glow: 0.25,
+        surface: PlanetSurface.craters,
+        seed: seed * 7 + i,
+      );
+    }
   }
 
+  paintMoons(far: true);
+  if (ringed) paintRing(canvas, center, radius, shade, back: true);
+  paintPlanet(
+    canvas,
+    center,
+    radius,
+    shade,
+    glow: 0.3 + 0.6 * (progress ?? 0.5),
+    surface: surfaceOf(seed),
+    seed: seed,
+  );
+  if (ringed) paintRing(canvas, center, radius, shade, back: false);
+  paintMoons(far: false);
+}
+
+/// A goal's planet with its moons, e.g. in a page header or a list.
+class GoalPlanet extends StatelessWidget {
+  const GoalPlanet({
+    super.key,
+    required this.color,
+    this.progress,
+    this.ringed = false,
+    this.moons = const [],
+    this.size = 48,
+    this.seed = 0,
+  });
+
+  final Color color;
+
+  /// 0–1; null for a goal without measures.
+  final double? progress;
+  final bool ringed;
+
+  /// One area color per moon (at most six are drawn).
+  final List<Color> moons;
+  final double size;
+  final int seed;
+
   @override
-  bool shouldRepaint(_SystemPainter old) =>
-      old.geometry != geometry ||
-      old.star != star ||
+  Widget build(BuildContext context) => ExcludeSemantics(
+    child: SizedBox.square(
+      dimension: size,
+      child: CustomPaint(
+        painter: _GoalPlanetPainter(
+          color: color,
+          progress: progress,
+          ringed: ringed,
+          moons: moons,
+          seed: seed,
+        ),
+      ),
+    ),
+  );
+}
+
+class _GoalPlanetPainter extends CustomPainter {
+  _GoalPlanetPainter({
+    required this.color,
+    required this.progress,
+    required this.ringed,
+    required this.moons,
+    required this.seed,
+  });
+
+  final Color color;
+  final double? progress;
+  final bool ringed;
+  final List<Color> moons;
+  final int seed;
+
+  @override
+  void paint(Canvas canvas, Size size) => paintGoalPlanet(
+    canvas,
+    size.center(Offset.zero),
+    // Room for the moons' orbit around the planet.
+    // The same size with or without moons, so planets compare.
+    size.shortestSide / 2 / 2.5,
+    color,
+    progress: progress,
+    ringed: ringed,
+    moons: moons,
+    seed: seed,
+  );
+
+  @override
+  bool shouldRepaint(_GoalPlanetPainter old) =>
+      old.color != color ||
       old.progress != progress ||
-      old.moons != moons ||
-      !_listEquals(old.planets, planets);
+      old.ringed != ringed ||
+      old.seed != seed ||
+      !_listEquals(old.moons, moons);
 }
 
 bool _listEquals<T>(List<T> a, List<T> b) {
@@ -520,7 +502,7 @@ bool _listEquals<T>(List<T> a, List<T> b) {
   return true;
 }
 
-/// A seed for [StarSystem.seed] that is the same on every run and platform
+/// A seed for drawing positions that is the same on every run and platform
 /// (unlike [String.hashCode]).
 int stableSeed(String id) =>
     id.codeUnits.fold(0, (sum, c) => sum * 31 + c) & 0xFFFF;

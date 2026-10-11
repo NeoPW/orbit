@@ -86,7 +86,7 @@ class TimerRepository extends Repository {
           )..where((t) => t.id.equals(taskId))).getSingleOrNull();
     final entry = await _logs.add(
       projectId: task == null ? timer.projectId : task.projectId,
-      keyResultId: task?.keyResultId,
+      goalId: task?.goalId,
       taskId: taskId,
       durationMinutes: minutes,
       source: LogSource.timer,
