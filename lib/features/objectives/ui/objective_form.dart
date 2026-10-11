@@ -5,6 +5,8 @@ import '../../../core/db/app_database.dart';
 import '../../../core/widgets/confirm_delete.dart';
 import '../../../core/widgets/date_field.dart';
 import '../../../core/widgets/form_sheet.dart';
+import '../../../core/widgets/planet_color_picker.dart';
+import '../../../core/space/space_colors.dart';
 import '../data/objective_repository.dart';
 
 /// Opens the objective form in a sheet: a new objective, or [objectiveId].
@@ -51,6 +53,7 @@ class _ObjectiveFormState extends ConsumerState<_ObjectiveForm> {
   );
   late CalendarDate? _start = widget.objective?.startDate;
   late CalendarDate? _end = widget.objective?.endDate;
+  late String? _color = widget.objective?.color;
   late ObjectiveStatus _status =
       widget.objective?.status ?? ObjectiveStatus.active;
   String? _startError;
@@ -88,6 +91,7 @@ class _ObjectiveFormState extends ConsumerState<_ObjectiveForm> {
         description: _description.text,
         startDate: _start!,
         endDate: _end!,
+        color: _color,
       );
     } else {
       await repo.update(
@@ -97,6 +101,7 @@ class _ObjectiveFormState extends ConsumerState<_ObjectiveForm> {
           startDate: _start,
           endDate: _end,
           status: _status,
+          color: Value(_color),
         ),
       );
     }
@@ -163,6 +168,16 @@ class _ObjectiveFormState extends ConsumerState<_ObjectiveForm> {
           value: _end,
           errorText: _endError,
           onChanged: (date) => setState(() => _end = date),
+        ),
+        PlanetColorPicker(
+          label: 'Star color',
+          value: _color,
+          onChanged: (color) => setState(() => _color = color),
+          // A new objective goes last; its automatic color follows from
+          // there, which the sheet does not know: preview the first.
+          auto: widget.objective == null
+              ? starColors.first
+              : objectiveColor(widget.objective!.sortOrder),
         ),
         if (editing)
           SegmentedButton<ObjectiveStatus>(

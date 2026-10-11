@@ -31,8 +31,27 @@
 
   <title>orbit</title>
   <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0B1026">
+  <style>
+    /* Night sky with the planet while Flutter loads. */
+    html, body { margin: 0; height: 100%; background: #05070F; }
+    body {
+      background: radial-gradient(circle at 45% 40%, #1E2763 0%, #0B1026 45%, #05070F 100%);
+    }
+    #splash {
+      position: fixed; inset: 0; margin: auto; width: 128px; height: 128px;
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+    @keyframes pulse { 50% { opacity: 0.6; transform: scale(0.96); } }
+    @media (prefers-reduced-motion: reduce) { #splash { animation: none; } }
+  </style>
 </head>
 <body>
+  <img id="splash" src="icons/Icon-maskable-192.png" alt="">
+  <script>
+    window.addEventListener('flutter-first-frame', () =>
+      document.getElementById('splash')?.remove());
+  </script>
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader

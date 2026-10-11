@@ -3,8 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:orbit/core/db/app_database.dart';
 import 'package:orbit/core/router/routes.dart';
+import 'package:orbit/core/space/planets.dart';
+import 'package:orbit/core/space/shooting_star.dart';
 import 'package:orbit/core/time/today.dart';
 import 'package:orbit/features/home/ui/home_habits_section.dart';
+import 'package:orbit/features/home/ui/home_star_systems.dart';
 import 'package:orbit/features/settings/data/settings_repository.dart';
 import 'package:orbit/features/tasks/domain/task_assignment.dart';
 
@@ -292,6 +295,64 @@ void main() {
       expect(find.text('Garden'), findsOneWidget);
       expect(find.text('Due tomorrow'), findsOneWidget);
       expect(find.text('Nothing due in the next 7 days'), findsOneWidget);
+    });
+  });
+
+  testApp('sheets open above the tab bar, down to the screen bottom', (
+    tester,
+  ) async {
+    await pumpHome(tester);
+    await tester.tap(find.byTooltip('Log work'));
+    await tester.pumpAndSettle();
+    // Inside the tab it would end at the tab bar's top edge.
+    expect(tester.getBottomLeft(find.byType(BottomSheet)).dy, 1600);
+  });
+
+  group('space', () {
+    testApp('active objectives show as star systems; one opens its page', (
+      tester,
+    ) async {
+      final o = await seed.objective(title: 'Get fit');
+      await seed.kr(o.id);
+      await seed.objective(title: 'Finish thesis');
+      final app = await pumpHome(tester);
+      expect(
+        find.descendant(
+          of: find.byType(HomeStarSystems),
+          matching: find.byType(StarSystem),
+        ),
+        findsNWidgets(2),
+      );
+      expect(find.bySemanticsLabel('Get fit, 20 percent'), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('Get fit, 20 percent'));
+      await tester.pumpAndSettle();
+      expect(path(app), Routes.objective(o.id));
+    });
+
+    testApp('no star systems without active objectives', (tester) async {
+      await pumpHome(tester);
+      expect(find.byType(StarSystem), findsNothing);
+    });
+
+    testApp('checking the last habit of the day sends a shooting star', (
+      tester,
+    ) async {
+      await seed.habits.create(
+        title: 'Stretch',
+        scheduleType: ScheduleType.daily,
+      );
+      await pumpHome(tester);
+      final paints = find.descendant(
+        of: find.byType(ShootingStar),
+        matching: find.byType(CustomPaint),
+      );
+      final before = tester.widgetList(paints).length;
+      await tester.tap(find.text('Stretch'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(tester.widgetList(paints).length, before + 1);
+      await tester.pumpAndSettle();
+      expect(tester.widgetList(paints).length, before);
     });
   });
 }

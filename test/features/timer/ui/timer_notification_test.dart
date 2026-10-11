@@ -102,9 +102,7 @@ void main() {
     expect(find.text('Habits due today'), findsOneWidget);
   });
 
-  testApp('without permission it asks once when a timer runs', (
-    tester,
-  ) async {
+  testApp('without permission it asks once when a timer runs', (tester) async {
     await SettingsRepository(db).setRemindersEnabled(false);
     scheduler.allowed = false;
     final p = await seed.projects.create(title: 'Thesis');

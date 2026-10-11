@@ -52,9 +52,19 @@ void main() {
     final o = await seed.objective();
     final kr = await seed.kr(o.id, title: 'Run 100 km');
     final app = await openPage(tester, o.id);
-    await tester.tap(find.text('Run 100 km'));
+    // The last one is the list tile; the first is the planet's label.
+    await tester.tap(find.text('Run 100 km').last);
     await tester.pumpAndSettle();
     expect(find.byType(KeyResultPageBody), findsOneWidget);
+    expect(app.router.state.uri.path, Routes.keyResult(kr.id));
+  });
+
+  testApp('tapping a key result planet opens its page', (tester) async {
+    final o = await seed.objective();
+    final kr = await seed.kr(o.id, title: 'Run 100 km');
+    final app = await openPage(tester, o.id);
+    await tester.tap(find.bySemanticsLabel('Run 100 km'));
+    await tester.pumpAndSettle();
     expect(app.router.state.uri.path, Routes.keyResult(kr.id));
   });
 

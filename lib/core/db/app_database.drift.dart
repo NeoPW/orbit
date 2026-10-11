@@ -571,6 +571,15 @@ class $ObjectivesTable extends Objectives
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -583,6 +592,7 @@ class $ObjectivesTable extends Objectives
     endDate,
     status,
     sortOrder,
+    color,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -648,6 +658,12 @@ class $ObjectivesTable extends Objectives
     } else if (isInserting) {
       context.missing(_sortOrderMeta);
     }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    }
     return context;
   }
 
@@ -703,6 +719,10 @@ class $ObjectivesTable extends Objectives
         DriftSqlType.int,
         data['${effectivePrefix}sort_order'],
       )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      ),
     );
   }
 
@@ -737,6 +757,9 @@ class Objective extends DataClass implements Insertable<Objective> {
   final CalendarDate endDate;
   final ObjectiveStatus status;
   final int sortOrder;
+
+  /// `#RRGGBB`, the star's color; null picks one by position.
+  final String? color;
   const Objective({
     required this.id,
     required this.createdAt,
@@ -748,6 +771,7 @@ class Objective extends DataClass implements Insertable<Objective> {
     required this.endDate,
     required this.status,
     required this.sortOrder,
+    this.color,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -776,6 +800,9 @@ class Objective extends DataClass implements Insertable<Objective> {
       );
     }
     map['sort_order'] = Variable<int>(sortOrder);
+    if (!nullToAbsent || color != null) {
+      map['color'] = Variable<String>(color);
+    }
     return map;
   }
 
@@ -793,6 +820,9 @@ class Objective extends DataClass implements Insertable<Objective> {
       endDate: Value(endDate),
       status: Value(status),
       sortOrder: Value(sortOrder),
+      color: color == null && nullToAbsent
+          ? const Value.absent()
+          : Value(color),
     );
   }
 
@@ -812,6 +842,7 @@ class Objective extends DataClass implements Insertable<Objective> {
       endDate: serializer.fromJson<CalendarDate>(json['endDate']),
       status: serializer.fromJson<ObjectiveStatus>(json['status']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      color: serializer.fromJson<String?>(json['color']),
     );
   }
   @override
@@ -828,6 +859,7 @@ class Objective extends DataClass implements Insertable<Objective> {
       'endDate': serializer.toJson<CalendarDate>(endDate),
       'status': serializer.toJson<ObjectiveStatus>(status),
       'sortOrder': serializer.toJson<int>(sortOrder),
+      'color': serializer.toJson<String?>(color),
     };
   }
 
@@ -842,6 +874,7 @@ class Objective extends DataClass implements Insertable<Objective> {
     CalendarDate? endDate,
     ObjectiveStatus? status,
     int? sortOrder,
+    Value<String?> color = const Value.absent(),
   }) => Objective(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -853,6 +886,7 @@ class Objective extends DataClass implements Insertable<Objective> {
     endDate: endDate ?? this.endDate,
     status: status ?? this.status,
     sortOrder: sortOrder ?? this.sortOrder,
+    color: color.present ? color.value : this.color,
   );
   Objective copyWithCompanion(ObjectivesCompanion data) {
     return Objective(
@@ -868,6 +902,7 @@ class Objective extends DataClass implements Insertable<Objective> {
       endDate: data.endDate.present ? data.endDate.value : this.endDate,
       status: data.status.present ? data.status.value : this.status,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      color: data.color.present ? data.color.value : this.color,
     );
   }
 
@@ -883,7 +918,8 @@ class Objective extends DataClass implements Insertable<Objective> {
           ..write('startDate: $startDate, ')
           ..write('endDate: $endDate, ')
           ..write('status: $status, ')
-          ..write('sortOrder: $sortOrder')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('color: $color')
           ..write(')'))
         .toString();
   }
@@ -900,6 +936,7 @@ class Objective extends DataClass implements Insertable<Objective> {
     endDate,
     status,
     sortOrder,
+    color,
   );
   @override
   bool operator ==(Object other) =>
@@ -914,7 +951,8 @@ class Objective extends DataClass implements Insertable<Objective> {
           other.startDate == this.startDate &&
           other.endDate == this.endDate &&
           other.status == this.status &&
-          other.sortOrder == this.sortOrder);
+          other.sortOrder == this.sortOrder &&
+          other.color == this.color);
 }
 
 class ObjectivesCompanion extends UpdateCompanion<Objective> {
@@ -928,6 +966,7 @@ class ObjectivesCompanion extends UpdateCompanion<Objective> {
   final Value<CalendarDate> endDate;
   final Value<ObjectiveStatus> status;
   final Value<int> sortOrder;
+  final Value<String?> color;
   final Value<int> rowid;
   const ObjectivesCompanion({
     this.id = const Value.absent(),
@@ -940,6 +979,7 @@ class ObjectivesCompanion extends UpdateCompanion<Objective> {
     this.endDate = const Value.absent(),
     this.status = const Value.absent(),
     this.sortOrder = const Value.absent(),
+    this.color = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ObjectivesCompanion.insert({
@@ -953,6 +993,7 @@ class ObjectivesCompanion extends UpdateCompanion<Objective> {
     required CalendarDate endDate,
     required ObjectiveStatus status,
     required int sortOrder,
+    this.color = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        createdAt = Value(createdAt),
@@ -973,6 +1014,7 @@ class ObjectivesCompanion extends UpdateCompanion<Objective> {
     Expression<String>? endDate,
     Expression<String>? status,
     Expression<int>? sortOrder,
+    Expression<String>? color,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -986,6 +1028,7 @@ class ObjectivesCompanion extends UpdateCompanion<Objective> {
       if (endDate != null) 'end_date': endDate,
       if (status != null) 'status': status,
       if (sortOrder != null) 'sort_order': sortOrder,
+      if (color != null) 'color': color,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1001,6 +1044,7 @@ class ObjectivesCompanion extends UpdateCompanion<Objective> {
     Value<CalendarDate>? endDate,
     Value<ObjectiveStatus>? status,
     Value<int>? sortOrder,
+    Value<String?>? color,
     Value<int>? rowid,
   }) {
     return ObjectivesCompanion(
@@ -1014,6 +1058,7 @@ class ObjectivesCompanion extends UpdateCompanion<Objective> {
       endDate: endDate ?? this.endDate,
       status: status ?? this.status,
       sortOrder: sortOrder ?? this.sortOrder,
+      color: color ?? this.color,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1057,6 +1102,9 @@ class ObjectivesCompanion extends UpdateCompanion<Objective> {
     if (sortOrder.present) {
       map['sort_order'] = Variable<int>(sortOrder.value);
     }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1076,6 +1124,7 @@ class ObjectivesCompanion extends UpdateCompanion<Objective> {
           ..write('endDate: $endDate, ')
           ..write('status: $status, ')
           ..write('sortOrder: $sortOrder, ')
+          ..write('color: $color, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1254,6 +1303,15 @@ class $KeyResultsTable extends KeyResults
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1272,6 +1330,7 @@ class $KeyResultsTable extends KeyResults
     habitId,
     deadline,
     sortOrder,
+    color,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1390,6 +1449,12 @@ class $KeyResultsTable extends KeyResults
     } else if (isInserting) {
       context.missing(_sortOrderMeta);
     }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    }
     return context;
   }
 
@@ -1467,6 +1532,10 @@ class $KeyResultsTable extends KeyResults
         DriftSqlType.int,
         data['${effectivePrefix}sort_order'],
       )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      ),
     );
   }
 
@@ -1517,6 +1586,9 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
   /// Falls back to the objective's end date when null.
   final CalendarDate? deadline;
   final int sortOrder;
+
+  /// `#RRGGBB`, the planet's color; null takes a shade of the objective's.
+  final String? color;
   const KeyResult({
     required this.id,
     required this.createdAt,
@@ -1534,6 +1606,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
     this.habitId,
     this.deadline,
     required this.sortOrder,
+    this.color,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1574,6 +1647,9 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
       );
     }
     map['sort_order'] = Variable<int>(sortOrder);
+    if (!nullToAbsent || color != null) {
+      map['color'] = Variable<String>(color);
+    }
     return map;
   }
 
@@ -1607,6 +1683,9 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
           ? const Value.absent()
           : Value(deadline),
       sortOrder: Value(sortOrder),
+      color: color == null && nullToAbsent
+          ? const Value.absent()
+          : Value(color),
     );
   }
 
@@ -1632,6 +1711,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
       habitId: serializer.fromJson<String?>(json['habitId']),
       deadline: serializer.fromJson<CalendarDate?>(json['deadline']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      color: serializer.fromJson<String?>(json['color']),
     );
   }
   @override
@@ -1654,6 +1734,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
       'habitId': serializer.toJson<String?>(habitId),
       'deadline': serializer.toJson<CalendarDate?>(deadline),
       'sortOrder': serializer.toJson<int>(sortOrder),
+      'color': serializer.toJson<String?>(color),
     };
   }
 
@@ -1674,6 +1755,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
     Value<String?> habitId = const Value.absent(),
     Value<CalendarDate?> deadline = const Value.absent(),
     int? sortOrder,
+    Value<String?> color = const Value.absent(),
   }) => KeyResult(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -1691,6 +1773,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
     habitId: habitId.present ? habitId.value : this.habitId,
     deadline: deadline.present ? deadline.value : this.deadline,
     sortOrder: sortOrder ?? this.sortOrder,
+    color: color.present ? color.value : this.color,
   );
   KeyResult copyWithCompanion(KeyResultsCompanion data) {
     return KeyResult(
@@ -1722,6 +1805,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
       habitId: data.habitId.present ? data.habitId.value : this.habitId,
       deadline: data.deadline.present ? data.deadline.value : this.deadline,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      color: data.color.present ? data.color.value : this.color,
     );
   }
 
@@ -1743,7 +1827,8 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
           ..write('step: $step, ')
           ..write('habitId: $habitId, ')
           ..write('deadline: $deadline, ')
-          ..write('sortOrder: $sortOrder')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('color: $color')
           ..write(')'))
         .toString();
   }
@@ -1766,6 +1851,7 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
     habitId,
     deadline,
     sortOrder,
+    color,
   );
   @override
   bool operator ==(Object other) =>
@@ -1786,7 +1872,8 @@ class KeyResult extends DataClass implements Insertable<KeyResult> {
           other.step == this.step &&
           other.habitId == this.habitId &&
           other.deadline == this.deadline &&
-          other.sortOrder == this.sortOrder);
+          other.sortOrder == this.sortOrder &&
+          other.color == this.color);
 }
 
 class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
@@ -1806,6 +1893,7 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
   final Value<String?> habitId;
   final Value<CalendarDate?> deadline;
   final Value<int> sortOrder;
+  final Value<String?> color;
   final Value<int> rowid;
   const KeyResultsCompanion({
     this.id = const Value.absent(),
@@ -1824,6 +1912,7 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
     this.habitId = const Value.absent(),
     this.deadline = const Value.absent(),
     this.sortOrder = const Value.absent(),
+    this.color = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   KeyResultsCompanion.insert({
@@ -1843,6 +1932,7 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
     this.habitId = const Value.absent(),
     this.deadline = const Value.absent(),
     required int sortOrder,
+    this.color = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        createdAt = Value(createdAt),
@@ -1868,6 +1958,7 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
     Expression<String>? habitId,
     Expression<String>? deadline,
     Expression<int>? sortOrder,
+    Expression<String>? color,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1887,6 +1978,7 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
       if (habitId != null) 'habit_id': habitId,
       if (deadline != null) 'deadline': deadline,
       if (sortOrder != null) 'sort_order': sortOrder,
+      if (color != null) 'color': color,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1908,6 +2000,7 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
     Value<String?>? habitId,
     Value<CalendarDate?>? deadline,
     Value<int>? sortOrder,
+    Value<String?>? color,
     Value<int>? rowid,
   }) {
     return KeyResultsCompanion(
@@ -1927,6 +2020,7 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
       habitId: habitId ?? this.habitId,
       deadline: deadline ?? this.deadline,
       sortOrder: sortOrder ?? this.sortOrder,
+      color: color ?? this.color,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1986,6 +2080,9 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
     if (sortOrder.present) {
       map['sort_order'] = Variable<int>(sortOrder.value);
     }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2011,6 +2108,7 @@ class KeyResultsCompanion extends UpdateCompanion<KeyResult> {
           ..write('habitId: $habitId, ')
           ..write('deadline: $deadline, ')
           ..write('sortOrder: $sortOrder, ')
+          ..write('color: $color, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -7469,6 +7567,7 @@ typedef $$ObjectivesTableCreateCompanionBuilder = ObjectivesCompanion Function({
   required CalendarDate endDate,
   required ObjectiveStatus status,
   required int sortOrder,
+  Value<String?> color,
   Value<int> rowid,
 });
 typedef $$ObjectivesTableUpdateCompanionBuilder = ObjectivesCompanion Function({
@@ -7482,6 +7581,7 @@ typedef $$ObjectivesTableUpdateCompanionBuilder = ObjectivesCompanion Function({
   Value<CalendarDate> endDate,
   Value<ObjectiveStatus> status,
   Value<int> sortOrder,
+  Value<String?> color,
   Value<int> rowid,
 });
 
@@ -7546,6 +7646,11 @@ class $$ObjectivesTableFilterComposer
     column: $table.sortOrder,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$ObjectivesTableOrderingComposer
@@ -7606,6 +7711,11 @@ class $$ObjectivesTableOrderingComposer
     column: $table.sortOrder,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ObjectivesTableAnnotationComposer
@@ -7648,6 +7758,9 @@ class $$ObjectivesTableAnnotationComposer
 
   GeneratedColumn<int> get sortOrder =>
       $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<String> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
 }
 
 class $$ObjectivesTableTableManager
@@ -7691,6 +7804,7 @@ class $$ObjectivesTableTableManager
                 Value<CalendarDate> endDate = const Value.absent(),
                 Value<ObjectiveStatus> status = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
+                Value<String?> color = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ObjectivesCompanion(
                 id: id,
@@ -7703,6 +7817,7 @@ class $$ObjectivesTableTableManager
                 endDate: endDate,
                 status: status,
                 sortOrder: sortOrder,
+                color: color,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -7717,6 +7832,7 @@ class $$ObjectivesTableTableManager
                 required CalendarDate endDate,
                 required ObjectiveStatus status,
                 required int sortOrder,
+                Value<String?> color = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ObjectivesCompanion.insert(
                 id: id,
@@ -7729,6 +7845,7 @@ class $$ObjectivesTableTableManager
                 endDate: endDate,
                 status: status,
                 sortOrder: sortOrder,
+                color: color,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -7779,6 +7896,7 @@ typedef $$KeyResultsTableCreateCompanionBuilder = KeyResultsCompanion Function({
   Value<String?> habitId,
   Value<CalendarDate?> deadline,
   required int sortOrder,
+  Value<String?> color,
   Value<int> rowid,
 });
 typedef $$KeyResultsTableUpdateCompanionBuilder = KeyResultsCompanion Function({
@@ -7798,6 +7916,7 @@ typedef $$KeyResultsTableUpdateCompanionBuilder = KeyResultsCompanion Function({
   Value<String?> habitId,
   Value<CalendarDate?> deadline,
   Value<int> sortOrder,
+  Value<String?> color,
   Value<int> rowid,
 });
 
@@ -7891,6 +8010,11 @@ class $$KeyResultsTableFilterComposer
     column: $table.sortOrder,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$KeyResultsTableOrderingComposer
@@ -7981,6 +8105,11 @@ class $$KeyResultsTableOrderingComposer
     column: $table.sortOrder,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$KeyResultsTableAnnotationComposer
@@ -8052,6 +8181,9 @@ class $$KeyResultsTableAnnotationComposer
 
   GeneratedColumn<int> get sortOrder =>
       $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<String> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
 }
 
 class $$KeyResultsTableTableManager
@@ -8101,6 +8233,7 @@ class $$KeyResultsTableTableManager
                 Value<String?> habitId = const Value.absent(),
                 Value<CalendarDate?> deadline = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
+                Value<String?> color = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KeyResultsCompanion(
                 id: id,
@@ -8119,6 +8252,7 @@ class $$KeyResultsTableTableManager
                 habitId: habitId,
                 deadline: deadline,
                 sortOrder: sortOrder,
+                color: color,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -8139,6 +8273,7 @@ class $$KeyResultsTableTableManager
                 Value<String?> habitId = const Value.absent(),
                 Value<CalendarDate?> deadline = const Value.absent(),
                 required int sortOrder,
+                Value<String?> color = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KeyResultsCompanion.insert(
                 id: id,
@@ -8157,6 +8292,7 @@ class $$KeyResultsTableTableManager
                 habitId: habitId,
                 deadline: deadline,
                 sortOrder: sortOrder,
+                color: color,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

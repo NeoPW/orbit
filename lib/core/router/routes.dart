@@ -17,6 +17,7 @@ abstract final class Routes {
   static const areas = '/plan/areas';
   static const habits = '/plan/habits';
   static const settings = '/settings';
+  static const spaceImages = '/settings/space-images';
 
   /// Objective page, reachable from Plan, the Archive and task pages.
   static String objective(String id) => '/objectives/$id';

@@ -18,10 +18,11 @@ double contrast(Color a, Color b) {
 }
 
 void main() {
-  test('both themes use Inter', () {
+  test('body text uses Inter, headings Space Grotesk', () {
     for (final theme in [lightTheme, darkTheme]) {
       expect(theme.textTheme.bodyMedium!.fontFamily, appFontFamily);
-      expect(theme.textTheme.titleLarge!.fontFamily, 'Inter');
+      expect(theme.textTheme.titleMedium!.fontFamily, 'Inter');
+      expect(theme.textTheme.titleLarge!.fontFamily, displayFontFamily);
     }
   });
 

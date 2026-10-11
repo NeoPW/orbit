@@ -155,4 +155,28 @@ void main() {
       ObjectiveStatus.completed,
     );
   });
+
+  testApp('picks a star color, and Auto clears it again', (tester) async {
+    final db = newTestDatabase();
+    final o = await Seed(db).objective(title: 'Get fit');
+    await pumpSheet(
+      tester,
+      (c) => showObjectiveForm(c, objectiveId: o.id),
+      db: db,
+      height: 1200,
+    );
+    await tester.tap(find.bySemanticsLabel('Color #FF7A9C'));
+    await save(tester);
+    expect((await db.select(db.objectives).getSingle()).color, '#FF7A9C');
+
+    await pumpSheet(
+      tester,
+      (c) => showObjectiveForm(c, objectiveId: o.id),
+      db: db,
+      height: 1200,
+    );
+    await tester.tap(find.bySemanticsLabel('Auto color'));
+    await save(tester);
+    expect((await db.select(db.objectives).getSingle()).color, isNull);
+  });
 }

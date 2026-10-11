@@ -37,6 +37,7 @@ class ObjectiveRepository extends Repository {
     String description = '',
     required CalendarDate startDate,
     required CalendarDate endDate,
+    String? color,
   }) async {
     final now = clock();
     return db
@@ -52,6 +53,7 @@ class ObjectiveRepository extends Repository {
             endDate: endDate,
             status: ObjectiveStatus.active,
             sortOrder: await nextSortOrder(db.objectives, (o) => o.sortOrder),
+            color: Value(color),
           ),
         );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/widgets/form_sheet.dart';
 import '../../../core/messages/messenger.dart';
 import '../../projects/data/project_repository.dart';
 import '../../tasks/data/task_repository.dart';
@@ -15,6 +16,8 @@ import 'duration_field.dart';
 /// plain entry. In "Start timer" mode, tapping starts a timer instead.
 Future<void> showQuickLog(BuildContext context) => showModalBottomSheet<void>(
   context: context,
+  // Above the tab bar, which would otherwise cover the sheet's bottom.
+  useRootNavigator: true,
   isScrollControlled: true,
   useSafeArea: true,
   showDragHandle: true,
@@ -108,8 +111,9 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
     );
 
     return Padding(
-      // Keeps the fields above the on-screen keyboard.
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      // Keeps the fields above the on-screen keyboard and the list above
+      // the system navigation bar.
+      padding: EdgeInsets.only(bottom: sheetBottomInset(context)),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

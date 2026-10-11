@@ -5,6 +5,9 @@ import 'orbit_palette.dart';
 /// The app font, bundled (assets/fonts).
 const appFontFamily = 'Inter';
 
+/// The display font for titles, bundled (assets/fonts, variable weight).
+const displayFontFamily = 'SpaceGrotesk';
+
 final lightTheme = _theme(OrbitPalette.light, OrbitColors.light);
 final darkTheme = _theme(OrbitPalette.dark, OrbitColors.dark);
 
@@ -20,10 +23,11 @@ ThemeData _theme(ColorScheme colors, OrbitColors orbit) {
   );
   return base.copyWith(
     textTheme: text,
-    scaffoldBackgroundColor: colors.surface,
+    // The space background (SpaceBackground) shows through every screen.
+    scaffoldBackgroundColor: Colors.transparent,
     extensions: [orbit],
     appBarTheme: AppBarTheme(
-      backgroundColor: colors.surface,
+      backgroundColor: Colors.transparent,
       foregroundColor: colors.onSurface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
@@ -32,12 +36,12 @@ ThemeData _theme(ColorScheme colors, OrbitColors orbit) {
       titleTextStyle: text.titleLarge,
     ),
     cardTheme: CardThemeData(
-      color: colors.surfaceContainer,
+      color: colors.surfaceContainer.withValues(alpha: 0.72),
       elevation: 0,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.5)),
+        side: BorderSide(color: colors.primary.withValues(alpha: 0.18)),
       ),
     ),
     chipTheme: ChipThemeData(
@@ -57,14 +61,21 @@ ThemeData _theme(ColorScheme colors, OrbitColors orbit) {
     ),
     navigationBarTheme: NavigationBarThemeData(
       height: 68,
-      backgroundColor: colors.surfaceContainerLow,
+      backgroundColor: colors.surfaceContainerLowest.withValues(alpha: 0.82),
       indicatorColor: colors.primaryContainer,
       labelTextStyle: WidgetStatePropertyAll(text.labelMedium),
     ),
     navigationRailTheme: NavigationRailThemeData(
-      backgroundColor: colors.surfaceContainerLow,
+      backgroundColor: colors.surfaceContainerLowest.withValues(alpha: 0.82),
       indicatorColor: colors.primaryContainer,
     ),
+    // Opaque: the screen behind would show through as ghost text.
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: colors.surfaceContainerLow,
+      modalBackgroundColor: colors.surfaceContainerLow,
+      showDragHandle: true,
+    ),
+    dialogTheme: DialogThemeData(backgroundColor: colors.surfaceContainerLow),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: colors.surfaceContainerHigh,
@@ -110,13 +121,24 @@ ThemeData _theme(ColorScheme colors, OrbitColors orbit) {
   );
 }
 
-/// Bold titles, slightly smaller body text, muted secondary text.
+/// Bold titles, slightly smaller body text, muted secondary text. The
+/// largest titles use the display font.
 TextTheme _textTheme(TextTheme base, ColorScheme colors) {
   TextStyle? weight(TextStyle? style, FontWeight w, [double? size]) =>
       style?.copyWith(fontWeight: w, fontSize: size ?? style.fontSize);
+  TextStyle? display(TextStyle? style, double wght, double size) =>
+      style?.copyWith(
+        fontFamily: displayFontFamily,
+        fontSize: size,
+        fontWeight: FontWeight.values[(wght ~/ 100) - 1],
+        // A variable font: the weight is an axis.
+        fontVariations: [FontVariation.weight(wght)],
+        letterSpacing: 0.2,
+      );
   return base.copyWith(
-    headlineSmall: weight(base.headlineSmall, FontWeight.w700, 24),
-    titleLarge: weight(base.titleLarge, FontWeight.w600, 20),
+    headlineMedium: display(base.headlineMedium, 600, 28),
+    headlineSmall: display(base.headlineSmall, 600, 26),
+    titleLarge: display(base.titleLarge, 600, 21),
     titleMedium: weight(base.titleMedium, FontWeight.w600, 16),
     titleSmall: weight(base.titleSmall, FontWeight.w600, 14),
     bodyLarge: base.bodyLarge?.copyWith(fontSize: 15),

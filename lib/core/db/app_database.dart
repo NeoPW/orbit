@@ -35,7 +35,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -65,6 +65,11 @@ class AppDatabase extends _$AppDatabase {
       from4To5: (m, schema) async {
         await m.createTable(schema.timers);
         await m.addColumn(schema.keyResults, schema.keyResults.step);
+      },
+      // v6: colors of objectives and KRs.
+      from5To6: (m, schema) async {
+        await m.addColumn(schema.objectives, schema.objectives.color);
+        await m.addColumn(schema.keyResults, schema.keyResults.color);
       },
     ),
   );

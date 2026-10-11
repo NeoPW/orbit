@@ -24,6 +24,8 @@ class PlanScreen extends ConsumerWidget {
   Future<void> _showCreateMenu(BuildContext context) async {
     final create = await showModalBottomSheet<Future<void> Function()>(
       context: context,
+      // Above the tab bar, which would otherwise cover the sheet's bottom.
+      useRootNavigator: true,
       showDragHandle: true,
       builder: (sheetContext) => SafeArea(
         child: Column(

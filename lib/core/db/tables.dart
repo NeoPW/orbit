@@ -42,6 +42,9 @@ class Objectives extends Table with SyncColumns {
     const DbEnumConverter<ObjectiveStatus>(ObjectiveStatus.values),
   )();
   IntColumn get sortOrder => integer()();
+
+  /// `#RRGGBB`, the star's color; null picks one by position.
+  TextColumn get color => text().nullable()();
 }
 
 @TableIndex(name: 'key_results_objective_id', columns: {#objectiveId})
@@ -70,6 +73,9 @@ class KeyResults extends Table with SyncColumns {
   TextColumn get deadline =>
       text().map(const CalendarDateConverter()).nullable()();
   IntColumn get sortOrder => integer()();
+
+  /// `#RRGGBB`, the planet's color; null takes a shade of the objective's.
+  TextColumn get color => text().nullable()();
 }
 
 @TableIndex(name: 'projects_status', columns: {#status})

@@ -8,6 +8,8 @@ import '../../../core/router/routes.dart';
 Future<void> showMoreSheet(BuildContext context) async {
   final route = await showModalBottomSheet<String>(
     context: context,
+    // Above the tab bar, which would otherwise cover the sheet's bottom.
+    useRootNavigator: true,
     showDragHandle: true,
     constraints: const BoxConstraints(maxWidth: 640),
     builder: (context) => SafeArea(

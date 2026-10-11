@@ -17,6 +17,7 @@ import '../../settings/data/settings_repository.dart';
 import '../../tasks/ui/task_tile.dart';
 import '../data/plan_providers.dart';
 import '../domain/plan_overview.dart';
+import 'objective_system.dart';
 import 'open_plan_item.dart';
 import '../../key_results/ui/key_result_form.dart';
 import '../../objectives/ui/objective_form.dart';
@@ -86,6 +87,7 @@ class _ObjectiveCard extends ConsumerWidget {
     final today = ref.watch(todayProvider);
     final leadDays =
         ref.watch(appSettingsProvider).value?.deadlineLeadDays ?? 7;
+    final system = ObjectiveSystem(plan);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
@@ -95,11 +97,7 @@ class _ObjectiveCard extends ConsumerWidget {
           ListTile(
             onTap: () =>
                 openPlanItem(context, ref, PlanObjective(objective.id)),
-            leading: CircleAvatar(
-              backgroundColor: theme.colorScheme.primaryContainer,
-              foregroundColor: theme.colorScheme.onPrimaryContainer,
-              child: const Icon(Icons.flag_outlined),
-            ),
+            leading: system.compact(),
             title: Text(objective.title, style: theme.textTheme.titleMedium),
             subtitle: Padding(
               padding: const EdgeInsets.only(top: 4),
@@ -130,8 +128,9 @@ class _ObjectiveCard extends ConsumerWidget {
               ),
             )
           else
-            for (final kr in plan.keyResults) ...[
+            for (final (i, kr) in plan.keyResults.indexed) ...[
               KeyResultTile(
+                color: system.keyResult(i),
                 keyResult: kr.keyResult,
                 progress: kr.progress,
                 habitCheckIns: kr.habitCheckIns,

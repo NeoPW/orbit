@@ -64,6 +64,7 @@ Server-side, every table also has `user_id` (Supabase auth user), protected by R
 - `start_date`, `end_date`
 - `status`: `active | completed | archived`
 - `sort_order`
+- `color` nullable (`#RRGGBB`, the color of its star; when null, one of the space palette by `sort_order`)
 
 ### KeyResult
 - `objective_id`
@@ -74,6 +75,7 @@ Server-side, every table also has `user_id` (Supabase auth user), protected by R
 - `habit_id` nullable (for habit-measured KRs; progress = check-ins counted against target)
 - `deadline` nullable (defaults to the objective's `end_date` when null)
 - `sort_order`
+- `color` nullable (`#RRGGBB`, the color of its planet; when null, a shade of its objective's color)
 
 ### Project
 - `title`, `description`
@@ -192,11 +194,12 @@ Bottom navigation with three tabs: **Plan**, **Home**, **Review**. Each of them 
 
 ### 6.1 Home (today)
 A dashboard for the day, top to bottom:
-1. **Header:** today's weekday and date, the number of tasks due today, and the habits done of due as an orbit ring ("2/4").
-2. **Habits due today:** compact chips, labeled with their project or KR; tapping a chip checks or unchecks it.
-3. **Upcoming deadlines:** KRs and tasks inside projects whose *own* deadline is overdue or within the warning lead time (default 7 days), sorted by date. Active projects and tasks outside projects are not listed here: their deadline is shown as a badge on their own card below, so nothing appears twice.
-4. **Active projects:** sorted by score (§5). Each card shows title, area, deadline badge and the next step as a checkbox. Ticking the next step opens the next-step prompt and marks it done unless the prompt is cancelled. Tapping the card opens the project detail.
-5. **Tasks:** open tasks that are not part of a project (standalone, or assigned to a KR or objective), sorted by deadline (overdue first, none last), then by creation. Each shows a checkbox, title, what it is assigned to and a deadline badge; tapping it opens the task page.
+1. **Header:** today's weekday and date, the number of tasks due today, and the habits done of due as an orbit ring ("2/4"). When the last habit due today is checked, a shooting star crosses the header once.
+2. **Star systems:** the active objectives side by side as small star systems (§6.7), each labeled with its title and progress; scrolls sideways when they do not fit, tapping one opens the objective page. Hidden without active objectives.
+3. **Habits due today:** compact chips, labeled with their project or KR; tapping a chip checks or unchecks it.
+4. **Upcoming deadlines:** KRs and tasks inside projects whose *own* deadline is overdue or within the warning lead time (default 7 days), sorted by date. Active projects and tasks outside projects are not listed here: their deadline is shown as a badge on their own card below, so nothing appears twice.
+5. **Active projects:** sorted by score (§5). Each card shows title, area, deadline badge and the next step as a checkbox. Ticking the next step opens the next-step prompt and marks it done unless the prompt is cancelled. Tapping the card opens the project detail.
+6. **Tasks:** open tasks that are not part of a project (standalone, or assigned to a KR or objective), sorted by deadline (overdue first, none last), then by creation. Each shows a checkbox, title, what it is assigned to and a deadline badge; tapping it opens the task page.
 
 Two floating action buttons:
 - **Left: new task.** A sheet with title, optional deadline and optional assignment (project, KR or objective). Saving takes two taps for a plain task.
@@ -219,14 +222,15 @@ While a timer runs, a **timer card** at the top of Home (below the header) shows
 - Reachable from Home, the project detail, the Plan tab, the review summary and deadline reminders.
 
 ### 6.4 Plan
-- **Objectives list:** for each active objective, its date range with a deadline badge for its end date (amber within the lead time, red "Overdue" once it has passed), its key results (progress as orbit rings), and under each KR the **active** projects linked to it. Shown one after another.
+- **Objectives list:** for each active objective, its star system (§6.7) as the card's icon, its date range with a deadline badge for its end date (amber within the lead time, red "Overdue" once it has passed), its key results (progress as orbit rings), and under each KR the **active** projects linked to it. Shown one after another.
 - Active projects with no KR are listed in a separate "Projects without a KR" section. Active projects whose KR belongs to a non-active objective are also listed there, with the KR's title.
 - Only active projects appear in the objectives list; backlog and paused projects appear only in the Backlog.
 - Open tasks assigned to a KR or an objective are listed under it, like projects.
 - Create and edit objectives, KRs, projects, tasks, habits and areas. The create button offers **New task** next to new objective, project and habit. Creating and editing happen in a **sheet** like the new-task sheet (a bottom sheet on phones, a side sheet on wide screens), not on a separate page.
 - A **More** button in the top bar opens a sheet with large tiles for Habits, Areas and Archive; Settings has its own button (§6).
 - Tapping an objective, KR, project or task opens its **page** (on wide screens in the detail pane), never the edit form directly; each page has Edit in its top bar. Task rows have no extra menu: their checkbox completes them and tapping opens the page.
-- **Objective page:** a header with title, date range, status chip and deadline badge, the description, its key results with progress, and the open tasks assigned to it.
+- **Objective page:** on top its star system, large: the KRs as labeled planets (tapping one opens the KR page) with their active projects as small moons; then a header with title, date range, status chip and deadline badge, the description, its key results with progress rings in their planet colors, and the open tasks assigned to it.
+- **Colors:** the objective form has a **star color** and the KR form a **planet color**, chosen from the space palette (shown as small planets) or **Auto** (§4).
 - **KR page:** a header with title, progress ring, current and target value and deadline badge, then progress controls: − / + buttons changing the current value by the KR's step plus editing the value directly (numeric), a done switch (boolean), or the linked habit's check-ins (habit, read-only). Below: the linked projects, open tasks and habits, and the log entries on the KR.
 - **Backlog:** all projects with status `backlog` or `paused`, filterable by area. Activating one makes it appear on Home.
 - Archive of completed objectives and projects.
@@ -254,10 +258,18 @@ While a timer runs, a **timer card** at the top of Home (below the header) shows
 ### 6.6 Settings
 - Reachable from the top bar of Plan, Home and Review.
 - Reminders, default reminder time, weekly review day and time, deadline lead time, account and sync.
+- **Space images:** all background photos with title and credit (CC BY 4.0) and the license note; pick one to keep it, or "A new image every day" (default). Stored in the local settings.
 
 ### 6.7 Design and interaction
 The app should feel calm, clear and quick. Guidelines for every screen:
-- **Visual identity:** the space-inspired Orbit palette instead of the default Material seed: deep navy "night sky" surfaces in dark mode (#0B1026) and light lavender-grey ones in light mode (#F4F5FB), a blue-violet primary, a cyan secondary and an amber color reserved for urgency (red for overdue). Area colors are accents on cards and chips. Body text meets 4.5:1 contrast in both themes. Text uses **Inter**, bundled with the app so it also works offline, with bold titles and smaller, muted secondary text. Progress (habits today, KRs, review scores) is shown as orbit rings. A logo and app icon are a later branding step.
+- **Visual identity:** the space-inspired Orbit palette instead of the default Material seed: deep navy "night sky" surfaces (#0B1026), a blue-violet primary, a cyan secondary and an amber color reserved for urgency (red for overdue). **Dark only:** the app ignores the system's light mode. Area colors are accents on cards and chips. Body text meets 4.5:1 contrast. Body text uses **Inter**, headings (page titles, large headlines) **Space Grotesk**; both are bundled so they also work offline. Progress (habits today, KRs, review scores) is shown as orbit rings.
+- **Space background:** behind every screen a Hubble photo (ESA/Hubble, CC BY 4.0, bundled with the app, about a dozen) under a dark gradient so text stays readable. It changes once a day (the same photo on all screens that day) unless one is picked in Settings. Cards, top bars and the navigation are slightly translucent so the photo shows through; sheets and dialogs are opaque. Sheets open above the tab bar and keep their content clear of the phone's navigation bar.
+- **The plan as space:** an **objective is a star** in its color with its own solar system, its **key results are planets** orbiting it, and **projects are moons** of their KR's planet.
+  - A star glows brighter as its objective progresses; a planet grows brighter with its KR's progress and gets a **ring** once the KR is reached.
+  - Projects appear as moons only in the star system view: small moons in their area's color around their KR's planet on the objective page. In lists and on Home they stay plain cards, to keep those screens calm.
+  - KR progress rings use the planet color, so the list under a system matches its picture.
+  - The space visuals are static: nothing moves continuously. The only motion is the one-off shooting star, which is skipped when the system asks to remove animations.
+- **Brand:** the app icon is a glowing planet with a ringed orbit and a cyan moon on a starry night sky (also as an Android adaptive icon and for the web). The launch screen on Android and the web loading screen are the night sky with that planet.
 - **Less text, more structure:** metadata as chips, icons and badges instead of text lines. For example importance as dots or stars, status as a colored chip, deadlines as a badge colored by urgency. Absent values are left out instead of written out ("No area", "No deadline").
 - **Compact cards and lists:** denser rows, cards for projects and tasks, and no duplicate rows for the same item on one screen.
 - **Detail pages:** a header with title, status, area and deadline; actions in the top bar or a menu instead of rows of large buttons.
@@ -303,7 +315,8 @@ Tapping a reminder opens its screen: Home for habits, the task page for tasks, t
 6. **Tasks and navigation:** tasks as their own items (assignment to project, KR or objective, task page, log work on tasks), new-task button on Home and in Plan, tasks section on Home, Settings from every main screen.
 7. **Design refresh:** the guidelines of §6.7 applied to all screens, Home as a dashboard, review flow as pages, two-pane Plan on wide screens.
 8. **Timer and detail pages:** work timer with a running notification, objective and KR pages with KR progress buttons, create and edit in sheets, the Plan More sheet, overdue objectives, the Review tab on the current week with a last-week page and past weeks' summaries, messages at the top.
-9. **Later:** stats, optional native desktop builds.
+9. **Orbit identity:** dark only, Hubble backgrounds with a Space images setting, Space Grotesk headings, objectives as star systems with KR planets and project moons (Home, Plan, objective page), star and planet colors, the shooting star, app icon and launch screens.
+10. **Later:** stats, optional native desktop builds.
 
 The schema includes the sync columns from milestone 1, so adding sync later requires no migration of existing data.
 

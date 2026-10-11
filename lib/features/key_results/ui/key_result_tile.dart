@@ -37,6 +37,7 @@ class KeyResultTile extends StatelessWidget {
     required this.effectiveDeadline,
     required this.today,
     this.leadDays = 7,
+    this.color,
     this.onTap,
   });
 
@@ -50,6 +51,9 @@ class KeyResultTile extends StatelessWidget {
   final CalendarDate effectiveDeadline;
   final CalendarDate today;
   final int leadDays;
+
+  /// The ring's color: the KR's planet color in its objective's system.
+  final Color? color;
   final VoidCallback? onTap;
 
   @override
@@ -66,7 +70,7 @@ class KeyResultTile extends StatelessWidget {
               progress: progress,
               size: 44,
               label: '${(progress * 100).round()}%',
-              color: done ? theme.colorScheme.secondary : null,
+              color: color ?? (done ? theme.colorScheme.secondary : null),
             ),
             const SizedBox(width: 12),
             Expanded(

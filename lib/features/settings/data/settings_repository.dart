@@ -38,6 +38,20 @@ class SettingsRepository {
   Future<void> setReviewTime(TimeOfDayValue time) =>
       _set(SettingKeys.reviewTime, formatTimeOfDay(time));
 
+  /// The background image chosen in Settings, or null for one per day.
+  Stream<String?> watchPinnedSpaceImage() =>
+      (db.select(db.settings)..where((s) => s.key.equals(_spaceImageKey)))
+          .watchSingleOrNull()
+          .map((row) => row?.value);
+
+  Future<void> setPinnedSpaceImage(String? name) => name == null
+      ? (db.delete(
+          db.settings,
+        )..where((s) => s.key.equals(_spaceImageKey))).go()
+      : _set(_spaceImageKey, name);
+
+  static const _spaceImageKey = 'space_image';
+
   Future<void> _set(String key, String value) => db
       .into(db.settings)
       .insertOnConflictUpdate(SettingsCompanion.insert(key: key, value: value));
@@ -51,3 +65,8 @@ SettingsRepository settingsRepository(Ref ref) =>
 @riverpod
 Stream<AppSettings> appSettings(Ref ref) =>
     ref.watch(settingsRepositoryProvider).watch();
+
+/// The background image chosen in Settings, or null for one per day.
+@riverpod
+Stream<String?> pinnedSpaceImage(Ref ref) =>
+    ref.watch(settingsRepositoryProvider).watchPinnedSpaceImage();

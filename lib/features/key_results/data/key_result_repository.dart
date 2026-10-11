@@ -45,6 +45,7 @@ class KeyResultRepository extends Repository {
     double step = 1,
     String? habitId,
     CalendarDate? deadline,
+    String? color,
   }) async {
     final now = clock();
     final sortOrder = await nextSortOrder(
@@ -69,6 +70,7 @@ class KeyResultRepository extends Repository {
         habitId: habitId,
         deadline: deadline,
         sortOrder: sortOrder,
+        color: color,
       ),
     );
     await db.into(db.keyResults).insert(kr);

@@ -64,4 +64,12 @@ void main() {
         );
     expect((await repo.watch().first).deadlineLeadDays, 7);
   });
+
+  test('a pinned space image is stored and cleared', () async {
+    expect(await repo.watchPinnedSpaceImage().first, isNull);
+    await repo.setPinnedSpaceImage('crab_nebula');
+    expect(await repo.watchPinnedSpaceImage().first, 'crab_nebula');
+    await repo.setPinnedSpaceImage(null);
+    expect(await repo.watchPinnedSpaceImage().first, isNull);
+  });
 }

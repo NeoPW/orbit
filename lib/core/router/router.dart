@@ -14,6 +14,7 @@ import '../../features/review/ui/review_screen.dart';
 import '../../features/review/ui/week_screen.dart';
 import '../../features/review/ui/weekly_review_screen.dart';
 import '../../features/settings/ui/settings_screen.dart';
+import '../../features/settings/ui/space_images_screen.dart';
 import '../../features/tasks/ui/task_screen.dart';
 import 'app_shell.dart';
 import 'routes.dart';
@@ -58,6 +59,10 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
       GoRoute(
         path: Routes.settings,
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: Routes.spaceImages,
+        builder: (context, state) => const SpaceImagesScreen(),
       ),
       GoRoute(
         path: Routes.weeklyReview,

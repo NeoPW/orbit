@@ -70,8 +70,10 @@ create table if not exists public.objectives (
   end_date date not null,
   status text not null,
   sort_order integer not null,
+  color text,
   server_updated_at timestamptz not null default clock_timestamp()
 );
+alter table public.objectives add column if not exists color text;
 create index if not exists objectives_user_server_updated
   on public.objectives (user_id, server_updated_at);
 alter table public.objectives enable row level security;
@@ -106,10 +108,12 @@ create table if not exists public.key_results (
   habit_id uuid,
   deadline date,
   sort_order integer not null,
+  color text,
   server_updated_at timestamptz not null default clock_timestamp()
 );
 -- Added in schema version 5 (step of the KR's − / + buttons).
 alter table public.key_results add column if not exists step double precision not null default 1;
+alter table public.key_results add column if not exists color text;
 create index if not exists key_results_user_server_updated
   on public.key_results (user_id, server_updated_at);
 alter table public.key_results enable row level security;

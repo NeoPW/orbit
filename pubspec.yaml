@@ -72,7 +72,13 @@ flutter:
 
   # Inter (OFL, assets/fonts/Inter-LICENSE.txt): the app font on every
   # platform, bundled so it works offline.
+  assets:
+    - assets/space/
+
   fonts:
+    - family: SpaceGrotesk
+      fonts:
+        - asset: assets/fonts/SpaceGrotesk.ttf
     - family: Inter
       fonts:
         - asset: assets/fonts/Inter-Regular.ttf

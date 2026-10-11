@@ -7,6 +7,8 @@ import '../../../core/time/date_format.dart';
 import '../../../core/widgets/confirm_delete.dart';
 import '../../../core/widgets/date_field.dart';
 import '../../../core/widgets/form_sheet.dart';
+import '../../../core/widgets/planet_color_picker.dart';
+import '../../../core/space/space_colors.dart';
 import '../../habits/data/habit_repository.dart';
 import '../../objectives/data/objective_repository.dart';
 import '../data/key_result_repository.dart';
@@ -68,6 +70,7 @@ class _KeyResultFormState extends ConsumerState<_KeyResultForm> {
   late final KeyResult? _kr = widget.keyResult;
   late final _title = TextEditingController(text: _kr?.title);
   late final _description = TextEditingController(text: _kr?.description);
+  late String? _color = _kr?.color;
   late MeasureType _type = _kr?.measureType ?? MeasureType.numeric;
   late final _start = _numberController(
     _kr?.measureType == MeasureType.numeric ? _kr?.startValue : 0,
@@ -145,6 +148,7 @@ class _KeyResultFormState extends ConsumerState<_KeyResultForm> {
         step: step,
         habitId: _habitId,
         deadline: _deadline,
+        color: _color,
       );
     } else {
       await repo.update(
@@ -159,6 +163,7 @@ class _KeyResultFormState extends ConsumerState<_KeyResultForm> {
           step: step,
           habitId: Value(_habitId),
           deadline: Value(_deadline),
+          color: Value(_color),
         ),
       );
     }
@@ -280,6 +285,12 @@ class _KeyResultFormState extends ConsumerState<_KeyResultForm> {
               'Without a deadline: the objective\'s end date, '
               '${formatDate(widget.objective.endDate)}',
           onChanged: (date) => setState(() => _deadline = date),
+        ),
+        PlanetColorPicker(
+          label: 'Planet color',
+          value: _color,
+          onChanged: (color) => setState(() => _color = color),
+          auto: colorOfObjective(widget.objective),
         ),
       ],
     );

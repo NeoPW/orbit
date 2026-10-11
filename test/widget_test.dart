@@ -5,22 +5,21 @@ import 'package:orbit/core/theme/app_theme.dart';
 import 'helpers/pump_app.dart';
 
 void main() {
-  testApp('app starts on Home with Material 3 light and dark themes', (
+  testApp('app starts on Home with the dark Material 3 theme only', (
     tester,
   ) async {
     await pumpApp(tester);
 
     expect(find.text('Home'), findsWidgets);
     final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
-    expect(app.themeMode, ThemeMode.system);
-    expect(app.theme, same(lightTheme));
-    expect(app.darkTheme, same(darkTheme));
-    expect(lightTheme.useMaterial3, isTrue);
+    expect(app.themeMode, ThemeMode.dark);
+    expect(app.theme, same(darkTheme));
+    expect(darkTheme.useMaterial3, isTrue);
     expect(darkTheme.colorScheme.brightness, Brightness.dark);
   });
 
-  testApp('dark system brightness uses the dark theme', (tester) async {
-    tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
+  testApp('light system brightness still uses the dark theme', (tester) async {
+    tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
     addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
     await pumpApp(tester);
 
