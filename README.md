@@ -17,6 +17,7 @@ Personal, local-first app for objectives, key results, projects, tasks, habits, 
 | Test | `flutter test` |
 | Update web database assets | `tool/fetch_web_assets.sh` |
 | Release build on Android (`--install`: also install over USB) | `tool/build_release.sh [--install]` |
+| Deploy the web app to https://orbit-neo.pages.dev | `tool/deploy_web.sh` |
 
 Run code generation after changing drift tables or `@riverpod` providers. Generated files (`*.g.dart`, `*.drift.dart`) are committed.
 
@@ -85,7 +86,7 @@ flutter run --dart-define-from-file=supabase.json
 flutter run -d chrome --dart-define-from-file=supabase.json
 ```
 
-Release APKs for the phone are built with `tool/build_release.sh`, which passes the file itself (see [Release build on Android](#release-build-on-android)).
+Release APKs for the phone are built with `tool/build_release.sh` and the hosted web app with `tool/deploy_web.sh`; both pass the file themselves (see [Release build on Android](#release-build-on-android) and [Web hosting](#web-hosting)).
 
 Then sign in under **Plan → ⋮ → Settings → Account & sync**. Sign in on the device with your real data first: an empty account receives that device's data. Signing in on another device afterwards replaces that device's local data with the account's (after a confirmation).
 
@@ -144,3 +145,35 @@ A phone that ran `flutter run` before this setup has an app with ID `dev.neopw.o
 4. Open Orbit, sign in, confirm that the account's data replaces the empty local data, and allow notifications.
 
 To roll back, uninstall the release and use `flutter run` as before. The data is in the account.
+
+## Web hosting
+
+The web app is hosted on [Cloudflare Pages](https://pages.cloudflare.com) at **https://orbit-neo.pages.dev**, deployed by hand from this machine. The URL is public, but the site holds no data: everything lives in each browser and behind the account login (sign-up is off, see [Your user](#2-your-user)).
+
+### 1. Cloudflare (once)
+
+Create a free Cloudflare account, then log in and create the Pages project:
+
+```bash
+npx wrangler login
+npx wrangler pages project create orbit-neo --production-branch=main
+```
+
+`npx wrangler pages project list` should show `orbit-neo` with the domain `orbit-neo.pages.dev`. Wrangler, Cloudflare's CLI, runs through `npx` (Node.js), so it is not a project dependency.
+
+### 2. Deploy
+
+```bash
+tool/deploy_web.sh
+```
+
+The script needs `supabase.json` and stops if it is missing. It builds the web app with sync configured, uploads `build/web` to the production site (also when run from a branch) and prints the version, build number and URL. Open tabs get the new version on their next reload; their local data and sign-in stay.
+
+**If the version changes `supabase/schema.sql`**, run the schema in the SQL Editor first (see [Server schema](#1-server-schema)): the web app is usually the first device on a new version.
+
+`web/_headers` makes the site cross-origin isolated, so the browser database uses OPFS. That's also why the build serves Flutter's CanvasKit itself (`--no-web-resources-cdn`) instead of loading it from Google's CDN, which the headers would block.
+
+### Notes
+
+- The hosted site has its own browser data, separate from `flutter run -d chrome` on `localhost`. Sign in once on the site to get the account's data.
+- To roll back, open the project in the Cloudflare dashboard (**Workers & Pages → orbit-neo → Deployments**) and roll back to an earlier deployment.

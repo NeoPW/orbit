@@ -1,12 +1,12 @@
 {
-    "name": "orbit",
-    "short_name": "orbit",
+    "name": "Orbit",
+    "short_name": "Orbit",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#05070F",
     "theme_color": "#0B1026",
-    "description": "Objectives, key results, projects, habits and a weekly review.",
-    "orientation": "portrait-primary",
+    "description": "Goals, projects, tasks, habits, work logs and a weekly review.",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {

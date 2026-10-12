@@ -24,6 +24,7 @@ Personal local-first Flutter app (Android + web) for objectives, key results, pr
 - Run on phone: `flutter run`
 - Run in browser: `flutter run -d chrome`
 - Release build on Android: `tool/build_release.sh [--install]`
+- Deploy web app (https://orbit-neo.pages.dev): `tool/deploy_web.sh`
 - Analyze: `flutter analyze`
 - Test: `flutter test`
 - Code generation (drift, riverpod): `dart run build_runner build --delete-conflicting-outputs`
