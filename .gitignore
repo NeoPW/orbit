@@ -49,3 +49,6 @@ app.*.map.json
 
 # Supabase connection for this machine (see supabase.example.json).
 /supabase.json
+
+# Wrangler (Cloudflare CLI) cache, see tool/deploy_web.sh
+/.wrangler/

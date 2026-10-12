@@ -1,0 +1,6 @@
+# Cloudflare Pages response headers (copied into build/web by flutter build).
+# Cross-origin isolation lets drift store the database in OPFS; it requires
+# building with --no-web-resources-cdn (see tool/deploy_web.sh).
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp

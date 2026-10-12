@@ -31,6 +31,7 @@ A personal, local-first app for tracking work: projects, tasks, habits and the w
 | Backend | Supabase (Postgres + Auth + Row Level Security), free tier |
 | Sync | Custom, last-write-wins per row (see §7) |
 | Android distribution | Signed release APK, installed by hand (no store); development builds install next to it as "Orbit Dev" |
+| Web hosting | Static build on Cloudflare Pages (`orbit-neo.pages.dev`, public URL; data stays behind the Supabase login), deployed by hand from a local script |
 
 The app must be fully usable with no backend configured. Sync is an add-on, but it is what connects the phone and the web version: until sync exists, each has its own local data.
 
