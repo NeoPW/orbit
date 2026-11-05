@@ -1,3 +1,5 @@
+mod db;
+
 use tauri::{LogicalSize, Manager};
 
 const DEFAULT_WIDTH: f64 = 1280.0;
@@ -7,9 +9,12 @@ const DEFAULT_HEIGHT: f64 = 800.0;
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
+            let database = db::open(app)?;
+            app.manage(database);
             fit_main_window_to_screen(app)?;
             Ok(())
         })
+        .invoke_handler(tauri::generate_handler![db::db_query, db::db_batch])
         .run(tauri::generate_context!())
         .expect("error while running Orbit");
 }

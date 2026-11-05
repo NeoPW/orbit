@@ -13,6 +13,13 @@ export default defineConfig({
     },
   },
   envPrefix: ['VITE_', 'TAURI_ENV_'],
+  // sqlite-wasm loads its .wasm relative to its own module; pre-bundling breaks that.
+  optimizeDeps: {
+    exclude: ['@sqlite.org/sqlite-wasm'],
+  },
+  worker: {
+    format: 'es',
+  },
   test: {
     environment: 'node',
     include: ['src/**/*.test.{ts,tsx}'],

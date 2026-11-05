@@ -41,6 +41,29 @@ The Flutter version of the app is kept under the git tag `flutter-final`.
 | Build the browser version (to `dist/`) | `npm run build` |
 | Typecheck, lint and test | `npm run check` |
 | Run some tests | `npx vitest run <paths>` |
+| Generate a migration after changing `src/core/db/schema.ts` | `npm run db:generate` |
+
+## Database
+
+Orbit stores its data in SQLite, through Drizzle.
+
+| Where | Location |
+|---|---|
+| Desktop release | `~/.local/share/dev.neopw.orbit/orbit.db` |
+| Desktop development (`npm run desktop`) | `~/.local/share/dev.neopw.orbit.dev/orbit.db` |
+| Browser | SQLite WASM in the browser's private file system (OPFS), per origin |
+
+- The desktop database runs in WAL mode, so `orbit.db-wal` and `orbit.db-shm` sit next to it. The Rust side is `src-tauri/src/db.rs`.
+- Each browser origin has its own data: `npm run dev` (port 1420) and `vite preview` (port 4173) do not share anything.
+- Only one browser tab can hold the database. A further tab shows "Orbit is already open in another tab".
+- Without OPFS (for example a Firefox private window) the browser build runs in memory and shows a warning; the data is gone when the tab closes.
+
+**Schema and migrations.** The schema is `src/core/db/schema.ts`. After changing it, run `npm run db:generate`; it writes a migration to `drizzle/` (committed). Review the SQL. The schema version is stored in `PRAGMA user_version`. Never edit a migration that has been applied; generate a new one. There are no foreign keys, because sync applies rows in any order. Writes that belong together use `db.batch()` (one transaction). Tests use `openTestDatabase()` from `src/core/db/testing.ts` (in memory).
+
+**Reset development data.**
+
+- Desktop: close the dev app, then delete `~/.local/share/dev.neopw.orbit.dev/orbit.db*`.
+- Browser: clear the site data for that address (DevTools, Application, Storage, Clear site data).
 
 ## Desktop builds
 
