@@ -1,0 +1,31 @@
+.source {
+  display: inline-flex;
+  color: var(--color-text-muted);
+}
+
+.source svg {
+  width: 18px;
+  height: 18px;
+}
+
+.when {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.when svg {
+  width: 14px;
+  height: 14px;
+}
+
+.totals {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-1) var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.totals dt {
+  color: var(--color-text-muted);
+}

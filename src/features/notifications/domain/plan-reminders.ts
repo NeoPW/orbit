@@ -1,0 +1,117 @@
+import { localToday } from '../../../core/dates/deadline.ts';
+import { addDays } from '../../../core/dates/today.ts';
+import { isDue, isoWeekday, type HabitSchedule } from '../../habits/domain/habits.ts';
+import { formatWeekRange, reviewWeekStart } from '../../review/domain/review-week.ts';
+import type { Settings } from '../../settings/data/settings.ts';
+
+export interface ReminderHabit extends HabitSchedule {
+  id: string;
+  title: string;
+  /** `HH:mm`, or null for the default reminder time. */
+  reminderTime: string | null;
+  /** Title of the linked project or goal. */
+  linkTitle: string | null;
+}
+
+/** Everything the plan depends on, as plain data (the loader fills it from the database). */
+export interface ReminderInput {
+  habits: ReminderHabit[];
+  /** Habit checks of the current week at least. */
+  checks: { habitId: string; date: string }[];
+  /** Open tasks with a due date, of active projects or outside projects. */
+  tasks: { id: string; title: string; dueDate: string }[];
+  /** Active projects with an own deadline. */
+  projects: { id: string; title: string; deadline: string }[];
+  /** Weeks (Mondays) whose review is completed. */
+  completedReviewWeeks: string[];
+  /** The running timer, when it has a planned length. */
+  focus: { title: string; startedAt: string; plannedMinutes: number } | null;
+}
+
+export type ReminderSettings = Pick<Settings, 'remindersOn' | 'reminderTime' | 'leadDays' | 'reviewDay' | 'reviewTime'>;
+
+export interface PlannedReminder {
+  /** Stable for the same reminder, so a runner can show it once. */
+  key: string;
+  at: Date;
+  title: string;
+  body: string;
+  /** App path opened when the notification is clicked. */
+  route: string;
+}
+
+/** Local date `yyyy-mm-dd` and time `HH:mm` as an instant. */
+function localInstant(date: string, time: string): Date {
+  const [y, m, d] = date.split('-').map(Number);
+  const [h, min] = time.split(':').map(Number);
+  return new Date(y ?? 0, (m ?? 1) - 1, d ?? 1, h ?? 0, min ?? 0);
+}
+
+const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'}`;
+
+/**
+ * The reminders that fall from `now` up to and including `until`, earliest first. With reminders off
+ * only the end of a focus session remains. Reminders before `now` are left out.
+ */
+export function planReminders(input: ReminderInput, settings: ReminderSettings, now: Date, until: Date): PlannedReminder[] {
+  const result: PlannedReminder[] = [];
+  const add = (reminder: PlannedReminder) => {
+    if (reminder.at >= now && reminder.at <= until) result.push(reminder);
+  };
+
+  if (input.focus) {
+    const at = new Date(new Date(input.focus.startedAt).getTime() + input.focus.plannedMinutes * 60_000);
+    add({
+      key: `focus:${input.focus.startedAt}`,
+      at,
+      title: `${input.focus.title}: ${plural(input.focus.plannedMinutes, 'minute')} done`,
+      body: 'The timer keeps running',
+      route: '/focus',
+    });
+  }
+
+  if (settings.remindersOn) {
+    const lastDate = localToday(until);
+    for (let date = localToday(now); date <= lastDate; date = addDays(date, 1)) {
+      for (const habit of input.habits) {
+        const checkDates = input.checks.filter((c) => c.habitId === habit.id).map((c) => c.date);
+        if (checkDates.includes(date) || !isDue(habit, date, checkDates)) continue;
+        add({
+          key: `habit:${habit.id}:${date}`,
+          at: localInstant(date, habit.reminderTime ?? settings.reminderTime),
+          title: habit.title,
+          body: habit.linkTitle ?? '',
+          route: '/home',
+        });
+      }
+
+      const deadlines = [
+        ...input.tasks.map((t) => ({ kind: 'task', id: t.id, title: t.title, due: t.dueDate, route: `/tasks/${t.id}` })),
+        ...input.projects.map((p) => ({ kind: 'project', id: p.id, title: p.title, due: p.deadline, route: `/projects/${p.id}` })),
+      ];
+      for (const item of deadlines) {
+        if (item.due === date) {
+          add({ key: `deadline:${item.kind}:${item.id}:${date}:due`, at: localInstant(date, settings.reminderTime), title: item.title, body: 'Due today', route: item.route });
+        }
+        if (addDays(item.due, -settings.leadDays) === date) {
+          add({
+            key: `deadline:${item.kind}:${item.id}:${item.due}:lead`,
+            at: localInstant(date, settings.reminderTime),
+            title: item.title,
+            body: `Due in ${plural(settings.leadDays, 'day')}`,
+            route: item.route,
+          });
+        }
+      }
+
+      if (isoWeekday(date) === settings.reviewDay) {
+        const week = reviewWeekStart(date);
+        if (!input.completedReviewWeeks.includes(week)) {
+          add({ key: `review:${date}`, at: localInstant(date, settings.reviewTime), title: 'Weekly review', body: `Week ${formatWeekRange(week)}`, route: '/review/flow' });
+        }
+      }
+    }
+  }
+
+  return result.sort((a, b) => a.at.getTime() - b.at.getTime() || a.key.localeCompare(b.key));
+}

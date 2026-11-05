@@ -1,0 +1,42 @@
+.focus {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6);
+  height: 100%;
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  overflow-y: auto;
+}
+
+.leave {
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-4);
+}
+
+.target {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 720px;
+}
+
+.target h1 {
+  font-size: var(--text-xl);
+}
+
+.notes {
+  white-space: pre-wrap;
+  color: var(--color-text-muted);
+  max-height: 30vh;
+  overflow-y: auto;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+}

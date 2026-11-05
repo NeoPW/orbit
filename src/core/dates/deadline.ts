@@ -1,6 +1,6 @@
 import { formatDate } from './format.ts';
 
-/** Deadline lead time until the Settings feature stores the user's choice. */
+/** The default deadline lead time; the user's choice is a setting (`useSettings()`). */
 export const DEFAULT_LEAD_DAYS = 7;
 
 const DAY_MS = 24 * 60 * 60 * 1000;

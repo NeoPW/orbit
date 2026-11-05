@@ -1,0 +1,270 @@
+/* Controls beside TextField: same label, error and control look. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.anchor {
+  position: relative;
+  display: flex;
+}
+
+.anchor > input {
+  flex: 1;
+  min-width: 0;
+  padding-right: 40px;
+}
+
+.anchorButton {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+}
+
+.select {
+  appearance: none;
+  padding-right: var(--space-6);
+  background-image: linear-gradient(45deg, transparent 50%, var(--color-text-muted) 50%),
+    linear-gradient(135deg, var(--color-text-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 50%,
+    calc(100% - 13px) 50%;
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+}
+
+.select option,
+.select optgroup {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+/* Switch and checkbox: a real checkbox, drawn by the sibling. */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  opacity: 0;
+}
+
+.toggle input:disabled ~ * {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.track {
+  position: relative;
+  flex-shrink: 0;
+  width: 38px;
+  height: 22px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-raised);
+  transition: background-color var(--motion-fast) var(--ease-out);
+}
+
+.track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  transition:
+    translate var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast) var(--ease-out);
+}
+
+input:checked + .track {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+input:checked + .track::after {
+  translate: 16px 0;
+  background: var(--color-on-primary);
+}
+
+.box {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--color-text-faint);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-on-primary);
+  transition: background-color var(--motion-fast) var(--ease-out);
+}
+
+.box svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0;
+}
+
+input:checked + .box {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+input:checked + .box svg {
+  opacity: 1;
+}
+
+input:focus-visible + .track,
+input:focus-visible + .box {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Segmented control, weekday picker */
+.segments {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.segment {
+  min-height: 30px;
+  min-width: 36px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--ease-out);
+}
+
+.segment:hover {
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+.segment[aria-checked='true'],
+.segment[aria-pressed='true'] {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+}
+
+/* Color picker */
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.swatch {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: var(--swatch-color);
+  background-clip: padding-box;
+  cursor: pointer;
+  box-shadow: 0 0 0 0 var(--swatch-color);
+  transition: box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.swatch[aria-checked='true'] {
+  border-color: var(--color-bg);
+  box-shadow: 0 0 0 2px var(--swatch-color);
+}
+
+.auto {
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auto[aria-checked='true'] {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+}
+
+/* Calendar popover */
+.calendar {
+  position: fixed;
+  z-index: 50;
+  width: 264px;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.calendarHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+  font-weight: 600;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  text-align: center;
+}
+
+.weekday {
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+  padding: var(--space-1) 0;
+}
+
+.day {
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.day:hover {
+  background: var(--color-surface-hover);
+}
+
+.day[data-today='true'] {
+  color: var(--color-secondary);
+  font-weight: 700;
+}
+
+.day[aria-pressed='true'] {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}

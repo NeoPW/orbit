@@ -1,4 +1,5 @@
 mod db;
+mod notify;
 
 use tauri::{LogicalSize, Manager};
 
@@ -12,9 +13,15 @@ pub fn run() {
             let database = db::open(app)?;
             app.manage(database);
             fit_main_window_to_screen(app)?;
+            notify::setup_tray(app)?;
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![db::db_query, db::db_batch])
+        .on_window_event(notify::on_window_event)
+        .invoke_handler(tauri::generate_handler![
+            db::db_query,
+            db::db_batch,
+            notify::show_notification
+        ])
         .run(tauri::generate_context!())
         .expect("error while running Orbit");
 }
