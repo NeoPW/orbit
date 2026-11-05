@@ -16,9 +16,14 @@ context: |
   - Desktop-only features (tray, hotkey, notifications, native SQLite) sit
     behind src/platform/; feature code never checks the platform itself,
     and the browser build must start without Tauri APIs.
-  - Planned (later changes): SQLite + Drizzle locally (Tauri plugin on
-    desktop, SQLite WASM in the browser); Cloudflare Worker + D1 sync
-    server, last-write-wins per row, bearer token per device.
+  - Database: Drizzle (sqlite-proxy) over the drivers in src/platform/db
+    (Rust/rusqlite on desktop, sqlite-wasm OPFS worker in the browser,
+    node:sqlite in tests). Schema in src/core/db/schema.ts, migrations in
+    drizzle/ via npm run db:generate (never edit applied ones). Use
+    db.batch() for writes that belong together; no foreign keys; tests use
+    openTestDatabase().
+  - Planned (later change): Cloudflare Worker + D1 sync server,
+    last-write-wins per row, bearer token per device.
 
   Architecture conventions:
   - Feature-first folders: src/core/ (shared), src/features/<feature>/

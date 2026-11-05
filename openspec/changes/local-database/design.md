@@ -64,6 +64,7 @@ The official `tauri-plugin-sql` was considered: it returns rows as objects keyed
 - **No foreign-key constraints.** References are plain text columns. Sync applies rows in whatever order they arrive, and soft deletes keep rows around, so database-level references would reject valid states. Integrity is the repositories' job.
 - Unique indexes: `habit_checks (habit_id, date)`, `weekly_reviews (week_start)`, `notes (target_type, target_id, week_start)`. Because these records have natural-key IDs, re-creating one that was soft-deleted (re-checking a habit the same day) updates and revives the existing row instead of inserting.
 - `settings`: `key` text primary key, `value` text; no shared columns, never synced.
+- Habit `weekdays` is a JSON text column with weekday numbers (1 = Monday … 7 = Sunday). Defaults: task `importance` is null (inherited), project `importance` 3, texts `''`, measure `step` 1; a weekly review's `score` is nullable so a draft can exist.
 
 ### Record helpers (`src/core/db/records.ts`)
 - `newId()`: `crypto.randomUUID()` (v4).
@@ -75,7 +76,7 @@ The official `tauri-plugin-sql` was considered: it returns rows as objects keyed
 `openDatabase()` picks the driver through `src/platform/` (desktop driver loaded with a dynamic import only on the desktop), runs migrations, seeds the default areas when the database was just created (`user_version` was 0), and returns one of:
 `{ status: 'ready', db, storage: 'file' | 'opfs' | 'memory', schemaVersion }`, `{ status: 'other-tab' }` or `{ status: 'error', message }`.
 
-Default areas (seeded once, in this order, with the colors of the Flutter app): Job `#1E88E5`, Personal `#8E24AA`, Sport `#43A047`, Uni `#FB8C00`.
+Default areas (seeded once, in this order, with the colors of the Flutter app): Job `#1E88E5`, Personal `#8E24AA`, Sport `#43A047`, Uni `#FB8C00`. "Once" is a settings flag (`default_areas_seeded`) written in the same batch as the areas, not "the version was 0": a seed that failed is retried on the next start, and deleted default areas never come back. `migrate` refuses a database whose version is newer than the app's newest migration (error state).
 
 ### Placeholder start screen
 Until `app-shell` replaces it, `src/App.tsx` shows: the platform, the storage (`file`, `opfs` or `memory`), the schema version, and a start counter that is incremented in the settings table (`app_starts`) on every start. In memory it shows the warning; in a second tab only the notice. This is how persistence is checked by hand on both platforms.
