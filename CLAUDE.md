@@ -1,6 +1,6 @@
 # Project Tracker
 
-Personal local-first Flutter app (Android + web) for objectives, key results, projects, tasks, habits, work logs and a weekly review.
+Personal local-first app for goals, projects, tasks, habits, focused work and a weekly review: a Tauri desktop app (React + TypeScript) with a browser build of the same frontend; an Android companion comes later.
 
 ## Sources of truth
 - Product spec: `docs/SPEC.md`
@@ -16,21 +16,21 @@ Personal local-first Flutter app (Android + web) for objectives, key results, pr
 ## Token budget
 - Keep OpenSpec changes small (see the rules in `openspec/config.yaml`). When a request or proposal would exceed them, propose splitting it first.
 - Keep the `context` in `openspec/config.yaml` short.
-- During apply, run only the tests affected by the task (`flutter test <paths> -r failures-only`); run the full suite once, in the final verification task.
+- During apply, run only the tests affected by the task (`npx vitest run <paths>`); run `npm run check` (full suite) once, in the final verification task.
 - Take screenshots only when a visual check is really needed.
 - Suggest switching to Sonnet (`/model`) for mechanical apply work; use Opus for propose and design.
 
 ## Commands
-- Run on phone: `flutter run`
-- Run in browser: `flutter run -d chrome`
-- Release build on Android: `tool/build_release.sh [--install]`
-- Deploy web app (https://orbit-neo.pages.dev): `tool/deploy_web.sh`
-- Analyze: `flutter analyze`
-- Test: `flutter test`
-- Code generation (drift, riverpod): `dart run build_runner build --delete-conflicting-outputs`
+- Run the desktop app (dev, "Orbit Dev"): `npm run desktop`
+- Run in browser: `npm run dev`
+- Build the desktop app (.deb + AppImage): `npm run desktop:build`
+- Build the browser version: `npm run build`
+- Typecheck + lint + test: `npm run check`
+- Some tests: `npx vitest run <paths>`
+- Node 24 is pinned in `.node-version` (fnm); Rust comes from `~/.cargo/bin`.
 
 ## Conventions
-- Feature-first structure under `lib/features/`, shared code in `lib/core/`.
-- UI → Riverpod providers → repositories → drift. No drift calls from widgets.
-- Domain logic as pure Dart functions with unit tests.
+- Feature-first structure under `src/features/`, shared code in `src/core/`, platform adapters in `src/platform/`.
+- UI → state → repositories → database. No database calls from components.
+- Domain logic as pure TypeScript functions with Vitest tests.
 - Commit messages: conventional commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`).

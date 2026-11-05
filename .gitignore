@@ -1,54 +1,16 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
+# OS and editors
 .DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
+*.swp
+*.log
 .idea/
+*.iml
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# Node / Vite
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-/coverage/
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-
-# Widget Preview related
-.widget_preview/
-
-# Supabase connection for this machine (see supabase.example.json).
-/supabase.json
-
-# Wrangler (Cloudflare CLI) cache, see tool/deploy_web.sh
-/.wrangler/
+# Rust / Tauri
+src-tauri/target/
+src-tauri/gen/schemas/
