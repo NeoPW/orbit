@@ -17,21 +17,6 @@ The user SHALL be able to change a project's status between `active`, `backlog`,
 - **WHEN** the user sets a project's status to completed
 - **THEN** the project appears in the Archive and nowhere else in the Plan tab
 
-### Requirement: Next step
-The user SHALL be able to set a project's next step as text in the project form. Setting it when none exists SHALL create an open task for the project and link it as the next step; changing the text SHALL update that task's title; clearing it SHALL remove the link and leave the task as an open task of the project.
-
-#### Scenario: Set first next step
-- **WHEN** the user enters "Draft outline" as next step of a project without one and saves
-- **THEN** an open task "Draft outline" exists for the project and is the project's next step
-
-#### Scenario: Change next step
-- **WHEN** the user changes the next step text to "Write intro" and saves
-- **THEN** the same task now has the title "Write intro" and no new task is created
-
-#### Scenario: Clear next step
-- **WHEN** the user clears the next step text and saves
-- **THEN** the project has no next step and the task remains open
-
 ### Requirement: Delete project
 The user SHALL be able to delete a project after confirming. Deleting SHALL soft-delete the project and its tasks; habits linked to the project SHALL keep existing without the project link.
 
@@ -70,7 +55,7 @@ The user SHALL be able to create a project with a title (required), optional des
 
 #### Scenario: Create active project for a goal
 - **WHEN** the user creates an active project serving an active goal
-- **THEN** the project appears under that goal in the Plan tab and as its moon on Home
+- **THEN** the project appears under that goal in Plan and in Home's active projects
 
 #### Scenario: Create backlog project
 - **WHEN** the user creates a project with status backlog

@@ -43,16 +43,16 @@ Metadata SHALL be shown as chips, icons and badges rather than sentences: status
 - **WHEN** an item's deadline has passed
 - **THEN** its deadline badge is red and reads "Overdue"
 
-### Requirement: Progress as orbit rings
-Habits done today and the weekly review's summaries SHALL be shown as slim circular "orbit" rings: a faint track and a rounded arc, without an end marker. A measure's progress SHALL be shown as a slim bar in its goal's color with the percentage next to it.
+### Requirement: Progress bars
+A measure's progress and a goal's progress SHALL be shown as a slim bar in the goal's color with the percentage next to it. A goal without measures SHALL show no bar and no percentage.
 
-#### Scenario: Habits done today
-- **WHEN** 2 of 4 habits due today are checked
-- **THEN** the Home header shows a half-filled orbit ring with "2/4"
+#### Scenario: Measure bar color
+- **WHEN** the goal "Get fit" is rose and its measure "Run 100 km" is at 45 %
+- **THEN** the measure shows a rose bar filled to 45 % and "45 %"
 
-#### Scenario: Measure ring color
-- **WHEN** the goal "Get fit" is rose
-- **THEN** the progress bars of its measures are rose
+#### Scenario: Goal without measures
+- **WHEN** a goal has no measures
+- **THEN** it shows no progress bar and no percentage
 
 ### Requirement: Empty states
 A list or section without content SHALL show an icon, one short line of text and, where it makes sense, the action that fills it.
@@ -71,17 +71,6 @@ Items added to or removed from lists (for example a checked habit, a completed t
 #### Scenario: Reduced motion
 - **WHEN** the system setting to remove animations is on
 - **THEN** lists and pages change without animation
-
-### Requirement: Two panes on wide screens
-At a window width of 1000 logical pixels or more, the Plan tab SHALL show its list on the left and the selected goal, project or task on the right, instead of opening them as a separate page. At smaller widths they SHALL open as pages.
-
-#### Scenario: Desktop browser
-- **WHEN** the window is 1400 pixels wide and the user taps a project in the Plan tab
-- **THEN** the project detail is shown to the right of the list and the list stays visible
-
-#### Scenario: Phone
-- **WHEN** the window is 400 pixels wide and the user taps a project
-- **THEN** the project detail opens as its own page
 
 ### Requirement: Message cards
 Short confirmations (for example "Task completed", "Work logged") SHALL appear at the top of the window, centered over the screen, as a compact card with an icon, one line of text and a close button, announced to screen readers. A message SHALL disappear on its own after 3 seconds, but not while the pointer is over it or it has keyboard focus. An action such as Undo SHALL be part of the card; choosing it SHALL run it and close the message. A new message SHALL replace the one shown.
@@ -203,3 +192,14 @@ Every interactive element SHALL show a clearly visible focus indicator when it i
 #### Scenario: Click
 - **WHEN** the user clicks a button
 - **THEN** no focus ring is shown on it
+
+### Requirement: Menus
+Status chips and overflow actions SHALL open a small menu next to them. A menu SHALL be usable with the keyboard (arrow keys move, Enter chooses, Escape closes and returns focus to its button) and SHALL close when clicking outside it.
+
+#### Scenario: Status chip menu
+- **WHEN** the user clicks the "Active" status chip of a project
+- **THEN** a menu offers the other statuses next to the chip
+
+#### Scenario: Escape
+- **WHEN** a menu is open and the user presses Escape
+- **THEN** the menu closes and focus is back on the chip

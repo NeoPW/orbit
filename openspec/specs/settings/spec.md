@@ -7,11 +7,11 @@ Lets the user adjust how the app reminds and warns them: whether reminders are o
 ## Requirements
 
 ### Requirement: Settings screen
-The app SHALL provide a Settings screen, reachable from the Settings entry of the navigation, showing the reminders switch, the default reminder time, the review day and time, the deadline lead time with their current values, an entry to Space images, and a "Sync" section (see account and sync).
+The app SHALL provide a Settings screen, reachable from the Settings entry of the navigation, with a "Reminders" section showing the reminders switch, the default reminder time, the review day and time and the deadline lead time with their current values, and a "Sync" section (see account and sync). The Space images entry SHALL be added when the space background exists.
 
 #### Scenario: Open settings
 - **WHEN** the user selects Settings in the navigation
-- **THEN** the reminders switch, the default reminder time, the review day and time, the deadline lead time, the Space images entry and the "Sync" section are shown
+- **THEN** the reminders switch, the default reminder time, the review day and time, the deadline lead time and the "Sync" section are shown
 
 #### Scenario: From Home and Review
 - **WHEN** the user selects Settings while on Home or on Review
@@ -32,11 +32,11 @@ The user SHALL be able to choose the default reminder time with a time picker. I
 - **THEN** Settings shows 07:15 and habit reminders without own time use 07:15
 
 ### Requirement: Deadline lead time
-The user SHALL be able to set the deadline lead time as a whole number of days from 1 to 30. Other values SHALL NOT be saved and the field SHALL show an error.
+The user SHALL be able to set the deadline lead time as a whole number of days from 1 to 30. Other values SHALL NOT be saved and the field SHALL show an error. The lead time SHALL decide when deadline badges turn amber (see visual-design) and when deadline reminders start (see notifications).
 
 #### Scenario: Valid lead time
 - **WHEN** the user sets the lead time to 3 days
-- **THEN** the lead time is saved and Home lists deadlines up to 3 days ahead
+- **THEN** the lead time is saved and deadline badges turn amber from 3 days ahead
 
 #### Scenario: Invalid lead time
 - **WHEN** the user enters 0 or 31
@@ -49,12 +49,12 @@ Settings SHALL be stored on the device, SHALL survive an app restart or page rel
 - **WHEN** the user sets the lead time to 3 days and restarts the app
 - **THEN** the lead time is still 3 days
 
-### Requirement: Reminder settings on web
-In the browser the Settings screen SHALL show that reminders are only available on Android instead of the reminders switch; the default reminder time SHALL still be shown and editable, and the lead time SHALL still apply to Home.
+### Requirement: Reminder settings in the browser
+In the browser the Settings screen SHALL show, instead of the reminders switch, a note that reminders are shown by the desktop app. The default reminder time, the review day and time and the lead time SHALL still be shown and editable, and the lead time SHALL still apply to deadline badges.
 
-#### Scenario: Settings in Chrome
+#### Scenario: Settings in the browser
 - **WHEN** the user opens Settings in Chrome
-- **THEN** a note says that reminders are only available on Android and the lead time can be changed
+- **THEN** a note says that reminders are shown by the desktop app and the lead time can be changed
 
 ### Requirement: Review day and time
 The user SHALL be able to choose the weekday (Monday to Sunday) and the time of day of the weekly review reminder. The defaults SHALL be Sunday and 18:00. The time SHALL be shown as `HH:mm`.
