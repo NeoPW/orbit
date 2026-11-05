@@ -105,18 +105,18 @@ Progress of a habit measure SHALL be the check-ins of its linked habit on or aft
 - **THEN** the measure's progress on the goal page increases without a reload
 
 ### Requirement: Record progress on the goal page
-Each measure on the goal page SHALL show its progress ring in the goal's color, its value and its controls: − and + changing a numeric measure by its step, tapping the value to enter it directly, a done switch for a boolean measure, and no controls for a habit measure. Changes SHALL be saved immediately and SHALL NOT be limited to start or target.
+Each measure on the goal page SHALL show its progress bar in the goal's color, its value and its controls in the row: − and + changing a numeric measure by its step, clicking the value to enter it directly (Enter saves, Escape cancels), a done switch for a boolean measure, and no controls for a habit measure. Changes SHALL be saved immediately and SHALL NOT be limited to start or target.
 
 #### Scenario: Plus button
-- **WHEN** the numeric measure "Run 100 km" with current value 40 and step 5 is shown and the user taps +
-- **THEN** its current value is 45 and its progress ring shows 45%
+- **WHEN** the numeric measure "Run 100 km" (start 0, target 100) with current value 40 and step 5 is shown and the user clicks +
+- **THEN** its current value is 45 and its progress bar shows 45 %
 
 #### Scenario: Minus button
-- **WHEN** the user taps − on a numeric measure with current value 40 and step 1
+- **WHEN** the user clicks − on a numeric measure with current value 40 and step 1
 - **THEN** its current value is 39
 
 #### Scenario: Enter the value
-- **WHEN** the user taps the value and enters 62.5
+- **WHEN** the user clicks the value, types 62.5 and presses Enter
 - **THEN** its current value is 62.5
 
 #### Scenario: Done switch

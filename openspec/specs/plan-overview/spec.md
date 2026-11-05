@@ -53,65 +53,42 @@ All Plan tab views SHALL update immediately after any create, edit, status chang
 - **WHEN** the user changes a project from active to backlog in the project form and returns to the Plan tab
 - **THEN** the project is shown in the Backlog and no longer in its previous section
 
-### Requirement: Entry points for creating and editing
-From the Plan tab the user SHALL be able to create a goal, a project, a task and a habit, add a measure on a goal's page, open Habits, Areas and Archive from the More sheet and Settings from the settings button. Tapping a goal, project or task SHALL open its page, never its edit form; each page SHALL offer Edit. Creating and editing SHALL happen in a sheet (see visual-design), not on a separate page.
+### Requirement: Create from Plan
+Plan's header SHALL offer "New" with a menu to create a goal, a project, a task or a habit; the chosen form SHALL open in a sheet over Plan. Each page SHALL offer Edit, which opens its form in a sheet. Measures SHALL be added on the goal page.
 
-#### Scenario: Create from Plan tab
-- **WHEN** the user uses the Plan tab's create action
-- **THEN** they can choose to create a goal, a project, a task or a habit, and the chosen form opens in a sheet over the Plan tab
+#### Scenario: Create from Plan
+- **WHEN** the user chooses "New" → "Project" in Plan
+- **THEN** the project form opens in a sheet over Plan
 
-#### Scenario: Edit by tapping
-- **WHEN** the user taps a goal in the goals section and then Edit on its page
+#### Scenario: Edit from the page
+- **WHEN** the user clicks a goal in Plan and then Edit on its page
 - **THEN** the goal's edit form opens in a sheet
 
-#### Scenario: Open project detail
-- **WHEN** the user taps a project in the Overview or the Backlog
-- **THEN** the project's detail opens
-
-#### Scenario: Open settings
-- **WHEN** the user taps the settings button in the Plan tab's top bar
-- **THEN** the Settings screen opens
-
 #### Scenario: Measure in the goals list
-- **WHEN** the user taps a measure in the goals section
+- **WHEN** the user clicks a measure in the Goals section
 - **THEN** the page of its goal opens
 
-#### Scenario: Old form URL
-- **WHEN** the app is opened at the former edit URL of a key result
-- **THEN** the page of the goal its measure belongs to is shown
+### Requirement: Plan layout
+The Plan screen SHALL be one page with the sections Goals, Projects without a goal, Backlog, Habits, Areas and Archive, limited to a readable width. Clicking a goal, project or task SHALL open its page (see app-shell, "Detail page addresses"), never its edit form; going back SHALL return to Plan.
 
-### Requirement: Usable at phone and desktop width
-The Plan tab and all its forms SHALL be usable at phone width and at desktop browser width; on wide screens content SHALL be limited to a readable maximum width instead of stretching across the window, and at 1000 pixels or more the selected goal, project or task SHALL be shown next to the list (see visual-design).
+#### Scenario: Open a project page
+- **WHEN** the user clicks a project in the Backlog
+- **THEN** the project's page opens, and going back shows Plan again
 
-#### Scenario: Desktop browser
-- **WHEN** the Plan tab is shown in a 1600 pixel wide browser window
-- **THEN** the content is limited to readable widths and no text runs across the full window
+#### Scenario: Wide window
+- **WHEN** Plan is shown in a 1600 pixel wide window
+- **THEN** its content is limited to a readable width and no text runs across the full window
 
-#### Scenario: Goal in the detail pane
-- **WHEN** the window is 1400 pixels wide and the user taps a goal in the Plan tab
-- **THEN** the goal page is shown to the right of the list
-
-#### Scenario: Measure in the detail pane
-- **WHEN** the window is 1400 pixels wide and the user taps a measure in the Plan tab
-- **THEN** the page of its goal is shown to the right of the list
-
-### Requirement: More sheet
-The Plan tab's top bar SHALL have a More button that opens a sheet with one large tile each for Habits, Areas and Archive, with an icon and a label. Tapping a tile SHALL close the sheet and open that screen.
-
-#### Scenario: Open Areas
-- **WHEN** the user taps More in the Plan tab and then the Areas tile
-- **THEN** the Areas screen opens
-
-### Requirement: Goals section
-The Plan tab SHALL list every goal with status `active`, one after another in sort order. Each goal SHALL show its planet, title, progress, date range and deadline badge (see goals), a measures line ("3 measures") that expands to its measures in order with their progress bars and an "Add measure" action, the `active` projects serving it and the open tasks assigned to it. Tapping a goal SHALL open its page.
+### Requirement: Goals in Plan
+The Goals section SHALL list every goal with status `active` in sort order. Each goal SHALL show its color, title, progress bar with percentage, date range and deadline badge (see goals), its measures with their progress bars, the `active` projects serving it and the open tasks assigned to it. Clicking a goal SHALL open its page. Without active goals the section SHALL show an empty state with "New goal".
 
 #### Scenario: Goal with measures and projects
 - **WHEN** an active goal has two measures and one active project serving it
-- **THEN** the goal is shown with its date range, "2 measures" and the project, and expanding "2 measures" shows both measures with progress
+- **THEN** the goal is shown with its date range, both measures with their progress and the project
 
 #### Scenario: Non-active goals hidden
 - **WHEN** a goal has status completed or archived
-- **THEN** it is not shown in the goals section
+- **THEN** it is not shown in the Goals section
 
 #### Scenario: Backlog project hidden
 - **WHEN** a project serving an active goal has status backlog or paused
@@ -119,23 +96,15 @@ The Plan tab SHALL list every goal with status `active`, one after another in so
 
 #### Scenario: Goal without measures
 - **WHEN** an active goal has no measures
-- **THEN** it shows no percentage and offers to add a measure
-
-#### Scenario: Measures collapsed by default
-- **WHEN** the Plan tab opens
-- **THEN** each goal's measures are collapsed to their count and expand when the line is tapped
-
-#### Scenario: Add a measure from the Plan tab
-- **WHEN** the user expands the measures of "Get fit" and taps "Add measure"
-- **THEN** the measure form for "Get fit" opens
+- **THEN** it shows no percentage and no progress bar
 
 #### Scenario: No active goals
 - **WHEN** there is no active goal
-- **THEN** the section shows an empty state with an action to create a goal
+- **THEN** the section shows an empty state with "New goal"
 
 #### Scenario: Task under a goal
 - **WHEN** the open task "Book physio" is assigned to the active goal "Get fit"
-- **THEN** it is listed under that goal and tapping it opens its task page
+- **THEN** it is listed under that goal and clicking it opens its task page
 
 #### Scenario: Overdue goal in the list
 - **WHEN** an active goal's end date has passed

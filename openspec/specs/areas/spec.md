@@ -7,11 +7,11 @@ Lets the user maintain the list of life areas (such as Job, Personal, Sport, Uni
 ## Requirements
 
 ### Requirement: Area list
-The app SHALL provide an Areas screen, reachable from the Plan tab, that lists all areas in their sort order, each with its name and color.
+The Plan screen SHALL have an Areas section that lists all areas in their sort order, each with its name and color. Clicking an area SHALL open its edit form in a sheet; the section SHALL offer "New area".
 
 #### Scenario: Open areas
-- **WHEN** the user opens Areas from the Plan tab
-- **THEN** all non-deleted areas are listed in sort order with their color
+- **WHEN** the user opens Plan
+- **THEN** the Areas section lists all non-deleted areas in sort order with their color
 
 ### Requirement: Create area
 The user SHALL be able to create an area with a name and a color chosen from a fixed palette. The name is required, is trimmed, and SHALL be unique among areas (case-insensitive). New areas are added at the end of the list.

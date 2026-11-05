@@ -21,24 +21,25 @@ function subscribe(onChange: () => void): () => void {
   };
 }
 
-function currentPath(): string {
-  return window.location.pathname;
+/** Path and query: the query carries the review step. */
+function currentLocation(): string {
+  return window.location.pathname + window.location.search;
 }
 
 /** Replaces `/`, unknown paths and trailing slashes with the route's own path, without a new history entry. */
 export function normalizeLocation(): void {
-  const { redirect } = parsePath(currentPath(), { dev: DEV });
+  const { redirect } = parsePath(currentLocation(), { dev: DEV });
   if (redirect !== undefined) window.history.replaceState(window.history.state, '', redirect);
 }
 
 export function navigate(route: Route): void {
   const path = pathOf(route);
-  if (path === currentPath()) return;
+  if (path === currentLocation()) return;
   window.history.pushState(null, '', path);
   window.dispatchEvent(new Event(NAVIGATE_EVENT));
 }
 
 export function useRoute(): Route {
-  const path = useSyncExternalStore(subscribe, currentPath);
+  const path = useSyncExternalStore(subscribe, currentLocation);
   return parsePath(path, { dev: DEV }).route;
 }

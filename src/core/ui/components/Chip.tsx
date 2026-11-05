@@ -13,9 +13,12 @@ export interface ChipProps {
   /** Makes the chip a button, for example a status chip that offers the other statuses. */
   onClick?: () => void;
   title?: string;
+  /** For a chip that opens a Menu. */
+  'aria-haspopup'?: 'menu';
+  'aria-expanded'?: boolean;
 }
 
-export function Chip({ children, tone = 'neutral', color, icon, onClick, title }: ChipProps) {
+export function Chip({ children, tone = 'neutral', color, icon, onClick, title, 'aria-haspopup': haspopup, 'aria-expanded': expanded }: ChipProps) {
   const className = [styles.chip, color ? styles.area : styles[tone], onClick ? styles.clickable : undefined]
     .filter(Boolean)
     .join(' ');
@@ -29,7 +32,7 @@ export function Chip({ children, tone = 'neutral', color, icon, onClick, title }
   );
   if (onClick) {
     return (
-      <button type="button" className={className} style={style} onClick={onClick} title={title}>
+      <button type="button" className={className} style={style} onClick={onClick} title={title} aria-haspopup={haspopup} aria-expanded={expanded}>
         {content}
       </button>
     );

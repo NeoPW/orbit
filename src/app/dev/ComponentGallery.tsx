@@ -1,28 +1,38 @@
-import { Inbox, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Inbox, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { daysUntil, localToday } from '../../core/dates/deadline.ts';
+import { addDays } from '../../core/dates/today.ts';
+import { AREA_COLORS, GOAL_COLORS } from '../../core/ui/palette.ts';
+import { AnimatedList } from '../../core/ui/components/AnimatedList.tsx';
 import { Button, IconButton } from '../../core/ui/components/Button.tsx';
+import { Checkbox } from '../../core/ui/components/Checkbox.tsx';
 import { Chip } from '../../core/ui/components/Chip.tsx';
+import { ColorPicker } from '../../core/ui/components/ColorPicker.tsx';
 import { ConfirmDialog } from '../../core/ui/components/ConfirmDialog.tsx';
+import { DateField } from '../../core/ui/components/DateField.tsx';
 import { DeadlineBadge } from '../../core/ui/components/DeadlineBadge.tsx';
 import { EmptyState } from '../../core/ui/components/EmptyState.tsx';
 import { ImportanceDots } from '../../core/ui/components/ImportanceDots.tsx';
+import { ListRow } from '../../core/ui/components/ListRow.tsx';
+import { Menu } from '../../core/ui/components/Menu.tsx';
+import { NumberField } from '../../core/ui/components/NumberField.tsx';
 import { PageHeader } from '../../core/ui/components/PageHeader.tsx';
+import { ProgressBar } from '../../core/ui/components/ProgressBar.tsx';
+import { Section } from '../../core/ui/components/Section.tsx';
+import { SegmentedControl } from '../../core/ui/components/SegmentedControl.tsx';
+import { Select } from '../../core/ui/components/Select.tsx';
 import { Sheet } from '../../core/ui/components/Sheet.tsx';
+import { Switch } from '../../core/ui/components/Switch.tsx';
 import { TextArea, TextField } from '../../core/ui/components/TextField.tsx';
+import { TimeField } from '../../core/ui/components/TimeField.tsx';
+import { WeekdayPicker } from '../../core/ui/components/WeekdayPicker.tsx';
 import { useMessages } from '../../core/ui/messages/MessageProvider.tsx';
 import styles from './ComponentGallery.module.css';
 
 // Development only (/dev/components): every shared component in its states,
 // for checking the look and keyboard behavior by hand.
 
-function addDays(today: string, days: number): string {
-  const [y, m, d] = today.split('-').map(Number) as [number, number, number];
-  const date = new Date(Date.UTC(y, m - 1, d + days));
-  return date.toISOString().slice(0, 10);
-}
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Block({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className={styles.section}>
       <h2>{title}</h2>
@@ -55,6 +65,19 @@ export default function ComponentGallery() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const today = localToday();
+  const [date, setDate] = useState<string | null>('2026-11-30');
+  const [time, setTime] = useState<string | null>('07:15');
+  const [amount, setAmount] = useState<number | null>(12.5);
+  const [assignment, setAssignment] = useState('');
+  const [reminders, setReminders] = useState(true);
+  const [done, setDone] = useState(false);
+  const [length, setLength] = useState<number>(25);
+  const [days, setDays] = useState<number[]>([1, 3, 5]);
+  const [areaColor, setAreaColor] = useState<string | null>(AREA_COLORS[0]);
+  const [goalColor, setGoalColor] = useState<string | null>(null);
+  const [status, setStatus] = useState('Active');
+  const [rows, setRows] = useState(['Write outline', 'Book flights', 'Call the bank']);
+  const [counter, setCounter] = useState(1);
 
   return (
     <div className={styles.gallery}>
@@ -78,7 +101,7 @@ export default function ComponentGallery() {
         }
       />
 
-      <Section title="Buttons">
+      <Block title="Buttons">
         <Button variant="primary">Primary</Button>
         <Button>Secondary</Button>
         <Button variant="ghost">Ghost</Button>
@@ -90,15 +113,15 @@ export default function ComponentGallery() {
         </Button>
         <IconButton label="Add" icon={<Plus />} />
         <IconButton label="Delete" icon={<Trash2 />} tooltip="right" />
-      </Section>
+      </Block>
 
-      <Section title="Text fields">
+      <Block title="Text fields">
         <TextField label="Title" placeholder="What needs doing" />
         <TextField label="Lead time" defaultValue="0" error="Enter a number from 1 to 30" />
         <TextArea label="Notes" rows={3} />
-      </Section>
+      </Block>
 
-      <Section title="Chips">
+      <Block title="Chips">
         <Chip>Backlog</Chip>
         <Chip tone="primary">Active</Chip>
         <Chip tone="secondary">Completed</Chip>
@@ -111,24 +134,107 @@ export default function ComponentGallery() {
         <Chip tone="primary" onClick={() => messages.show({ text: 'Status chip clicked', kind: 'info' })}>
           Clickable
         </Chip>
-      </Section>
+      </Block>
 
-      <Section title="Importance">
+      <Block title="Importance">
         {[1, 2, 3, 4, 5].map((n) => (
           <ImportanceDots key={n} value={n} />
         ))}
         <ImportanceDots value={3} inherited />
-      </Section>
+      </Block>
 
-      <Section title="Deadline badges">
+      <Block title="Deadline badges">
         {[-2, 0, 1, 5, 40].map((days) => (
           <DeadlineBadge key={days} deadline={addDays(today, days)} />
         ))}
         <DeadlineBadge deadline={addDays(today, 6)} inherited />
         <span className={styles.hint}>({daysUntil(addDays(today, 40), today)} days ahead shows the date)</span>
-      </Section>
+      </Block>
 
-      <Section title="Empty state">
+      <Block title="Date and time fields">
+        <DateField label="Deadline" value={date} onChange={setDate} />
+        <TimeField label="Reminder" value={time} onChange={setTime} />
+        <span className={styles.hint}>
+          Value: {date ?? 'empty'} / {time ?? 'empty'}. Type 31-02-2026 and leave the field to see the error.
+        </span>
+      </Block>
+
+      <Block title="Number, select and choices">
+        <NumberField label="Target" value={amount} onChange={setAmount} inputMode="decimal" />
+        <Select
+          label="Assign to"
+          value={assignment}
+          onChange={setAssignment}
+          options={[
+            { value: '', label: 'None' },
+            { group: 'Goals', options: [{ value: 'g1', label: 'Get fit' }, { value: 'g2', label: 'Learn Rust' }] },
+            { group: 'Projects', options: [{ value: 'p1', label: 'Thesis' }] },
+          ]}
+        />
+        <Switch label="Reminders" checked={reminders} onChange={setReminders} />
+        <Checkbox label="Done" checked={done} onChange={setDone} />
+        <SegmentedControl
+          label="Focus length"
+          options={[
+            { value: 25, label: '25' },
+            { value: 50, label: '50' },
+            { value: 90, label: '90' },
+          ]}
+          value={length}
+          onChange={setLength}
+        />
+        <WeekdayPicker value={days} onChange={setDays} />
+      </Block>
+
+      <Block title="Color pickers">
+        <ColorPicker label="Area color" colors={AREA_COLORS} value={areaColor} onChange={setAreaColor} />
+        <ColorPicker label="Goal color" colors={GOAL_COLORS} value={goalColor} onChange={setGoalColor} allowAuto />
+      </Block>
+
+      <Block title="Menu">
+        <Menu
+          label="Status"
+          trigger={(props) => (
+            <Chip tone="primary" onClick={props.onClick} aria-haspopup={props['aria-haspopup']} aria-expanded={props['aria-expanded']}>
+              {status}
+            </Chip>
+          )}
+          items={['Active', 'Paused', 'Backlog', 'Completed'].map((label) => ({ label, checked: label === status, onSelect: () => setStatus(label) }))}
+        />
+        <Menu
+          label="More actions"
+          trigger={(props) => <IconButton label="More actions" icon={<MoreHorizontal />} {...props} />}
+          items={[
+            { label: 'Edit', icon: <Pencil />, onSelect: () => messages.show({ text: 'Edit chosen' }) },
+            { label: 'Delete', icon: <Trash2 />, danger: true, onSelect: () => messages.show({ text: 'Delete chosen' }) },
+          ]}
+        />
+      </Block>
+
+      <Block title="Progress, rows and sections">
+        <div className={styles.wide}>
+          <ProgressBar label="Run 100 km" value={0.45} color={GOAL_COLORS[0]} />
+          <ProgressBar label="Read 12 books" value={1} color={GOAL_COLORS[3]} />
+          <Section title="Tasks" count={rows.length} actions={<Button icon={<Plus />} onClick={() => { setRows([...rows, `New task ${counter}`]); setCounter(counter + 1); }}>Add</Button>}>
+            <AnimatedList
+              label="Tasks"
+              items={rows}
+              getKey={(row) => row}
+              renderItem={(row) => (
+                <ListRow
+                  leading={<Checkbox label="" checked={false} onChange={() => setRows(rows.filter((r) => r !== row))} />}
+                  title={row}
+                  meta={<DeadlineBadge deadline={addDays(today, 2)} />}
+                  onOpen={() => messages.show({ text: `Open ${row}` })}
+                  trailing={<IconButton label="Delete" icon={<Trash2 />} onClick={() => setRows(rows.filter((r) => r !== row))} />}
+                />
+              )}
+            />
+          </Section>
+        </div>
+      </Block>
+
+      <Block title="Empty state">
         <div className={styles.wide}>
           <EmptyState
             icon={Inbox}
@@ -140,9 +246,9 @@ export default function ComponentGallery() {
             }
           />
         </div>
-      </Section>
+      </Block>
 
-      <Section title="Sheet and dialog">
+      <Block title="Sheet and dialog">
         <span>
           Project title: <strong>{projectTitle}</strong>
         </span>
@@ -150,9 +256,9 @@ export default function ComponentGallery() {
         <Button variant="danger" onClick={() => setConfirmOpen(true)}>
           Delete…
         </Button>
-      </Section>
+      </Block>
 
-      <Section title="Messages">
+      <Block title="Messages">
         <Button onClick={() => messages.show({ text: 'Work logged' })}>Plain</Button>
         <Button
           onClick={() =>
@@ -165,7 +271,7 @@ export default function ComponentGallery() {
           With Undo
         </Button>
         <Button onClick={() => messages.show({ text: 'The server could not be reached', kind: 'error' })}>Error</Button>
-      </Section>
+      </Block>
 
       {sheetOpen && (
         <EditTitleSheet

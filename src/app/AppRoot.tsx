@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { openAppDatabase } from '../core/db/app-database.ts';
 import { normalizeLocation } from '../core/routing/useRoute.ts';
 import { MessageProvider } from '../core/ui/messages/MessageProvider.tsx';
+import { ReminderRunner } from '../features/notifications/ui/ReminderRunner.tsx';
 import { SyncRunner } from '../features/sync/ui/SyncRunner.tsx';
+import { useNotificationClicks } from './useNotificationClicks.ts';
 import { ServicesContext, type Services } from './services.ts';
 import { Shell } from './Shell.tsx';
 import { StartScreen, type StartState } from './StartScreen.tsx';
@@ -34,11 +36,16 @@ export function AppRoot() {
 
   if (state.kind !== 'ready') return <StartScreen state={state} />;
 
-  const { services } = state;
+  return <ReadyApp services={state.services} />;
+}
+
+function ReadyApp({ services }: { services: Services }) {
+  useNotificationClicks();
   return (
     <ServicesContext.Provider value={services}>
       <MessageProvider>
         <SyncRunner driver={services.driver} onWrite={services.onWrite}>
+          <ReminderRunner />
           <Shell />
         </SyncRunner>
       </MessageProvider>

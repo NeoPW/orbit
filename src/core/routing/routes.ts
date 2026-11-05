@@ -1,20 +1,80 @@
-/** A place in the app. Detail pages (`/projects/:id`, …) join this union later. */
-export type Route = { name: 'home' } | { name: 'plan' } | { name: 'review' } | { name: 'settings' } | { name: 'dev-components' };
+/** A place in the app. */
+export type Route =
+  | { name: 'home' }
+  | { name: 'plan' }
+  | { name: 'review' }
+  | { name: 'settings' }
+  | { name: 'goal'; id: string }
+  | { name: 'project'; id: string }
+  | { name: 'task'; id: string }
+  /** The guided review; `step` is kept in the address (`?step=`) so reload returns to it. */
+  | { name: 'review-flow'; step?: string }
+  | { name: 'review-history'; id: string }
+  | { name: 'review-last-week' }
+  | { name: 'focus' }
+  | { name: 'dev-components' };
 
 export type RouteName = Route['name'];
 
-const PATHS: Record<RouteName, string> = {
+/** The sidebar destination a route belongs to. */
+export type Section = 'home' | 'plan' | 'review' | 'settings';
+
+/** Routes without parameters, by path. */
+const STATIC_PATHS = {
   home: '/home',
   plan: '/plan',
   review: '/review',
   settings: '/settings',
+  'review-flow': '/review/flow',
+  'review-last-week': '/review/last-week',
+  focus: '/focus',
   'dev-components': '/dev/components',
-};
+} as const;
+
+/** Routes with an id as last path segment, by path prefix. */
+const ID_PREFIXES = {
+  goal: '/goals/',
+  project: '/projects/',
+  task: '/tasks/',
+  'review-history': '/review/history/',
+} as const;
+
+type StaticName = keyof typeof STATIC_PATHS;
+type IdName = keyof typeof ID_PREFIXES;
 
 export const HOME: Route = { name: 'home' };
 
 export function pathOf(route: Route): string {
-  return PATHS[route.name];
+  if (route.name in ID_PREFIXES) {
+    const { name, id } = route as Extract<Route, { name: IdName }>;
+    return ID_PREFIXES[name] + encodeURIComponent(id);
+  }
+  const path = STATIC_PATHS[route.name as StaticName];
+  if (route.name === 'review-flow' && route.step) return `${path}?step=${encodeURIComponent(route.step)}`;
+  return path;
+}
+
+/** The sidebar destination for a route; `null` for the dev gallery. Details belong to Plan, review pages to Review. */
+export function sectionOf(route: Route): Section | null {
+  switch (route.name) {
+    case 'home':
+    case 'focus':
+      return 'home';
+    case 'plan':
+    case 'goal':
+    case 'project':
+    case 'task':
+      return 'plan';
+    case 'review':
+    case 'review-flow':
+    case 'review-history':
+    case 'review-last-week':
+      return 'review';
+    case 'settings':
+      return 'settings';
+    case 'dev-components':
+      return null;
+  }
 }
 
 export interface ParsedPath {
@@ -24,16 +84,38 @@ export interface ParsedPath {
 }
 
 /**
- * Maps a pathname to a route. `/`, unknown paths and (outside development) the
- * dev-only gallery fall back to Home and ask for a redirect to `/home`.
+ * Maps a location (`pathname`, optionally followed by `?query`) to a route.
+ * `/`, unknown paths and (outside development) the dev-only gallery fall back
+ * to Home and ask for a redirect to `/home`.
  */
-export function parsePath(pathname: string, options: { dev?: boolean } = {}): ParsedPath {
+export function parsePath(location: string, options: { dev?: boolean } = {}): ParsedPath {
+  const [pathname = '', query = ''] = location.split('?', 2);
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
-  for (const [name, own] of Object.entries(PATHS) as [RouteName, string][]) {
+  const route = routeOfPath(path, new URLSearchParams(query), options.dev ?? false);
+  if (!route) return { route: HOME, redirect: STATIC_PATHS.home };
+  if (path === pathname) return { route };
+  return { route, redirect: pathOf(route) };
+}
+
+function routeOfPath(path: string, query: URLSearchParams, dev: boolean): Route | null {
+  for (const [name, own] of Object.entries(STATIC_PATHS) as [StaticName, string][]) {
     if (own !== path) continue;
-    if (name === 'dev-components' && !options.dev) break;
-    const route = { name } as Route;
-    return own === pathname ? { route } : { route, redirect: own };
+    if (name === 'dev-components' && !dev) return null;
+    if (name === 'review-flow') {
+      const step = query.get('step');
+      return step ? { name, step } : { name };
+    }
+    return { name } as Route;
   }
-  return { route: HOME, redirect: PATHS.home };
+  for (const [name, prefix] of Object.entries(ID_PREFIXES) as [IdName, string][]) {
+    if (!path.startsWith(prefix)) continue;
+    const rest = path.slice(prefix.length);
+    if (rest === '' || rest.includes('/')) return null;
+    try {
+      return { name, id: decodeURIComponent(rest) };
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }

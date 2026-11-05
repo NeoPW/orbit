@@ -8,6 +8,13 @@ Personal, local-first app for goals, projects, tasks, habits, focused work and a
 
 The Flutter version of the app is kept under the git tag `flutter-final`.
 
+## Using Orbit
+
+- **Home:** today, the focus panel (pick a task or project, 25/50/90 minutes or open-ended), habits due today, To do ranked by importance × urgency, and the active projects with their next steps. **New task** and **Log work** sit next to the date.
+- **Plan:** goals with measures, projects and tasks; projects without a goal; backlog; habits; areas; archive. **New** creates a goal, project, task or habit; goals, projects and tasks open as their own pages.
+- **Review:** this week's plan and summary, the guided weekly review (look back, projects, goals, score, plan, save), history and last week.
+- **Settings:** reminders, default reminder time, review day and time, deadline lead time, and sync.
+
 ## Stack
 
 - [Tauri 2](https://tauri.app) desktop shell (Rust, uses the system webview)
@@ -106,7 +113,7 @@ Sync is off until a device is connected. Connecting happens in **Settings → Sy
 
 The address and token are stored in the device's local settings and are never synced. A device and the server must have the same schema version; otherwise syncing waits ("different schema version") until the app or the server is updated.
 
-To check sync by hand, **Add test area** on the Plan screen of one device and watch it appear on the other.
+To check sync by hand, create an area in Plan → Areas on one device and watch it appear on the other.
 
 ## Desktop builds
 
@@ -118,3 +125,5 @@ To check sync by hand, **Add test area** on the Plan screen of one device and wa
 Development runs (`npm run desktop`) are named **Orbit Dev** with the identifier `dev.neopw.orbit.dev`, so they keep their own data (`~/.local/share/dev.neopw.orbit.dev`) and can run next to the installed release (`dev.neopw.orbit`).
 
 The version lives in `package.json`; the desktop app reads it from there.
+
+**Tray and notifications.** Closing the window keeps Orbit running with an icon in the system tray (**Open Orbit**, **Quit**), so reminders and the focus timer keep working; on GNOME the tray needs the AppIndicator extension. Reminders (habits, deadlines, weekly review) and the end of a focus session are shown as desktop notifications while Orbit runs; reminders missed while it was not running are not shown later. Clicking a notification opens its screen, which needs a notification daemon with action support (GNOME, KDE and most others); without it the notification still shows. The browser build shows no notifications, but plays the focus-end sound.

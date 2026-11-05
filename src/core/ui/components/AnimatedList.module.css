@@ -1,0 +1,42 @@
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item,
+.exit {
+  display: grid;
+  grid-template-rows: 1fr;
+}
+
+.inner {
+  min-height: 0;
+}
+
+.enter {
+  animation: row-in var(--motion-normal) var(--ease-out);
+}
+
+.exit {
+  animation: row-out var(--motion-normal) var(--ease-out) forwards;
+}
+
+.exit .inner {
+  overflow: hidden;
+  pointer-events: none;
+}
+
+@keyframes row-in {
+  from {
+    opacity: 0;
+    translate: 0 -4px;
+  }
+}
+
+@keyframes row-out {
+  to {
+    opacity: 0;
+    grid-template-rows: 0fr;
+  }
+}

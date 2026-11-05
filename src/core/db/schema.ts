@@ -182,6 +182,9 @@ export const settings = sqliteTable('settings', {
 export type Area = typeof areas.$inferSelect;
 export type NewArea = typeof areas.$inferInsert;
 
+export type Goal = typeof goals.$inferSelect;
+export type Measure = typeof measures.$inferSelect;
+
 /** Every synced table by its SQL name (all but the local `settings`). */
 export const SYNCED_TABLES = {
   areas: areas,

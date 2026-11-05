@@ -32,15 +32,19 @@ The project detail SHALL start with a header showing the title, a status chip, t
 - **WHEN** the user uses the edit action and changes the importance to 5
 - **THEN** the detail shows five of five importance dots after saving
 
-### Requirement: Next step and open tasks in detail
-The project detail SHALL show the project's open tasks with the next step marked in that list and placed first (or a hint "No next step" with an action to set one), and SHALL provide the task actions defined in tasks. Tapping a task SHALL open its task page. The next step SHALL NOT be shown twice.
+### Requirement: Next steps and open tasks in detail
+The project detail SHALL list the project's open tasks once, with its next steps marked and listed first, each group ordered as in tasks ("Open task order"). It SHALL offer adding a task, and the task rows SHALL work as defined in tasks ("Task rows"). Without open tasks the section SHALL show an empty state with "Add task".
 
-#### Scenario: Next step shown
-- **WHEN** a project's next step is the task "Write intro"
-- **THEN** the detail lists "Write intro" first in the open tasks, marked as next step, and nowhere else
+#### Scenario: Next steps first
+- **WHEN** the project has the open tasks "Book venue" (next step), "Send invites" and "Write intro" (next step)
+- **THEN** the detail lists "Book venue" and "Write intro" first, marked as next steps, then "Send invites"
+
+#### Scenario: Not shown twice
+- **WHEN** a task is a next step of the project
+- **THEN** it is listed once in the detail
 
 #### Scenario: Open a task
-- **WHEN** the user taps the open task "Book venue"
+- **WHEN** the user clicks the open task "Book venue"
 - **THEN** its task page opens
 
 ### Requirement: Habits in detail

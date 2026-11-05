@@ -258,7 +258,7 @@ Also on Home: **New task** (title, optional deadline, importance and assignment;
 - Log entries for this task (most recent first).
 
 ### 6.4 Plan
-Redesigned for desktop widths; the detailed layout is designed in its own change. What it contains:
+Designed for desktop widths: one page with sections (Goals, Projects without a goal, Backlog, Habits, Areas, Archive) and a **New** menu; goals, projects and tasks open as their own pages. What it contains:
 - **Goals:** each active goal with its color, title, progress, date range with a deadline badge for its end date, its measures with progress bars, the **active** projects serving it and its open tasks.
 - Active projects without a goal, and active projects whose goal is not active (showing the goal's title), in their own section.
 - **Backlog:** all projects with status `backlog` or `paused`, filterable by area. Activating one makes it active.
@@ -343,7 +343,7 @@ The app is rebuilt from scratch in this order, one OpenSpec change each (feature
 2. **Local database:** Drizzle schema with the sync columns, the Tauri SQLite plugin on the desktop and SQLite WASM in the browser.
 3. **Sync server:** Cloudflare Worker + D1, token login, push/pull sync, deploy of the Worker and the browser build.
 4. **App shell:** navigation, theme, shared components, messages.
-5. **Features**, in batches: areas, goals and measures; projects and tasks (with next steps and task importance); habits; work log, timer and focus mode; Home; Plan; Review with weekly notes; Settings; desktop notifications.
+5. **Features** (one change, `features`): areas, goals and measures; projects and tasks (with next steps and task importance); habits; work log, timer and focus mode; Home; Plan; Review with weekly notes; Settings; desktop notifications.
 6. **Android companion:** tasks and time tracking on the phone.
 7. **Later:** stats, Windows/macOS builds.
 

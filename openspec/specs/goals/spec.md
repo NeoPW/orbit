@@ -32,12 +32,12 @@ The user SHALL be able to edit a goal's title, description, dates, color and sta
 - **WHEN** the user sets a goal's status to completed
 - **THEN** the goal disappears from the Plan tab's goals section and appears in the Archive
 
-### Requirement: Goal color
-The goal form SHALL offer the colors of the space palette, shown as small planets, and "Auto". A goal with "Auto" SHALL get a palette color by its position in the goal order, so neighboring goals differ. The goal's color SHALL be used for its planet and for the progress rings of its measures.
+### Requirement: Goal color swatches
+The goal form SHALL offer the colors of the goal palette as swatches, and "Auto". A goal with "Auto" SHALL get a palette color by its position in the goal order, so neighboring goals differ. The goal's color SHALL mark the goal in Plan and on its page and SHALL color the progress bars of the goal and its measures.
 
 #### Scenario: Pick a color
 - **WHEN** the user picks the rose color for "Get fit" and saves
-- **THEN** its planet and its measures' progress rings are rose
+- **THEN** "Get fit" is marked rose in Plan and its progress bars are rose
 
 #### Scenario: Back to Auto
 - **WHEN** the user chooses Auto for a goal with its own color and saves
@@ -74,7 +74,7 @@ A goal's progress SHALL be the average progress of its measures (see measures). 
 - **THEN** it shows no percentage anywhere
 
 ### Requirement: Goal deadline badge
-An active goal SHALL show a deadline badge for its end date wherever it is listed and on its page: amber when the end date is within the deadline lead time, red "Overdue" when the end date has passed, neutral otherwise. Completed and archived goals SHALL NOT be marked overdue.
+An active goal SHALL show a deadline badge for its end date wherever it is listed and on its page, as defined in visual-design ("Deadline badge text"): amber when the end date is within the deadline lead time, red "Overdue" when the end date has passed, the date otherwise. Completed and archived goals SHALL NOT show a deadline badge.
 
 #### Scenario: Overdue goal
 - **WHEN** today is 2026-10-07 and an active goal ended on 2026-09-30
@@ -82,17 +82,17 @@ An active goal SHALL show a deadline badge for its end date wherever it is liste
 
 #### Scenario: Ending soon
 - **WHEN** the lead time is 7 days and an active goal ends in 3 days
-- **THEN** its badge is amber and reads "Due in 3 days"
+- **THEN** its badge is amber and reads "In 3 days"
 
 #### Scenario: Completed goal
 - **WHEN** a completed goal's end date has passed
 - **THEN** it is not marked overdue
 
 ### Requirement: Goal page
-Every goal SHALL have a page with its own URL. It SHALL show a header with the goal's planet and its moons, title, progress, date range, a status chip and the deadline badge, then the description and the sections for measures, projects, tasks and habits, and work. The page SHALL offer Edit and Delete; the status chip SHALL offer the other statuses and change the status immediately.
+Every goal SHALL have a page with its own address (see app-shell). It SHALL show a header with the goal's color, title, progress, date range, a status chip and the deadline badge, then the description and the sections measures, projects, tasks and habits, work, and weekly notes (see weekly-notes). The page SHALL offer Edit and Delete; the status chip SHALL offer the other statuses in a menu and change the status immediately.
 
 #### Scenario: Open from Plan
-- **WHEN** the user taps the goal "Get fit" in the Plan tab on a phone
+- **WHEN** the user clicks the goal "Get fit" in Plan
 - **THEN** the goal page opens with its date range, measures, projects and work, not the edit form
 
 #### Scenario: Complete from the status chip
@@ -141,8 +141,8 @@ Work on a goal SHALL be every log entry linked to the goal, to a project serving
 - **THEN** its 3 entries count in the total work of "Get fit"
 
 ### Requirement: Goal page updates live
-The goal page SHALL update immediately after changes to the goal, its measures, the projects serving it, its tasks and habits, and log entries.
+The goal page SHALL update immediately after changes to the goal, its measures, the projects serving it, its tasks and habits, log entries and weekly notes, also after a sync.
 
 #### Scenario: Measure changed
 - **WHEN** the user raises a measure on the goal page
-- **THEN** the goal's progress and its planet update without a reload
+- **THEN** the goal's progress and its progress bar update without a reload
