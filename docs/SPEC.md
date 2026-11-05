@@ -226,7 +226,7 @@ Measured in local calendar days from today to a deadline:
 
 ## 6. Screens
 
-Three main destinations: **Home**, **Plan** and **Review**, plus **Settings**. The navigation itself (on the desktop and in narrow browser windows) is designed in the app shell change.
+Three main destinations: **Home**, **Plan** and **Review**, plus **Settings**. They sit in a sidebar on the left, with Settings at its foot: icons and labels from a window width of 960 px, icons with tooltips below. Each has its own path (`/home`, `/plan`, `/review`, `/settings`), so reload, back and forward work; `/` and unknown paths open Home. Forms open in a side sheet on the right (full width below 600 px).
 
 ### 6.1 Home (today)
 Desktop layout with a main column and a side column.
@@ -299,15 +299,15 @@ The review is the main place where projects and goals are updated.
 - **Sync:** the server address and this device's token, the time of the last successful sync and whether the last attempt failed (and why: no connection, token refused, different schema version, server error), "Sync now" and "Disconnect".
 
 ### 6.7 Design and interaction
-The app should feel calm, clear and quick. The visual design is redefined for the desktop in the app shell change; these guidelines hold for every screen:
+The app should feel calm, clear and quick. These guidelines hold for every screen; the shared components and design tokens that implement them are in `src/core/ui/` (in development, `/dev/components` shows them all):
 - **Desktop first:** layouts use the width of a desktop window (columns, side panels) and still work in a narrower browser window. Keyboard use is first-class: Enter saves forms, Escape closes them.
-- **Visual identity (starting point):** dark, with the Orbit palette (deep navy surfaces, a blue-violet primary, a cyan secondary, amber reserved for urgency and red for overdue). Body text uses **Inter**, headings **Space Grotesk**; both are bundled. Body text meets 4.5:1 contrast.
-- **Less text, more structure:** metadata as chips, icons and badges instead of text lines: importance as dots, status as a colored chip, deadlines as a badge colored by urgency. Absent values are left out instead of written out ("No area", "No deadline").
+- **Visual identity:** dark only, with the Orbit palette (deep navy surfaces, a blue-violet primary, a cyan secondary, amber reserved for urgency and red for overdue). Body text uses **Inter**, headings **Space Grotesk**; both are bundled. Body text meets 4.5:1 contrast. Keyboard focus shows a visible ring; pointer clicks do not.
+- **Less text, more structure:** metadata as chips, icons and badges instead of text lines: importance as dots, status as a colored chip, deadlines as a badge colored by urgency ("Overdue" in red; "Today", "Tomorrow" or "In N days" in amber within the lead time; otherwise the date). Absent values are left out instead of written out ("No area", "No deadline").
 - **Compact lists:** dense rows and no duplicate rows for the same item on one screen.
 - **Detail pages:** a header with title, status, area and deadline; actions in the header or a menu instead of rows of large buttons.
 - **Empty states:** an icon, one line of text and the action that fills the section.
 - **Motion:** list changes animate in and out briefly (at most 300 ms), skipped when the system asks to reduce motion.
-- **Messages:** short confirmations ("Task completed", "Work logged", …) appear as a compact card that disappears on its own after 3 seconds; an action such as Undo is part of the card while it is shown.
+- **Messages:** short confirmations ("Task completed", "Work logged", …) appear as a compact card at the top of the window that disappears on its own after 3 seconds (not while the pointer is on it or it has focus) and has a close button; an action such as Undo is part of the card while it is shown, and a new message replaces the current one.
 
 ## 7. Sync
 

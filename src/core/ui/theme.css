@@ -1,0 +1,201 @@
+/* Orbit theme: design tokens, bundled fonts and base styles. Dark only. */
+
+@font-face {
+  font-family: 'Inter';
+  src: url('../../../assets/fonts/Inter-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('../../../assets/fonts/Inter-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('../../../assets/fonts/Inter-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('../../../assets/fonts/Inter-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('../../../assets/fonts/SpaceGrotesk.ttf') format('truetype');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: block;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* Night sky surfaces */
+  --color-bg: #0b1026;
+  --color-surface: #121a3a;
+  --color-surface-raised: #1a2350;
+  --color-surface-hover: #212b5c;
+  --color-sheet: #151d42;
+  --color-border: #2a3566;
+  --color-scrim: rgb(5 8 20 / 0.6);
+
+  /* Text */
+  --color-text: #e8ecff;
+  --color-text-muted: #a3acd6;
+  --color-text-faint: #8c95c4;
+
+  /* Accents */
+  --color-primary: #8b8cff;
+  --color-primary-strong: #a5a6ff;
+  --color-on-primary: #0b1026;
+  --color-primary-soft: rgb(139 140 255 / 0.16);
+  --color-secondary: #4fd8eb;
+  --color-secondary-soft: rgb(79 216 235 / 0.14);
+  --color-amber: #ffb547;
+  --color-amber-soft: rgb(255 181 71 / 0.16);
+  --color-red: #ff6b6b;
+  --color-red-soft: rgb(255 107 107 / 0.16);
+  --color-focus: #4fd8eb;
+
+  /* Spacing (4 px grid) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* Type */
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-md: 0.9375rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+
+  /* Motion */
+  --motion-fast: 120ms;
+  --motion-normal: 200ms;
+  --motion-slow: 300ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* Layers */
+  --shadow-raised: 0 8px 24px rgb(0 0 0 / 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-normal: 0ms;
+    --motion-slow: 0ms;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0ms !important;
+    transition-duration: 0ms !important;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  font-size: var(--text-2xl);
+}
+
+h2 {
+  font-size: var(--text-lg);
+}
+
+h3 {
+  font-size: var(--text-md);
+}
+
+p {
+  margin: 0;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--color-primary-strong);
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--color-primary-soft);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

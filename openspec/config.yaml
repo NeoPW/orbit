@@ -40,8 +40,10 @@ context: |
     calendar dates; weeks start on Monday
   - Fonts and images are bundled (assets/), never loaded from the network
 
-  UI conventions (redefined in the app-shell change):
+  UI conventions (docs/SPEC.md §6.7; components and tokens in src/core/ui/):
   - Desktop first; layouts must also work in a browser window
+  - Use the shared components and theme tokens; forms in a Sheet,
+    confirmations through useMessages()
   - Leave unset values out; no placeholder texts like "No area" or
     "No deadline" (choices in pickers are fine)
   - Empty lists and sections: an icon, one short line without a period,

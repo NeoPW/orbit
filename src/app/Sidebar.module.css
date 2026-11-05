@@ -1,0 +1,136 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 220px;
+  height: 100%;
+  padding: var(--space-4) var(--space-3);
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-2) var(--space-3);
+  font-family: var(--font-heading);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.foot {
+  margin-top: auto;
+}
+
+.link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 40px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background-color var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out);
+}
+
+.link:hover {
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+.link[aria-current='page'] {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+}
+
+.link[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--space-3));
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--color-primary);
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* Icons only below 960 px; the label then shows as a tooltip. */
+@media (max-width: 959px) {
+  .sidebar {
+    width: 64px;
+    align-items: center;
+    padding-inline: var(--space-2);
+  }
+
+  .brand {
+    padding-inline: 0;
+  }
+
+  .label {
+    display: none;
+  }
+
+  .link {
+    justify-content: center;
+    width: 44px;
+    padding: 0;
+  }
+
+  .link[aria-current='page']::before {
+    left: calc(-1 * var(--space-2) - 2px);
+  }
+
+  .link::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    z-index: 10;
+    top: 50%;
+    left: calc(100% + 10px);
+    translate: 0 -50%;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--motion-fast) var(--ease-out);
+  }
+
+  .link:hover::after {
+    opacity: 1;
+    transition-delay: 300ms;
+  }
+
+  .link:focus-visible::after {
+    opacity: 1;
+  }
+}
