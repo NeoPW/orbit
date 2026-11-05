@@ -1,0 +1,19 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "orbit",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-05",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "orbit",
+      "database_id": "c5f31991-4716-4727-bb11-b6f52187b722",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "assets": {
+    "directory": "../dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  }
+}

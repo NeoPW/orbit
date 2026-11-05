@@ -10,14 +10,20 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p server/tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run --passWithNoTests",
     "check": "npm run typecheck && npm run lint && npm run test",
     "tauri": "tauri",
     "desktop": "tauri dev --config src-tauri/tauri.dev.conf.json",
     "desktop:build": "tauri build",
-    "db:generate": "drizzle-kit generate"
+    "server:dev": "npm run build && wrangler d1 migrations apply orbit --local -c server/wrangler.jsonc && wrangler dev -c server/wrangler.jsonc",
+    "server:migrate": "wrangler d1 migrations apply orbit --remote -c server/wrangler.jsonc",
+    "server:deploy": "npm run build && npm run server:migrate && wrangler deploy -c server/wrangler.jsonc",
+    "server:token": "node -e \"console.log(require('crypto').randomBytes(32).toString('base64url'))\"",
+    "server:smoke": "node server/smoke.mjs",
+    "db:generate": "drizzle-kit generate",
+    "db:generate:server": "drizzle-kit generate --config drizzle.server.config.ts"
   },
   "dependencies": {
     "@sqlite.org/sqlite-wasm": "^3.54.1-build1",
@@ -41,6 +47,7 @@
     "typescript": "~6.0",
     "typescript-eslint": "^8.72.1",
     "vite": "^8.3.6",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.0",
+    "wrangler": "^4.158.0"
   }
 }
