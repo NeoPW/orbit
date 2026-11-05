@@ -42,6 +42,10 @@ The Flutter version of the app is kept under the git tag `flutter-final`.
 | Typecheck, lint and test | `npm run check` |
 | Run some tests | `npx vitest run <paths>` |
 | Generate a migration after changing `src/core/db/schema.ts` | `npm run db:generate` |
+| Generate the matching sync server migration | `npm run db:generate:server` |
+| Run the sync server locally (http://localhost:8787) | `npm run server:dev` |
+| Check a running sync server | `npm run server:smoke -- <url> <token>` |
+| Create a device token | `npm run server:token` |
 
 ## Database
 
@@ -64,6 +68,32 @@ Orbit stores its data in SQLite, through Drizzle.
 
 - Desktop: close the dev app, then delete `~/.local/share/dev.neopw.orbit.dev/orbit.db*`.
 - Browser: clear the site data for that address (DevTools, Application, Storage, Clear site data).
+
+## Sync server
+
+`server/` is a Cloudflare Worker with a D1 database. It stores the rows of every synced table, keeps the newest version of each row (last-write-wins by `updated_at`), lets only devices with a token in, and also serves the browser build (`dist/`). The API is `GET /api/status`, `POST /api/push` and `GET /api/pull?cursor=<n>`, all with `Authorization: Bearer <token>`; push and pull also send `Orbit-Schema-Version`. The app's side of sync comes with the `sync-client` change.
+
+**Run it locally.** Create `server/.dev.vars` (not committed) with one token per device:
+
+```
+DEVICE_TOKENS=desktop=<token>,browser=<token>
+```
+
+Create a token with `npm run server:token`. Then `npm run server:dev` builds the browser build, creates the local D1 tables and starts the Worker at http://localhost:8787 (local data lives in `server/.wrangler/`; delete that folder to reset it). `npm run server:smoke -- http://localhost:8787 <token>` checks the API.
+
+**Schema changes.** After `npm run db:generate`, also run `npm run db:generate:server` and commit both; a test fails when the server tables and the app tables differ. The Worker and the apps must be released together, because the server refuses a different schema version.
+
+**Devices.** `DEVICE_TOKENS` holds comma-separated `name=token` pairs. To add or remove a device, change the list and set it again (see Deploy). Removing a token locks out only that device.
+
+**Deploy (once, then `npm run server:deploy`).** Needs a free Cloudflare account.
+
+1. `npx wrangler login`
+2. `npx wrangler d1 create orbit`, then put the printed `database_id` into `server/wrangler.jsonc`.
+3. Create a token per device (`npm run server:token`) and set the secret: `npx wrangler secret put DEVICE_TOKENS -c server/wrangler.jsonc`, entering `desktop=<token>,browser=<token>`. The Worker has to exist first: if wrangler says so, run step 4 before this one.
+4. `npm run server:deploy` builds the browser build, applies the D1 migrations to the remote database and deploys the Worker. It prints the address (`https://orbit.<account>.workers.dev`), which serves the browser build.
+5. Check it: `npm run server:smoke -- https://orbit.<account>.workers.dev <token>`.
+
+Rollback: `npx wrangler rollback -c server/wrangler.jsonc`. D1 migrations only go forward.
 
 ## Desktop builds
 

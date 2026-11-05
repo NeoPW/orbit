@@ -62,7 +62,7 @@ All synced tables share these columns:
 - `created_at`, `updated_at` (UTC timestamps)
 - `deleted_at` nullable (soft delete; needed for sync)
 
-The server stores the same tables with the same columns, plus a server-set `server_updated_at` used to find changes since the last pull (§7).
+The server stores the same tables with the same columns, plus a server-set change number (`server_seq`) used to find changes since the last pull (§7).
 
 ### Area
 - `name`, `color`, `sort_order`
@@ -315,7 +315,7 @@ The app should feel calm, clear and quick. The visual design is redefined for th
 - Every change updates `updated_at`; local changes since the last upload are found by it.
 - Sync cycle:
   1. **Push:** send all rows changed since the last complete upload.
-  2. **Pull:** fetch rows with a `server_updated_at` after the last pull (minus a short overlap); apply each if newer than the local copy (last-write-wins per row, by `updated_at`).
+  2. **Pull:** fetch, page by page, the rows with a change number after the cursor of the last pull (the server numbers every stored row, so no overlap is needed); apply each if newer than the local copy (last-write-wins per row, by `updated_at`).
   3. Store the new watermarks (in the local settings).
 - The server enforces last-write-wins too: it ignores an incoming row whose `updated_at` is not newer than the stored one. Device clocks therefore decide which edit wins. Apart from that, the server has no business logic: it stores rows.
 - Deletes are soft (`deleted_at`) so they propagate. Local settings are never synced.

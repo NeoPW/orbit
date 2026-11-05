@@ -27,7 +27,8 @@ Personal local-first app for goals, projects, tasks, habits, focused work and a 
 - Build the browser version: `npm run build`
 - Typecheck + lint + test: `npm run check`
 - Some tests: `npx vitest run <paths>`
-- Generate a migration after changing src/core/db/schema.ts: npm run db:generate
+- Generate a migration after changing src/core/db/schema.ts: npm run db:generate; then npm run db:generate:server for the sync server
+- Sync server (local, http://localhost:8787): `npm run server:dev`; check it with `npm run server:smoke -- <url> <token>`; new device token: `npm run server:token`
 - Node 24 is pinned in `.node-version` (fnm); Rust comes from `~/.cargo/bin`.
 
 ## Conventions

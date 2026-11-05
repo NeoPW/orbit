@@ -5,6 +5,7 @@ import { migrate } from './migrate.ts';
 import { createFields } from './records.ts';
 import { habitChecks, notes, projects, weeklyReviews } from './schema.ts';
 import { openTestDatabase } from './testing.ts';
+import { SCHEMA_VERSION } from './version.ts';
 
 const clock = () => new Date('2026-11-05T10:00:00.000Z');
 
@@ -34,6 +35,11 @@ describe('migrations', () => {
     const names = tables.rows.map((r) => r[0]);
     expect(names).toHaveLength(13);
     expect(names).toContain('settings');
+  });
+
+  it('exposes the latest migration number as SCHEMA_VERSION', async () => {
+    const { schemaVersion } = await openTestDatabase();
+    expect(SCHEMA_VERSION).toBe(schemaVersion);
   });
 
   it('runs nothing when already at the current version', async () => {
