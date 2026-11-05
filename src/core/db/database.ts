@@ -7,7 +7,7 @@ import { seedDefaultAreas } from './seed.ts';
 export type Storage = 'file' | 'opfs' | 'memory';
 
 export type OpenDatabaseResult =
-  | { status: 'ready'; db: Db; storage: Storage; schemaVersion: number }
+  | { status: 'ready'; db: Db; driver: SqlDriver; storage: Storage; schemaVersion: number }
   | { status: 'other-tab' }
   | { status: 'error'; message: string };
 
@@ -35,7 +35,7 @@ export async function openDatabase(
     if (options.seed !== false) {
       await seedDefaultAreas(db, options.clock ?? (() => new Date()));
     }
-    return { status: 'ready', db, storage, schemaVersion };
+    return { status: 'ready', db, driver, storage, schemaVersion };
   } catch (error) {
     return { status: 'error', message: error instanceof Error ? error.message : String(error) };
   }

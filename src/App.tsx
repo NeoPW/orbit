@@ -1,7 +1,10 @@
 import { eq, sql } from 'drizzle-orm';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { openAppDatabase } from './core/db/app-database.ts';
 import type { Db } from './core/db/drizzle.ts';
+import type { SqlDriver } from './platform/db/driver.ts';
+import { SyncPanel } from './features/sync/ui/SyncPanel.tsx';
+import { TestAreas } from './features/sync/ui/TestAreas.tsx';
 import { settings } from './core/db/schema.ts';
 import { platform } from './platform/platform.ts';
 
@@ -10,7 +13,15 @@ import { platform } from './platform/platform.ts';
 
 type Status =
   | { kind: 'loading' }
-  | { kind: 'ready'; storage: string; schemaVersion: number; starts: number }
+  | {
+      kind: 'ready';
+      storage: string;
+      schemaVersion: number;
+      starts: number;
+      db: Db;
+      driver: SqlDriver;
+      onWrite: (listener: () => void) => () => void;
+    }
   | { kind: 'other-tab' }
   | { kind: 'error'; message: string };
 
@@ -32,7 +43,15 @@ function loadStatus(): Promise<Status> {
     if (result.status === 'error') return { kind: 'error', message: result.message };
     try {
       const starts = await countStart(result.db);
-      return { kind: 'ready', storage: result.storage, schemaVersion: result.schemaVersion, starts };
+      return {
+        kind: 'ready',
+        storage: result.storage,
+        schemaVersion: result.schemaVersion,
+        starts,
+        db: result.db,
+        driver: result.driver,
+        onWrite: result.onWrite,
+      };
     } catch (error) {
       return { kind: 'error', message: error instanceof Error ? error.message : String(error) };
     }
@@ -42,6 +61,8 @@ function loadStatus(): Promise<Status> {
 
 export function App() {
   const [status, setStatus] = useState<Status>({ kind: 'loading' });
+  const [dataVersion, setDataVersion] = useState(0);
+  const onSynced = useCallback(() => setDataVersion((n) => n + 1), []);
 
   useEffect(() => {
     let active = true;
@@ -68,6 +89,8 @@ export function App() {
           <p>Storage: {status.storage}</p>
           <p>Schema version: {status.schemaVersion}</p>
           <p>Starts: {status.starts}</p>
+          <SyncPanel driver={status.driver} onWrite={status.onWrite} onSynced={onSynced} />
+          <TestAreas db={status.db} refreshKey={dataVersion} />
         </>
       )}
     </main>

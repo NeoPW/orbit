@@ -1,6 +1,6 @@
 import type { SqlDriver, SqlQuery } from '../../src/platform/db/driver.ts';
 import { HttpError } from './errors.ts';
-import { TABLES, type TableInfo } from './tables.ts';
+import { TABLES, type TableInfo } from '../../src/core/db/sync-tables.ts';
 
 export const MAX_PUSH_ROWS = 500;
 
