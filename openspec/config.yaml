@@ -3,68 +3,47 @@ schema: spec-driven
 context: |
   Project: personal, local-first project and work tracker: goals (with
   measures tracking their progress), projects, tasks, habits and work done,
-  with a guided weekly review.
+  with focus sessions and a guided weekly review.
   Single user. The full product spec is in docs/SPEC.md; read the relevant
-  sections before writing any artifact.
+  sections before writing any artifact. The app is being rebuilt: specs in
+  openspec/specs/ that describe the previous app are the brief for the
+  rebuild, not current code.
 
   Tech stack:
-  - Flutter (Dart), targets: Android (phone) and web (PC, in the browser).
-    Every feature must work on both, except notifications (Android only).
-  - State management: Riverpod
-  - Local database: SQLite via drift (source of truth for the UI), set up
-    with drift_flutter so the same database code runs on Android (native
-    SQLite) and web (sqlite3 WASM, browser storage). Required web assets
-    (sqlite3.wasm, drift worker) live in web/.
-  - Avoid dart:io and other platform-specific APIs outside lib/core/;
-    use conditional imports where unavoidable.
-  - Navigation: go_router with a bottom navigation shell (Plan, Home, Review)
-  - Notifications (later): flutter_local_notifications, scheduled locally
-  - Backend: Supabase, custom last-write-wins sync (lib/core/sync/). Every
-    change to the local drift tables must update supabase/schema.sql in the
-    same change (checked by test/core/sync/schema_sql_test.dart).
+  - Tauri 2 desktop app (Linux), main target, works fully offline; the same
+    React + TypeScript frontend (Vite) also runs as a browser build.
+    Android companion (tasks + time tracking) comes later.
+  - Desktop-only features (tray, hotkey, notifications, native SQLite) sit
+    behind src/platform/; feature code never checks the platform itself,
+    and the browser build must start without Tauri APIs.
+  - Planned (later changes): SQLite + Drizzle locally (Tauri plugin on
+    desktop, SQLite WASM in the browser); Cloudflare Worker + D1 sync
+    server, last-write-wins per row, bearer token per device.
 
   Architecture conventions:
-  - Feature-first folders: lib/core/ (db, router, theme, shared widgets),
-    lib/features/<feature>/ (data/, domain/, ui/)
-  - UI never talks to drift directly; it goes through repositories exposed
-    as Riverpod providers
+  - Feature-first folders: src/core/ (shared), src/features/<feature>/
+    (data/, domain/, ui/), src/platform/ (platform adapters)
+  - UI never talks to the database directly; it goes through repositories
   - Every synced table has: id (UUID v4, generated on client),
     created_at, updated_at (UTC), deleted_at (nullable, soft delete).
     Queries exclude soft-deleted rows by default.
-  - Pure business logic (scores, deadlines, habit due rules) lives in
-    domain/ as plain Dart functions with unit tests, no Flutter imports
+  - Pure business logic (scores, ranks, deadlines, habit due rules) lives
+    in domain/ as plain TypeScript functions with Vitest tests, no React
   - Dates: store timestamps in UTC; habit and review dates are local
     calendar dates; weeks start on Monday
-  - Material 3, dark only, with the Orbit palette, bundled Inter (body)
-    and Space Grotesk (headings) (lib/core/theme/); use theme colors and
-    the OrbitColors extension, never hard-coded colors (goal and area
-    colors come from the data and lib/core/space/space_colors.dart)
-  - Space visuals (planets, solar system, background) live in
-    lib/core/space/ and are static: no continuous animation
-  - Responsive layout: bottom navigation on narrow screens (phone),
-    navigation rail on wide screens (browser on PC); Plan shows two panes
-    from 1000 px on (TwoPane)
+  - Fonts and images are bundled (assets/), never loaded from the network
 
-  UI conventions (visual-design spec):
-  - Show metadata with the shared widgets in lib/core/widgets/
-    (StatusChip, AreaChip, DeadlineChip, ImportanceDots, OrbitRing,
-    GoalPlanet)
-    instead of text lines
-  - Leave unset values out; no placeholder texts like "No area",
-    "No deadline" or "Importance 3" (choices in pickers are fine)
-  - Empty lists and sections use EmptyState / SectionEmptyText: an icon,
-    one short line without a period, and the action that fills it
-  - Animate list changes with AnimatedItems; respect reduced motion
-  - Pages that also appear in Plan's detail pane keep their content in a
-    scaffold-free ...Body widget
-  - Create and edit forms open with showFormSheet (bottom sheet on
-    phones, side sheet on wide screens) and have no routes
-  - Confirmations go through the message host (showMessage), never a
-    SnackBar
+  UI conventions (redefined in the app-shell change):
+  - Desktop first; layouts must also work in a browser window
+  - Leave unset values out; no placeholder texts like "No area" or
+    "No deadline" (choices in pickers are fine)
+  - Empty lists and sections: an icon, one short line without a period,
+    and the action that fills it
+  - Respect reduced motion
 
   Quality:
-  - flutter analyze must pass with no warnings
-  - Unit tests for all domain logic and repositories (in-memory drift DB)
+  - npm run check (strict tsc, ESLint, Vitest) must pass
+  - Unit tests for all domain logic and repositories
   - Keep dependencies minimal; justify each new package in design.md
 
 rules:
@@ -82,6 +61,6 @@ rules:
   tasks:
     - Keep tasks small enough to verify individually
     - Name the files each task touches
-    - Include tasks for tests and for running flutter analyze
+    - Include tasks for tests and for running npm run check
     - Test each spec scenario once, at the lowest level that shows it; no tests for layout order, framework behavior or trivial getters
-    - Include a task to verify the change on Android and in Chrome
+    - Include a task to verify the change in the desktop app and in the browser

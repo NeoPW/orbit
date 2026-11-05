@@ -65,6 +65,11 @@ Prettier is left out for now; ESLint covers correctness and the code base is sma
 | `eslint`, `@eslint/js`, `typescript-eslint`, `eslint-plugin-react-hooks`, `globals` (dev) | Linting |
 
 Versions: the current stable release of each at apply time, with exact versions recorded in `package-lock.json` and `Cargo.lock`.
+Also `@types/react`, `@types/react-dom` and `@types/node` (dev) for typing.
+
+Two deviations found during apply:
+- **TypeScript is pinned to 6.0** (`~6.0`): the current typescript-eslint supports TypeScript below 6.1 only, not TypeScript 7 (the native port). Move to 7 once typescript-eslint supports it.
+- **Node 24 is pinned in `.node-version`**: current Vite, Vitest and ESLint need Node 22.13 or newer, and the machine's default was 22.10. fnm picks the pinned version up; `package.json` declares `engines.node >= 22.13`.
 
 ### Fonts and assets bundled
 Inter and Space Grotesk stay in `assets/fonts` and are served from the bundle, never from Google Fonts, to satisfy "Desktop app works offline". Using them in the UI is part of `app-shell`.
@@ -81,7 +86,7 @@ These were agreed with the user while planning the rebuild. `docs/SPEC.md` recor
   - `timers.planned_minutes` (nullable) added.
   - New `notes` table: `target_type` (`project` | `goal`), `target_id`, `week_start` (Monday), `note`; one note per target and week, ID derived from those three.
 - **Derived logic (§5)**:
-  - Task rank = importance × urgency. Importance: the task's own, else its project's, else its goal's (a standalone task without importance counts as 3, the default). Urgency: from the task's due date, else from its project's effective deadline, with the existing urgency scale.
+  - Task rank = importance × urgency. Importance: the task's own, else its project's; goals have no importance, so a task of a goal or a standalone task without its own importance counts as 3. Urgency: from the task's due date, else its project's effective deadline, else its goal's end date, with the existing urgency scale.
   - Completing a next-step task asks "What's the next step?" only when it was the project's last open next step; otherwise it completes without a prompt.
 - **Home (§6.1)**, desktop layout: a main column with today's date, the focus panel (pick a task or project, choose 25, 50 or 90 minutes or open-ended, start) and the running timer; below it, habits due today in their own row (not ranked); below that the to-do list: open next-step tasks of active projects plus open tasks outside projects, ranked by task rank. A compact project overview (active projects by score, with their next steps) sits in a side column. Upcoming deadlines, the solar system and the separate project and task sections are gone.
 - **Focus mode (§6.1)**: starting focus opens a full-window view with only the task or project, its notes and a large timer. With a planned length, a desktop notification and a sound mark the end, and the timer keeps counting into overtime. Stopping asks "What did you get done?" (saved as the log entry's note), then runs the next-step prompt when the target was a next-step task that is now done.

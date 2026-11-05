@@ -1,179 +1,54 @@
 # orbit
 
-Personal, local-first app for objectives, key results, projects, tasks, habits, work logs and a weekly review. Flutter, targeting Android and the web.
+Personal, local-first app for goals, projects, tasks, habits, focused work and a weekly review. A desktop app first (works offline), with a browser build of the same app; a small Android companion follows later.
 
 - Product spec: `docs/SPEC.md`
 - Implemented behavior: `openspec/specs/`
 - Work in progress: `openspec/changes/`
 
+The Flutter version of the app is kept under the git tag `flutter-final`.
+
+## Stack
+
+- [Tauri 2](https://tauri.app) desktop shell (Rust, uses the system webview)
+- React + TypeScript frontend, built with [Vite](https://vite.dev)
+- Vitest, ESLint and strict TypeScript, all run by `npm run check`
+
+## Setup (once)
+
+1. **Node.js 22.13 or newer.** The repo pins Node 24 in `.node-version`; with [fnm](https://github.com/Schniz/fnm): `fnm install 24 && fnm use`.
+2. **Rust**, through [rustup](https://rustup.rs):
+
+   ```bash
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   ```
+
+3. **Tauri's Linux libraries** (Debian/Ubuntu):
+
+   ```bash
+   sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+   ```
+
+4. **Packages:** `npm install`
+
 ## Commands
 
 | What | Command |
 |---|---|
-| Run on phone | `flutter run` |
-| Run in the browser | `flutter run -d chrome` |
-| Code generation (drift, riverpod) | `dart run build_runner build --delete-conflicting-outputs` |
-| Analyze | `flutter analyze` |
-| Test | `flutter test` |
-| Update web database assets | `tool/fetch_web_assets.sh` |
-| Release build on Android (`--install`: also install over USB) | `tool/build_release.sh [--install]` |
-| Deploy the web app to https://orbit-neo.pages.dev | `tool/deploy_web.sh` |
+| Run the desktop app (development, "Orbit Dev") | `npm run desktop` |
+| Run in the browser (http://localhost:1420) | `npm run dev` |
+| Build the desktop app (`.deb` and AppImage) | `npm run desktop:build` |
+| Build the browser version (to `dist/`) | `npm run build` |
+| Typecheck, lint and test | `npm run check` |
+| Run some tests | `npx vitest run <paths>` |
 
-Run code generation after changing drift tables or `@riverpod` providers. Generated files (`*.g.dart`, `*.drift.dart`) are committed.
+## Desktop builds
 
-## Database
+`npm run desktop:build` writes the packages to `src-tauri/target/release/bundle/`:
 
-Data is stored locally with [drift](https://drift.simonbinder.eu/), opened through `drift_flutter`:
+- `deb/Orbit_<version>_amd64.deb`: install with `sudo dpkg -i <file>`; Orbit then appears in the application launcher.
+- `appimage/Orbit_<version>_amd64.AppImage`: runs without installing (`chmod +x` first).
 
-- **Android:** native SQLite.
-- **Web:** SQLite compiled to WebAssembly, running in a web worker and persisted in browser storage (OPFS or IndexedDB). If the browser offers no persistent storage, the app falls back to an in-memory database and shows a warning banner.
+Development runs (`npm run desktop`) are named **Orbit Dev** with the identifier `dev.neopw.orbit.dev`, so they keep their own data (`~/.local/share/dev.neopw.orbit.dev`) and can run next to the installed release (`dev.neopw.orbit`).
 
-### Web assets
-
-The browser build needs two files in `web/`:
-
-- `web/sqlite3.wasm`: SQLite compiled to WebAssembly, from the [sqlite3.dart releases](https://github.com/simolus3/sqlite3.dart/releases) (`sqlite3-<version>`).
-- `web/drift_worker.js`: drift's web worker, from the [drift releases](https://github.com/simolus3/drift/releases) (`drift-<version>`).
-
-Both must match the `sqlite3` and `drift` versions in `pubspec.lock`, and both are committed so a fresh checkout runs in Chrome straight away.
-
-**After upgrading `drift` or `sqlite3`** (any change to their versions in `pubspec.lock`), run:
-
-```bash
-tool/fetch_web_assets.sh
-```
-
-It reads both versions from `pubspec.lock`, downloads the matching files into `web/` and prints the versions it used. Commit the updated files together with the `pubspec.lock` change.
-
-## Sync (Supabase)
-
-The phone and the browser sync through a [Supabase](https://supabase.com) project. Without the steps below the app works fully offline; sync is simply not offered.
-
-### 1. Server schema
-
-In the Supabase dashboard, open **SQL Editor → New query**, paste the contents of [`supabase/schema.sql`](supabase/schema.sql) and run it. It creates one table per synced entity with row-level security (each user only sees their own rows) and a trigger that keeps the newest version of every row. Running it again is safe.
-
-Every change to the local drift tables (`lib/core/db/tables.dart`) must update `supabase/schema.sql` in the same change; `test/core/sync/schema_sql_test.dart` fails otherwise.
-
-**After an update that changes `supabase/schema.sql`** (for example schema version 4: task assignment and work logged on tasks; schema version 5: the work timer and the KR step), run the file again in the SQL Editor before syncing with the new app version. New tables are created with `create table if not exists` and new columns are added with `add column if not exists`, so existing data stays. Until then, sync fails quietly and is retried; nothing local is lost.
-
-**Schema version 7 (goals and measures)** also moves data on the server: objectives become goals and key results measures, with the same IDs, and the links of projects, tasks, habits and log entries move to the goals. Run the script **before** opening the new app version on any device, and back up your tables first (Table Editor → export as CSV). Afterwards, devices still on the old version can no longer sync; update them too. Their local data stays and syncs after the update.
-
-### 2. Your user
-
-- **Authentication → Users → Add user → Create new user:** your email and password, with **Auto Confirm User** on.
-- **Authentication → Sign In / Providers:** turn off **Allow new users to sign up**. The app has no sign-up; this keeps anyone else from creating an account with the app's public key.
-
-### 3. Connection values
-
-Copy the template and fill in the two values:
-
-```bash
-cp supabase.example.json supabase.json
-```
-
-- `SUPABASE_URL`: **Project Settings → Data API → Project URL** (`https://<ref>.supabase.co`), without `/rest/v1`.
-- `SUPABASE_ANON_KEY`: **Project Settings → API Keys**, the **publishable** key (`sb_publishable_…`), or the legacy **anon** key (`eyJ…`).
-
-Never use the **secret** key (`sb_secret_…`) or the legacy **service_role** key: they bypass row-level security. `supabase.json` is git-ignored.
-
-### 4. Run with sync
-
-Pass the file to every run or build:
-
-```bash
-flutter run --dart-define-from-file=supabase.json
-flutter run -d chrome --dart-define-from-file=supabase.json
-```
-
-Release APKs for the phone are built with `tool/build_release.sh` and the hosted web app with `tool/deploy_web.sh`; both pass the file themselves (see [Release build on Android](#release-build-on-android) and [Web hosting](#web-hosting)).
-
-Then sign in under **Plan → ⋮ → Settings → Account & sync**. Sign in on the device with your real data first: an empty account receives that device's data. Signing in on another device afterwards replaces that device's local data with the account's (after a confirmation).
-
-## Release build on Android
-
-The phone runs a signed release build named **Orbit**, installed by hand (no store) and updated in place. `flutter run` installs debug builds as **Orbit Dev** (`dev.neopw.orbit.debug`) next to it, with their own local data; both sync through the same account.
-
-### 1. Release key (once)
-
-Create the keystore outside the repository:
-
-```bash
-mkdir -p ~/.config/orbit
-keytool -genkeypair -v -keystore ~/.config/orbit/release.jks -keyalg RSA -keysize 4096 -validity 10000 -alias orbit
-```
-
-Then create `android/key.properties`, a plain text file (git-ignored) that points to the keystore:
-
-```properties
-storeFile=/home/<you>/.config/orbit/release.jks
-storePassword=<keystore password>
-keyAlias=orbit
-keyPassword=<key password>
-```
-
-`storeFile` must be an absolute path (no `~`). **Back up the keystore and both passwords outside this machine** (for example in a password manager). Without them, the installed app can't be updated: it has to be uninstalled and reinstalled, which loses any data that isn't synced.
-
-Without `android/key.properties`, release builds fail with "android/key.properties not found, see README". They never fall back to the debug key.
-
-### 2. Version
-
-Before every release, raise the build number (`+N`) in `pubspec.yaml`:
-
-```yaml
-version: 1.0.0+2
-```
-
-Android refuses to install a lower build number over a higher one. Commit the version change.
-
-### 3. Build and install
-
-```bash
-tool/build_release.sh            # build the signed APK
-tool/build_release.sh --install  # build, then install it over USB (adb install -r)
-```
-
-The script needs `android/key.properties` and `supabase.json` and stops if either is missing. It builds one APK for all phones with sync configured, fails if the APK is signed with the debug key, and prints the version, build number, signing certificate and APK path (`build/app/outputs/flutter-apk/app-release.apk`). It finds `apksigner` and `adb` under `$ANDROID_HOME`, or `~/Android/Sdk` when that's not set. Installing an update keeps the app's data, sign-in and reminders.
-
-### Moving from a development install (once)
-
-A phone that ran `flutter run` before this setup has an app with ID `dev.neopw.orbit` signed with the debug key. The release can't update it:
-
-1. In that app: **Settings → Account & sync → Sync now**, and check the last sync time.
-2. Uninstall it: `adb uninstall dev.neopw.orbit`.
-3. Run `tool/build_release.sh --install`.
-4. Open Orbit, sign in, confirm that the account's data replaces the empty local data, and allow notifications.
-
-To roll back, uninstall the release and use `flutter run` as before. The data is in the account.
-
-## Web hosting
-
-The web app is hosted on [Cloudflare Pages](https://pages.cloudflare.com) at **https://orbit-neo.pages.dev**, deployed by hand from this machine. The URL is public, but the site holds no data: everything lives in each browser and behind the account login (sign-up is off, see [Your user](#2-your-user)).
-
-### 1. Cloudflare (once)
-
-Create a free Cloudflare account, then log in and create the Pages project:
-
-```bash
-npx wrangler login
-npx wrangler pages project create orbit-neo --production-branch=main
-```
-
-`npx wrangler pages project list` should show `orbit-neo` with the domain `orbit-neo.pages.dev`. Wrangler, Cloudflare's CLI, runs through `npx` (Node.js), so it is not a project dependency.
-
-### 2. Deploy
-
-```bash
-tool/deploy_web.sh
-```
-
-The script needs `supabase.json` and stops if it is missing. It builds the web app with sync configured, uploads `build/web` to the production site (also when run from a branch) and prints the version, build number and URL. Open tabs get the new version on their next reload; their local data and sign-in stay.
-
-**If the version changes `supabase/schema.sql`**, run the schema in the SQL Editor first (see [Server schema](#1-server-schema)): the web app is usually the first device on a new version.
-
-`web/_headers` makes the site cross-origin isolated, so the browser database uses OPFS. That's also why the build serves Flutter's CanvasKit itself (`--no-web-resources-cdn`) instead of loading it from Google's CDN, which the headers would block.
-
-### Notes
-
-- The hosted site has its own browser data, separate from `flutter run -d chrome` on `localhost`. Sign in once on the site to get the account's data.
-- To roll back, open the project in the Cloudflare dashboard (**Workers & Pages → orbit-neo → Deployments**) and roll back to an earlier deployment.
+The version lives in `package.json`; the desktop app reads it from there.

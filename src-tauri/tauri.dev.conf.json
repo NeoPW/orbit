@@ -1,0 +1,19 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Orbit Dev",
+  "identifier": "dev.neopw.orbit.dev",
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Orbit Dev",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
+        "resizable": true,
+        "center": true
+      }
+    ]
+  }
+}
