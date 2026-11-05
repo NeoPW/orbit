@@ -296,7 +296,7 @@ The review is the main place where projects and goals are updated.
 
 ### 6.6 Settings
 - Reminders, default reminder time, weekly review day and time, deadline lead time.
-- **Sync:** the server address and this device's token, the time of the last successful sync and whether the last attempt failed, and "Sync now".
+- **Sync:** the server address and this device's token, the time of the last successful sync and whether the last attempt failed (and why: no connection, token refused, different schema version, server error), "Sync now" and "Disconnect".
 
 ### 6.7 Design and interaction
 The app should feel calm, clear and quick. The visual design is redefined for the desktop in the app shell change; these guidelines hold for every screen:
@@ -320,10 +320,10 @@ The app should feel calm, clear and quick. The visual design is redefined for th
 - The server enforces last-write-wins too: it ignores an incoming row whose `updated_at` is not newer than the stored one. Device clocks therefore decide which edit wins. Apart from that, the server has no business logic: it stores rows.
 - Deletes are soft (`deleted_at`) so they propagate. Local settings are never synced.
 - Habit checks, weekly reviews, the timer and weekly notes get IDs derived from their natural key (habit + date, week start, the fixed timer ID, target + week), so the same record created on two devices is one record.
-- Trigger sync on app start, when the app comes back to the foreground, a few seconds after local changes, and with "Sync now" in Settings. Failures are silent, retried later and shown in Settings.
+- Trigger sync on app start, when the app comes back to the foreground, a few seconds after local changes, every 5 minutes while the app is open, and with "Sync now" in Settings (and pull-to-refresh on the phone). Failures are silent, retried later and shown in Settings.
 - **Server:** a Cloudflare Worker with a D1 database, one table per entity. Every request carries the device's token (`Authorization: Bearer …`); the Worker compares it with a secret and refuses anything else. There are no accounts and no sign-up.
 - **First connection of a device:** if the server has no data, the device uploads its data; otherwise the device's local data is replaced by the server's after a confirmation.
-- The Worker also serves the browser build; the browser build holds no data of its own until its token is entered.
+- The Worker also serves the browser build; the browser build works on its own local data until its token is entered; connecting to a server that has data replaces that local data after the confirmation.
 
 ## 8. Notifications
 

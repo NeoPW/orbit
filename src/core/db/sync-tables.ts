@@ -1,5 +1,5 @@
 import { getTableColumns } from 'drizzle-orm';
-import { SYNCED_TABLES, type SyncedTableName } from '../../src/core/db/schema.ts';
+import { SYNCED_TABLES, type SyncedTableName } from './schema.ts';
 
 export interface TableInfo {
   /** SQL column names in the app's order. */

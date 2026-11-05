@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TABLE_NAMES, TABLES } from './tables.ts';
+import { TABLE_NAMES, TABLES } from '../../src/core/db/sync-tables.ts';
 import { openServerTestDatabase } from './testing.ts';
 
 describe('server schema', () => {

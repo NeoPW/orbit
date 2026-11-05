@@ -95,6 +95,19 @@ Create a token with `npm run server:token`. Then `npm run server:dev` builds the
 
 Rollback: `npx wrangler rollback -c server/wrangler.jsonc`. D1 migrations only go forward.
 
+## Connecting a device
+
+Sync is off until a device is connected. Until the Settings screen exists, the connect form is on the start screen, under the database state.
+
+1. Enter the **server address** (`https://orbit.<subdomain>.workers.dev`, or `http://localhost:8787` for `npm run server:dev`) and **this device's token** (one of the tokens in the server's `DEVICE_TOKENS`; see Sync server). In the hosted browser build the address is filled in.
+2. **Connect.** If the server holds no data, everything on this device is uploaded. If it holds data, Orbit asks for confirmation first: **Replace** deletes this device's data and downloads the server's; **Cancel** leaves the device unconnected and unchanged.
+3. A connected device syncs at start, when it returns to the foreground, a few seconds after a change, every 5 minutes while open, and with **Sync now**. It shows when it last synced and why the last sync failed, if it did.
+4. **Disconnect** forgets the token and keeps the local data. Connecting again asks for the confirmation again if the server has data.
+
+The address and token are stored in the device's local settings and are never synced. A device and the server must have the same schema version; otherwise syncing waits ("different schema version") until the app or the server is updated.
+
+To check sync by hand, **Add test area** on one device and watch it appear on the other.
+
 ## Desktop builds
 
 `npm run desktop:build` writes the packages to `src-tauri/target/release/bundle/`:

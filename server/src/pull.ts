@@ -1,7 +1,7 @@
 import type { SqlDriver } from '../../src/platform/db/driver.ts';
 import { HttpError } from './errors.ts';
 import type { WireRow } from './push.ts';
-import { TABLE_NAMES, TABLES } from './tables.ts';
+import { TABLE_NAMES, TABLES } from '../../src/core/db/sync-tables.ts';
 
 export const PULL_PAGE_SIZE = 1000;
 
