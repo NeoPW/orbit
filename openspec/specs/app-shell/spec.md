@@ -2,23 +2,23 @@
 
 ## Purpose
 
-Provides the app's frame on Android and in the browser: theming, the three top-level destinations (Home, Plan, Review) and navigation that adapts to the screen width.
+Provides the app's frame on the desktop and in the browser: theming, the destinations Home, Plan, Review and Settings in a sidebar that adapts to the window width, and the addresses of every destination and detail page.
 
 ## Requirements
 
-### Requirement: Runs on Android and web
-The app SHALL start and be fully usable on an Android phone and in a desktop browser (Chrome) from the same codebase.
+### Requirement: Runs on the desktop and in the browser
+The app SHALL start and be fully usable in the Tauri desktop app on Linux and in a desktop browser from the same codebase.
 
-#### Scenario: Start on Android
-- **WHEN** the app is launched on an Android phone
+#### Scenario: Start on the desktop
+- **WHEN** the desktop app is launched
 - **THEN** the app shell is shown with the Home destination selected
 
 #### Scenario: Start in the browser
-- **WHEN** the app is opened in Chrome
+- **WHEN** the app is opened in Chrome or Firefox
 - **THEN** the app shell is shown with the Home destination selected
 
 ### Requirement: Three top-level destinations
-The app SHALL provide exactly three top-level destinations, in this order: Plan, Home, Review. Selecting a destination SHALL show its screen and mark it as selected.
+The app SHALL provide exactly three top-level destinations, in this order: Home, Plan, Review, and Settings apart from them. Selecting a destination SHALL show its screen and mark it as selected. Until a destination's feature change fills it, its screen SHALL show its title and an empty state.
 
 #### Scenario: Switch destination
 - **WHEN** the user selects Plan
@@ -26,37 +26,53 @@ The app SHALL provide exactly three top-level destinations, in this order: Plan,
 
 #### Scenario: Home content
 - **WHEN** the user selects Home
-- **THEN** the Home screen with its sections is shown (see home)
+- **THEN** the Home screen is shown and Home is marked as selected
+
+#### Scenario: Settings
+- **WHEN** the user selects Settings
+- **THEN** the Settings screen is shown, Settings is marked as selected and no other destination is
 
 #### Scenario: Placeholder destinations
-- **WHEN** the user selects Review
-- **THEN** the Review screen is shown (see weekly-review) and no destination is a placeholder
+- **WHEN** the user selects Review before the review feature exists
+- **THEN** the Review screen shows its title and an empty state, without placeholder text such as "Coming soon"
 
-### Requirement: Responsive navigation
-The app SHALL show a bottom navigation bar when the window is narrower than 600 logical pixels, and a navigation rail on the left otherwise. Resizing SHALL switch between them without losing the selected destination.
+### Requirement: Sidebar navigation
+The app SHALL show the destinations in a sidebar on the left, with Settings at its foot. At a window width of 960 logical pixels or more the sidebar SHALL show each destination's icon and label; below that only the icons, each with its label as accessible name and tooltip. Resizing SHALL NOT change the selected destination.
 
-#### Scenario: Phone width
-- **WHEN** the window width is less than 600 logical pixels
-- **THEN** destinations are shown in a bottom navigation bar and no navigation rail is shown
+#### Scenario: Wide window
+- **WHEN** the window is 1280 pixels wide
+- **THEN** the sidebar shows Home, Plan and Review with icons and labels, and Settings at its foot
 
-#### Scenario: Desktop width
-- **WHEN** the window width is 600 logical pixels or more
-- **THEN** destinations are shown in a navigation rail and no bottom navigation bar is shown
+#### Scenario: Narrow window
+- **WHEN** the window is 800 pixels wide
+- **THEN** the sidebar shows only the icons, and hovering an icon shows its label
 
 #### Scenario: Resize keeps destination
-- **WHEN** Plan is selected and the window is resized across the 600 pixel boundary
+- **WHEN** Plan is selected and the window is resized across 960 pixels
 - **THEN** Plan remains selected and its screen remains visible
 
-### Requirement: Addressable destinations on web
-Each top-level destination SHALL have its own URL path (`/home`, `/plan`, `/review`) so that a browser reload stays on the current destination.
+#### Scenario: Keyboard
+- **WHEN** the user moves through the sidebar with Tab and presses Enter on Review
+- **THEN** the Review screen is shown
+
+### Requirement: Addressable destinations
+Each destination SHALL have its own URL path (`/home`, `/plan`, `/review`, `/settings`), on the desktop and in the browser. Reloading SHALL stay on the current destination, and the browser's back and forward SHALL move between visited destinations. The root path and unknown paths SHALL show Home under the path `/home`.
 
 #### Scenario: Reload keeps destination
-- **WHEN** the user is on Plan in the browser and reloads the page
+- **WHEN** the user is on Plan and reloads the page
 - **THEN** the app opens on Plan
 
+#### Scenario: Back
+- **WHEN** the user goes from Home to Plan to Settings and then goes back
+- **THEN** Plan is shown and selected
+
 #### Scenario: Unknown path
-- **WHEN** the app is opened at a path that does not exist
-- **THEN** the app shows the Home destination
+- **WHEN** the app is opened at `/does-not-exist`
+- **THEN** the Home destination is shown and the path is `/home`
+
+#### Scenario: Root path
+- **WHEN** the app is opened at `/`
+- **THEN** the Home destination is shown and the path is `/home`
 
 ### Requirement: Date display format
 Every calendar date shown in the app SHALL be displayed as `dd-mm-yyyy` with leading zeros, independent of the device or browser locale. Date ranges SHALL be shown as `dd-mm-yyyy – dd-mm-yyyy`. Date fields SHALL show the selected date in the same format. This affects display only, not how dates are stored.
@@ -82,7 +98,7 @@ Every calendar date shown in the app SHALL be displayed as `dd-mm-yyyy` with lea
 - **THEN** the date field shows `15-11-2026`
 
 ### Requirement: Dark theme
-The app SHALL use a Material 3 dark theme built from the Orbit palette with Inter and Space Grotesk (see visual-design), whatever the system brightness setting.
+The app SHALL use its dark theme built from the Orbit palette with Inter and Space Grotesk (see visual-design), whatever the system brightness setting.
 
 #### Scenario: System in dark mode
 - **WHEN** the operating system or browser is set to dark mode
@@ -92,17 +108,9 @@ The app SHALL use a Material 3 dark theme built from the Orbit palette with Inte
 - **WHEN** the operating system or browser is set to light mode
 - **THEN** the app still uses its dark theme
 
-### Requirement: Former objective and key result addresses
-Addresses of objective pages SHALL open the page of the goal with the same ID. Addresses of key result pages and key result forms SHALL open the page of the goal the measure with the same ID belongs to. When no such goal or measure exists, the page SHALL say that the goal was not found.
+### Requirement: Database cannot be opened
+When the local database cannot be opened at start, the app SHALL show a full-window message saying so, with the reason, instead of the navigation and screens.
 
-#### Scenario: Old objective link
-- **WHEN** the app is opened at the former address of the objective "Get fit"
-- **THEN** the goal page of "Get fit" is shown
-
-#### Scenario: Old key result link
-- **WHEN** the app is opened at the former address of the key result "Run 100 km" of "Get fit"
-- **THEN** the goal page of "Get fit" is shown
-
-#### Scenario: Unknown key result
-- **WHEN** the app is opened at the former address of a key result that does not exist
-- **THEN** a page says the goal was not found
+#### Scenario: Failed start
+- **WHEN** opening the database fails with an error
+- **THEN** the window shows that the database could not be opened and the error's message, and no destination is shown
