@@ -2,38 +2,27 @@
 
 ## Purpose
 
-Stores all app data locally on the device (native SQLite on Android, browser storage on web) so the app works fully offline, using a schema that is ready for later features and for sync.
+Stores all app data locally (an SQLite file in the desktop app, SQLite in the browser's private storage in the browser build) so the app works fully offline, using a schema that is ready for later features and for sync.
 
 ## Requirements
 
-### Requirement: Data persists locally
-All data SHALL be stored locally and SHALL survive an app restart on Android and a page reload on web. No network connection SHALL be required.
-
-#### Scenario: Restart on Android
-- **WHEN** the user creates a project and then fully closes and reopens the app on Android
-- **THEN** the project is still shown
-
-#### Scenario: Reload in the browser
-- **WHEN** the user creates a project in Chrome and reloads the page
-- **THEN** the project is still shown
-
-#### Scenario: Offline use
-- **WHEN** the device has no network connection
-- **THEN** all create, edit and delete actions work as normal
-
 ### Requirement: Warning when browser storage is unavailable
-On web, if the browser offers no persistent storage for the database, the app SHALL still start and SHALL show a persistent warning that data will be lost when the page is closed.
+In the browser, the app SHALL ask the browser to keep its storage persistent. If the browser offers no storage for the database, the app SHALL still start, on an in-memory database, and SHALL show a persistent warning that data will be lost when the page is closed.
 
 #### Scenario: No persistent storage
-- **WHEN** the app is opened in a browser where persistent database storage is unavailable
-- **THEN** the app starts with an in-memory database and shows a warning banner that data is not saved
+- **WHEN** the app is opened in a browser window that offers no storage for the database (for example a private window in Firefox)
+- **THEN** the app starts with an in-memory database and shows a warning that data is not saved
+
+#### Scenario: Storage available
+- **WHEN** the app is opened in a normal Chrome or Firefox window
+- **THEN** no storage warning is shown and saved data survives a reload
 
 ### Requirement: Complete schema from the start
-The database SHALL contain tables for all entities of the product spec: Area, Goal, Measure, Project, Task, Habit, HabitCheck, LogEntry, WeeklyReview, ReviewMeasureSnapshot and Timer, with the fields defined in `docs/SPEC.md` §4 (including the goal links of projects, tasks, habits and log entries, the project's completion time, the goal's color and the measure's step), and a local-only settings table that is not synced.
+The database SHALL contain tables for all entities of the product spec: Area, Goal, Measure, Project, Task, Habit, HabitCheck, LogEntry, Timer, Note, WeeklyReview and ReviewMeasureSnapshot, with the fields defined in `docs/SPEC.md` §4 (including a task's importance and next-step flag, the timer's planned length and the note's target and week), and a local-only settings table that is not synced. A project SHALL NOT store a next step of its own.
 
 #### Scenario: Fresh install
 - **WHEN** the database is created for the first time
-- **THEN** all eleven entity tables and the settings table exist and the schema version is 7
+- **THEN** all twelve entity tables and the settings table exist and the schema version is 1
 
 #### Scenario: Unique habit check per day
 - **WHEN** a second HabitCheck row is inserted for the same habit and the same date
@@ -43,8 +32,12 @@ The database SHALL contain tables for all entities of the product spec: Area, Go
 - **WHEN** a second WeeklyReview row is inserted for the same `week_start`
 - **THEN** the insert is rejected
 
+#### Scenario: Unique note per target and week
+- **WHEN** a second Note row is inserted for the same target type, target and `week_start`
+- **THEN** the insert is rejected
+
 ### Requirement: Record identity and timestamps
-Every record SHALL have a client-generated UUID `id`, a `created_at` and `updated_at` timestamp in UTC, and a nullable `deleted_at`. The `id` SHALL be a random UUID v4, except for new habit checks and weekly reviews, whose `id` SHALL be a UUID v5 derived from their natural key (habit and date, week start). Creating a record SHALL set `created_at` and `updated_at` to the current time; every update SHALL set `updated_at` to the current time.
+Every record SHALL have a client-generated UUID `id`, a `created_at` and `updated_at` timestamp in UTC, and a nullable `deleted_at`. The `id` SHALL be a random UUID v4, except for habit checks, weekly reviews and notes, whose `id` SHALL be a UUID v5 derived from their natural key (habit and date; week start; target type, target and week start), and the timer, which has one fixed `id`. Creating a record SHALL set `created_at` and `updated_at` to the current time; every update SHALL set `updated_at` to the current time.
 
 #### Scenario: Create sets identity and timestamps
 - **WHEN** a record is created
@@ -58,6 +51,14 @@ Every record SHALL have a client-generated UUID `id`, a `created_at` and `update
 - **WHEN** the same habit is checked for the same date on two devices
 - **THEN** both checks get the same `id`
 
+#### Scenario: Deterministic note ID
+- **WHEN** the note of the same project for the week starting 2026-11-02 is created on two devices
+- **THEN** both notes get the same `id`, and a note of the same project for another week gets a different one
+
+#### Scenario: Fixed timer ID
+- **WHEN** a timer is started on two devices
+- **THEN** both timer records have the same `id`
+
 ### Requirement: Soft delete
 Deleting a record SHALL set its `deleted_at` (and `updated_at`) instead of removing the row. Soft-deleted records SHALL be excluded from all lists, lookups and counts shown in the app.
 
@@ -66,7 +67,7 @@ Deleting a record SHALL set its `deleted_at` (and `updated_at`) instead of remov
 - **THEN** the area row still exists with `deleted_at` set, and the area no longer appears anywhere in the app
 
 ### Requirement: Enumerations stored as text
-Enumerated values (goal status, project status, task status, measure type, schedule type, log source) SHALL be stored as the text values defined in `docs/SPEC.md` §4 (for example `times_per_week`, `backlog`).
+Enumerated values (goal status, project status, task status, measure type, schedule type, log source, note target type) SHALL be stored as the text values defined in `docs/SPEC.md` §4 (for example `times_per_week`, `backlog`, `goal`).
 
 #### Scenario: Stored status value
 - **WHEN** a project with status backlog is saved
@@ -79,37 +80,6 @@ Calendar dates (goal start/end, deadlines, due dates, habit check dates, week st
 - **WHEN** a project deadline of 2026-12-31 is saved and later read on a device in a different time zone
 - **THEN** the deadline is still 2026-12-31
 
-### Requirement: Schema versioning
-The database SHALL record its schema version and SHALL run versioned migrations on upgrade, so later versions can add tables or columns without losing existing data.
-
-#### Scenario: Opening an existing database
-- **WHEN** the app opens a database already at the current schema version
-- **THEN** no migration runs and all existing data is available
-
-#### Scenario: Upgrade from version 1
-- **WHEN** the app opens a database at schema version 1 that contains projects, habits and log entries
-- **THEN** it is migrated to the current version, the settings and snapshot tables exist and all existing rows are unchanged
-
-#### Scenario: Upgrade from version 2
-- **WHEN** the app opens a database at schema version 2 that contains settings and weekly reviews
-- **THEN** it is migrated to the current version, the snapshot table exists and all existing rows are unchanged
-
-#### Scenario: Upgrade from version 3
-- **WHEN** the app opens a database at schema version 3 that contains tasks and log entries
-- **THEN** it is migrated to the current version, existing tasks keep their project and have no goal, existing log entries have no task, and all other values are unchanged
-
-#### Scenario: Upgrade from version 4
-- **WHEN** the app opens a database at schema version 4 that contains numeric key results
-- **THEN** it is migrated to the current version, the timer table exists and is empty, and every resulting measure has step 1
-
-#### Scenario: Upgrade from version 5
-- **WHEN** the app opens a database at schema version 5 that contains objectives
-- **THEN** it is migrated to the current version and the resulting goals have no own color
-
-#### Scenario: Upgrade from version 6
-- **WHEN** the app opens a database at schema version 6 with objectives, key results and linked projects
-- **THEN** it is migrated to version 7 as described in "Move objectives and key results to goals and measures"
-
 ### Requirement: Default areas on first launch
 When the database is created for the first time, the app SHALL create the areas Job, Personal, Sport and Uni. Seeding SHALL NOT run again on later launches, even if the user has edited or deleted those areas.
 
@@ -121,33 +91,61 @@ When the database is created for the first time, the app SHALL create the areas 
 - **WHEN** the user deletes the area Uni and restarts the app
 - **THEN** Uni does not reappear
 
-### Requirement: Move objectives and key results to goals and measures
-Upgrading a database from schema version 6 SHALL move its data to goals and measures, keeping every record's ID, timestamps and deletion state, as defined in `docs/SPEC.md` §4 "Moving from objectives and key results". Nothing SHALL have to be entered again.
+### Requirement: Data persists on the desktop and in the browser
+All data SHALL be stored locally and SHALL survive a restart of the desktop app and a page reload in the browser. No network connection SHALL be required.
 
-#### Scenario: Objective becomes a goal
-- **WHEN** a version 6 database has the active objective "Get job" with color `#FF7A9C`
-- **THEN** after the upgrade the goal "Get job" exists with the same ID, dates, status, order and color
+#### Scenario: Restart of the desktop app
+- **WHEN** data is saved in the desktop app and the app is closed and started again
+- **THEN** the data is still there
 
-#### Scenario: Key result becomes a measure
-- **WHEN** the objective "Get job" has the numeric key result "Kann" at 4 of 5 with step 1 and deadline 2026-10-16
-- **THEN** after the upgrade "Get job" has the measure "Kann" with the same ID, 4 of 5 and step 1, and no deadline
+#### Scenario: Reload in the browser
+- **WHEN** data is saved in the browser and the page is reloaded
+- **THEN** the data is still there
 
-#### Scenario: Project linked to a key result
-- **WHEN** the project "Create app" is linked to the key result "Kann" of "Get job"
-- **THEN** after the upgrade "Create app" serves the goal "Get job"
+#### Scenario: Offline use
+- **WHEN** the computer has no network connection
+- **THEN** data is saved and read as normal
 
-#### Scenario: Tasks, habits and log entries
-- **WHEN** a task is assigned to "Kann", another to the objective "Get job", a habit and a log entry are linked to "Kann"
-- **THEN** after the upgrade both tasks are assigned to "Get job", and the habit and the log entry are linked to "Get job"
+### Requirement: Schema version and migrations
+The database SHALL record its schema version and SHALL run versioned, forward-only migrations when the app starts, so later versions can add tables or columns without losing existing data. Each migration SHALL be applied completely or not at all.
 
-#### Scenario: Review snapshots
-- **WHEN** a completed review stored a snapshot of "Kann" at 60 %
-- **THEN** after the upgrade the review has a measure snapshot of "Kann" at 60 %
+#### Scenario: Opening an existing database
+- **WHEN** the app opens a database already at the current schema version
+- **THEN** no migration runs and all existing data is available
 
-#### Scenario: Completed project
-- **WHEN** a completed project was last updated on 2026-10-05
-- **THEN** after the upgrade its completion time is that update time
+#### Scenario: Upgrade to a newer version
+- **WHEN** the app opens a database at an older schema version that contains data
+- **THEN** each newer migration runs once, in order, the schema version becomes the current one, and the existing rows are unchanged
 
-#### Scenario: Deleted key result
-- **WHEN** a key result was soft-deleted before the upgrade
-- **THEN** its measure exists and is soft-deleted too
+#### Scenario: Failing migration
+- **WHEN** a migration fails halfway
+- **THEN** none of its changes remain, the schema version stays at the previous one, and the app shows that the database could not be opened instead of starting with a partial schema
+
+### Requirement: Database location
+On the desktop, the database SHALL be one SQLite file, `orbit.db`, in the app data directory of the running app identity, so that development runs and the installed release use separate databases. In the browser, the database SHALL belong to the site's origin, so each address the app is served from has its own data.
+
+#### Scenario: Development run beside the release
+- **WHEN** a development run saves data on a computer where the release app is installed
+- **THEN** the data is written to `orbit.db` in the development identity's data directory, and the release app's `orbit.db` is unchanged
+
+#### Scenario: Different addresses in the browser
+- **WHEN** the browser build is opened from two different addresses
+- **THEN** each address has its own database
+
+### Requirement: One browser tab at a time
+In the browser, only one tab SHALL have the database open. A further tab of the same site SHALL NOT open it and SHALL show that Orbit is already open in another tab; after the first tab is closed, reloading the further tab SHALL open the database.
+
+#### Scenario: Second tab
+- **WHEN** Orbit is open in one tab and the same address is opened in a second tab
+- **THEN** the second tab shows that Orbit is open in another tab and changes no data
+
+#### Scenario: First tab closed
+- **WHEN** the first tab is closed and the second tab is reloaded
+- **THEN** the second tab opens the database and shows the saved data
+
+### Requirement: Writes that belong together
+Several writes that belong together (for example completing a task and creating its log entry) SHALL be applicable as one unit: either all of them are stored or none.
+
+#### Scenario: One write of a unit fails
+- **WHEN** a unit of two inserts is applied and the second insert is rejected
+- **THEN** the first insert is not stored either
