@@ -2,46 +2,57 @@
 
 ## Purpose
 
-Connects the app to the user's Supabase project and lets the single user sign in and out with email and password, so their data can be synced between devices.
+Connects a device to the user's own sync server with the server's address and a token for that device, and lets the user disconnect, so the device's data can be synced with the others.
 
 ## Requirements
 
-### Requirement: Connection settings at build time
-The app SHALL read the Supabase project URL and publishable key at build time from a local file that is not committed to the repository. When either value is missing, the app SHALL run without sync and the "Account & sync" section SHALL say that sync is not configured in this build.
+### Requirement: Connect with a device token
+The app SHALL let the user connect the device by entering the sync server's address and this device's token. Before saving them, the app SHALL check them with the server. A refused token or an unreachable server SHALL show an error and leave the device unconnected. The app SHALL NOT offer creating an account or a token.
 
-#### Scenario: Not configured
-- **WHEN** the app is built without Supabase values
-- **THEN** all features work locally and Settings says that sync is not configured
+#### Scenario: Valid token
+- **WHEN** the user enters the server address and a configured device token and connects
+- **THEN** the device is connected and its first connection starts (see sync)
 
-#### Scenario: Configured
-- **WHEN** the app is built with the Supabase URL and key
-- **THEN** Settings offers signing in
+#### Scenario: Refused token
+- **WHEN** the user connects with a token the server does not accept
+- **THEN** an error says that the token was refused, and the device stays unconnected
 
-### Requirement: Sign in with email and password
-The "Account & sync" section SHALL let the user sign in with email and password. Wrong credentials or a missing connection SHALL show an error and leave the user signed out. The app SHALL NOT offer creating an account.
+#### Scenario: Server unreachable
+- **WHEN** the user connects while offline or with a wrong address
+- **THEN** an error says that the server could not be reached, and the device stays unconnected
 
-#### Scenario: Successful sign-in
-- **WHEN** the user enters the email and password of their Supabase user and signs in
-- **THEN** the section shows the signed-in email and a first sync starts (see sync)
+### Requirement: Server address suggested in the browser
+In the browser build, the address field SHALL start with the address the page was loaded from, unless that is a local development address.
 
-#### Scenario: Wrong password
-- **WHEN** the user signs in with a wrong password
-- **THEN** an error is shown and the user stays signed out
+#### Scenario: Hosted browser build
+- **WHEN** the browser build served at `https://orbit.example.workers.dev` shows the connect form
+- **THEN** the address field contains `https://orbit.example.workers.dev`
 
-#### Scenario: No sign-up
-- **WHEN** the user is signed out
-- **THEN** there is no option to create an account
+#### Scenario: Development server
+- **WHEN** the connect form is shown at `http://localhost:1420`
+- **THEN** the address field is empty
 
-### Requirement: Session kept
-A signed-in user SHALL stay signed in across app restarts and page reloads until they sign out.
+### Requirement: Working without a connection
+A device that is not connected SHALL work fully on its local data and SHALL NOT send any request to a sync server.
+
+#### Scenario: Never connected
+- **WHEN** the app is used without ever entering a token
+- **THEN** all data is saved locally and no sync request is made
+
+### Requirement: Connection kept
+A connected device SHALL stay connected across app restarts and page reloads until it is disconnected. The address and token SHALL be stored in the local settings and never synced.
 
 #### Scenario: Restart
-- **WHEN** a signed-in user restarts the app or reloads the page
-- **THEN** they are still signed in and sync continues
+- **WHEN** a connected device restarts the app or reloads the page
+- **THEN** it is still connected and a sync runs
 
-### Requirement: Sign out
-The user SHALL be able to sign out. Signing out SHALL stop syncing and keep all local data on the device.
+### Requirement: Disconnect
+The user SHALL be able to disconnect the device. Disconnecting SHALL stop syncing, forget the token and keep all local data. Connecting again later SHALL be a first connection again.
 
-#### Scenario: Sign out
-- **WHEN** the user signs out
-- **THEN** the section shows the sign-in form, no further sync happens, and all local data is still shown in the app
+#### Scenario: Disconnect
+- **WHEN** the user disconnects
+- **THEN** the connect form is shown again, no further sync happens, and all local data is still there
+
+#### Scenario: Connect again
+- **WHEN** a disconnected device connects again to a server that holds data
+- **THEN** the app asks for confirmation before replacing the local data
