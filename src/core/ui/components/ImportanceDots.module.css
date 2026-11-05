@@ -1,0 +1,24 @@
+.dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.filled,
+.empty {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.filled {
+  background: var(--color-primary);
+}
+
+.empty {
+  background: var(--color-border);
+}
+
+.inherited .filled {
+  background: color-mix(in srgb, var(--color-primary) 50%, transparent);
+}

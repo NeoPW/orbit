@@ -1,0 +1,65 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.chip svg {
+  width: 13px;
+  height: 13px;
+}
+
+.clickable {
+  cursor: pointer;
+  transition: filter var(--motion-fast) var(--ease-out);
+}
+
+.clickable:hover {
+  filter: brightness(1.2);
+}
+
+.neutral {
+  background: var(--color-surface-raised);
+  color: var(--color-text-muted);
+}
+
+.primary {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+}
+
+.secondary {
+  background: var(--color-secondary-soft);
+  color: var(--color-secondary);
+}
+
+.amber {
+  background: var(--color-amber-soft);
+  color: var(--color-amber);
+}
+
+.red {
+  background: var(--color-red-soft);
+  color: var(--color-red);
+}
+
+.area {
+  background: color-mix(in srgb, var(--chip-color) 14%, transparent);
+  border-color: color-mix(in srgb, var(--chip-color) 45%, transparent);
+  color: var(--color-text);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--chip-color);
+}
