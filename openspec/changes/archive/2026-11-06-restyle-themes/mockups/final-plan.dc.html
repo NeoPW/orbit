@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Orbit · Final · Plan</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Inter+Tight:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{text-decoration:none}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="{{rootStyle}}">
+<div style="min-height: 100vh; box-sizing: border-box; display: flex; font-family: Inter, sans-serif; background: var(--bg); color: var(--text); font-size: 13px">
+
+  <aside style="width: 220px; flex: none; box-sizing: border-box; background: var(--side); border-right: 1px solid var(--border); padding: 20px 14px 18px; display: flex; flex-direction: column; gap: 4px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 2px 8px 18px">
+      <span style="width: 30px; height: 30px; border-radius: 10px; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"></circle><ellipse cx="12" cy="12" rx="10" ry="5" transform="rotate(-25 12 12)"></ellipse></svg>
+      </span>
+      <span style="font-size: 17px; font-weight: 700; letter-spacing: -0.01em">Orbit</span>
+    </div>
+    <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; font-weight: 500; color: var(--muted)">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg>Home</a>
+    <a href="#" aria-current="page" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; font-weight: 600; color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, var(--side))">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="2"></rect><rect x="14" y="3" width="7" height="5" rx="2"></rect><rect x="14" y="12" width="7" height="9" rx="2"></rect><rect x="3" y="16" width="7" height="5" rx="2"></rect></svg>Plan</a>
+    <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; font-weight: 500; color: var(--muted)">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"></path><path d="M8 12l3 3 5-6"></path></svg>Review</a>
+    <div style="flex: 1"></div>
+    <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; font-weight: 500; color: var(--muted)">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"></path></svg>Settings</a>
+    <div style="padding: 12px 10px 0; border-top: 1px solid var(--border); margin-top: 8px">
+      <div style="font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px">Theme</div>
+      <div style="display: flex; gap: 8px">
+        <sc-for list="{{themes}}" as="th" hint-placeholder-count="5">
+          <button type="button" aria-label="{{th.label}}" aria-pressed="{{th.pressed}}" onClick="{{th.pick}}" style="{{th.style}}"><span style="{{th.dot}}"></span></button>
+        </sc-for>
+      </div>
+    </div>
+  </aside>
+
+  <main style="flex: 1; min-width: 0; box-sizing: border-box; padding: 24px 28px 40px">
+  <div style="max-width: 1004px; display: flex; flex-direction: column; gap: 30px">
+
+    <header style="display: flex; align-items: center; justify-content: space-between">
+      <h1 style="margin: 0; font-family: 'Inter Tight', Inter, sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -0.02em">Plan</h1>
+      <button type="button" style="display: flex; align-items: center; gap: 6px; padding: 9px 14px; border-radius: 12px; border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent); font-size: 13px; font-weight: 700; cursor: pointer">
+        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>New</button>
+    </header>
+
+    <section aria-label="Goals" style="display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; align-items: baseline; gap: 10px"><h2 style="margin: 0; font-size: 17px; font-weight: 700">Goals</h2><span style="font-size: 12px; color: var(--muted)">3 active</span></div>
+
+      <!-- Goal 1 -->
+      <div style="{{g0.pcStyle}}">
+        <article style="position: relative; overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: 18px">
+          <span aria-hidden="true" style="position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--pc)"></span>
+          <div style="padding: 16px 22px 16px 26px; background: color-mix(in srgb, var(--pc) 14%, var(--surface)); display: flex; align-items: center; justify-content: space-between; gap: 24px">
+            <div style="min-width: 0">
+              <h3 style="margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.01em">{{g0.title}}</h3>
+              <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px">
+                <span style="font-size: 12.5px; color: var(--muted)">{{g0.range}}</span>
+                <span style="{{g0.badgeStyle}}">{{g0.badge}}</span>
+              </div>
+            </div>
+            <div style="width: 270px; flex: none">
+              <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px">
+                <span style="font-size: 12px; color: var(--muted)">Progress</span>
+                <span style="font-family: 'Inter Tight', Inter, sans-serif; font-variant-numeric: tabular-nums; font-size: 34px; font-weight: 700; line-height: 1; color: var(--pc)">{{g0.pct}}</span>
+              </div>
+              <div role="progressbar" aria-label="Goal progress" aria-valuenow="{{g0.pctNum}}" aria-valuemin="0" aria-valuemax="100" style="height: 10px; border-radius: 999px; background: color-mix(in srgb, var(--pc) 22%, var(--surface)); overflow: hidden"><div style="{{g0.barStyle}}"></div></div>
+            </div>
+          </div>
+          <div style="padding: 16px 22px 18px 26px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px">
+            <div>
+              <h4 style="margin: 0 0 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted)">Measures</h4>
+              <div style="display: flex; flex-direction: column; gap: 14px">
+                <sc-for list="{{g0.measures}}" as="m" hint-placeholder-count="3">
+                  <div>
+                    <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px; margin-bottom: 6px"><span style="font-weight: 600">{{m.title}}</span><span style="color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap">{{m.value}} · {{m.pct}}</span></div>
+                    <div style="height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--pc) 20%, var(--surface)); overflow: hidden"><div style="{{m.barStyle}}"></div></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 16px">
+              <div>
+                <h4 style="margin: 0 0 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted)">Projects</h4>
+                <div style="display: flex; flex-direction: column; gap: 8px">
+                  <sc-for list="{{g0.projects}}" as="p" hint-placeholder-count="2">
+                    <div style="{{p.pcStyle}}">
+                      <div style="position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px 9px 17px; border-radius: 12px; border: 1px solid var(--border); background: color-mix(in srgb, var(--pc) 12%, var(--surface))">
+                        <span aria-hidden="true" style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--pc)"></span>
+                        <span style="font-weight: 600; font-size: 13px">{{p.title}}</span>
+                        <span style="display: flex; align-items: center; gap: 6px"><sc-if value="{{p.inherited}}" hint-placeholder-val="{{true}}"><span style="font-size: 11px; color: var(--muted)">from goal</span></sc-if><span style="{{p.badgeStyle}}">{{p.badge}}</span></span>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <sc-if value="{{g0.hasTasks}}" hint-placeholder-val="{{true}}">
+                <div>
+                  <h4 style="margin: 0 0 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted)">Open tasks</h4>
+                  <sc-for list="{{g0.tasks}}" as="tk" hint-placeholder-count="1">
+                    <div style="{{tk.pcStyle}}">
+                      <div style="position: relative; display: flex; align-items: center; gap: 10px; padding: 8px 12px 8px 17px; border-radius: 12px; border: 1px solid var(--border); background: var(--raised)">
+                        <span aria-hidden="true" style="position: absolute; left: 0; top: 8px; bottom: 8px; width: 4px; border-radius: 0 3px 3px 0; background: var(--pc)"></span>
+                        <span aria-hidden="true" style="width: 15px; height: 15px; flex: none; box-sizing: border-box; border-radius: 5px; border: 1.8px solid var(--pc)"></span>
+                        <span style="font-size: 13px; font-weight: 500">{{tk.title}}</span>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Goal 2 -->
+      <div style="{{g1.pcStyle}}">
+        <article style="position: relative; overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: 18px">
+          <span aria-hidden="true" style="position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--pc)"></span>
+          <div style="padding: 16px 22px 16px 26px; background: color-mix(in srgb, var(--pc) 14%, var(--surface)); display: flex; align-items: center; justify-content: space-between; gap: 24px">
+            <div style="min-width: 0">
+              <h3 style="margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.01em">{{g1.title}}</h3>
+              <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px">
+                <span style="font-size: 12.5px; color: var(--muted)">{{g1.range}}</span>
+                <span style="{{g1.badgeStyle}}">{{g1.badge}}</span>
+              </div>
+            </div>
+            <div style="width: 270px; flex: none">
+              <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px">
+                <span style="font-size: 12px; color: var(--muted)">Progress</span>
+                <span style="font-family: 'Inter Tight', Inter, sans-serif; font-variant-numeric: tabular-nums; font-size: 34px; font-weight: 700; line-height: 1; color: var(--pc)">{{g1.pct}}</span>
+              </div>
+              <div role="progressbar" aria-label="Goal progress" aria-valuenow="{{g1.pctNum}}" aria-valuemin="0" aria-valuemax="100" style="height: 10px; border-radius: 999px; background: color-mix(in srgb, var(--pc) 22%, var(--surface)); overflow: hidden"><div style="{{g1.barStyle}}"></div></div>
+            </div>
+          </div>
+          <div style="padding: 16px 22px 18px 26px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px">
+            <div>
+              <h4 style="margin: 0 0 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted)">Measures</h4>
+              <div style="display: flex; flex-direction: column; gap: 14px">
+                <sc-for list="{{g1.measures}}" as="m" hint-placeholder-count="2">
+                  <div>
+                    <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px; margin-bottom: 6px"><span style="font-weight: 600">{{m.title}}</span><span style="color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap">{{m.value}} · {{m.pct}}</span></div>
+                    <div style="height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--pc) 20%, var(--surface)); overflow: hidden"><div style="{{m.barStyle}}"></div></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 16px">
+              <div>
+                <h4 style="margin: 0 0 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted)">Projects</h4>
+                <div style="display: flex; flex-direction: column; gap: 8px">
+                  <sc-for list="{{g1.projects}}" as="p" hint-placeholder-count="1">
+                    <div style="{{p.pcStyle}}">
+                      <div style="position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px 9px 17px; border-radius: 12px; border: 1px solid var(--border); background: color-mix(in srgb, var(--pc) 12%, var(--surface))">
+                        <span aria-hidden="true" style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--pc)"></span>
+                        <span style="font-weight: 600; font-size: 13px">{{p.title}}</span>
+                        <span style="display: flex; align-items: center; gap: 6px"><sc-if value="{{p.inherited}}" hint-placeholder-val="{{true}}"><span style="font-size: 11px; color: var(--muted)">from goal</span></sc-if><span style="{{p.badgeStyle}}">{{p.badge}}</span></span>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Goal 3 -->
+      <div style="{{g2.pcStyle}}">
+        <article style="position: relative; overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: 18px">
+          <span aria-hidden="true" style="position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--pc)"></span>
+          <div style="padding: 16px 22px 16px 26px; background: color-mix(in srgb, var(--pc) 14%, var(--surface)); display: flex; align-items: center; justify-content: space-between; gap: 24px">
+            <div style="min-width: 0">
+              <h3 style="margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.01em">{{g2.title}}</h3>
+              <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px">
+                <span style="font-size: 12.5px; color: var(--muted)">{{g2.range}}</span>
+                <span style="{{g2.badgeStyle}}">{{g2.badge}}</span>
+              </div>
+            </div>
+            <div style="width: 270px; flex: none">
+              <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px">
+                <span style="font-size: 12px; color: var(--muted)">Progress</span>
+                <span style="font-family: 'Inter Tight', Inter, sans-serif; font-variant-numeric: tabular-nums; font-size: 34px; font-weight: 700; line-height: 1; color: var(--pc)">{{g2.pct}}</span>
+              </div>
+              <div role="progressbar" aria-label="Goal progress" aria-valuenow="{{g2.pctNum}}" aria-valuemin="0" aria-valuemax="100" style="height: 10px; border-radius: 999px; background: color-mix(in srgb, var(--pc) 22%, var(--surface)); overflow: hidden"><div style="{{g2.barStyle}}"></div></div>
+            </div>
+          </div>
+          <div style="padding: 16px 22px 18px 26px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px">
+            <div>
+              <h4 style="margin: 0 0 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted)">Measures</h4>
+              <div style="display: flex; flex-direction: column; gap: 14px">
+                <sc-for list="{{g2.measures}}" as="m" hint-placeholder-count="1">
+                  <div>
+                    <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px; margin-bottom: 6px"><span style="font-weight: 600">{{m.title}}</span><span style="color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap">{{m.value}} · {{m.pct}}</span></div>
+                    <div style="height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--pc) 20%, var(--surface)); overflow: hidden"><div style="{{m.barStyle}}"></div></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 16px">
+              <div>
+                <h4 style="margin: 0 0 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted)">Projects</h4>
+                <div style="display: flex; flex-direction: column; gap: 8px">
+                  <sc-for list="{{g2.projects}}" as="p" hint-placeholder-count="1">
+                    <div style="{{p.pcStyle}}">
+                      <div style="position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px 9px 17px; border-radius: 12px; border: 1px solid var(--border); background: color-mix(in srgb, var(--pc) 12%, var(--surface))">
+                        <span aria-hidden="true" style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--pc)"></span>
+                        <span style="font-weight: 600; font-size: 13px">{{p.title}}</span>
+                        <span style="display: flex; align-items: center; gap: 6px"><sc-if value="{{p.inherited}}" hint-placeholder-val="{{true}}"><span style="font-size: 11px; color: var(--muted)">from goal</span></sc-if><span style="{{p.badgeStyle}}">{{p.badge}}</span></span>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section aria-label="Projects without a goal" style="display: flex; flex-direction: column; gap: 14px">
+      <h2 style="margin: 0; font-size: 17px; font-weight: 700">Projects without a goal</h2>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px">
+        <sc-for list="{{loose}}" as="p" hint-placeholder-count="1">
+          <div style="{{p.pcStyle}}">
+            <article style="position: relative; overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: 16px">
+              <span aria-hidden="true" style="position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--pc)"></span>
+              <div style="padding: 12px 16px 12px 21px; background: color-mix(in srgb, var(--pc) 13%, var(--surface)); font-size: 14px; font-weight: 700">{{p.title}}</div>
+              <div style="padding: 12px 16px 14px 21px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+                <span style="{{p.areaStyle}}"><span style="display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--border); font-size: 11px; font-weight: 500; color: var(--muted)"><span style="width: 7px; height: 7px; border-radius: 50%; background: var(--ac)"></span>{{p.area}}</span></span>
+                <span style="{{p.badgeStyle}}">{{p.badge}}</span>
+                <span role="img" aria-label="{{p.impLabel}}" style="display: flex; gap: 3px"><span style="{{p.d1}}"></span><span style="{{p.d2}}"></span><span style="{{p.d3}}"></span><span style="{{p.d4}}"></span><span style="{{p.d5}}"></span></span>
+              </div>
+            </article>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section aria-label="Backlog" style="display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+        <h2 style="margin: 0; font-size: 17px; font-weight: 700">Backlog</h2>
+        <div role="group" aria-label="Filter by area" style="display: flex; gap: 6px; flex-wrap: wrap">
+          <sc-for list="{{filters}}" as="f" hint-placeholder-count="6">
+            <button type="button" aria-pressed="{{f.pressed}}" onClick="{{f.pick}}" style="{{f.style}}">{{f.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 4px 6px; min-height: 56px">
+        <sc-for list="{{backlog}}" as="b" hint-placeholder-count="2">
+          <div style="{{b.pcStyle}}">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 0 12px; height: 52px; border-bottom: 1px solid var(--border)">
+              <span aria-hidden="true" style="width: 9px; height: 9px; flex: none; border-radius: 50%; background: var(--pc)"></span>
+              <span style="flex: 1; min-width: 0; font-weight: 600; font-size: 13.5px">{{b.title}}</span>
+              <span style="padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: var(--raised); color: var(--muted)">{{b.status}}</span>
+              <span style="{{b.areaStyle}}"><span style="display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--border); font-size: 11px; font-weight: 500; color: var(--muted)"><span style="width: 7px; height: 7px; border-radius: 50%; background: var(--ac)"></span>{{b.area}}</span></span>
+              <span role="img" aria-label="{{b.impLabel}}" style="display: flex; gap: 3px"><span style="{{b.d1}}"></span><span style="{{b.d2}}"></span><span style="{{b.d3}}"></span><span style="{{b.d4}}"></span><span style="{{b.d5}}"></span></span>
+              <button type="button" aria-label="{{b.activateLabel}}" style="padding: 6px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--raised); color: var(--text); font-size: 12.5px; font-weight: 600; cursor: pointer">Activate</button>
+            </div>
+          </div>
+        </sc-for>
+        <sc-if value="{{backlogEmpty}}" hint-placeholder-val="{{false}}">
+          <div style="padding: 16px 12px; color: var(--muted); font-size: 13px">Nothing in the backlog for this area.</div>
+        </sc-if>
+      </div>
+    </section>
+
+    <section aria-label="Habits" style="display: flex; flex-direction: column; gap: 14px">
+      <h2 style="margin: 0; font-size: 17px; font-weight: 700">Habits</h2>
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 6px 6px 4px">
+        <div style="display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.4fr) minmax(0, 1.2fr) 90px; gap: 12px; padding: 8px 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted)">
+          <span>Habit</span><span>Linked to</span><span>Schedule</span><span>Status</span>
+        </div>
+        <sc-for list="{{habits}}" as="h" hint-placeholder-count="5">
+          <div style="{{h.pcStyle}}">
+            <div style="{{h.rowStyle}}">
+              <span style="font-weight: 600; font-size: 13.5px">{{h.title}}</span>
+              <span>
+                <sc-if value="{{h.hasLink}}" hint-placeholder-val="{{true}}"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 600; color: var(--pc); background: color-mix(in srgb, var(--pc) 15%, var(--surface))"><span style="width: 6px; height: 6px; border-radius: 50%; background: var(--pc)"></span>{{h.link}}</span></sc-if>
+              </span>
+              <span style="color: var(--muted)">{{h.schedule}}</span>
+              <span>
+                <sc-if value="{{h.inactive}}" hint-placeholder-val="{{false}}"><span style="padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; border: 1px solid var(--border); color: var(--muted)">Inactive</span></sc-if>
+              </span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section aria-label="Areas" style="display: flex; flex-direction: column; gap: 14px">
+      <h2 style="margin: 0; font-size: 17px; font-weight: 700">Areas</h2>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px">
+        <sc-for list="{{areas}}" as="a" hint-placeholder-count="4">
+          <div style="{{a.pcStyle}}">
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 12px">
+              <span aria-hidden="true" style="width: 12px; height: 12px; border-radius: 50%; background: var(--pc)"></span>
+              <div>
+                <div style="font-weight: 700; font-size: 14px">{{a.name}}</div>
+                <div style="font-size: 12px; color: var(--muted); margin-top: 2px">{{a.count}}</div>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section aria-label="Archive" style="display: flex; flex-direction: column; gap: 14px">
+      <h2 style="margin: 0; font-size: 17px; font-weight: 700">Archive</h2>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+        <sc-for list="{{archive}}" as="r" hint-placeholder-count="2">
+          <div style="{{r.pcStyle}}">
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 12px">
+              <span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 50%; background: var(--pc)"></span>
+              <span style="flex: 1; font-weight: 600; font-size: 13.5px">{{r.title}}</span>
+              <span style="font-size: 12px; color: var(--muted)">{{r.kind}}</span>
+              <span style="padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: var(--raised); color: var(--muted)">Completed</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["slate","forest","ember","plum","graphite"],"default":"slate"},"$preview":{"width":1280,"height":2250}}'>
+class Component extends DCLogic {
+  state = { areaFilter: 'All' };
+
+  renderVals() {
+    // name, bg, side, surface, raised, border, text, muted, accent, onAccent, overdue, overdueBg, soon, soonBg, pc0..pc7
+    const TH = {
+      slate:    ['Slate',    '#0f1218','#0b0e13','#171b24','#1f2430','#2b3242','#e6e9f2','#a2aabd','#8b93ff','#0c0e1f','#ff8f8a','#3b1d20','#f3c969','#372f17','#f4a26a','#6fa8f0','#6fcf97','#a994f4','#f08fb5','#54c4c8','#c2d86a','#d2c2a6'],
+      forest:   ['Forest',   '#0e1512','#0a100d','#151e1a','#1d2822','#2a3930','#e4efe8','#9fb3a7','#6fe0b0','#06150e','#ff9a90','#3a1f1d','#f3c969','#333218','#f0a874','#82b7ea','#7bdc9e','#bba6ee','#ec97b6','#62d5c4','#c4d776','#d0bf9d'],
+      ember:    ['Ember',    '#15110e','#100c0a','#1d1814','#271f19','#392f26','#f0e9e2','#b5a799','#ff9f43','#1c0f02','#ff8d85','#401e1b','#f5d36b','#3d3016','#ee9a78','#86b4ef','#7ccf93','#bda3ee','#ee93b1','#62cbc6','#c9d46e','#d6c09a'],
+      plum:     ['Plum',     '#140f1a','#0f0a14','#1c1524','#261d30','#382b46','#ece6f3','#b1a5c0','#e58bd0','#1f0a1b','#ff93a0','#401c27','#f3c969','#392f1a','#f0a07a','#86b2f4','#77d4a0','#c0a2fa','#f08fc0','#60d0d2','#bfd673','#d2bfa4'],
+      graphite: ['Graphite', '#111112','#0c0c0d','#19191b','#222225','#313135','#ececee','#a8a8af','#dcdfe6','#111114','#ff938c','#3a2020','#f3c969','#38311a','#f0a56e','#7fb2ee','#7dd09b','#b6a6ee','#ee98b8','#66cdd0','#c0d278','#cbbca3']
+    };
+    const ids = Object.keys(TH);
+    const id = this.state.theme ?? this.props.theme ?? 'slate';
+    const t = TH[id] || TH.slate;
+    const keys = ['bg','side','surface','raised','border','text','muted','accent','on-accent','overdue','overdue-bg','soon','soon-bg'];
+    let rootStyle = '';
+    keys.forEach((k, i) => { rootStyle += '--' + k + ':' + t[i + 1] + ';'; });
+    for (let i = 0; i < 8; i++) rootStyle += '--pc' + i + ':' + t[14 + i] + ';';
+
+    const themes = ids.map((k) => {
+      const x = TH[k];
+      const on = k === id;
+      return {
+        label: 'Theme: ' + x[0],
+        pressed: on ? 'true' : 'false',
+        pick: () => this.setState({ theme: k }),
+        style: 'width:26px;height:26px;padding:0;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;box-sizing:border-box;background:' + x[1] + ';border:2px solid ' + (on ? 'var(--text)' : 'var(--border)'),
+        dot: 'width:12px;height:12px;border-radius:50%;background:' + x[8]
+      };
+    });
+
+    const badgeBase = 'flex:none;white-space:nowrap;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;';
+    const badge = (kind) => badgeBase + (kind === 'od' ? 'background:var(--overdue-bg);color:var(--overdue)' : kind === 'soon' ? 'background:var(--soon-bg);color:var(--soon)' : 'background:var(--raised);color:var(--muted)');
+    const dotStyle = (on) => 'width:6px;height:6px;border-radius:50%;background:' + (on ? 'var(--text)' : 'var(--border)');
+    const dots = (n) => ({ impLabel: 'Importance ' + n + ' of 5', d1: dotStyle(n > 0), d2: dotStyle(n > 1), d3: dotStyle(n > 2), d4: dotStyle(n > 3), d5: dotStyle(n > 4) });
+    const pc = (n) => '--pc:var(--pc' + n + ')';
+    const area = { Uni: 0, Job: 1, Sport: 2, Personal: 3 };
+    const areaStyle = (a) => a in area ? '--ac:var(--pc' + area[a] + ')' : '--ac:var(--muted)';
+    const meas = (title, value, pct) => ({ title, value, pct: pct + '%', barStyle: 'width:' + pct + '%;height:100%;border-radius:999px;background:var(--pc)' });
+    const proj = (title, n, bd, kind, inh) => ({ title, pcStyle: pc(n), badge: bd, badgeStyle: badge(kind), inherited: inh });
+    const goal = (title, n, range, bd, kind, pct, measures, projects, tasks) => ({
+      title, pcStyle: pc(n), range, badge: bd, badgeStyle: badge(kind),
+      pct: pct + '%', pctNum: pct, barStyle: 'width:' + pct + '%;height:100%;border-radius:999px;background:var(--pc)',
+      measures, projects, tasks, hasTasks: tasks.length > 0
+    });
+
+    const g0 = goal('Land a frontend role', 1, '01-10-2026 – 31-12-2026', '31-12-2026', 'n', 62,
+      [meas('Applications sent', '9 / 20', 45), meas('Portfolio live', 'Done', 100), meas('Mock interviews', '4 / 10 check-ins', 40)],
+      [proj('Portfolio site', 1, 'In 3 days', 'soon', false), proj('Orbit app rebuild', 3, '31-12-2026', 'n', true)],
+      [{ title: 'Update LinkedIn headline', pcStyle: pc(1) }]);
+    const g1 = goal('Run a half marathon', 2, '01-09-2026 – 10-11-2026', 'In 5 days', 'soon', 59,
+      [meas('Long run', '14 / 21 km (start 5)', 56), meas('Runs logged', '22 / 36 check-ins', 61)],
+      [proj('Training block 3', 2, 'In 5 days', 'soon', true)], []);
+    const g2 = goal('Finish thesis draft', 0, '15-09-2026 – 30-01-2027', '30-01-2027', 'n', 50,
+      [meas('Chapters drafted', '3 / 6', 50)],
+      [proj('Chapter 4: Evaluation', 0, 'Overdue', 'od', false)], []);
+
+    const loose = [Object.assign({ title: 'Tax return 2025', pcStyle: pc(4), area: 'Personal', areaStyle: areaStyle('Personal'), badge: '30-11-2026', badgeStyle: badge('n') }, dots(2))];
+
+    const af = this.state.areaFilter ?? 'All';
+    const filters = ['All', 'Job', 'Personal', 'Sport', 'Uni', 'No area'].map((f) => {
+      const on = f === af;
+      return {
+        label: f, pressed: on ? 'true' : 'false',
+        pick: () => this.setState({ areaFilter: f }),
+        style: 'padding:6px 13px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;' + (on ? 'background:color-mix(in srgb,var(--accent) 17%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 50%,var(--border));color:var(--text)' : 'background:var(--surface);border:1px solid var(--border);color:var(--muted)')
+      };
+    });
+    const bl = [['Learn Rust basics', 'Backlog', 'Personal', 2, 5], ['Garden redesign', 'Paused', 'Personal', 3, 6]];
+    const backlog = bl.filter((b) => af === 'All' || b[2] === af).map((b) => Object.assign({
+      title: b[0], status: b[1], area: b[2], areaStyle: areaStyle(b[2]), pcStyle: pc(b[4]), activateLabel: 'Activate ' + b[0]
+    }, dots(b[3])));
+
+    const hd = [
+      ['Stretch', 'Training block 3', 2, 'Daily', false],
+      ['Read 20 pages', 'Finish thesis draft', 0, 'Mon, Tue, Wed, Thu, Fri', false],
+      ['Duolingo', '', -1, 'Daily', false],
+      ['Mock interview prep', 'Land a frontend role', 1, '3 times per week', false],
+      ['Meditate', '', -1, 'Daily', true]
+    ];
+    const habits = hd.map((h, i) => ({
+      title: h[0], link: h[1], hasLink: h[2] >= 0, pcStyle: h[2] >= 0 ? pc(h[2]) : '--pc:var(--muted)', schedule: h[3], inactive: h[4],
+      rowStyle: 'display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.4fr) minmax(0,1.2fr) 90px;gap:12px;align-items:center;padding:0 12px;height:46px;border-top:1px solid var(--border);font-size:13px;' + (h[4] ? 'opacity:0.7' : '')
+    }));
+
+    const areas = [['Job', 1, '1 project'], ['Personal', 3, '4 projects'], ['Sport', 2, '1 project'], ['Uni', 0, '1 project']].map((a) => ({ name: a[0], pcStyle: pc(a[1]), count: a[2] }));
+    const archive = [
+      { title: 'Learn Spanish A2', kind: 'Goal', pcStyle: pc(7) },
+      { title: 'Move flat', kind: 'Project', pcStyle: '--pc:var(--muted)' }
+    ];
+
+    return { rootStyle, themes, g0, g1, g2, loose, filters, backlog, backlogEmpty: backlog.length === 0, habits, areas, archive };
+  }
+}
+</script>
+</body>
+</html>

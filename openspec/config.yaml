@@ -42,8 +42,11 @@ context: |
 
   UI conventions (docs/SPEC.md §6.7; components and tokens in src/core/ui/):
   - Desktop first; layouts must also work in a browser window
-  - Use the shared components and theme tokens; forms in a Sheet,
+  - Use the shared components and theme tokens (never hard-coded colours;
+    themes are CSS variables on <html data-theme>); forms in a Sheet,
     confirmations through useMessages()
+  - A project's colour always comes from colors.ts (slot → var(--pcN)),
+    shown with its name
   - Leave unset values out; no placeholder texts like "No area" or
     "No deadline" (choices in pickers are fine)
   - Empty lists and sections: an icon, one short line without a period,
