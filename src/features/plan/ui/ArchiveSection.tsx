@@ -8,7 +8,9 @@ import { Section } from '../../../core/ui/components/Section.tsx';
 import { listAreas } from '../../areas/data/areas-repository.ts';
 import { listArchivedGoals } from '../../goals/data/goals-repository.ts';
 import { listProjectsByStatus } from '../../projects/data/projects-repository.ts';
-import { ProjectRow } from '../../projects/ui/ProjectRow.tsx';
+import { goalColor } from '../../../core/ui/colors.ts';
+import { Tile } from '../../../core/ui/components/Tile.tsx';
+import styles from './PlanScreen.module.css';
 import { archiveItems } from '../domain/plan.ts';
 
 /** Completed and archived goals and completed projects, most recently updated first. */
@@ -21,19 +23,36 @@ export function ArchiveSection() {
   return (
     <Section title="Archive" count={data?.items.length}>
       {data && data.items.length === 0 && <EmptyState icon={Archive} text="Nothing archived yet" />}
-      <div>
-        {data?.items.map((entry) =>
-          entry.kind === 'goal' ? (
-            <ListRow
-              key={entry.item.id}
-              title={entry.item.title}
-              onOpen={() => navigate({ name: 'goal', id: entry.item.id })}
-              meta={<Chip tone={entry.item.status === 'completed' ? 'secondary' : 'neutral'}>{entry.item.status === 'completed' ? 'Completed goal' : 'Archived goal'}</Chip>}
-            />
+      <div className={styles.archiveGrid}>
+        {data?.items.map((entry) => {
+          const area = entry.kind === 'project' ? data.areas.find((a) => a.id === entry.item.project.areaId) : undefined;
+          return entry.kind === 'goal' ? (
+            <Tile key={entry.item.id} color={entry.item.color ? goalColor(entry.item, 0) : undefined}>
+              <ListRow
+                title={entry.item.title}
+                onOpen={() => navigate({ name: 'goal', id: entry.item.id })}
+                meta={
+                  <Chip tone={entry.item.status === 'completed' ? 'secondary' : 'neutral'}>
+                    {entry.item.status === 'completed' ? 'Completed goal' : 'Archived goal'}
+                  </Chip>
+                }
+              />
+            </Tile>
           ) : (
-            <ProjectRow key={entry.item.project.id} view={entry.item} area={data.areas.find((a) => a.id === entry.item.project.areaId)} />
-          ),
-        )}
+            <Tile key={entry.item.project.id} color={entry.item.color}>
+              <ListRow
+                title={entry.item.project.title}
+                onOpen={() => navigate({ name: 'project', id: entry.item.project.id })}
+                meta={
+                  <>
+                    <Chip tone="secondary">Completed project</Chip>
+                    {area && <Chip color={area.color}>{area.name}</Chip>}
+                  </>
+                }
+              />
+            </Tile>
+          );
+        })}
       </div>
     </Section>
   );

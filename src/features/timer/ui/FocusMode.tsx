@@ -1,9 +1,12 @@
 import { ArrowLeft, Square, Timer, Trash2 } from 'lucide-react';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, type CSSProperties } from 'react';
 import { useLiveQuery } from '../../../core/db/live.ts';
 import { navigate } from '../../../core/routing/useRoute.ts';
+import { Chip } from '../../../core/ui/components/Chip.tsx';
+import { ThemeSwitcher } from '../../../core/ui/components/ThemeSwitcher.tsx';
 import { Button } from '../../../core/ui/components/Button.tsx';
 import { EmptyState } from '../../../core/ui/components/EmptyState.tsx';
+import { useSettings } from '../../settings/data/settings.ts';
 import { getTimerView, type TimerView } from '../data/timer-view.ts';
 import styles from './FocusMode.module.css';
 import { TimerReadout } from './TimerReadout.tsx';
@@ -31,7 +34,7 @@ export function FocusMode() {
   if (view === undefined) return null;
   if (view === null) {
     return (
-      <div className={styles.focus}>
+      <div className={styles.empty}>
         <EmptyState icon={Timer} text="No timer running" action={<Button onClick={() => navigate({ name: 'home' })}>Go to Home</Button>} />
       </div>
     );
@@ -42,25 +45,37 @@ export function FocusMode() {
 function FocusSession({ view }: { view: TimerView }) {
   const ended = useCallback(() => leave(), []);
   const stop = useStopTimer(view, ended);
+  const { settings, save } = useSettings();
   const { timer } = view;
   return (
-    <div className={styles.focus}>
-      <Button variant="ghost" className={styles.leave} icon={<ArrowLeft />} onClick={leave}>
-        Leave focus mode
-      </Button>
-      <div className={styles.target}>
-        <h1>{view.title}</h1>
-        {view.notes && <p className={styles.notes}>{view.notes}</p>}
-      </div>
-      <TimerReadout startedAt={timer.startedAt} plannedMinutes={timer.plannedMinutes} large />
-      <div className={styles.actions}>
-        <Button variant="primary" icon={<Square />} onClick={stop.askStop}>
-          Stop
+    <div className={styles.focus} style={view.projectColor ? ({ '--pc': view.projectColor } as CSSProperties) : undefined}>
+      <header className={styles.top}>
+        <Button icon={<ArrowLeft />} onClick={leave}>
+          Leave focus mode (Esc)
         </Button>
-        <Button variant="ghost" icon={<Trash2 />} onClick={stop.askDiscard}>
-          Discard
-        </Button>
-      </div>
+        <ThemeSwitcher value={settings.theme} onChange={(id) => void save('theme', id)} />
+      </header>
+      <main className={styles.main}>
+        <div className={styles.column}>
+          {view.projectColor && view.projectName && <Chip projectColor={view.projectColor}>{view.projectName}</Chip>}
+          <h1>{view.title}</h1>
+          <TimerReadout startedAt={timer.startedAt} plannedMinutes={timer.plannedMinutes} large />
+          <div className={styles.actions}>
+            <Button variant="primary" icon={<Square />} onClick={stop.askStop}>
+              Stop
+            </Button>
+            <Button icon={<Trash2 />} onClick={stop.askDiscard}>
+              Discard
+            </Button>
+          </div>
+          {view.notes && (
+            <section className={styles.notes} aria-label="Notes">
+              <h2>Notes</h2>
+              <p>{view.notes}</p>
+            </section>
+          )}
+        </div>
+      </main>
       {stop.dialogs}
     </div>
   );

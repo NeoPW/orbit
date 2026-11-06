@@ -7,7 +7,9 @@ import { Chip } from '../../../core/ui/components/Chip.tsx';
 import { DeadlineBadge } from '../../../core/ui/components/DeadlineBadge.tsx';
 import { ImportanceDots } from '../../../core/ui/components/ImportanceDots.tsx';
 import { ListRow } from '../../../core/ui/components/ListRow.tsx';
+import type { CSSProperties } from 'react';
 import type { Task } from '../data/tasks-repository.ts';
+import styles from './TaskRow.module.css';
 import { useCompleteTask } from './useCompleteTask.ts';
 
 export interface TaskRowProps {
@@ -18,6 +20,10 @@ export interface TaskRowProps {
   context?: string;
   /** Shows a "Start focus" button at the end of the row. */
   onStartFocus?: () => void;
+  /** CSS colour of the task's project (`projectColor(p)`); with `projectName` it shows the project chip and a colour rail. */
+  projectColor?: string | null;
+  /** The project's name, shown in the chip. */
+  projectName?: string;
 }
 
 /**
@@ -26,21 +32,16 @@ export interface TaskRowProps {
  * next-step marker, optional importance and context, and the due date.
  * Clicking the row opens the task page. A row has no menu of its own.
  */
-export function TaskRow({ task, importance, context, onStartFocus }: TaskRowProps) {
+export function TaskRow({ task, importance, context, onStartFocus, projectColor, projectName }: TaskRowProps) {
   const complete = useCompleteTask();
-  return (
+  const colored = Boolean(projectColor && projectName);
+  const row = (
     <ListRow
-      leading={
-        <Checkbox
-          checked={false}
-          label={<span className="visually-hidden">Complete {task.title}</span>}
-          onChange={() => void complete(task)}
-        />
-      }
+      leading={<Checkbox checked={false} label={<span className="visually-hidden">Complete {task.title}</span>} onChange={() => void complete(task)} />}
       title={task.title}
       onOpen={() => navigate({ name: 'task', id: task.id })}
       meta={
-        task.isNextStep || importance || context || task.dueDate ? (
+        task.isNextStep || importance || context || task.dueDate || colored ? (
           <>
             {task.isNextStep && (
               <Chip tone="primary" icon={<ArrowRight aria-hidden="true" />}>
@@ -48,13 +49,21 @@ export function TaskRow({ task, importance, context, onStartFocus }: TaskRowProp
               </Chip>
             )}
             {importance && <ImportanceDots value={importance.value} inherited={importance.inherited} />}
-            {context && <span>{context}</span>}
+            {colored && <Chip projectColor={projectColor ?? undefined}>{projectName}</Chip>}
+            {context && !colored && <span>{context}</span>}
             {task.dueDate && <DeadlineBadge deadline={task.dueDate} />}
           </>
         ) : undefined
       }
       trailing={onStartFocus && <IconButton label={`Start focus on ${task.title}`} icon={<Play />} onClick={onStartFocus} />}
     />
+  );
+  return colored ? (
+    <div className={styles.colored} style={{ '--pc': projectColor } as CSSProperties}>
+      {row}
+    </div>
+  ) : (
+    row
   );
 }
 
@@ -67,12 +76,5 @@ export interface TaskListProps {
 
 /** Open tasks as `TaskRow`s in an `AnimatedList`, so a completed task leaves with a short animation. */
 export function TaskList({ tasks, rowProps, label }: TaskListProps) {
-  return (
-    <AnimatedList
-      items={tasks}
-      getKey={(task) => task.id}
-      label={label}
-      renderItem={(task) => <TaskRow task={task} {...rowProps?.(task)} />}
-    />
-  );
+  return <AnimatedList items={tasks} getKey={(task) => task.id} label={label} renderItem={(task) => <TaskRow task={task} {...rowProps?.(task)} />} />;
 }

@@ -60,6 +60,8 @@ export function MeasuresSection({ data, color }: GoalSectionProps) {
   return (
     <Section
       title="Measures"
+      tile
+      color={color}
       count={data.measures.length}
       actions={
         <Button variant="ghost" icon={<Plus />} onClick={() => setSheet({})}>
@@ -67,37 +69,39 @@ export function MeasuresSection({ data, color }: GoalSectionProps) {
         </Button>
       }
     >
-      <div>
-        {data.measures.map((measure) => {
-          const progress = measureProgress(measure, measure.checkIns);
-          const unit = measure.unit ? ` ${measure.unit}` : '';
-          return (
-            <ListRow
-              key={measure.id}
-              title={measure.title}
-              onOpen={() => setSheet({ measure })}
-              meta={<ProgressBar value={progress} color={color} label={measure.title} />}
-              trailing={
-                measure.measureType === 'numeric' ? (
-                  <>
-                    <IconButton label={`Lower ${measure.title}`} icon={<Minus />} onClick={() => void stepMeasure(db, clock, measure.id, -1)} />
-                    <ValueEditor measure={measure} />
-                    <span className={styles.target}>
-                      / {measure.targetValue ?? 0}
-                      {unit}
-                    </span>
-                    <IconButton label={`Raise ${measure.title}`} icon={<Plus />} onClick={() => void stepMeasure(db, clock, measure.id, 1)} />
-                  </>
-                ) : measure.measureType === 'boolean' ? (
-                  <Switch label="Done" checked={measure.currentValue === 1} onChange={(done) => void setMeasureDone(db, clock, measure.id, done)} />
-                ) : (
-                  <span className={styles.target}>{measureValueText(measure, measure.checkIns)}</span>
-                )
-              }
-            />
-          );
-        })}
-      </div>
+      {data.measures.length > 0 && (
+        <div>
+          {data.measures.map((measure) => {
+            const progress = measureProgress(measure, measure.checkIns);
+            const unit = measure.unit ? ` ${measure.unit}` : '';
+            return (
+              <ListRow
+                key={measure.id}
+                title={measure.title}
+                onOpen={() => setSheet({ measure })}
+                meta={<ProgressBar value={progress} color={color} label={measure.title} />}
+                trailing={
+                  measure.measureType === 'numeric' ? (
+                    <>
+                      <IconButton label={`Lower ${measure.title}`} icon={<Minus />} onClick={() => void stepMeasure(db, clock, measure.id, -1)} />
+                      <ValueEditor measure={measure} />
+                      <span className={styles.target}>
+                        / {measure.targetValue ?? 0}
+                        {unit}
+                      </span>
+                      <IconButton label={`Raise ${measure.title}`} icon={<Plus />} onClick={() => void stepMeasure(db, clock, measure.id, 1)} />
+                    </>
+                  ) : measure.measureType === 'boolean' ? (
+                    <Switch label="Done" checked={measure.currentValue === 1} onChange={(done) => void setMeasureDone(db, clock, measure.id, done)} />
+                  ) : (
+                    <span className={styles.target}>{measureValueText(measure, measure.checkIns)}</span>
+                  )
+                }
+              />
+            );
+          })}
+        </div>
+      )}
       {sheet && <MeasureSheet goalId={data.goal.id} measure={sheet.measure} onClose={() => setSheet(null)} />}
     </Section>
   );

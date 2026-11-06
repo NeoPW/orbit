@@ -3,8 +3,8 @@ import { createFields } from '../../../core/db/records.ts';
 import { goals, projects } from '../../../core/db/schema.ts';
 import { openTestDatabase } from '../../../core/db/testing.ts';
 import { checkHabit, createHabit } from '../../habits/data/habits-repository.ts';
-import { createTask, setNextStep, type TaskInput } from '../../tasks/data/tasks-repository.ts';
-import { listActiveProjects, listHabitsForToday, listTodo } from './home-queries.ts';
+import { completeTask, createTask, setNextStep, type TaskInput } from '../../tasks/data/tasks-repository.ts';
+import { listActiveHabitOptions, listActiveProjects, listDoneToday, listHabitsForToday, listTodo } from './home-queries.ts';
 
 const clock = () => new Date('2026-10-05T09:00:00Z');
 const TODAY = '2026-10-05';
@@ -53,7 +53,10 @@ describe('home queries', () => {
     await createTask(db, clock, { ...base, title: 'Book physio', goalId: goal });
     await createTask(db, clock, { ...base, title: 'Other' });
     const todo = await listTodo(db, TODAY);
-    expect(todo.map((t) => [t.task.title, t.context])).toEqual([['Book physio', 'Get fit'], ['Other', null]]);
+    expect(todo.map((t) => [t.task.title, t.context])).toEqual([
+      ['Book physio', 'Get fit'],
+      ['Other', null],
+    ]);
   });
 
   it('lists active projects by score with their open next steps', async () => {
@@ -63,14 +66,26 @@ describe('home queries', () => {
     await addProject(db, 'Paused', { status: 'paused' });
     await step(db, b, 'Next B');
     const list = await listActiveProjects(db, TODAY);
-    expect(list.map((p) => [p.view.project.id, p.nextSteps.map((t) => t.title)])).toEqual([[b, ['Next B']], [a, []]]);
+    expect(list.map((p) => [p.view.project.id, p.nextSteps.map((t) => t.title)])).toEqual([
+      [b, ['Next B']],
+      [a, []],
+    ]);
   });
 
   it('keeps a habit listed after it is checked and leaves out one that is not due', async () => {
     const { db } = await openTestDatabase();
     const project = await addProject(db, 'Marathon');
     const goal = await addGoal(db, 'Learn Spanish');
-    const habit = { title: 'Stretch', projectId: project, goalId: null, scheduleType: 'times_per_week' as const, weekdays: [], timesPerWeek: 1, reminderTime: null, active: true };
+    const habit = {
+      title: 'Stretch',
+      projectId: project,
+      goalId: null,
+      scheduleType: 'times_per_week' as const,
+      weekdays: [],
+      timesPerWeek: 1,
+      reminderTime: null,
+      active: true,
+    };
     const stretch = await createHabit(db, clock, habit);
     await createHabit(db, clock, { ...habit, title: 'Read', projectId: null, goalId: goal, scheduleType: 'daily', timesPerWeek: null });
     await createHabit(db, clock, { ...habit, title: 'Off', active: false });
@@ -80,6 +95,42 @@ describe('home queries', () => {
       ['Read', 'Learn Spanish', false],
     ]);
     await checkHabit(db, clock, stretch.id, TODAY);
-    expect((await listHabitsForToday(db, TODAY)).map((h) => [h.title, h.checked])).toEqual([['Stretch', true], ['Read', false]]);
+    expect((await listHabitsForToday(db, TODAY)).map((h) => [h.title, h.checked])).toEqual([
+      ['Stretch', true],
+      ['Read', false],
+    ]);
+  });
+
+  it("lists the tasks completed today, newest first, and not yesterday's", async () => {
+    const { db } = await openTestDatabase();
+    const input: TaskInput = { title: 'A', notes: '', dueDate: null, importance: null, projectId: null, goalId: null };
+    const a = await createTask(db, clock, { ...input, title: 'Early' });
+    const b = await createTask(db, clock, { ...input, title: 'Late' });
+    const c = await createTask(db, clock, { ...input, title: 'Yesterday' });
+    const open = await createTask(db, clock, { ...input, title: 'Still open' });
+    await completeTask(db, () => new Date(2026, 9, 5, 9, 0), a, { kind: 'skip' });
+    await completeTask(db, () => new Date(2026, 9, 5, 15, 30), b, { kind: 'skip' });
+    await completeTask(db, () => new Date(2026, 9, 4, 22, 0), c, { kind: 'skip' });
+    const done = await listDoneToday(db, '2026-10-05');
+    expect(done.map((d) => d.task.title)).toEqual(['Late', 'Early']);
+    expect(done.some((d) => d.task.id === open)).toBe(false);
+  });
+
+  it('lists all active habits with their project, not only the due ones', async () => {
+    const { db } = await openTestDatabase();
+    const project = createFields(clock);
+    await db.insert(projects).values({ ...project, title: 'Training', color: 'pc2' });
+    const base = {
+      projectId: project.id,
+      goalId: null,
+      scheduleType: 'weekdays' as const,
+      weekdays: [1],
+      timesPerWeek: null,
+      reminderTime: null,
+    };
+    await createHabit(db, clock, { ...base, title: 'Run', active: true });
+    await createHabit(db, clock, { ...base, title: 'Paused', active: false });
+    const options = await listActiveHabitOptions(db);
+    expect(options).toMatchObject([{ title: 'Run', projectTitle: 'Training', projectColor: 'var(--pc2)' }]);
   });
 });

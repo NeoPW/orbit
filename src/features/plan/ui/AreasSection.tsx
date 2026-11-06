@@ -1,11 +1,10 @@
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { listAreas } from '../../areas/data/areas-repository.ts';
 import { AreaSheet } from '../../areas/ui/AreaSheet.tsx';
 import { useLiveQuery } from '../../../core/db/live.ts';
 import type { Area } from '../../../core/db/schema.ts';
 import { Button } from '../../../core/ui/components/Button.tsx';
-import { Chip } from '../../../core/ui/components/Chip.tsx';
 import { Section } from '../../../core/ui/components/Section.tsx';
 import styles from './PlanScreen.module.css';
 
@@ -22,11 +21,12 @@ export function AreasSection() {
         </Button>
       }
     >
-      <div className={styles.chips}>
+      <div className={styles.areaGrid}>
         {areas?.map((area) => (
-          <Chip key={area.id} color={area.color} onClick={() => setSheet({ area })}>
-            {area.name}
-          </Chip>
+          <button key={area.id} type="button" className={styles.areaTile} style={{ '--pc': area.color } as CSSProperties} onClick={() => setSheet({ area })}>
+            <span className={styles.areaDot} aria-hidden="true" />
+            <span className={styles.areaName}>{area.name}</span>
+          </button>
         ))}
       </div>
       {sheet && <AreaSheet area={sheet.area} count={areas?.length} onClose={() => setSheet(null)} />}

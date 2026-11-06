@@ -90,6 +90,7 @@ The server stores the same tables with the same columns, plus a server-set chang
 - `status`: `active | backlog | paused | completed`
 - `importance`: integer 1–5
 - `deadline` nullable
+- `color` nullable: a palette slot (`pc0`…`pc7`) of the colour theme (§6.7); a new project gets the least used slot, and a project without one shows a slot derived from its id
 - `completed_at` nullable (set when the status becomes `completed`, cleared when it changes away from it)
 
 A project's next steps are its tasks with `is_next_step` set (see Task); the project itself stores no next step.
@@ -118,16 +119,16 @@ A project's next steps are its tasks with `is_next_step` set (see Task); the pro
 - Unique per (`habit_id`, `date`)
 
 ### LogEntry
-- `project_id` nullable, `goal_id` nullable, `task_id` nullable
+- `project_id` nullable, `goal_id` nullable, `task_id` nullable, `habit_id` nullable (the habit a focus session or a check belongs to)
 - `occurred_at`
 - `duration_minutes` nullable
 - `note`
 - `source`: `manual | habit | task | timer`
 
 ### Timer
-- `project_id` nullable, `task_id` nullable: exactly one of them is set
+- `project_id` nullable, `task_id` nullable, `habit_id` nullable: exactly one of them is set
 - `started_at` (UTC)
-- `planned_minutes` nullable: the planned length of a focus session (25, 50 or 90 from the quick choices, or any other number); null for an open-ended session
+- `planned_minutes` nullable: the planned length of a focus session (30, 60 or 90 from the quick choices, or any other number); null for an open-ended session
 - There is at most one row: it has a fixed ID, so starting a timer on two devices gives one record (the later start wins). Stopping soft-deletes it.
 
 ### Note
@@ -205,7 +206,7 @@ Measured in local calendar days from today to a deadline:
 ### Timer and focus
 - Starting a timer while another runs stops the running one first (and logs it).
 - With `planned_minutes`, the end of the planned time is marked by a desktop notification and a sound; the timer keeps counting into overtime and is not stopped automatically.
-- Stopping asks "What did you get done?"; the answer becomes the log entry's note. It then creates a `LogEntry` (`source = timer`, `occurred_at` = start, linked to the project, or to the task and its project or goal) with the elapsed whole minutes, at least 1. When the session ran for a task that is completed at that point and was a next step, the next-step prompt follows.
+- Stopping asks "What did you get done?"; the answer becomes the log entry's note. It then creates a `LogEntry` (`source = timer`, `occurred_at` = start, linked to the project, or to the task and its project or goal, or to the habit and its project or goal) with the elapsed whole minutes, at least 1. For a habit that is not yet checked today the stop dialog offers "Mark as done today" (on by default), which checks the habit. When the session ran for a task that is completed at that point and was a next step, the next-step prompt follows.
 - The timer can also be discarded without logging.
 - The elapsed time is computed from `started_at`, so the timer keeps running while the app is closed.
 
@@ -233,13 +234,16 @@ Desktop layout with a main column and a side column.
 
 **Main column**, top to bottom:
 1. **Today:** the weekday and date.
-2. **Focus panel:** pick a task or project (the to-do list below and the active projects are offered), choose a planned length (25, 50 or 90 minutes, or open-ended) and start. While a timer runs, the panel shows what it runs for, the elapsed time counting live (and the overtime after a planned length), **Stop** and **Discard**, and a button to enter focus mode again.
-3. **Habits due today:** in their own row, as compact chips labeled with their project or goal; clicking a chip checks or unchecks it. Habits are not ranked with tasks.
+2. **Focus panel:** a text field "What are you working on?" that suggests matching open tasks and active habits (with their project colour and name) while typing (Tab accepts the highlighted or first suggestion), a planned length (30, 60 or 90 minutes, or open-ended; open-ended is the default and the last choice is remembered on the device) and Start. Text that is not an existing task creates one when starting: `title # project` puts the new task in that project (after `#` the active projects are suggested; a prefix is enough when it is unique), without `#` it is a standalone task, and `# project` alone starts on the project itself. An unknown project name shows an error and disables Start. While a timer runs, the panel shows what it runs for, the elapsed time counting live (and the overtime after a planned length), **Stop** and **Discard**, and a button to enter focus mode again.
+3. **Habits due today:** in their own row, as compact chips labeled with their project or goal; clicking a chip checks or unchecks it, and its small start button starts a focus session on the habit (a habit is like a recurring task: it can be focused on and its time is logged on it). Habits are not ranked with tasks.
 4. **To do:** the open next-step tasks of active projects and the open tasks outside projects (standalone or assigned to a goal), ranked by task rank (§5). Each row shows a checkbox, the title, its project or goal, importance dots and a deadline badge; a row can be started as a focus session directly. Clicking a row opens the task page.
+5. **Done today:** the tasks completed today, newest first, each with a checked checkbox (unchecking reopens it), its title, project chip and completion time; hidden while nothing was completed today.
 
-**Side column:** a compact overview of the active projects, ordered by project score (§5), each with its title, area color, deadline badge and its next steps. Clicking a project opens its detail.
+**Side column:**
+1. **Today:** the work already logged today, plotted as blocks on an hour axis (06:00–22:00, extended for earlier or later work), colored like their project and labeled with the task, project or goal. A timer entry starts at its time, any other entry ends at its time (the work was done before it was logged); entries without a duration (a completed task, a habit check) are small dots at the left edge of the column, without text (details on hover), so only focus sessions and tracked time are blocks; a block shows its title, its time range and project when it is high enough; a running focus session is a striped block growing to the current time; overlapping blocks sit side by side; a line marks now. Clicking a block opens its task, project or goal. A view only, no planning.
+2. A compact overview of the active projects, ordered by project score (§5), each with its title, area color, deadline badge and its next steps. Clicking a project opens its detail.
 
-Also on Home: **New task** (title, optional deadline, importance and assignment; saving a plain task takes a title and Enter) and **Log work** (record work done without a timer: optional duration and note, then the project or task).
+Also on Home: **New task** (title, optional deadline, importance and assignment; saving a plain task takes a title and Enter) and **Log work** (record work done without a timer: optional start time, duration and note, then the project or task; without a start time the work ended now, with one it ended at the start plus the duration).
 
 **Focus mode:** starting a focus session opens a full-window view showing only the task or project, its notes and a large timer (with the planned length and overtime, if set), with Stop and Discard. Stopping follows §5 (Timer and focus).
 
@@ -273,6 +277,7 @@ The review is the main place where projects and goals are updated.
 - **Review week:** on Sunday the Monday–Sunday week ending today, on any other day the previous Monday–Sunday week. One review per week.
 - **Week summary**, used in all places below, top to bottom:
   - **Goals:** each active goal with its progress and the change since the last completed review (§5, "Weeks"), its measures with their change below it, and the work logged on it that week.
+  - **Days:** the work of each day, Monday to Sunday, as seven timelines (as on Home) side by side on one shared hour axis.
   - **Work:** work logged per project (count and total duration), grouped by the goal the project serves, then projects without a goal.
   - **Finished:** projects completed and tasks completed that week.
   - **Habits:** adherence per habit (done of expected).
@@ -301,7 +306,10 @@ The review is the main place where projects and goals are updated.
 ### 6.7 Design and interaction
 The app should feel calm, clear and quick. These guidelines hold for every screen; the shared components and design tokens that implement them are in `src/core/ui/` (in development, `/dev/components` shows them all):
 - **Desktop first:** layouts use the width of a desktop window (columns, side panels) and still work in a narrower browser window. Keyboard use is first-class: Enter saves forms, Escape closes them.
-- **Visual identity:** dark only, with the Orbit palette (deep navy surfaces, a blue-violet primary, a cyan secondary, amber reserved for urgency and red for overdue). Body text uses **Inter**, headings **Space Grotesk**; both are bundled. Body text meets 4.5:1 contrast. Keyboard focus shows a visible ring; pointer clicks do not.
+- **Visual identity:** dark only, clean and modular: tiles (14–20 px radii, 1 px borders) on a calm ground, no textures or illustrations. All text is **Inter** (bundled), with tabular numerals for timers.
+- **Colour themes:** five dark themes (Slate, Forest, Ember, Plum, Graphite), switchable live from the sidebar and Settings; only colours change. Each theme has a ground, surfaces, one accent, red for overdue, amber for soon and eight project colours. The choice is a local setting.
+- **Colour coding:** every project has its own colour (a slot of the theme palette), shown the same everywhere it appears: a rail and tint on its tile and page, a chip with its name on its tasks and habits, a rail on its next steps. Goals use the same palette; areas stay small chips with a dot. The name always accompanies the colour. Body text meets 4.5:1 contrast. Keyboard focus shows a visible ring; pointer clicks do not.
+- **Dropdowns:** a field that picks one value from a list is a styled dropdown (a field-like button and a popup list on the app's own surface), not the browser's native select. It supports groups, optional colour dots (project colours), the keyboard (arrows, Enter, Escape, type-ahead) and works inside sheets.
 - **Less text, more structure:** metadata as chips, icons and badges instead of text lines: importance as dots, status as a colored chip, deadlines as a badge colored by urgency ("Overdue" in red; "Today", "Tomorrow" or "In N days" in amber within the lead time; otherwise the date). Absent values are left out instead of written out ("No area", "No deadline").
 - **Compact lists:** dense rows and no duplicate rows for the same item on one screen.
 - **Detail pages:** a header with title, status, area and deadline; actions in the header or a menu instead of rows of large buttons.

@@ -10,7 +10,7 @@ import { Chip } from '../../../core/ui/components/Chip.tsx';
 import { ConfirmDialog } from '../../../core/ui/components/ConfirmDialog.tsx';
 import { DeadlineBadge } from '../../../core/ui/components/DeadlineBadge.tsx';
 import { ImportanceDots } from '../../../core/ui/components/ImportanceDots.tsx';
-import { PageHeader } from '../../../core/ui/components/PageHeader.tsx';
+import { Tile } from '../../../core/ui/components/Tile.tsx';
 import { useMessages } from '../../../core/ui/messages/MessageProvider.tsx';
 import { StartFocusButton } from '../../timer/ui/StartFocusButton.tsx';
 import { LogSection } from '../../work-log/ui/LogSection.tsx';
@@ -35,8 +35,11 @@ export function TaskPage() {
   if (loaded === undefined) return null;
   if (loaded === null) return <NotFound text="Task not found" destination={{ name: 'plan' }} label="Go to Plan" />;
 
-  const { task, projectTitle, goalTitle, projectImportance } = loaded;
-  const importance = effectiveImportance({ importance: task.importance, projectImportance });
+  const { task, projectTitle, projectColor, goalTitle, projectImportance } = loaded;
+  const importance = effectiveImportance({
+    importance: task.importance,
+    projectImportance,
+  });
   const open = task.status === 'open';
 
   function afterDelete() {
@@ -48,18 +51,24 @@ export function TaskPage() {
 
   return (
     <div className={styles.page}>
-      <PageHeader
-        title={task.title}
-        meta={
-          <>
-            <Chip tone={open ? 'primary' : 'secondary'}>{open ? 'Open' : 'Done'}</Chip>
-            {task.isNextStep && (
-              <Chip tone="primary" icon={<ArrowRight aria-hidden="true" />}>
-                Next step
-              </Chip>
-            )}
-            {open && task.dueDate && <DeadlineBadge deadline={task.dueDate} />}
-          </>
+      <Tile
+        as="article"
+        color={projectColor ?? undefined}
+        tinted
+        title={
+          <div className={styles.titles}>
+            <h1 className={styles.heading}>{task.title}</h1>
+            <div className={styles.meta}>
+              {task.projectId && projectTitle && projectColor && <Chip projectColor={projectColor}>{projectTitle}</Chip>}
+              <Chip tone={open ? 'primary' : 'secondary'}>{open ? 'Open' : 'Done'}</Chip>
+              {task.isNextStep && (
+                <Chip tone="primary" icon={<ArrowRight aria-hidden="true" />}>
+                  Next step
+                </Chip>
+              )}
+              {open && task.dueDate && <DeadlineBadge deadline={task.dueDate} />}
+            </div>
+          </div>
         }
         actions={
           <>
@@ -81,42 +90,45 @@ export function TaskPage() {
             </Button>
           </>
         }
-      />
-      {task.notes && <p className={styles.notes}>{task.notes}</p>}
-      <dl className={styles.details}>
-        {task.dueDate && (
-          <>
-            <dt>Due</dt>
-            <dd>{formatDate(task.dueDate)}</dd>
-          </>
-        )}
-        <dt>Importance</dt>
-        <dd>
-          <ImportanceDots value={importance.value} inherited={importance.inherited} />
-        </dd>
-        <dt>Assigned to</dt>
-        <dd>
-          {task.projectId ? (
-            <button type="button" className={styles.link} onClick={() => navigate({ name: 'project', id: task.projectId! })}>
-              {projectTitle}
-            </button>
-          ) : task.goalId ? (
-            <button type="button" className={styles.link} onClick={() => navigate({ name: 'goal', id: task.goalId! })}>
-              {goalTitle}
-            </button>
-          ) : (
-            'Standalone'
+      >
+        {task.notes && <p className={styles.notes}>{task.notes}</p>}
+      </Tile>
+      <Tile aria-label="Details">
+        <dl className={styles.details}>
+          {task.dueDate && (
+            <>
+              <dt>Due</dt>
+              <dd>{formatDate(task.dueDate)}</dd>
+            </>
           )}
-        </dd>
-      </dl>
-      {open && task.projectId && (
-        <div>
-          <Button onClick={() => void setNextStep(db, clock, task.id, !task.isNextStep)}>
-            {task.isNextStep ? 'Remove from next steps' : 'Mark as next step'}
-          </Button>
-        </div>
-      )}
-      <LogSection target={{ taskId: task.id }} />
+          <dt>Importance</dt>
+          <dd>
+            <ImportanceDots value={importance.value} inherited={importance.inherited} />
+          </dd>
+          <dt>Assigned to</dt>
+          <dd>
+            {task.projectId ? (
+              <button type="button" className={styles.link} onClick={() => navigate({ name: 'project', id: task.projectId! })}>
+                {projectTitle}
+              </button>
+            ) : task.goalId ? (
+              <button type="button" className={styles.link} onClick={() => navigate({ name: 'goal', id: task.goalId! })}>
+                {goalTitle}
+              </button>
+            ) : (
+              'Standalone'
+            )}
+          </dd>
+        </dl>
+        {open && task.projectId && (
+          <div>
+            <Button onClick={() => void setNextStep(db, clock, task.id, !task.isNextStep)}>
+              {task.isNextStep ? 'Remove from next steps' : 'Mark as next step'}
+            </Button>
+          </div>
+        )}
+      </Tile>
+      <LogSection target={{ taskId: task.id }} color={projectColor ?? undefined} />
       {editing && <TaskSheet task={task} onDeleted={afterDelete} onClose={() => setEditing(false)} />}
       {confirming && (
         <ConfirmDialog

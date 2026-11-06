@@ -2,10 +2,12 @@ import { Inbox, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { daysUntil, localToday } from '../../core/dates/deadline.ts';
 import { addDays } from '../../core/dates/today.ts';
-import { AREA_COLORS, GOAL_COLORS } from '../../core/ui/palette.ts';
+import { SLOTS, slotColor, colorLabel } from '../../core/ui/colors.ts';
+import { AREA_COLORS } from '../../core/ui/palette.ts';
 import { AnimatedList } from '../../core/ui/components/AnimatedList.tsx';
 import { Button, IconButton } from '../../core/ui/components/Button.tsx';
 import { Checkbox } from '../../core/ui/components/Checkbox.tsx';
+import { Tile } from '../../core/ui/components/Tile.tsx';
 import { Chip } from '../../core/ui/components/Chip.tsx';
 import { ColorPicker } from '../../core/ui/components/ColorPicker.tsx';
 import { ConfirmDialog } from '../../core/ui/components/ConfirmDialog.tsx';
@@ -24,9 +26,13 @@ import { Select } from '../../core/ui/components/Select.tsx';
 import { Sheet } from '../../core/ui/components/Sheet.tsx';
 import { Switch } from '../../core/ui/components/Switch.tsx';
 import { TextArea, TextField } from '../../core/ui/components/TextField.tsx';
+import { ThemeSwitcher } from '../../core/ui/components/ThemeSwitcher.tsx';
 import { TimeField } from '../../core/ui/components/TimeField.tsx';
 import { WeekdayPicker } from '../../core/ui/components/WeekdayPicker.tsx';
+import type { ThemeId } from '../../core/ui/themes.ts';
 import { useMessages } from '../../core/ui/messages/MessageProvider.tsx';
+import { DayTimeline } from '../../features/timeline/ui/DayTimeline.tsx';
+import type { TimelineItem } from '../../features/timeline/data/timeline-loader.ts';
 import styles from './ComponentGallery.module.css';
 
 // Development only (/dev/components): every shared component in its states,
@@ -45,18 +51,25 @@ function EditTitleSheet({ initial, onSave, onClose }: { initial: string; onSave:
   const [title, setTitle] = useState(initial);
   const [notes, setNotes] = useState('');
   return (
-    <Sheet
-      title="Edit project"
-      onClose={onClose}
-      onSave={() => onSave(title.trim())}
-      onDelete={onClose}
-      saveDisabled={title.trim() === ''}
-    >
+    <Sheet title="Edit project" onClose={onClose} onSave={() => onSave(title.trim())} onDelete={onClose} saveDisabled={title.trim() === ''}>
       <TextField label="Title" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
       <TextArea label="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
       <p className={styles.hint}>Enter in the title saves; Enter in the notes adds a line; Escape discards.</p>
     </Sheet>
   );
+}
+
+/** Sample work of today for the timeline variants. */
+function sampleItems(day: string): TimelineItem[] {
+  const at = (hhmm: string) => new Date(`${day}T${hhmm}:00`);
+  const base = { note: '', target: null, running: false, projectName: null as string | null };
+  return [
+    { ...base, id: 'a', kind: 'block', start: at('09:00'), end: at('10:15'), minutes: 75, label: 'Thesis', color: 'var(--pc0)' },
+    { ...base, id: 'b', kind: 'block', start: at('09:30'), end: at('10:30'), minutes: 60, label: 'Portfolio site', color: 'var(--pc1)' },
+    { ...base, id: 'c', kind: 'marker', start: at('11:20'), end: at('11:20'), minutes: 0, label: 'Email supervisor', color: 'var(--pc0)' },
+    { ...base, id: 'd', kind: 'block', start: at('13:00'), end: at('13:05'), minutes: 5, label: 'Quick call', color: null },
+    { ...base, id: 'e', kind: 'block', start: at('14:00'), end: at('15:00'), minutes: 60, label: 'Rerun benchmarks', projectName: 'Chapter 4: Evaluation', color: 'var(--pc2)', running: true },
+  ];
 }
 
 export default function ComponentGallery() {
@@ -69,6 +82,7 @@ export default function ComponentGallery() {
   const [time, setTime] = useState<string | null>('07:15');
   const [amount, setAmount] = useState<number | null>(12.5);
   const [assignment, setAssignment] = useState('');
+  const [projectChoice, setProjectChoice] = useState('p1');
   const [reminders, setReminders] = useState(true);
   const [done, setDone] = useState(false);
   const [length, setLength] = useState<number>(25);
@@ -78,6 +92,7 @@ export default function ComponentGallery() {
   const [status, setStatus] = useState('Active');
   const [rows, setRows] = useState(['Write outline', 'Book flights', 'Call the bank']);
   const [counter, setCounter] = useState(1);
+  const [theme, setTheme] = useState<ThemeId>('slate');
 
   return (
     <div className={styles.gallery}>
@@ -131,9 +146,33 @@ export default function ComponentGallery() {
         <Chip color="#8E24AA">Personal</Chip>
         <Chip color="#43A047">Sport</Chip>
         <Chip color="#FB8C00">Uni</Chip>
+        <Chip projectColor={slotColor('pc1')}>Rerun benchmarks</Chip>
+        <Chip projectColor={slotColor('pc3')}>Garden</Chip>
+        <Chip projectColor={slotColor('pc6')}>Thesis</Chip>
         <Chip tone="primary" onClick={() => messages.show({ text: 'Status chip clicked', kind: 'info' })}>
           Clickable
         </Chip>
+      </Block>
+
+      <Block title="Tiles">
+        <div className={styles.wide}>
+          <Tile title="Plain tile">Body text</Tile>
+        </div>
+        <div className={styles.wide}>
+          <Tile as="article" color={slotColor('pc1')} tinted title="Rerun benchmarks" actions={<Chip projectColor={slotColor('pc1')}>Research</Chip>}>
+            Tinted header with colour rail
+          </Tile>
+        </div>
+        <div className={styles.wide}>
+          <Tile color={slotColor('pc4')} title="Rail only">
+            <ProgressBar value={0.4} color={slotColor('pc4')} label="Demo" />
+          </Tile>
+        </div>
+      </Block>
+
+      <Block title="Theme switcher">
+        <ThemeSwitcher value={theme} onChange={setTheme} />
+        <ThemeSwitcher showNames value={theme} onChange={setTheme} />
       </Block>
 
       <Block title="Importance">
@@ -167,10 +206,27 @@ export default function ComponentGallery() {
           onChange={setAssignment}
           options={[
             { value: '', label: 'None' },
-            { group: 'Goals', options: [{ value: 'g1', label: 'Get fit' }, { value: 'g2', label: 'Learn Rust' }] },
+            {
+              group: 'Goals',
+              options: [
+                { value: 'g1', label: 'Get fit' },
+                { value: 'g2', label: 'Learn Rust' },
+              ],
+            },
             { group: 'Projects', options: [{ value: 'p1', label: 'Thesis' }] },
           ]}
         />
+        <Select
+          label="Work on (colour dots)"
+          value={projectChoice}
+          onChange={setProjectChoice}
+          options={[
+            { value: 'p1', label: 'Thesis', color: 'var(--pc0)' },
+            { value: 'p2', label: 'Portfolio site', color: 'var(--pc1)' },
+            { value: 'p3', label: 'Archived (disabled)', color: 'var(--pc2)', disabled: true },
+          ]}
+        />
+        <Select label="With error" value="" onChange={() => undefined} options={[{ value: '', label: 'Choose' }]} error="Required" />
         <Switch label="Reminders" checked={reminders} onChange={setReminders} />
         <Checkbox label="Done" checked={done} onChange={setDone} />
         <SegmentedControl
@@ -188,7 +244,12 @@ export default function ComponentGallery() {
 
       <Block title="Color pickers">
         <ColorPicker label="Area color" colors={AREA_COLORS} value={areaColor} onChange={setAreaColor} />
-        <ColorPicker label="Goal color" colors={GOAL_COLORS} value={goalColor} onChange={setGoalColor} allowAuto />
+        <ColorPicker label="Goal color" colors={SLOTS.map(slotColor)} colorLabel={colorLabel} value={goalColor} onChange={setGoalColor} allowAuto />
+      </Block>
+
+      <Block title="Day timeline">
+        <DayTimeline days={[{ date: today, items: sampleItems(today) }]} now={new Date(`${today}T14:20:00`)} today={today} hourHeight={48} label="Sample day" maxHeight={320} />
+        <DayTimeline days={[{ date: today, items: [] }]} now={new Date(`${today}T14:20:00`)} today={today} hourHeight={48} label="Empty day" emptyText="Nothing logged yet" maxHeight={200} />
       </Block>
 
       <Block title="Menu">
@@ -213,9 +274,23 @@ export default function ComponentGallery() {
 
       <Block title="Progress, rows and sections">
         <div className={styles.wide}>
-          <ProgressBar label="Run 100 km" value={0.45} color={GOAL_COLORS[0]} />
-          <ProgressBar label="Read 12 books" value={1} color={GOAL_COLORS[3]} />
-          <Section title="Tasks" count={rows.length} actions={<Button icon={<Plus />} onClick={() => { setRows([...rows, `New task ${counter}`]); setCounter(counter + 1); }}>Add</Button>}>
+          <ProgressBar label="Run 100 km" value={0.45} color={slotColor(SLOTS[0])} />
+          <ProgressBar label="Read 12 books" value={1} color={slotColor(SLOTS[3])} />
+          <Section
+            title="Tasks"
+            count={rows.length}
+            actions={
+              <Button
+                icon={<Plus />}
+                onClick={() => {
+                  setRows([...rows, `New task ${counter}`]);
+                  setCounter(counter + 1);
+                }}
+              >
+                Add
+              </Button>
+            }
+          >
             <AnimatedList
               label="Tasks"
               items={rows}

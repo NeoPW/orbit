@@ -1,0 +1,17 @@
+.colored {
+  position: relative;
+}
+
+.colored::before {
+  content: "";
+  position: absolute;
+  inset: 8px auto 8px 0;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--pc);
+}
+
+/* The checkbox outline takes the project colour. */
+.colored label > span[aria-hidden="true"] {
+  border-color: var(--pc);
+}

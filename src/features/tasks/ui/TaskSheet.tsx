@@ -3,6 +3,7 @@ import { useServices } from '../../../app/services.ts';
 import type { Db } from '../../../core/db/drizzle.ts';
 import { useLiveQuery } from '../../../core/db/live.ts';
 import { ConfirmDialog } from '../../../core/ui/components/ConfirmDialog.tsx';
+import { goalColor } from '../../../core/ui/colors.ts';
 import { DateField } from '../../../core/ui/components/DateField.tsx';
 import { Select, type SelectGroup, type SelectOption } from '../../../core/ui/components/Select.tsx';
 import { SegmentedControl } from '../../../core/ui/components/SegmentedControl.tsx';
@@ -46,13 +47,29 @@ async function loadOptions(db: Db, projectId: string | null, goalId: string | nu
     projectId ? getProject(db, projectId) : undefined,
     goalId ? getGoal(db, goalId) : undefined,
   ]);
-  const projects: SelectOption[] = activeProjects.map((v) => ({ value: `project:${v.project.id}`, label: v.project.title }));
+  const projects: SelectOption[] = activeProjects.map((v) => ({
+    value: `project:${v.project.id}`,
+    label: v.project.title,
+    color: v.color,
+  }));
   if (currentProject && !activeProjects.some((v) => v.project.id === currentProject.project.id)) {
-    projects.push({ value: `project:${currentProject.project.id}`, label: currentProject.project.title });
+    projects.push({
+      value: `project:${currentProject.project.id}`,
+      label: currentProject.project.title,
+      color: currentProject.color,
+    });
   }
-  const goals: SelectOption[] = activeGoals.map((g) => ({ value: `goal:${g.goal.id}`, label: g.goal.title }));
+  const goals: SelectOption[] = activeGoals.map((g, index) => ({
+    value: `goal:${g.goal.id}`,
+    label: g.goal.title,
+    color: goalColor(g.goal, index),
+  }));
   if (currentGoal && !activeGoals.some((g) => g.goal.id === currentGoal.goal.id)) {
-    goals.push({ value: `goal:${currentGoal.goal.id}`, label: currentGoal.goal.title });
+    goals.push({
+      value: `goal:${currentGoal.goal.id}`,
+      label: currentGoal.goal.title,
+      color: goalColor(currentGoal.goal, goals.length),
+    });
   }
   return { projects, goals };
 }

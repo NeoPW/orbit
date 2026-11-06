@@ -1,7 +1,7 @@
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: var(--space-6);
+  grid-template-columns: minmax(0, 1fr) 316px;
+  gap: 20px;
   align-items: start;
 }
 
@@ -9,8 +9,16 @@
 .side {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: 16px;
   min-width: 0;
+}
+
+.side {
+  gap: 10px;
+}
+
+.todoList {
+  margin: 0 calc(var(--space-3) * -1);
 }
 
 @media (max-width: 959px) {
@@ -19,24 +27,68 @@
   }
 }
 
+.tileTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.count {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
 .habits {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
 }
 
+.habitRow {
+  position: relative;
+  display: inline-flex;
+}
+
+.habitStart {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  translate: 0 -50%;
+}
+
+.habitStart svg {
+  width: 14px;
+  height: 14px;
+}
+
+.habitStart:hover,
+.habitStart:focus-visible {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
 .habit {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  min-height: 36px;
-  padding: 0 var(--space-3);
+  gap: 8px;
+  padding: 6px 36px 6px 8px;
   border: 1px solid var(--color-border);
-  border-radius: 999px;
+  border-radius: 12px;
   background: var(--color-surface);
   color: var(--color-text);
   font: inherit;
-  font-size: var(--text-sm);
+  font-size: 12.5px;
   cursor: pointer;
   transition: background-color var(--motion-fast) var(--ease-out);
 }
@@ -45,18 +97,50 @@
   background: var(--color-surface-raised);
 }
 
-.habit svg {
-  width: 16px;
-  height: 16px;
+.habitBox {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  box-sizing: border-box;
+  border: 1.8px solid var(--color-text-muted);
+  border-radius: 6px;
+}
+
+.habitBox svg {
+  width: 11px;
+  height: 11px;
+  stroke-width: 3.5;
+}
+
+.habitTitle {
+  font-weight: 600;
 }
 
 .habitLabel {
-  color: var(--color-text-faint);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-text-muted);
+  font-size: 11.5px;
+}
+
+.habitDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pc);
 }
 
 .checked {
-  border-color: var(--color-secondary);
-  background: var(--color-secondary-soft);
+  border-color: color-mix(in srgb, var(--color-primary) 50%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 17%, var(--color-surface));
+}
+
+.checked .habitBox {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
 }
 
 .checked .habitTitle {
@@ -64,27 +148,21 @@
   text-decoration-color: var(--color-text-faint);
 }
 
+.sideHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.sideBody {
+  display: contents;
+}
+
 .projects {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-}
-
-.project {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-}
-
-.projectHead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
+  gap: 10px;
 }
 
 .projectTitle {
@@ -97,7 +175,8 @@
   background: none;
   color: var(--color-text);
   font: inherit;
-  font-weight: 600;
+  font-size: 13.5px;
+  font-weight: 700;
   text-align: left;
   cursor: pointer;
 }
@@ -107,27 +186,32 @@
 }
 
 .dot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   flex-shrink: 0;
   border-radius: 50%;
   background: var(--area-color, var(--color-text-faint));
 }
 
-.steps {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
 .step {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-sm);
+  gap: 9px;
+  padding: 3px 0;
+  font-size: 12.5px;
+}
+
+/* The checkbox outline takes the project colour set on the tile. */
+.step label > span[aria-hidden='true'] {
+  width: 14px;
+  height: 14px;
+  border: 1.8px solid var(--pc);
+  border-radius: 5px;
+}
+
+.step label svg {
+  width: 10px;
+  height: 10px;
 }
 
 .stepOpen {
@@ -135,13 +219,12 @@
   padding: 0;
   border: 0;
   background: none;
-  color: var(--color-text-muted);
+  color: var(--color-text);
   font: inherit;
   text-align: left;
   cursor: pointer;
 }
 
 .stepOpen:hover {
-  color: var(--color-text);
   text-decoration: underline;
 }

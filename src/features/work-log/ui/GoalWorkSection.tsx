@@ -17,13 +17,13 @@ function totalsText({ count, minutes }: WorkTotals): string {
 }
 
 /** Work on a goal (its own entries and those of its projects and tasks): this week, the total and the recent entries. */
-export function GoalWorkSection({ goalId }: { goalId: string }) {
+export function GoalWorkSection({ goalId, color }: { goalId: string; color?: string }) {
   const today = useToday();
   const week = weekRange(currentWeekStart(today));
   const work = useLiveQuery((db) => listWorkOnGoal(db, goalId, week), [goalId, week.from, week.to]);
 
   return (
-    <Section title="Work" count={work?.total.count}>
+    <Section title="Work" tile color={color} count={work?.total.count}>
       {work && work.total.count === 0 && <EmptyState icon={Clock} text="No work on this goal yet" />}
       {work && work.total.count > 0 && (
         <>

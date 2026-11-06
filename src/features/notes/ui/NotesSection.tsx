@@ -8,11 +8,11 @@ import { listNotesForTarget } from '../data/notes-repository.ts';
 import styles from './NotesSection.module.css';
 
 /** The weekly notes of a project or goal, newest week first (they are written in the weekly review). */
-export function NotesSection({ targetType, targetId }: { targetType: NoteTargetType; targetId: string }) {
+export function NotesSection({ targetType, targetId, color }: { targetType: NoteTargetType; targetId: string; color?: string }) {
   const notes = useLiveQuery((db) => listNotesForTarget(db, targetType, targetId), [targetType, targetId]);
 
   return (
-    <Section title="Weekly notes" count={notes?.length}>
+    <Section title="Weekly notes" tile color={color} count={notes?.length}>
       {notes && notes.length === 0 && <EmptyState icon={NotebookPen} text="No weekly notes yet" />}
       {notes?.map((note) => (
         <article key={note.id} className={styles.note}>

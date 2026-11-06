@@ -22,7 +22,10 @@ const pad = (n: number) => String(n).padStart(2, '0');
 /** Local `dd-mm-yyyy` and `HH:mm` of an ISO instant. */
 function when(occurredAt: string): { date: string; time: string } {
   const d = new Date(occurredAt);
-  return { date: formatDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`), time: `${pad(d.getHours())}:${pad(d.getMinutes())}` };
+  return {
+    date: formatDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`),
+    time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
+  };
 }
 
 const clock = () => new Date();

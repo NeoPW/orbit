@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Orbit · Final · Focus</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Inter+Tight:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="{{rootStyle}}">
+<div style="min-height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; font-family: Inter, sans-serif; background: var(--bg); color: var(--text); font-size: 13px">
+
+  <header style="display: flex; align-items: center; justify-content: space-between; padding: 20px 28px">
+    <button type="button" style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer">
+      <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg>Leave focus mode (Esc)</button>
+    <div style="display: flex; align-items: center; gap: 12px">
+      <span style="font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase">Theme</span>
+      <div style="display: flex; gap: 8px">
+        <sc-for list="{{themes}}" as="th" hint-placeholder-count="5">
+          <button type="button" aria-label="{{th.label}}" aria-pressed="{{th.pressed}}" onClick="{{th.pick}}" style="{{th.style}}"><span style="{{th.dot}}"></span></button>
+        </sc-for>
+      </div>
+    </div>
+  </header>
+
+  <main style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 28px 40px">
+    <div style="{{pcStyle}}">
+      <div style="width: 560px; max-width: 100%; display: flex; flex-direction: column; align-items: center; text-align: center">
+
+        <span style="display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--pc); background: color-mix(in srgb, var(--pc) 16%, var(--bg))"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--pc)"></span>Chapter 4: Evaluation</span>
+
+        <h1 style="margin: 16px 0 0; font-size: 32px; font-weight: 700; letter-spacing: -0.02em">Rerun benchmarks</h1>
+
+        <div style="margin-top: 8px; font-family: 'Inter Tight', Inter, sans-serif; font-variant-numeric: tabular-nums; font-size: 120px; font-weight: 700; line-height: 1.05; letter-spacing: -0.03em">32:14</div>
+        <div style="font-size: 15px; color: var(--muted); font-variant-numeric: tabular-nums">of 50 min · <span style="color: var(--text); font-weight: 600">17:46 left</span></div>
+
+        <div role="progressbar" aria-label="Session progress" aria-valuenow="64" aria-valuemin="0" aria-valuemax="100" style="margin-top: 22px; width: 100%; height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--pc) 20%, var(--surface)); overflow: hidden">
+          <div style="width: 64%; height: 100%; border-radius: 999px; background: var(--pc)"></div>
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-top: 26px">
+          <button type="button" style="padding: 11px 30px; border-radius: 14px; border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent); font-size: 14px; font-weight: 700; cursor: pointer">Stop</button>
+          <button type="button" style="padding: 11px 26px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer">Discard</button>
+        </div>
+
+        <section aria-label="Notes" style="margin-top: 30px; width: 100%; box-sizing: border-box; text-align: left; background: var(--raised); border: 1px solid var(--border); border-radius: 18px; padding: 16px 20px; box-shadow: 0 6px 20px rgba(0,0,0,0.22)">
+          <h2 style="margin: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted)">Notes</h2>
+          <p style="margin: 0; font-size: 14.5px; line-height: 1.55">Use the cleaned dataset from Monday. Compare against baseline v2 and note anything more than 5 % slower.</p>
+        </section>
+
+      </div>
+    </div>
+  </main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["slate","forest","ember","plum","graphite"],"default":"slate"},"$preview":{"width":1280,"height":832}}'>
+class Component extends DCLogic {
+  state = {};
+
+  renderVals() {
+    // name, bg, side, surface, raised, border, text, muted, accent, onAccent, overdue, overdueBg, soon, soonBg, pc0..pc7
+    const TH = {
+      slate:    ['Slate',    '#0f1218','#0b0e13','#171b24','#1f2430','#2b3242','#e6e9f2','#a2aabd','#8b93ff','#0c0e1f','#ff8f8a','#3b1d20','#f3c969','#372f17','#f4a26a','#6fa8f0','#6fcf97','#a994f4','#f08fb5','#54c4c8','#c2d86a','#d2c2a6'],
+      forest:   ['Forest',   '#0e1512','#0a100d','#151e1a','#1d2822','#2a3930','#e4efe8','#9fb3a7','#6fe0b0','#06150e','#ff9a90','#3a1f1d','#f3c969','#333218','#f0a874','#82b7ea','#7bdc9e','#bba6ee','#ec97b6','#62d5c4','#c4d776','#d0bf9d'],
+      ember:    ['Ember',    '#15110e','#100c0a','#1d1814','#271f19','#392f26','#f0e9e2','#b5a799','#ff9f43','#1c0f02','#ff8d85','#401e1b','#f5d36b','#3d3016','#ee9a78','#86b4ef','#7ccf93','#bda3ee','#ee93b1','#62cbc6','#c9d46e','#d6c09a'],
+      plum:     ['Plum',     '#140f1a','#0f0a14','#1c1524','#261d30','#382b46','#ece6f3','#b1a5c0','#e58bd0','#1f0a1b','#ff93a0','#401c27','#f3c969','#392f1a','#f0a07a','#86b2f4','#77d4a0','#c0a2fa','#f08fc0','#60d0d2','#bfd673','#d2bfa4'],
+      graphite: ['Graphite', '#111112','#0c0c0d','#19191b','#222225','#313135','#ececee','#a8a8af','#dcdfe6','#111114','#ff938c','#3a2020','#f3c969','#38311a','#f0a56e','#7fb2ee','#7dd09b','#b6a6ee','#ee98b8','#66cdd0','#c0d278','#cbbca3']
+    };
+    const ids = Object.keys(TH);
+    const id = this.state.theme ?? this.props.theme ?? 'slate';
+    const t = TH[id] || TH.slate;
+    const keys = ['bg','side','surface','raised','border','text','muted','accent','on-accent','overdue','overdue-bg','soon','soon-bg'];
+    let rootStyle = '';
+    keys.forEach((k, i) => { rootStyle += '--' + k + ':' + t[i + 1] + ';'; });
+    for (let i = 0; i < 8; i++) rootStyle += '--pc' + i + ':' + t[14 + i] + ';';
+
+    const themes = ids.map((k) => {
+      const x = TH[k];
+      const on = k === id;
+      return {
+        label: 'Theme: ' + x[0],
+        pressed: on ? 'true' : 'false',
+        pick: () => this.setState({ theme: k }),
+        style: 'width:26px;height:26px;padding:0;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;box-sizing:border-box;background:' + x[1] + ';border:2px solid ' + (on ? 'var(--text)' : 'var(--border)'),
+        dot: 'width:12px;height:12px;border-radius:50%;background:' + x[8]
+      };
+    });
+
+    return { rootStyle, themes, pcStyle: '--pc:var(--pc0)' };
+  }
+}
+</script>
+</body>
+</html>

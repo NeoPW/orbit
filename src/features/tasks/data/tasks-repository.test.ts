@@ -8,6 +8,7 @@ import {
   deleteTask,
   getTask,
   listOpenNextSteps,
+  listOpenTasks,
   listOpenTasksOfProject,
   reopenTask,
   setNextStep,
@@ -155,5 +156,19 @@ describe('tasks repository', () => {
     const id = await createTask(db, clock, { ...base, goalId: g });
     await deleteGoal(db, clock, g);
     expect((await getTask(db, id))?.task).toMatchObject({ goalId: null, projectId: null, status: 'open' });
+  });
+
+  it('lists all open tasks (not only next steps) with their project, without done or deleted ones', async () => {
+    const { db } = await openTestDatabase();
+    const projectId = await addProject(db);
+    const a = await createTask(db, clock, { ...base, title: 'Plain' });
+    const b = await createTask(db, clock, { ...base, title: 'In project', projectId });
+    const done = await createTask(db, clock, { ...base, title: 'Done one' });
+    const gone = await createTask(db, clock, { ...base, title: 'Gone' });
+    await completeTask(db, clock, done, { kind: 'skip' });
+    await deleteTask(db, clock, gone);
+    const list = await listOpenTasks(db);
+    expect(list.map((v) => v.task.id).sort()).toEqual([a, b].sort());
+    expect(list.find((v) => v.task.id === b)?.projectTitle).toBe('Wedding');
   });
 });

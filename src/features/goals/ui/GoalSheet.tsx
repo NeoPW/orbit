@@ -7,7 +7,7 @@ import { DateField } from '../../../core/ui/components/DateField.tsx';
 import { SegmentedControl } from '../../../core/ui/components/SegmentedControl.tsx';
 import { Sheet } from '../../../core/ui/components/Sheet.tsx';
 import { TextArea, TextField } from '../../../core/ui/components/TextField.tsx';
-import { GOAL_COLORS } from '../../../core/ui/palette.ts';
+import { SLOTS, colorLabel, colorToCss, cssToStored, slotColor } from '../../../core/ui/colors.ts';
 import { createGoal, setGoalStatus, updateGoal } from '../data/goals-repository.ts';
 import { validateGoal, type GoalErrors } from '../domain/goals.ts';
 
@@ -25,6 +25,7 @@ const STATUS_OPTIONS: { value: GoalStatus; label: string }[] = [
   { value: 'archived', label: 'Archived' },
 ];
 
+const SLOT_COLORS = SLOTS.map(slotColor);
 const clock = () => new Date();
 const DEFAULT_LENGTH_DAYS = 90;
 
@@ -35,7 +36,7 @@ export function GoalSheet({ goal, onCreated, onClose }: GoalSheetProps) {
   const [description, setDescription] = useState(goal?.description ?? '');
   const [startDate, setStartDate] = useState<string | null>(goal ? goal.startDate : today);
   const [endDate, setEndDate] = useState<string | null>(goal ? goal.endDate : addDays(today, DEFAULT_LENGTH_DAYS));
-  const [color, setColor] = useState<string | null>(goal?.color ?? null);
+  const [color, setColor] = useState<string | null>(colorToCss(goal?.color ?? null));
   const [status, setStatus] = useState<GoalStatus>(goal?.status ?? 'active');
   const [validity, setValidity] = useState({ start: true, end: true });
   const [errors, setErrors] = useState<GoalErrors>({});
@@ -44,7 +45,13 @@ export function GoalSheet({ goal, onCreated, onClose }: GoalSheetProps) {
     const found = validateGoal({ title, startDate, endDate });
     setErrors(found);
     if (Object.keys(found).length > 0 || !validity.start || !validity.end || !startDate || !endDate) return;
-    const input = { title, description, startDate, endDate, color };
+    const input = {
+      title,
+      description,
+      startDate,
+      endDate,
+      color: cssToStored(color),
+    };
     if (goal) {
       await updateGoal(db, clock, goal.id, input);
       if (status !== goal.status) await setGoalStatus(db, clock, goal.id, status);
@@ -59,9 +66,15 @@ export function GoalSheet({ goal, onCreated, onClose }: GoalSheetProps) {
     <Sheet title={goal ? 'Edit goal' : 'New goal'} onClose={onClose} onSave={() => void save()} saveDisabled={!validity.start || !validity.end}>
       <TextField label="Title" value={title} error={errors.title} onChange={(event) => setTitle(event.target.value)} />
       <TextArea label="Description" value={description} onChange={(event) => setDescription(event.target.value)} />
-      <DateField label="Start date" value={startDate} error={errors.startDate} onChange={setStartDate} onValidity={(start) => setValidity((v) => ({ ...v, start }))} />
+      <DateField
+        label="Start date"
+        value={startDate}
+        error={errors.startDate}
+        onChange={setStartDate}
+        onValidity={(start) => setValidity((v) => ({ ...v, start }))}
+      />
       <DateField label="End date" value={endDate} error={errors.endDate} onChange={setEndDate} onValidity={(end) => setValidity((v) => ({ ...v, end }))} />
-      <ColorPicker label="Color" colors={GOAL_COLORS} value={color} onChange={setColor} allowAuto />
+      <ColorPicker label="Color" colors={SLOT_COLORS} colorLabel={colorLabel} value={color} onChange={setColor} allowAuto />
       {goal && <SegmentedControl label="Status" options={STATUS_OPTIONS} value={status} onChange={setStatus} />}
     </Sheet>
   );

@@ -18,11 +18,11 @@ In the browser, the app SHALL ask the browser to keep its storage persistent. If
 - **THEN** no storage warning is shown and saved data survives a reload
 
 ### Requirement: Complete schema from the start
-The database SHALL contain tables for all entities of the product spec: Area, Goal, Measure, Project, Task, Habit, HabitCheck, LogEntry, Timer, Note, WeeklyReview and ReviewMeasureSnapshot, with the fields defined in `docs/SPEC.md` §4 (including a task's importance and next-step flag, the timer's planned length and the note's target and week), and a local-only settings table that is not synced. A project SHALL NOT store a next step of its own.
+The database SHALL contain tables for all entities of the product spec: Area, Goal, Measure, Project, Task, Habit, HabitCheck, LogEntry, Timer, Note, WeeklyReview and ReviewMeasureSnapshot, with the fields defined in `docs/SPEC.md` §4 (including a task's importance and next-step flag, a project's colour, the timer's planned length and the note's target and week), and a local-only settings table that is not synced. A project SHALL NOT store a next step of its own.
 
 #### Scenario: Fresh install
 - **WHEN** the database is created for the first time
-- **THEN** all twelve entity tables and the settings table exist and the schema version is 1
+- **THEN** all twelve entity tables and the settings table exist and the schema version is 2
 
 #### Scenario: Unique habit check per day
 - **WHEN** a second HabitCheck row is inserted for the same habit and the same date
@@ -35,6 +35,10 @@ The database SHALL contain tables for all entities of the product spec: Area, Go
 #### Scenario: Unique note per target and week
 - **WHEN** a second Note row is inserted for the same target type, target and `week_start`
 - **THEN** the insert is rejected
+
+#### Scenario: Colour column added to projects
+- **WHEN** the app opens a database at schema version 1 that contains projects
+- **THEN** the migration adds the project colour, leaves every existing project row unchanged, and the colour of those projects is empty
 
 ### Requirement: Record identity and timestamps
 Every record SHALL have a client-generated UUID `id`, a `created_at` and `updated_at` timestamp in UTC, and a nullable `deleted_at`. The `id` SHALL be a random UUID v4, except for habit checks, weekly reviews and notes, whose `id` SHALL be a UUID v5 derived from their natural key (habit and date; week start; target type, target and week start), and the timer, which has one fixed `id`. Creating a record SHALL set `created_at` and `updated_at` to the current time; every update SHALL set `updated_at` to the current time.

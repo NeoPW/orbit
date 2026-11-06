@@ -10,8 +10,8 @@ import { Chip } from '../../../core/ui/components/Chip.tsx';
 import { DeadlineBadge } from '../../../core/ui/components/DeadlineBadge.tsx';
 import { ImportanceDots } from '../../../core/ui/components/ImportanceDots.tsx';
 import { Menu } from '../../../core/ui/components/Menu.tsx';
-import { PageHeader } from '../../../core/ui/components/PageHeader.tsx';
-import { goalColor } from '../../../core/ui/palette.ts';
+import { Tile } from '../../../core/ui/components/Tile.tsx';
+import { goalColor } from '../../../core/ui/colors.ts';
 import { listAreas } from '../../areas/data/areas-repository.ts';
 import { getGoal } from '../../goals/data/goals-repository.ts';
 import { getProject, setProjectStatus, type ProjectView } from '../data/projects-repository.ts';
@@ -29,7 +29,12 @@ export interface ProjectSectionProps {
 const SECTIONS: ComponentType<ProjectSectionProps>[] = [ProjectTasksSection, ProjectHabitsSection, ProjectLogSection, ProjectNotesSection];
 
 const STATUSES: ProjectStatus[] = ['active', 'paused', 'backlog', 'completed'];
-const STATUS_TONE = { active: 'primary', backlog: 'neutral', paused: 'amber', completed: 'secondary' } as const;
+const STATUS_TONE = {
+  active: 'primary',
+  backlog: 'neutral',
+  paused: 'amber',
+  completed: 'secondary',
+} as const;
 
 const clock = () => new Date();
 
@@ -42,7 +47,11 @@ export function ProjectPage() {
       const view = await getProject(database, id);
       if (!view) return null;
       const [areas, goal] = await Promise.all([listAreas(database), view.project.goalId ? getGoal(database, view.project.goalId) : undefined]);
-      return { view, area: areas.find((a) => a.id === view.project.areaId), goal };
+      return {
+        view,
+        area: areas.find((a) => a.id === view.project.areaId),
+        goal,
+      };
     },
     [id],
   );
@@ -56,44 +65,54 @@ export function ProjectPage() {
 
   return (
     <div className={styles.page}>
-      <PageHeader
-        title={project.title}
-        meta={
-          <>
-            <Menu
-              label="Status"
-              trigger={(props) => (
-                <Chip tone={STATUS_TONE[project.status]} {...props}>
-                  {PROJECT_STATUS_LABELS[project.status]}
-                </Chip>
-              )}
-              items={STATUSES.filter((status) => status !== project.status).map((status) => ({
-                label: PROJECT_STATUS_LABELS[status],
-                onSelect: () => void setProjectStatus(db, clock, project.id, status),
-              }))}
-            />
-            {area && <Chip color={area.color}>{area.name}</Chip>}
-            <ImportanceDots value={project.importance} />
-            {deadline && <DeadlineBadge deadline={deadline.date} inherited={deadline.inherited} />}
-          </>
+      <Tile
+        as="article"
+        color={view.color}
+        tinted
+        title={
+          <div className={styles.titles}>
+            <h1 className={styles.heading}>{project.title}</h1>
+            <div className={styles.meta}>
+              <Menu
+                label="Status"
+                trigger={(props) => (
+                  <Chip tone={STATUS_TONE[project.status]} {...props}>
+                    {PROJECT_STATUS_LABELS[project.status]}
+                  </Chip>
+                )}
+                items={STATUSES.filter((status) => status !== project.status).map((status) => ({
+                  label: PROJECT_STATUS_LABELS[status],
+                  onSelect: () => void setProjectStatus(db, clock, project.id, status),
+                }))}
+              />
+              {area && <Chip color={area.color}>{area.name}</Chip>}
+              <ImportanceDots value={project.importance} />
+              {deadline && <DeadlineBadge deadline={deadline.date} inherited={deadline.inherited} />}
+            </div>
+          </div>
         }
         actions={
           <Button icon={<Pencil />} onClick={() => setEditing(true)}>
             Edit
           </Button>
         }
-      />
-      {project.description && <p className={styles.description}>{project.description}</p>}
-      {goal && (
-        <button
-          type="button"
-          className={styles.goalLink}
-          style={{ '--goal-color': goalColor(goal.goal, goal.index) } as CSSProperties}
-          onClick={() => navigate({ name: 'goal', id: goal.goal.id })}
-        >
-          {goal.goal.title}
-        </button>
-      )}
+      >
+        {project.description && <p className={styles.description}>{project.description}</p>}
+        {goal && (
+          <button
+            type="button"
+            className={styles.goalLink}
+            style={
+              {
+                '--goal-color': goalColor(goal.goal, goal.index),
+              } as CSSProperties
+            }
+            onClick={() => navigate({ name: 'goal', id: goal.goal.id })}
+          >
+            {goal.goal.title}
+          </button>
+        )}
+      </Tile>
       <div className={styles.sections}>
         {SECTIONS.map((SectionComponent, i) => (
           <SectionComponent key={i} view={view} />

@@ -3,10 +3,14 @@ import { describe, expect, it } from 'vitest';
 import { createFields, TIMER_ID } from '../../../core/db/records.ts';
 import { logEntries, tasks, timers } from '../../../core/db/schema.ts';
 import { openTestDatabase } from '../../../core/db/testing.ts';
+import { createHabit, listChecksSince } from '../../habits/data/habits-repository.ts';
 import { applyPage } from '../../sync/data/pull.ts';
 import { discardTimer, getTimer, startTimer, stopTimer } from './timer-repository.ts';
 
-const at = (hhmm: string, seconds = '00') => () => new Date(`2026-11-05T${hhmm}:${seconds}Z`);
+const at =
+  (hhmm: string, seconds = '00') =>
+  () =>
+    new Date(`2026-11-05T${hhmm}:${seconds}Z`);
 
 const entries = async (db: Awaited<ReturnType<typeof openTestDatabase>>['db']) =>
   (await db.select().from(logEntries)).filter((e) => e.deletedAt === null);
@@ -21,6 +25,49 @@ describe('timer repository', () => {
     expect(await entries(db)).toMatchObject([
       { projectId: 'thesis', occurredAt: '2026-11-05T09:00:00.000Z', durationMinutes: 45, source: 'timer' },
     ]);
+  });
+
+  it('logs a habit timer on the habit with its project and goal', async () => {
+    const { db } = await openTestDatabase();
+    const made = await createHabit(db, at('08:00'), {
+      title: 'Run 5 km',
+      projectId: 'p1',
+      goalId: null,
+      scheduleType: 'weekdays',
+      weekdays: [1],
+      timesPerWeek: null,
+      reminderTime: null,
+      active: true,
+    });
+    if (!made.ok) throw new Error('habit invalid');
+    await startTimer(db, at('07:00'), { habitId: made.id }, null);
+    expect(await getTimer(db)).toMatchObject({ habitId: made.id, taskId: null });
+    await stopTimer(db, at('07:40'), 'Easy pace');
+    expect(await entries(db)).toMatchObject([
+      { habitId: made.id, projectId: 'p1', taskId: null, durationMinutes: 40, source: 'timer', note: 'Easy pace' },
+    ]);
+  });
+
+  it('checks the habit on stop only when asked', async () => {
+    const { db } = await openTestDatabase();
+    const input = {
+      title: 'Run',
+      projectId: null,
+      goalId: null,
+      scheduleType: 'weekdays' as const,
+      weekdays: [1],
+      timesPerWeek: null,
+      reminderTime: null,
+      active: true,
+    };
+    const made = await createHabit(db, at('06:00'), input);
+    if (!made.ok) throw new Error('habit invalid');
+    await startTimer(db, at('07:00'), { habitId: made.id }, null);
+    await stopTimer(db, at('07:30'), '', { markHabitDone: false });
+    expect(await listChecksSince(db, '1970-01-01')).toHaveLength(0);
+    await startTimer(db, at('08:00'), { habitId: made.id }, null);
+    await stopTimer(db, at('08:30'), '', { markHabitDone: true });
+    expect(await listChecksSince(db, '1970-01-01')).toHaveLength(1);
   });
 
   it('logs at least one minute', async () => {

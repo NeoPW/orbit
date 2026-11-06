@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { openAppDatabase } from '../core/db/app-database.ts';
 import { normalizeLocation } from '../core/routing/useRoute.ts';
 import { MessageProvider } from '../core/ui/messages/MessageProvider.tsx';
+import { useSettings } from '../features/settings/data/settings.ts';
+import { applyTheme, mirroredTheme } from '../core/ui/themes.ts';
 import { ReminderRunner } from '../features/notifications/ui/ReminderRunner.tsx';
 import { SyncRunner } from '../features/sync/ui/SyncRunner.tsx';
 import { useNotificationClicks } from './useNotificationClicks.ts';
@@ -39,11 +41,21 @@ export function AppRoot() {
   return <ReadyApp services={state.services} />;
 }
 
+/** Applies the stored theme once the settings are read (the mirror in localStorage may be missing or stale). */
+function ThemeApplier() {
+  const { settings, loaded } = useSettings();
+  useEffect(() => {
+    if (loaded && settings.theme !== mirroredTheme()) applyTheme(settings.theme);
+  }, [loaded, settings.theme]);
+  return null;
+}
+
 function ReadyApp({ services }: { services: Services }) {
   useNotificationClicks();
   return (
     <ServicesContext.Provider value={services}>
       <MessageProvider>
+        <ThemeApplier />
         <SyncRunner driver={services.driver} onWrite={services.onWrite}>
           <ReminderRunner />
           <Shell />

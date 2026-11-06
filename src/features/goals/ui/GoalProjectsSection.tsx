@@ -11,7 +11,7 @@ import type { GoalSectionProps } from './GoalPage.tsx';
 import styles from './GoalPage.module.css';
 
 /** Active projects first (Plan order), then backlog and paused ones; completed ones are counted. */
-export function GoalProjectsSection({ data }: GoalSectionProps) {
+export function GoalProjectsSection({ data, color }: GoalSectionProps) {
   const goalId = data.goal.id;
   const views = useLiveQuery((db) => listProjectsByGoal(db, goalId), [goalId]);
   const [adding, setAdding] = useState(false);
@@ -23,6 +23,8 @@ export function GoalProjectsSection({ data }: GoalSectionProps) {
   return (
     <Section
       title="Projects"
+      tile
+      color={color}
       count={active.length + others.length}
       actions={
         <Button variant="ghost" icon={<Plus />} onClick={() => setAdding(true)}>

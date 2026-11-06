@@ -5,16 +5,30 @@
   gap: var(--space-5);
 }
 
-.header {
-  padding-left: var(--space-4);
-  border-left: 4px solid var(--goal-color);
+.titles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
 }
 
-.header > :first-child {
-  margin-bottom: var(--space-3);
+.heading {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .description {
+  margin: 0 0 var(--space-3);
   white-space: pre-wrap;
   color: var(--color-text-muted);
 }
@@ -22,7 +36,7 @@
 .sections {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-5);
 }
 
 .value {

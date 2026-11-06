@@ -22,7 +22,7 @@ export function useStartFocus(): StartFocus {
   const start = useCallback(
     async (target: LogTarget, plannedMinutes: number | null) => {
       await startTimer(db, clock, target, plannedMinutes);
-      if (plannedMinutes !== null) await save('focusMinutes', plannedMinutes);
+      await save('focusMinutes', plannedMinutes);
       navigate({ name: 'focus' });
     },
     [db, save],
