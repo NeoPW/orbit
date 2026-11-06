@@ -3,6 +3,8 @@ import type { MouseEvent } from 'react';
 import orbitIcon from '../../assets/icon/orbit.png';
 import { navigate } from '../core/routing/useRoute.ts';
 import { pathOf, type Route, type Section } from '../core/routing/routes.ts';
+import { ThemeSwitcher } from '../core/ui/components/ThemeSwitcher.tsx';
+import { useSettings } from '../features/settings/data/settings.ts';
 import styles from './Sidebar.module.css';
 
 interface Entry {
@@ -48,6 +50,7 @@ function NavLink({ entry, current }: { entry: Entry; current: Section | null }) 
 
 /** Destinations on the left: icons and labels in wide windows, icons with tooltips below 960 px. */
 export function Sidebar({ current }: { current: Section | null }) {
+  const { settings, save } = useSettings();
   return (
     <nav className={styles.sidebar} aria-label="Main">
       <div className={styles.brand}>
@@ -62,6 +65,9 @@ export function Sidebar({ current }: { current: Section | null }) {
         ))}
       </ul>
       <div className={styles.foot}>
+        <div className={styles.themes}>
+          <ThemeSwitcher value={settings.theme} onChange={(id) => void save('theme', id)} />
+        </div>
         <NavLink entry={SETTINGS} current={current} />
       </div>
     </nav>

@@ -11,7 +11,7 @@ import { ListRow } from '../../../core/ui/components/ListRow.tsx';
 import { Menu } from '../../../core/ui/components/Menu.tsx';
 import { ProgressBar } from '../../../core/ui/components/ProgressBar.tsx';
 import { Switch } from '../../../core/ui/components/Switch.tsx';
-import { goalColor } from '../../../core/ui/palette.ts';
+import { goalColor } from '../../../core/ui/colors.ts';
 import { getGoal, listActiveGoals, setGoalStatus, type GoalWithMeasures, type MeasureView } from '../../goals/data/goals-repository.ts';
 import { setMeasureDone, setMeasureValue, stepMeasure } from '../../goals/data/measures-repository.ts';
 import { goalProgress, measureProgress, measureValueText } from '../../goals/domain/goals.ts';
@@ -24,7 +24,11 @@ const STATUSES: { status: GoalStatus; label: string }[] = [
   { status: 'completed', label: 'Completed' },
   { status: 'archived', label: 'Archived' },
 ];
-const STATUS_TONE = { active: 'primary', completed: 'secondary', archived: 'neutral' } as const;
+const STATUS_TONE = {
+  active: 'primary',
+  completed: 'secondary',
+  archived: 'neutral',
+} as const;
 
 /** The value of a numeric measure; typing is kept locally and applied on Enter or when the field loses focus. */
 function ValueInput({ measure }: { measure: MeasureView }) {

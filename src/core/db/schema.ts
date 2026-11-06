@@ -65,6 +65,8 @@ export const columns = {
     status: text('status', { enum: PROJECT_STATUSES }).notNull().default('active'),
     importance: integer('importance').notNull().default(3),
     deadline: text('deadline'),
+    /** Colour slot key (`pc0`..`pc7`); null for projects from before colours existed. */
+    color: text('color'),
     completedAt: text('completed_at'),
   }),
   tasks: () => ({
@@ -96,6 +98,7 @@ export const columns = {
     projectId: text('project_id'),
     goalId: text('goal_id'),
     taskId: text('task_id'),
+    habitId: text('habit_id'),
     occurredAt: text('occurred_at').notNull(),
     durationMinutes: integer('duration_minutes'),
     note: text('note').notNull().default(''),
@@ -105,6 +108,7 @@ export const columns = {
     ...shared(),
     projectId: text('project_id'),
     taskId: text('task_id'),
+    habitId: text('habit_id'),
     startedAt: text('started_at').notNull(),
     plannedMinutes: integer('planned_minutes'),
   }),
@@ -149,27 +153,15 @@ export const tasks = sqliteTable('tasks', columns.tasks());
 
 export const habits = sqliteTable('habits', columns.habits());
 
-export const habitChecks = sqliteTable(
-  'habit_checks',
-  columns.habitChecks(),
-  (t) => [uniqueIndex('habit_checks_habit_date').on(t.habitId, t.date)]
-);
+export const habitChecks = sqliteTable('habit_checks', columns.habitChecks(), (t) => [uniqueIndex('habit_checks_habit_date').on(t.habitId, t.date)]);
 
 export const logEntries = sqliteTable('log_entries', columns.logEntries());
 
 export const timers = sqliteTable('timers', columns.timers());
 
-export const notes = sqliteTable(
-  'notes',
-  columns.notes(),
-  (t) => [uniqueIndex('notes_target_week').on(t.targetType, t.targetId, t.weekStart)]
-);
+export const notes = sqliteTable('notes', columns.notes(), (t) => [uniqueIndex('notes_target_week').on(t.targetType, t.targetId, t.weekStart)]);
 
-export const weeklyReviews = sqliteTable(
-  'weekly_reviews',
-  columns.weeklyReviews(),
-  (t) => [uniqueIndex('weekly_reviews_week_start').on(t.weekStart)]
-);
+export const weeklyReviews = sqliteTable('weekly_reviews', columns.weeklyReviews(), (t) => [uniqueIndex('weekly_reviews_week_start').on(t.weekStart)]);
 
 export const reviewMeasureSnapshots = sqliteTable('review_measure_snapshots', columns.reviewMeasureSnapshots());
 

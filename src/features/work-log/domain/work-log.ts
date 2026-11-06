@@ -21,6 +21,21 @@ export function parseDuration(input: string): DurationResult {
   return { ok: true, minutes: n };
 }
 
+export type OccurrenceResult = { ok: true; at: Date } | { ok: false; error: string };
+
+/**
+ * The time of a manual entry. Without a start time the work ended `now`; with one (`HH:mm`, today) it ended
+ * at the start plus the duration (the start itself without a duration). A start later than `now` is an error.
+ */
+export function occurrenceTime(start: string | null, durationMinutes: number | null, now: Date): OccurrenceResult {
+  if (start === null || start.trim() === '') return { ok: true, at: now };
+  const match = /^(\d{1,2}):(\d{2})$/.exec(start.trim());
+  if (!match) return { ok: false, error: 'Enter a time as HH:mm' };
+  const begin = new Date(now.getFullYear(), now.getMonth(), now.getDate(), Number(match[1]), Number(match[2]));
+  if (begin.getTime() > now.getTime()) return { ok: false, error: 'The start time is in the future' };
+  return { ok: true, at: new Date(begin.getTime() + (durationMinutes ?? 0) * 60000) };
+}
+
 /** Items with log entries first, newest entry first, then the rest by title. `lastLogged` maps item id to its latest `occurred_at`. */
 export function recentFirst<T extends { id: string; title: string }>(items: readonly T[], lastLogged: ReadonlyMap<string, string>): T[] {
   return [...items].sort((a, b) => {

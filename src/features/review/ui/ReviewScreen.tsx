@@ -41,7 +41,7 @@ export function ReviewScreen() {
     <div className={styles.page}>
       <PageHeader title="Review" meta={<span>Week {formatWeekRange(thisWeek)}</span>} />
       <div className={styles.sections}>
-        <Section title="Plan for this week">
+        <Section tile title="Plan for this week">
           {plan ? <p className={styles.plan}>{plan}</p> : <EmptyState icon={NotebookPen} text="No plan yet, it comes from your weekly review" />}
         </Section>
         <Section title="This week so far">{summary && <WeekSummaryView summary={summary} />}</Section>
@@ -51,7 +51,7 @@ export function ReviewScreen() {
           </Button>
           <span className={styles.muted}>Week {formatWeekRange(reviewWeek)}</span>
         </div>
-        <Section title="History" count={history.length}>
+        <Section tile title="History" count={history.length}>
           {history.length === 0 ? (
             <EmptyState icon={History} text="No completed reviews yet" />
           ) : (

@@ -88,7 +88,7 @@ DEVICE_TOKENS=desktop=<token>,browser=<token>
 
 Create a token with `npm run server:token`. Then `npm run server:dev` builds the browser build, creates the local D1 tables and starts the Worker at http://localhost:8787 (local data lives in `server/.wrangler/`; delete that folder to reset it). `npm run server:smoke -- http://localhost:8787 <token>` checks the API.
 
-**Schema changes.** After `npm run db:generate`, also run `npm run db:generate:server` and commit both; a test fails when the server tables and the app tables differ. The Worker and the apps must be released together, because the server refuses a different schema version.
+**Schema changes.** After `npm run db:generate`, also run `npm run db:generate:server` and commit both; a test fails when the server tables and the app tables differ. The Worker and the apps must be released together, because the server refuses a different schema version: run `npm run server:deploy` (it migrates D1 first) before devices on the new version sync, otherwise they report "different schema version" and wait.
 
 **Devices.** `DEVICE_TOKENS` holds comma-separated `name=token` pairs. To add or remove a device, change the list and set it again (see Deploy). Removing a token locks out only that device.
 

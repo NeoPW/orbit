@@ -28,43 +28,45 @@
   font-style: normal;
   font-display: block;
 }
-@font-face {
-  font-family: 'Space Grotesk';
-  src: url('../../../assets/fonts/SpaceGrotesk.ttf') format('truetype');
-  font-weight: 300 700;
-  font-style: normal;
-  font-display: block;
-}
 
 :root {
   color-scheme: dark;
 
-  /* Night sky surfaces */
-  --color-bg: #0b1026;
-  --color-surface: #121a3a;
-  --color-surface-raised: #1a2350;
-  --color-surface-hover: #212b5c;
-  --color-sheet: #151d42;
-  --color-border: #2a3566;
-  --color-scrim: rgb(5 8 20 / 0.6);
+  /* Theme: Slate (default) */
+  --color-bg: #0f1218;
+  --color-sidebar: #0b0e13;
+  --color-surface: #171b24;
+  --color-surface-raised: #1f2430;
+  --color-border: #2b3242;
+  --color-text: #e6e9f2;
+  --color-text-muted: #a2aabd;
+  --color-primary: #8b93ff;
+  --color-on-primary: #0c0e1f;
+  --color-red: #ff8f8a;
+  --color-overdue-bg: #3b1d20;
+  --color-amber: #f3c969;
+  --color-soon-bg: #372f17;
+  --pc0: #f4a26a;
+  --pc1: #6fa8f0;
+  --pc2: #6fcf97;
+  --pc3: #a994f4;
+  --pc4: #f08fb5;
+  --pc5: #54c4c8;
+  --pc6: #c2d86a;
+  --pc7: #d2c2a6;
 
-  /* Text */
-  --color-text: #e8ecff;
-  --color-text-muted: #a3acd6;
-  --color-text-faint: #8c95c4;
-
-  /* Accents */
-  --color-primary: #8b8cff;
-  --color-primary-strong: #a5a6ff;
-  --color-on-primary: #0b1026;
-  --color-primary-soft: rgb(139 140 255 / 0.16);
-  --color-secondary: #4fd8eb;
-  --color-secondary-soft: rgb(79 216 235 / 0.14);
-  --color-amber: #ffb547;
-  --color-amber-soft: rgb(255 181 71 / 0.16);
-  --color-red: #ff6b6b;
-  --color-red-soft: rgb(255 107 107 / 0.16);
-  --color-focus: #4fd8eb;
+  /* Derived from the theme's base tokens above, so every theme gets them. */
+  --color-surface-hover: color-mix(in srgb, var(--color-surface-raised) 88%, var(--color-text));
+  --color-sheet: color-mix(in srgb, var(--color-surface) 50%, var(--color-surface-raised));
+  --color-scrim: rgb(0 0 0 / 0.6);
+  --color-text-faint: color-mix(in srgb, var(--color-text-muted) 80%, var(--color-bg));
+  --color-primary-strong: color-mix(in srgb, var(--color-primary) 75%, var(--color-text));
+  --color-primary-soft: color-mix(in srgb, var(--color-primary) 16%, transparent);
+  --color-secondary: var(--pc5);
+  --color-secondary-soft: color-mix(in srgb, var(--pc5) 14%, transparent);
+  --color-amber-soft: var(--color-soon-bg);
+  --color-red-soft: var(--color-overdue-bg);
+  --color-focus: var(--color-primary-strong);
 
   /* Spacing (4 px grid) */
   --space-1: 4px;
@@ -83,7 +85,7 @@
 
   /* Type */
   --font-body: 'Inter', system-ui, sans-serif;
-  --font-heading: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --font-heading: 'Inter', system-ui, sans-serif;
   --text-xs: 0.75rem;
   --text-sm: 0.8125rem;
   --text-md: 0.9375rem;
@@ -99,6 +101,107 @@
 
   /* Layers */
   --shadow-raised: 0 8px 24px rgb(0 0 0 / 0.35);
+}
+
+/* Other themes: only the base tokens differ (see themes.ts for the swatches). */
+/* Forest */
+[data-theme='forest'] {
+  --color-bg: #0e1512;
+  --color-sidebar: #0a100d;
+  --color-surface: #151e1a;
+  --color-surface-raised: #1d2822;
+  --color-border: #2a3930;
+  --color-text: #e4efe8;
+  --color-text-muted: #9fb3a7;
+  --color-primary: #6fe0b0;
+  --color-on-primary: #06150e;
+  --color-red: #ff9a90;
+  --color-overdue-bg: #3a1f1d;
+  --color-amber: #f3c969;
+  --color-soon-bg: #333218;
+  --pc0: #f0a874;
+  --pc1: #82b7ea;
+  --pc2: #7bdc9e;
+  --pc3: #bba6ee;
+  --pc4: #ec97b6;
+  --pc5: #62d5c4;
+  --pc6: #c4d776;
+  --pc7: #d0bf9d;
+}
+
+/* Ember */
+[data-theme='ember'] {
+  --color-bg: #15110e;
+  --color-sidebar: #100c0a;
+  --color-surface: #1d1814;
+  --color-surface-raised: #271f19;
+  --color-border: #392f26;
+  --color-text: #f0e9e2;
+  --color-text-muted: #b5a799;
+  --color-primary: #ff9f43;
+  --color-on-primary: #1c0f02;
+  --color-red: #ff8d85;
+  --color-overdue-bg: #401e1b;
+  --color-amber: #f5d36b;
+  --color-soon-bg: #3d3016;
+  --pc0: #ee9a78;
+  --pc1: #86b4ef;
+  --pc2: #7ccf93;
+  --pc3: #bda3ee;
+  --pc4: #ee93b1;
+  --pc5: #62cbc6;
+  --pc6: #c9d46e;
+  --pc7: #d6c09a;
+}
+
+/* Plum */
+[data-theme='plum'] {
+  --color-bg: #140f1a;
+  --color-sidebar: #0f0a14;
+  --color-surface: #1c1524;
+  --color-surface-raised: #261d30;
+  --color-border: #382b46;
+  --color-text: #ece6f3;
+  --color-text-muted: #b1a5c0;
+  --color-primary: #e58bd0;
+  --color-on-primary: #1f0a1b;
+  --color-red: #ff93a0;
+  --color-overdue-bg: #401c27;
+  --color-amber: #f3c969;
+  --color-soon-bg: #392f1a;
+  --pc0: #f0a07a;
+  --pc1: #86b2f4;
+  --pc2: #77d4a0;
+  --pc3: #c0a2fa;
+  --pc4: #f08fc0;
+  --pc5: #60d0d2;
+  --pc6: #bfd673;
+  --pc7: #d2bfa4;
+}
+
+/* Graphite */
+[data-theme='graphite'] {
+  --color-bg: #111112;
+  --color-sidebar: #0c0c0d;
+  --color-surface: #19191b;
+  --color-surface-raised: #222225;
+  --color-border: #313135;
+  --color-text: #ececee;
+  --color-text-muted: #a8a8af;
+  --color-primary: #dcdfe6;
+  --color-on-primary: #111114;
+  --color-red: #ff938c;
+  --color-overdue-bg: #3a2020;
+  --color-amber: #f3c969;
+  --color-soon-bg: #38311a;
+  --pc0: #f0a56e;
+  --pc1: #7fb2ee;
+  --pc2: #7dd09b;
+  --pc3: #b6a6ee;
+  --pc4: #ee98b8;
+  --pc5: #66cdd0;
+  --pc6: #c0d278;
+  --pc7: #cbbca3;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -135,6 +238,7 @@ body {
   font-size: var(--text-md);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
 }
 
 h1,

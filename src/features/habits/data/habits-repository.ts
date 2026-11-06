@@ -3,6 +3,7 @@ import type { Db } from '../../../core/db/drizzle.ts';
 import { createFields, deleteFields, naturalId, newId, notDeleted, updateFields, type Clock } from '../../../core/db/records.ts';
 import { goals, habitChecks, habits, measures, projects, type ScheduleType } from '../../../core/db/schema.ts';
 import { deleteLogEntryQuery, insertLogEntryQuery } from '../../work-log/data/log-repository.ts';
+import { goalColor, projectColor } from '../../../core/ui/colors.ts';
 import { validateSchedule } from '../domain/habits.ts';
 
 export type Habit = typeof habits.$inferSelect;
@@ -31,7 +32,10 @@ export interface HabitErrors {
 export type HabitResult = { ok: true; id: string } | { ok: false; errors: HabitErrors };
 
 function validate(input: HabitInput): HabitErrors {
-  return { ...(input.title.trim() === '' ? { title: 'Enter a title' } : {}), ...validateSchedule(input) };
+  return {
+    ...(input.title.trim() === '' ? { title: 'Enter a title' } : {}),
+    ...validateSchedule(input),
+  };
 }
 
 /** Only the schedule fields of the chosen type are stored. */
@@ -64,7 +68,10 @@ export async function createHabit(db: Db, clock: Clock, input: HabitInput): Prom
 export async function updateHabit(db: Db, clock: Clock, id: string, input: HabitInput): Promise<HabitResult> {
   const errors = validate(input);
   if (Object.keys(errors).length > 0) return { ok: false, errors };
-  await db.update(habits).set({ ...updateFields(clock), ...valuesOf(input) }).where(and(eq(habits.id, id), notDeleted(habits)));
+  await db
+    .update(habits)
+    .set({ ...updateFields(clock), ...valuesOf(input) })
+    .where(and(eq(habits.id, id), notDeleted(habits)));
   return { ok: true, id };
 }
 
@@ -72,7 +79,10 @@ export async function updateHabit(db: Db, clock: Clock, id: string, input: Habit
 export async function deleteHabit(db: Db, clock: Clock, id: string): Promise<void> {
   await db.batch([
     db.update(habits).set(deleteFields(clock)).where(eq(habits.id, id)),
-    db.update(measures).set({ ...updateFields(clock), habitId: null }).where(and(eq(measures.habitId, id), notDeleted(measures))),
+    db
+      .update(measures)
+      .set({ ...updateFields(clock), habitId: null })
+      .where(and(eq(measures.habitId, id), notDeleted(measures))),
   ]);
 }
 
@@ -84,7 +94,10 @@ export async function checkHabit(db: Db, clock: Clock, habitId: string, date: st
   const checkId = naturalId('habit_check', habitId, date);
   const [existing] = await db.select().from(habitChecks).where(eq(habitChecks.id, checkId));
   if (existing && existing.deletedAt === null) return;
-  const [habit] = await db.select().from(habits).where(and(eq(habits.id, habitId), notDeleted(habits)));
+  const [habit] = await db
+    .select()
+    .from(habits)
+    .where(and(eq(habits.id, habitId), notDeleted(habits)));
   if (!habit) return;
 
   const entryId = newId();
@@ -93,13 +106,30 @@ export async function checkHabit(db: Db, clock: Clock, habitId: string, date: st
     insertLogEntryQuery(
       db,
       clock,
-      { projectId: habit.projectId, goalId: habit.goalId, taskId: null, occurredAt: now, durationMinutes: null, note: habit.title, source: 'habit' },
+      {
+        projectId: habit.projectId,
+        goalId: habit.goalId,
+        taskId: null,
+        habitId: habit.id,
+        occurredAt: now,
+        durationMinutes: null,
+        note: habit.title,
+        source: 'habit',
+      },
       entryId,
     ),
     db
       .insert(habitChecks)
-      .values({ ...createFields(clock, checkId), habitId, date, logEntryId: entryId })
-      .onConflictDoUpdate({ target: habitChecks.id, set: { updatedAt: now, deletedAt: null, logEntryId: entryId } }),
+      .values({
+        ...createFields(clock, checkId),
+        habitId,
+        date,
+        logEntryId: entryId,
+      })
+      .onConflictDoUpdate({
+        target: habitChecks.id,
+        set: { updatedAt: now, deletedAt: null, logEntryId: entryId },
+      }),
   ]);
 }
 
@@ -117,7 +147,9 @@ export async function uncheckHabit(db: Db, clock: Clock, habitId: string, date: 
 
 /** Checks on or after `since` (`yyyy-mm-dd`), for one habit or all habits. */
 export function listChecksSince(db: Db, since: string, habitId?: string): Promise<HabitCheck[]> {
-  const filter = habitId ? and(notDeleted(habitChecks), gte(habitChecks.date, since), eq(habitChecks.habitId, habitId)) : and(notDeleted(habitChecks), gte(habitChecks.date, since));
+  const filter = habitId
+    ? and(notDeleted(habitChecks), gte(habitChecks.date, since), eq(habitChecks.habitId, habitId))
+    : and(notDeleted(habitChecks), gte(habitChecks.date, since));
   return db.select().from(habitChecks).where(filter).orderBy(habitChecks.date);
 }
 
@@ -132,5 +164,20 @@ export async function listLinkTitles(db: Db): Promise<{ projects: Map<string, st
     db.select({ id: projects.id, title: projects.title }).from(projects).where(notDeleted(projects)),
     db.select({ id: goals.id, title: goals.title }).from(goals).where(notDeleted(goals)),
   ]);
-  return { projects: new Map(projectRows.map((r) => [r.id, r.title])), goals: new Map(goalRows.map((r) => [r.id, r.title])) };
+  return {
+    projects: new Map(projectRows.map((r) => [r.id, r.title])),
+    goals: new Map(goalRows.map((r) => [r.id, r.title])),
+  };
+}
+
+/** CSS colours of the projects and goals habits can link to, by id, to colour a habit's link chips. */
+export async function listLinkColors(db: Db): Promise<{ projects: Map<string, string>; goals: Map<string, string> }> {
+  const [projectRows, goalRows] = await Promise.all([
+    db.select({ id: projects.id, color: projects.color }).from(projects).where(notDeleted(projects)),
+    db.select({ id: goals.id, color: goals.color }).from(goals).where(notDeleted(goals)).orderBy(goals.sortOrder, goals.createdAt),
+  ]);
+  return {
+    projects: new Map(projectRows.map((r) => [r.id, projectColor(r)])),
+    goals: new Map(goalRows.map((r, i) => [r.id, goalColor(r, i)])),
+  };
 }

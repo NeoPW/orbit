@@ -19,6 +19,8 @@ export function ProjectTasksSection({ view }: ProjectSectionProps) {
   return (
     <Section
       title="Tasks"
+      tile
+      color={view.color}
       count={tasks?.length}
       actions={
         <Button variant="ghost" icon={<Plus />} onClick={() => setAdding(true)}>
@@ -41,7 +43,14 @@ export function ProjectTasksSection({ view }: ProjectSectionProps) {
         <TaskList
           tasks={tasks}
           label="Open tasks"
-          rowProps={(task) => ({ importance: effectiveImportance({ importance: task.importance, projectImportance: project.importance }) })}
+          rowProps={(task) => ({
+            projectColor: view.color,
+            projectName: project.title,
+            importance: effectiveImportance({
+              importance: task.importance,
+              projectImportance: project.importance,
+            }),
+          })}
         />
       )}
       {adding && <TaskSheet projectId={project.id} onClose={() => setAdding(false)} />}

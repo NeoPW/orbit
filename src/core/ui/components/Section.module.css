@@ -10,10 +10,20 @@
   gap: var(--space-2);
 }
 
+.header h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
 .count {
   font-size: var(--text-sm);
   font-weight: 600;
-  color: var(--color-text-faint);
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-raised);
+  color: var(--color-text-muted);
 }
 
 .actions {
@@ -21,4 +31,16 @@
   align-items: center;
   gap: var(--space-2);
   margin-left: auto;
+}
+
+.tileTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tileHeading {
+  margin: 0;
+  font-size: var(--text-md, 1rem);
+  font-weight: 600;
 }

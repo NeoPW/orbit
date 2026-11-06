@@ -29,9 +29,9 @@ export function useStopTimer(view: TimerView, onEnded?: () => void): StopTimer {
   const [dialog, setDialog] = useState<'stop' | 'discard' | null>(null);
 
   const stop = useCallback(
-    async (note: string) => {
+    async (note: string, markDone: boolean) => {
       const prompt = await nextStepPromptAfterStop(db, view.timer);
-      await stopTimer(db, clock, note);
+      await stopTimer(db, clock, note, { markHabitDone: markDone });
       setDialog(null);
       onEnded?.();
       messages.show({ text: 'Work logged' });
@@ -52,7 +52,13 @@ export function useStopTimer(view: TimerView, onEnded?: () => void): StopTimer {
     dialogs: (
       <>
         {dialog === 'stop' && (
-          <StopDialog title={view.title} elapsedMs={elapsedMs(view.timer.startedAt, clock())} onStop={(note) => void stop(note)} onCancel={() => setDialog(null)} />
+          <StopDialog
+            title={view.title}
+            elapsedMs={elapsedMs(view.timer.startedAt, clock())}
+            offerMarkDone={view.habit !== null && !view.habit.checkedToday}
+            onStop={(note, markDone) => void stop(note, markDone)}
+            onCancel={() => setDialog(null)}
+          />
         )}
         {dialog === 'discard' && (
           <ConfirmDialog

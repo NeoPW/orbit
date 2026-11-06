@@ -23,3 +23,10 @@
 .section + .section {
   margin-top: var(--space-5);
 }
+
+.page {
+  display: flex;
+  flex-direction: column;
+  max-width: 720px;
+  gap: var(--space-5);
+}

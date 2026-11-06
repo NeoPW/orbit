@@ -9,6 +9,8 @@ export interface ChipProps {
   tone?: ChipTone;
   /** An area's color: shown as a dot and a tinted border. */
   color?: string;
+  /** A project's CSS colour (`projectColor(p)`): tinted chip with a dot; the name is the children. */
+  projectColor?: string;
   icon?: ReactNode;
   /** Makes the chip a button, for example a status chip that offers the other statuses. */
   onClick?: () => void;
@@ -18,14 +20,24 @@ export interface ChipProps {
   'aria-expanded'?: boolean;
 }
 
-export function Chip({ children, tone = 'neutral', color, icon, onClick, title, 'aria-haspopup': haspopup, 'aria-expanded': expanded }: ChipProps) {
-  const className = [styles.chip, color ? styles.area : styles[tone], onClick ? styles.clickable : undefined]
+export function Chip({
+  children,
+  tone = 'neutral',
+  color,
+  projectColor,
+  icon,
+  onClick,
+  title,
+  'aria-haspopup': haspopup,
+  'aria-expanded': expanded,
+}: ChipProps) {
+  const className = [styles.chip, projectColor ? styles.project : color ? styles.area : styles[tone], onClick ? styles.clickable : undefined]
     .filter(Boolean)
     .join(' ');
-  const style = color ? ({ '--chip-color': color } as CSSProperties) : undefined;
+  const style = projectColor ? ({ '--pc': projectColor } as CSSProperties) : color ? ({ '--chip-color': color } as CSSProperties) : undefined;
   const content = (
     <>
-      {color && <span className={styles.dot} aria-hidden="true" />}
+      {(color || projectColor) && <span className={styles.dot} aria-hidden="true" />}
       {icon}
       {children}
     </>

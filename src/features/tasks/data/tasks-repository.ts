@@ -2,6 +2,7 @@ import { and, eq, inArray } from 'drizzle-orm';
 import type { Db } from '../../../core/db/drizzle.ts';
 import { createFields, deleteFields, newId, notDeleted, updateFields, type Clock } from '../../../core/db/records.ts';
 import { goals, logEntries, projects, tasks } from '../../../core/db/schema.ts';
+import { projectColor } from '../../../core/ui/colors.ts';
 import { sortOpenTasks } from '../domain/tasks.ts';
 
 export type Task = typeof tasks.$inferSelect;
@@ -19,11 +20,7 @@ export interface TaskInput {
 }
 
 /** The choice in the "What's the next step?" prompt (cancel never reaches the repository). */
-export type NextStepChoice =
-  | { kind: 'direct' }
-  | { kind: 'new'; title: string }
-  | { kind: 'pick'; taskIds: string[] }
-  | { kind: 'skip' };
+export type NextStepChoice = { kind: 'direct' } | { kind: 'new'; title: string } | { kind: 'pick'; taskIds: string[] } | { kind: 'skip' };
 
 /** What undo needs to restore a completed task. */
 export interface CompletedTask {
@@ -39,6 +36,8 @@ export interface CompletedTask {
 export interface TaskView {
   task: Task;
   projectTitle: string | null;
+  /** CSS colour of its project (`var(--pcN)`); null for a task outside a project. */
+  projectColor: string | null;
   projectImportance: number | null;
   projectDeadline: string | null;
   /** End date of the project's goal (for the project's effective deadline). */
@@ -53,19 +52,17 @@ function assignment(input: { projectId: string | null; goalId: string | null }) 
 }
 
 async function loadTask(db: Db, id: string): Promise<Task | undefined> {
-  const [row] = await db.select().from(tasks).where(and(eq(tasks.id, id), notDeleted(tasks)));
+  const [row] = await db
+    .select()
+    .from(tasks)
+    .where(and(eq(tasks.id, id), notDeleted(tasks)));
   return row;
 }
 
 export async function toViews(db: Db, rows: Task[]): Promise<TaskView[]> {
   const projectIds = [...new Set(rows.flatMap((t) => (t.projectId ? [t.projectId] : [])))];
   const projectRows = projectIds.length ? await db.select().from(projects).where(inArray(projects.id, projectIds)) : [];
-  const goalIds = [
-    ...new Set([
-      ...rows.flatMap((t) => (t.goalId ? [t.goalId] : [])),
-      ...projectRows.flatMap((p) => (p.goalId ? [p.goalId] : [])),
-    ]),
-  ];
+  const goalIds = [...new Set([...rows.flatMap((t) => (t.goalId ? [t.goalId] : [])), ...projectRows.flatMap((p) => (p.goalId ? [p.goalId] : []))])];
   const goalRows = goalIds.length ? await db.select().from(goals).where(inArray(goals.id, goalIds)) : [];
   const projectById = new Map(projectRows.map((p) => [p.id, p]));
   const goalById = new Map(goalRows.map((g) => [g.id, g]));
@@ -76,6 +73,7 @@ export async function toViews(db: Db, rows: Task[]): Promise<TaskView[]> {
     return {
       task,
       projectTitle: project?.title ?? null,
+      projectColor: project ? projectColor(project) : null,
       projectImportance: project?.importance ?? null,
       projectDeadline: project?.deadline ?? null,
       projectGoalEnd: projectGoal?.endDate ?? null,
@@ -124,6 +122,16 @@ export async function listOpenTasksOfGoal(db: Db, goalId: string): Promise<Task[
 }
 
 /** Creates an open task, never a next step; returns its id. */
+/** All open tasks (not only the To do list) with their project's title and colour, for suggestions. */
+export async function listOpenTasks(db: Db): Promise<TaskView[]> {
+  const rows = await db
+    .select()
+    .from(tasks)
+    .where(and(eq(tasks.status, 'open'), notDeleted(tasks)))
+    .orderBy(tasks.title);
+  return toViews(db, rows);
+}
+
 export async function createTask(db: Db, clock: Clock, input: TaskInput): Promise<string> {
   const fields = createFields(clock);
   await db.insert(tasks).values({
@@ -162,7 +170,10 @@ export async function updateTask(db: Db, clock: Clock, id: string, input: TaskIn
 export async function setNextStep(db: Db, clock: Clock, id: string, isNextStep: boolean): Promise<void> {
   const task = await loadTask(db, id);
   if (!task || !task.projectId || (isNextStep && task.status !== 'open')) return;
-  await db.update(tasks).set({ ...updateFields(clock), isNextStep }).where(eq(tasks.id, id));
+  await db
+    .update(tasks)
+    .set({ ...updateFields(clock), isNextStep })
+    .where(eq(tasks.id, id));
 }
 
 /**
@@ -180,7 +191,12 @@ export async function completeTask(db: Db, clock: Clock, id: string, choice: Nex
   const writes = [
     db
       .update(tasks)
-      .set({ ...updateFields(clock), status: 'done' as const, completedAt: now, isNextStep: false })
+      .set({
+        ...updateFields(clock),
+        status: 'done' as const,
+        completedAt: now,
+        isNextStep: false,
+      })
       .where(eq(tasks.id, id)),
     db.insert(logEntries).values({
       ...createFields(clock, logEntryId),
@@ -199,22 +215,31 @@ export async function completeTask(db: Db, clock: Clock, id: string, choice: Nex
       const fields = createFields(clock);
       createdTaskId = fields.id;
       writes.push(
-        db.insert(tasks).values({ ...fields, title: choice.title.trim(), projectId: task.projectId, status: 'open', isNextStep: true }) as never,
+        db.insert(tasks).values({
+          ...fields,
+          title: choice.title.trim(),
+          projectId: task.projectId,
+          status: 'open',
+          isNextStep: true,
+        }) as never,
       );
     } else if (choice.kind === 'pick' && choice.taskIds.length > 0) {
       writes.push(
         db
           .update(tasks)
           .set({ ...updateFields(clock), isNextStep: true })
-          .where(
-            and(inArray(tasks.id, choice.taskIds), eq(tasks.projectId, task.projectId), eq(tasks.status, 'open'), notDeleted(tasks)),
-          ) as never,
+          .where(and(inArray(tasks.id, choice.taskIds), eq(tasks.projectId, task.projectId), eq(tasks.status, 'open'), notDeleted(tasks))) as never,
       );
     }
   }
 
   await db.batch(writes as [(typeof writes)[0], ...(typeof writes)[number][]]);
-  return { taskId: id, logEntryId, wasNextStep: task.isNextStep, createdTaskId };
+  return {
+    taskId: id,
+    logEntryId,
+    wasNextStep: task.isNextStep,
+    createdTaskId,
+  };
 }
 
 /** Undoes completing: reopens the task, deletes its log entry and restores the next-step flag. Chosen next steps stay. */
@@ -222,7 +247,12 @@ export async function undoCompleteTask(db: Db, clock: Clock, completed: Pick<Com
   await db.batch([
     db
       .update(tasks)
-      .set({ ...updateFields(clock), status: 'open', completedAt: null, isNextStep: completed.wasNextStep })
+      .set({
+        ...updateFields(clock),
+        status: 'open',
+        completedAt: null,
+        isNextStep: completed.wasNextStep,
+      })
       .where(eq(tasks.id, completed.taskId)),
     db.update(logEntries).set(deleteFields(clock)).where(eq(logEntries.id, completed.logEntryId)),
   ]);
@@ -247,9 +277,13 @@ export async function deleteTask(db: Db, clock: Clock, id: string): Promise<void
  */
 export async function applyNextStepChoice(db: Db, clock: Clock, projectId: string, choice: NextStepChoice): Promise<void> {
   if (choice.kind === 'new' && choice.title.trim()) {
-    await db
-      .insert(tasks)
-      .values({ ...createFields(clock), title: choice.title.trim(), projectId, status: 'open', isNextStep: true });
+    await db.insert(tasks).values({
+      ...createFields(clock),
+      title: choice.title.trim(),
+      projectId,
+      status: 'open',
+      isNextStep: true,
+    });
   } else if (choice.kind === 'pick' && choice.taskIds.length > 0) {
     await db
       .update(tasks)

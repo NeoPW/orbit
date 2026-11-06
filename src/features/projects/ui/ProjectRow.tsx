@@ -1,10 +1,11 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { navigate } from '../../../core/routing/useRoute.ts';
 import type { Area, ProjectStatus } from '../../../core/db/schema.ts';
 import { Chip } from '../../../core/ui/components/Chip.tsx';
 import { DeadlineBadge } from '../../../core/ui/components/DeadlineBadge.tsx';
 import { ImportanceDots } from '../../../core/ui/components/ImportanceDots.tsx';
 import { ListRow } from '../../../core/ui/components/ListRow.tsx';
+import styles from './ProjectRow.module.css';
 import type { ProjectView } from '../data/projects-repository.ts';
 
 export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
@@ -31,6 +32,7 @@ export function ProjectRow({ view, area, showStatus = false, showGoal = false, t
   const { project, deadline } = view;
   return (
     <ListRow
+      leading={<span className={styles.swatch} style={{ '--pc': view.color } as CSSProperties} aria-hidden="true" />}
       title={project.title}
       onOpen={() => navigate({ name: 'project', id: project.id })}
       meta={

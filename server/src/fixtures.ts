@@ -18,6 +18,7 @@ export function project(id: string, updatedAt: string, title = 'Project', extra:
     status: 'active',
     importance: 3,
     deadline: null,
+    color: null,
     completed_at: null,
     ...extra,
   };

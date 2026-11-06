@@ -18,21 +18,57 @@ export interface MeasureFields {
 
 /** Fields that do not belong to the type are stored empty. */
 function normalized(input: MeasureFields) {
-  const base = { title: input.title.trim(), description: input.description.trim(), measureType: input.measureType };
+  const base = {
+    title: input.title.trim(),
+    description: input.description.trim(),
+    measureType: input.measureType,
+  };
   if (input.measureType === 'numeric') {
-    return { ...base, startValue: input.startValue, targetValue: input.targetValue, currentValue: input.currentValue, unit: input.unit?.trim() || null, step: input.step, habitId: null };
+    return {
+      ...base,
+      startValue: input.startValue,
+      targetValue: input.targetValue,
+      currentValue: input.currentValue,
+      unit: input.unit?.trim() || null,
+      step: input.step,
+      habitId: null,
+    };
   }
   if (input.measureType === 'boolean') {
-    return { ...base, startValue: null, targetValue: null, currentValue: input.currentValue === 1 ? 1 : 0, unit: null, step: 1, habitId: null };
+    return {
+      ...base,
+      startValue: null,
+      targetValue: null,
+      currentValue: input.currentValue === 1 ? 1 : 0,
+      unit: null,
+      step: 1,
+      habitId: null,
+    };
   }
-  return { ...base, startValue: null, targetValue: input.targetValue, currentValue: null, unit: null, step: 1, habitId: input.habitId };
+  return {
+    ...base,
+    startValue: null,
+    targetValue: input.targetValue,
+    currentValue: null,
+    unit: null,
+    step: 1,
+    habitId: input.habitId,
+  };
 }
 
 /** Adds a measure after the goal's other measures. */
 export async function addMeasure(db: Db, clock: Clock, goalId: string, input: MeasureFields): Promise<string> {
-  const [last] = await db.select({ value: max(measures.sortOrder) }).from(measures).where(and(eq(measures.goalId, goalId), notDeleted(measures)));
+  const [last] = await db
+    .select({ value: max(measures.sortOrder) })
+    .from(measures)
+    .where(and(eq(measures.goalId, goalId), notDeleted(measures)));
   const fields = createFields(clock);
-  await db.insert(measures).values({ ...fields, ...normalized(input), goalId, sortOrder: (last?.value ?? -1) + 1 });
+  await db.insert(measures).values({
+    ...fields,
+    ...normalized(input),
+    goalId,
+    sortOrder: (last?.value ?? -1) + 1,
+  });
   return fields.id;
 }
 
@@ -48,7 +84,10 @@ export async function deleteMeasure(db: Db, clock: Clock, id: string): Promise<v
 }
 
 async function getMeasure(db: Db, id: string): Promise<Measure | undefined> {
-  const [row] = await db.select().from(measures).where(and(eq(measures.id, id), notDeleted(measures)));
+  const [row] = await db
+    .select()
+    .from(measures)
+    .where(and(eq(measures.id, id), notDeleted(measures)));
   return row;
 }
 

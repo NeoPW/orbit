@@ -16,7 +16,7 @@ import { WeekSummaryView } from './WeekSummaryView.tsx';
 
 function Text({ title, text }: { title: string; text: string }) {
   return (
-    <Section title={title}>
+    <Section tile title={title}>
       <p className={styles.plan}>{text}</p>
     </Section>
   );
@@ -31,21 +31,21 @@ function WeekSummaryOf({ weekStart }: { weekStart: string }) {
 export function ReviewHistoryPage() {
   const route = useRoute();
   const id = route.name === 'review-history' ? route.id : '';
-  const loaded = useLiveQuery(async (db) => {
-    const review = await getReviewById(db, id);
-    if (!review) return null;
-    const notes = await listNotesForWeek(db, review.weekStart);
-    const items = await Promise.all(
-      notes.map(async (note) => {
-        const title =
-          note.targetType === 'goal'
-            ? (await getGoal(db, note.targetId))?.goal.title
-            : (await getProject(db, note.targetId))?.project.title;
-        return title === undefined ? null : { note, title };
-      }),
-    );
-    return { review, notes: items.flatMap((item) => (item ? [item] : [])) };
-  }, [id]);
+  const loaded = useLiveQuery(
+    async (db) => {
+      const review = await getReviewById(db, id);
+      if (!review) return null;
+      const notes = await listNotesForWeek(db, review.weekStart);
+      const items = await Promise.all(
+        notes.map(async (note) => {
+          const title = note.targetType === 'goal' ? (await getGoal(db, note.targetId))?.goal.title : (await getProject(db, note.targetId))?.project.title;
+          return title === undefined ? null : { note, title };
+        }),
+      );
+      return { review, notes: items.flatMap((item) => (item ? [item] : [])) };
+    },
+    [id],
+  );
 
   if (loaded === undefined) return null;
   if (loaded === null) return <NotFound text="Review not found" destination={{ name: 'review' }} label="Go to Review" />;
@@ -58,7 +58,7 @@ export function ReviewHistoryPage() {
         {review.reflection.trim() && <Text title="Reflection" text={review.reflection.trim()} />}
         {review.planNextWeek.trim() && <Text title="Plan for the next week" text={review.planNextWeek.trim()} />}
         {notes.length > 0 && (
-          <Section title="Notes" count={notes.length}>
+          <Section tile title="Notes" count={notes.length}>
             {notes.map(({ note, title }) => (
               <ListRow
                 key={note.id}

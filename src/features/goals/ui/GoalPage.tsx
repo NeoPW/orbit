@@ -11,10 +11,10 @@ import { Chip } from '../../../core/ui/components/Chip.tsx';
 import { ConfirmDialog } from '../../../core/ui/components/ConfirmDialog.tsx';
 import { DeadlineBadge } from '../../../core/ui/components/DeadlineBadge.tsx';
 import { Menu } from '../../../core/ui/components/Menu.tsx';
-import { PageHeader } from '../../../core/ui/components/PageHeader.tsx';
+import { Tile } from '../../../core/ui/components/Tile.tsx';
 import { ProgressBar } from '../../../core/ui/components/ProgressBar.tsx';
 import { useMessages } from '../../../core/ui/messages/MessageProvider.tsx';
-import { goalColor } from '../../../core/ui/palette.ts';
+import { goalColor } from '../../../core/ui/colors.ts';
 import { deleteGoal, getGoal, setGoalStatus, type GoalWithMeasures } from '../data/goals-repository.ts';
 import { goalProgress, measureProgress } from '../domain/goals.ts';
 import { GoalHabitsSection, GoalNotesSection, GoalWorkSectionOf } from './GoalExtraSections.tsx';
@@ -45,7 +45,11 @@ const STATUSES: { status: GoalStatus; label: string }[] = [
   { status: 'archived', label: 'Archived' },
 ];
 
-const STATUS_TONE = { active: 'primary', completed: 'secondary', archived: 'neutral' } as const;
+const STATUS_TONE = {
+  active: 'primary',
+  completed: 'secondary',
+  archived: 'neutral',
+} as const;
 
 const clock = () => new Date();
 
@@ -68,11 +72,14 @@ export function GoalPage() {
 
   return (
     <div className={styles.page} style={{ '--goal-color': color } as CSSProperties}>
-      <div className={styles.header}>
-        <PageHeader
-          title={goal.title}
-          meta={
-            <>
+      <Tile
+        as="article"
+        color={color}
+        tinted
+        title={
+          <div className={styles.titles}>
+            <h1 className={styles.heading}>{goal.title}</h1>
+            <div className={styles.meta}>
               <Menu
                 label="Status"
                 trigger={(props) => (
@@ -88,22 +95,23 @@ export function GoalPage() {
               />
               {goal.startDate && goal.endDate && <Chip>{formatDateRange(goal.startDate, goal.endDate)}</Chip>}
               {goal.status === 'active' && goal.endDate && <DeadlineBadge deadline={goal.endDate} />}
-            </>
-          }
-          actions={
-            <>
-              <Button icon={<Pencil />} onClick={() => setEditing(true)}>
-                Edit
-              </Button>
-              <Button variant="danger" icon={<Trash2 />} onClick={() => setConfirming(true)}>
-                Delete
-              </Button>
-            </>
-          }
-        />
+            </div>
+          </div>
+        }
+        actions={
+          <>
+            <Button icon={<Pencil />} onClick={() => setEditing(true)}>
+              Edit
+            </Button>
+            <Button variant="danger" icon={<Trash2 />} onClick={() => setConfirming(true)}>
+              Delete
+            </Button>
+          </>
+        }
+      >
+        {goal.description && <p className={styles.description}>{goal.description}</p>}
         {progress !== null && <ProgressBar value={progress} color={color} label={`Progress of ${goal.title}`} />}
-      </div>
-      {goal.description && <p className={styles.description}>{goal.description}</p>}
+      </Tile>
       <div className={styles.sections}>
         {SECTIONS.map((SectionComponent, i) => (
           <SectionComponent key={i} data={loaded} color={color} />

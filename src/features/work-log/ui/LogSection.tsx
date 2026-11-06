@@ -9,7 +9,7 @@ import { LogEntryList } from './LogEntryList.tsx';
 import { LogWorkSheet } from './LogWorkSheet.tsx';
 
 /** The log entries of a project or task, newest first, with "Log work" on that target. */
-export function LogSection({ target }: { target: LogTarget }) {
+export function LogSection({ target, color }: { target: Exclude<LogTarget, { habitId: string }>; color?: string }) {
   const key = 'projectId' in target ? target.projectId : target.taskId;
   const entries = useLiveQuery(
     (db) => ('projectId' in target ? listEntriesForProject(db, target.projectId) : listEntriesForTask(db, target.taskId)),
@@ -20,6 +20,8 @@ export function LogSection({ target }: { target: LogTarget }) {
   return (
     <Section
       title="Log"
+      tile
+      color={color}
       count={entries?.length}
       actions={
         <Button variant="ghost" icon={<Plus />} onClick={() => setLogging(true)}>

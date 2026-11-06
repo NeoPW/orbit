@@ -6,8 +6,8 @@ import type { LogTarget } from '../../work-log/data/log-repository.ts';
 import { useStartFocus } from './useStartFocus.ts';
 
 const LENGTHS: { minutes: number | null; label: string }[] = [
-  { minutes: 25, label: '25 minutes' },
-  { minutes: 50, label: '50 minutes' },
+  { minutes: 30, label: '30 minutes' },
+  { minutes: 60, label: '60 minutes' },
   { minutes: 90, label: '90 minutes' },
   { minutes: null, label: 'Open-ended' },
 ];

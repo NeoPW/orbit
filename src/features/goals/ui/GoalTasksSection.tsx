@@ -9,7 +9,7 @@ import { TaskSheet } from '../../tasks/ui/TaskSheet.tsx';
 import type { GoalSectionProps } from './GoalPage.tsx';
 
 /** Open tasks assigned to the goal itself. */
-export function GoalTasksSection({ data }: GoalSectionProps) {
+export function GoalTasksSection({ data, color }: GoalSectionProps) {
   const goalId = data.goal.id;
   const tasks = useLiveQuery((db) => listOpenTasksOfGoal(db, goalId), [goalId]);
   const [adding, setAdding] = useState(false);
@@ -17,6 +17,8 @@ export function GoalTasksSection({ data }: GoalSectionProps) {
   return (
     <Section
       title="Tasks"
+      tile
+      color={color}
       count={tasks?.length}
       actions={
         <Button variant="ghost" icon={<Plus />} onClick={() => setAdding(true)}>

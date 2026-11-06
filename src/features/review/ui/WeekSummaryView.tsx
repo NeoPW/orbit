@@ -6,7 +6,8 @@ import { EmptyState } from '../../../core/ui/components/EmptyState.tsx';
 import { ListRow } from '../../../core/ui/components/ListRow.tsx';
 import { ProgressBar } from '../../../core/ui/components/ProgressBar.tsx';
 import { Section } from '../../../core/ui/components/Section.tsx';
-import { goalColor } from '../../../core/ui/palette.ts';
+import { goalColor } from '../../../core/ui/colors.ts';
+import { WeekTimeline } from '../../timeline/ui/WeekTimeline.tsx';
 import { formatDuration } from '../../work-log/domain/work-log.ts';
 import type { GoalSummary, WeekSummary } from '../domain/week-summary.ts';
 import styles from './WeekSummaryView.module.css';
@@ -69,7 +70,7 @@ export function WeekSummaryView({ summary }: WeekSummaryViewProps) {
   return (
     <div className={styles.summary}>
       {goals.length > 0 && (
-        <Section title="Goals" count={goals.length}>
+        <Section tile title="Goals" count={goals.length}>
           <div className={styles.goals}>
             {goals.map((goal) => (
               <GoalBlock key={goal.goalId} goal={goal} />
@@ -77,8 +78,11 @@ export function WeekSummaryView({ summary }: WeekSummaryViewProps) {
           </div>
         </Section>
       )}
+      <Section tile title="Days">
+        <WeekTimeline weekStart={summary.weekStart} />
+      </Section>
       {work.length > 0 && (
-        <Section title="Work">
+        <Section tile title="Work">
           {work.map((group) => (
             <div key={group.goalId ?? 'none'} className={styles.group}>
               {group.goalTitle !== null && <h3 className={styles.groupTitle}>{group.goalTitle}</h3>}
@@ -96,7 +100,7 @@ export function WeekSummaryView({ summary }: WeekSummaryViewProps) {
         </Section>
       )}
       {finishedProjects.length > 0 && (
-        <Section title="Finished projects" count={finishedProjects.length}>
+        <Section tile title="Finished projects" count={finishedProjects.length}>
           {finishedProjects.map((p) => (
             <ListRow
               key={p.projectId}
@@ -108,7 +112,7 @@ export function WeekSummaryView({ summary }: WeekSummaryViewProps) {
         </Section>
       )}
       {completedTasks.length > 0 && (
-        <Section title="Completed tasks" count={completedTasks.length}>
+        <Section tile title="Completed tasks" count={completedTasks.length}>
           {completedTasks.map((t) => (
             <ListRow
               key={t.taskId}
@@ -120,7 +124,7 @@ export function WeekSummaryView({ summary }: WeekSummaryViewProps) {
         </Section>
       )}
       {habits.length > 0 && (
-        <Section title="Habits" count={habits.length}>
+        <Section tile title="Habits" count={habits.length}>
           {habits.map((h) => (
             <ListRow
               key={h.habitId}

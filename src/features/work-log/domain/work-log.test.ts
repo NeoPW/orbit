@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDuration, parseDuration, recentFirst, workOnGoal, type GoalWorkEntry, type WorkLinks } from './work-log.ts';
+import { formatDuration, occurrenceTime, parseDuration, recentFirst, workOnGoal, type GoalWorkEntry, type WorkLinks } from './work-log.ts';
 
 describe('duration', () => {
   it('formats', () => {
@@ -65,5 +65,28 @@ describe('work on a goal', () => {
     expect(result.total.count).toBe(3);
     expect(result.week.count).toBe(0);
     expect(result.entries[0]?.occurredAt).toBe('2026-10-13T10:00:00Z');
+  });
+});
+
+describe('occurrenceTime', () => {
+  const now = new Date(2026, 10, 6, 15, 0);
+  const at = (h: number, m: number) => new Date(2026, 10, 6, h, m);
+
+  it('is now without a start time', () => {
+    expect(occurrenceTime(null, 45, now)).toEqual({ ok: true, at: now });
+    expect(occurrenceTime('', 45, now)).toEqual({ ok: true, at: now });
+  });
+
+  it('ends at the start plus the duration', () => {
+    expect(occurrenceTime('13:00', 90, now)).toEqual({ ok: true, at: at(14, 30) });
+  });
+
+  it('is the start itself without a duration', () => {
+    expect(occurrenceTime('13:00', null, now)).toEqual({ ok: true, at: at(13, 0) });
+  });
+
+  it('rejects a start in the future', () => {
+    expect(occurrenceTime('16:00', 30, now).ok).toBe(false);
+    expect(occurrenceTime('15:00', 30, now).ok).toBe(true);
   });
 });

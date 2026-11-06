@@ -1,0 +1,8 @@
+.list {
+  margin: calc(var(--space-2) * -1);
+}
+
+.list > * + * {
+  border-top: 1px solid var(--color-border);
+  border-radius: 0;
+}
