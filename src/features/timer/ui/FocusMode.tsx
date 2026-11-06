@@ -3,10 +3,8 @@ import { useCallback, useEffect, type CSSProperties } from 'react';
 import { useLiveQuery } from '../../../core/db/live.ts';
 import { navigate } from '../../../core/routing/useRoute.ts';
 import { Chip } from '../../../core/ui/components/Chip.tsx';
-import { ThemeSwitcher } from '../../../core/ui/components/ThemeSwitcher.tsx';
 import { Button } from '../../../core/ui/components/Button.tsx';
 import { EmptyState } from '../../../core/ui/components/EmptyState.tsx';
-import { useSettings } from '../../settings/data/settings.ts';
 import { getTimerView, type TimerView } from '../data/timer-view.ts';
 import styles from './FocusMode.module.css';
 import { TimerReadout } from './TimerReadout.tsx';
@@ -45,7 +43,6 @@ export function FocusMode() {
 function FocusSession({ view }: { view: TimerView }) {
   const ended = useCallback(() => leave(), []);
   const stop = useStopTimer(view, ended);
-  const { settings, save } = useSettings();
   const { timer } = view;
   return (
     <div className={styles.focus} style={view.projectColor ? ({ '--pc': view.projectColor } as CSSProperties) : undefined}>
@@ -53,7 +50,6 @@ function FocusSession({ view }: { view: TimerView }) {
         <Button icon={<ArrowLeft />} onClick={leave}>
           Leave focus mode (Esc)
         </Button>
-        <ThemeSwitcher value={settings.theme} onChange={(id) => void save('theme', id)} />
       </header>
       <main className={styles.main}>
         <div className={styles.column}>

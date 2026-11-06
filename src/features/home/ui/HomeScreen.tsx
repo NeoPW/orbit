@@ -155,6 +155,7 @@ export function HomeScreen() {
                   tasks={todo.map((item) => item.task)}
                   label="To do"
                   rowProps={(task) => ({
+                    compact: true,
                     importance: itemByTask.get(task.id)?.importance,
                     context: itemByTask.get(task.id)?.context ?? undefined,
                     projectColor: itemByTask.get(task.id)?.projectColor,
