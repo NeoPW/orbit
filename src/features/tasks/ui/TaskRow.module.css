@@ -15,3 +15,63 @@
 .colored label > span[aria-hidden="true"] {
   border-color: var(--pc);
 }
+
+/* Compact tags (Home's To do): small text, colour carries the meaning. */
+.compact {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.compactProject {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: color-mix(in srgb, var(--pc, var(--color-text-muted)) 70%, var(--color-text));
+}
+
+.compactDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pc);
+}
+
+.compactDue.overdue {
+  color: var(--color-red);
+  font-weight: 600;
+}
+
+.compactDue.soon {
+  color: var(--color-amber);
+}
+
+/* The start button is faint, and full on hover and keyboard focus. */
+.startOnHover {
+  opacity: 0.3;
+  transition: opacity var(--motion-fast) var(--ease-out);
+}
+
+div:hover > div > .startOnHover,
+.startOnHover:focus-within {
+  opacity: 1;
+}
+
+/* Compact rows: a thin outline in the project colour instead of the left rail. */
+.outlined {
+  margin: 4px 0;
+  border: 1px solid color-mix(in srgb, var(--pc) 45%, transparent);
+  border-radius: var(--radius-md);
+}
+
+.outlined::before {
+  display: none;
+}
+
+/* A task without a project: the same outline, neutral, so the list stays even. */
+.neutral {
+  --pc: var(--color-text-faint);
+}
