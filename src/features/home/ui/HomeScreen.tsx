@@ -79,20 +79,20 @@ export function HomeScreen() {
     return () => window.removeEventListener('mousedown', clear);
   }, [highlight]);
 
-  // J/K and up/down through the To do list (up from the first task reaches the habits), left/right through the habits,
-  // 1–9 highlight a task; Space, X and Enter act on what is highlighted (see openspec keyboard-shortcuts).
+  // J/K and up/down through the To do list (wrapping), left/right through the habits, 1–9 highlight a task and
+  // Shift+1–9 a habit; Space, X and Enter act on what is highlighted (see openspec keyboard-shortcuts).
   useScreenShortcuts((match) => {
     const tasks = todoTasks.length;
     const habitCount = habitItems.length;
     const at = highlighted;
     switch (match.action) {
+      // Up and down wrap around the To do list; from a habit they start at the first task.
       case 'todo-next':
         if (tasks === 0) return;
-        return setHighlight({ list: 'task', index: at?.list === 'task' ? Math.min(at.index + 1, tasks - 1) : 0 });
+        return setHighlight({ list: 'task', index: at?.list === 'task' ? (at.index + 1) % tasks : 0 });
       case 'todo-prev':
-        if (at?.list === 'task' && at.index === 0 && habitCount > 0) return setHighlight({ list: 'habit', index: 0 });
-        if (at?.list === 'habit' || tasks === 0) return;
-        return setHighlight({ list: 'task', index: at ? Math.max(at.index - 1, 0) : 0 });
+        if (tasks === 0) return;
+        return setHighlight({ list: 'task', index: at?.list === 'task' ? (at.index - 1 + tasks) % tasks : 0 });
       case 'habit-prev':
       case 'habit-next': {
         if (habitCount === 0) return;
@@ -102,6 +102,8 @@ export function HomeScreen() {
       }
       case 'todo-select-n':
         return (match.index ?? -1) < tasks ? setHighlight({ list: 'task', index: match.index ?? 0 }) : undefined;
+      case 'habit-select-n':
+        return (match.index ?? -1) < habitCount ? setHighlight({ list: 'habit', index: match.index ?? 0 }) : undefined;
       case 'todo-start':
         if (highlightedTask) return void start({ taskId: highlightedTask.id });
         if (highlightedHabit) return void start({ habitId: highlightedHabit.id });

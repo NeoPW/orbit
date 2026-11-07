@@ -3,7 +3,15 @@
 export type GlobalAction =
   'new-task' | 'log-work' | 'focus-field' | 'go-home' | 'go-plan' | 'go-review' | 'go-settings' | 'overlay' | 'palette';
 export type TodoAction =
-  'todo-next' | 'todo-prev' | 'habit-prev' | 'habit-next' | 'todo-start' | 'todo-complete' | 'todo-open' | 'todo-select-n';
+  | 'todo-next'
+  | 'todo-prev'
+  | 'habit-prev'
+  | 'habit-next'
+  | 'todo-start'
+  | 'todo-complete'
+  | 'todo-open'
+  | 'todo-select-n'
+  | 'habit-select-n';
 export type FocusAction =
   'focus-toggle' | 'focus-complete' | 'focus-leave' | 'focus-discard' | 'focus-limit' | 'focus-limit-up' | 'focus-limit-down';
 export type ShortcutAction = GlobalAction | TodoAction | FocusAction;
@@ -30,10 +38,11 @@ export const SHORTCUTS: Shortcut[] = [
   { action: 'palette', keys: 'Ctrl+K', label: 'Command palette', group: 'Global' },
   { action: 'overlay', keys: '?', label: 'All shortcuts', group: 'Global' },
   { action: 'todo-next', keys: 'J / ↓', label: 'Next task', group: 'Home' },
-  { action: 'todo-prev', keys: 'K / ↑', label: 'Previous task (up to the habits)', group: 'Home' },
+  { action: 'todo-prev', keys: 'K / ↑', label: 'Previous task', group: 'Home' },
   { action: 'habit-prev', keys: '←', label: 'Previous habit', group: 'Home' },
   { action: 'habit-next', keys: '→', label: 'Next habit', group: 'Home' },
   { action: 'todo-select-n', keys: '1–9', label: 'Highlight the 1st–9th task', group: 'Home' },
+  { action: 'habit-select-n', keys: 'Shift+1–9', label: 'Highlight the 1st–9th habit', group: 'Home' },
   { action: 'todo-start', keys: 'Space', label: 'Start focus on the highlighted task or habit', group: 'Home' },
   { action: 'todo-complete', keys: 'X', label: 'Complete the task / check the habit', group: 'Home' },
   { action: 'todo-open', keys: 'Enter', label: 'Open the task / check the habit', group: 'Home' },
@@ -55,6 +64,8 @@ export function withShortcut(label: string, action: ShortcutAction): string {
 /** The key event and where it happened, as plain data. */
 export interface KeyInput {
   key: string;
+  /** The physical key (`Digit1`), for Shift+digits whose character depends on the layout. */
+  code?: string;
   shiftKey: boolean;
   ctrlKey: boolean;
   altKey: boolean;
@@ -69,7 +80,7 @@ export interface KeyInput {
 
 export interface ShortcutMatch {
   action: ShortcutAction;
-  /** For `todo-select-n`: 0 for key 1. */
+  /** For `todo-select-n` and `habit-select-n`: 0 for key 1. */
   index?: number;
 }
 
@@ -130,6 +141,8 @@ export function matchShortcut(input: KeyInput, scope: ShortcutScope): ShortcutMa
   }
   if (scope === 'home') {
     if (!input.shiftKey && /^[1-9]$/.test(key)) return { action: 'todo-select-n', index: Number(key) - 1 };
+    const digit = /^Digit([1-9])$/.exec(input.code ?? '');
+    if (input.shiftKey && digit) return { action: 'habit-select-n', index: Number(digit[1]) - 1 };
     const action = TODO_KEYS[named];
     if (action) return { action };
   }

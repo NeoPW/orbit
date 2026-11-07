@@ -68,6 +68,12 @@ describe('To do keys on Home', () => {
     expect(action(press('ArrowRight'), 'home')).toBe('habit-next');
   });
 
+  it('highlights the nth habit with Shift and a digit, whatever character the layout gives', () => {
+    expect(matchShortcut(press('!', { shiftKey: true, code: 'Digit1' }), 'home')).toEqual({ action: 'habit-select-n', index: 0 });
+    expect(matchShortcut(press('§', { shiftKey: true, code: 'Digit3' }), 'home')).toEqual({ action: 'habit-select-n', index: 2 });
+    expect(matchShortcut(press('!', { shiftKey: true, code: 'Digit1' }), 'global')).toBeNull();
+  });
+
   it('highlights the nth task with 1–9', () => {
     expect(matchShortcut(press('3'), 'home')).toEqual({ action: 'todo-select-n', index: 2 });
     expect(matchShortcut(press('0'), 'home')).toBeNull();

@@ -47,6 +47,21 @@ Single-key and `Shift` shortcuts SHALL NOT act while the cursor is in a text fie
 - **WHEN** the cursor is in the focus field and the user presses `Ctrl+K`
 - **THEN** the command palette opens
 
+### Requirement: Leave a field with Esc
+`Esc` in a text field, text area or dropdown that is not inside a dialog or sheet SHALL take the cursor out of the field, so that the shortcuts work again. A field that uses `Esc` itself (closing its suggestions) SHALL do that first; in a dialog or sheet `Esc` SHALL close it as before.
+
+#### Scenario: Leave the focus field
+- **WHEN** the cursor is in the focus field without suggestions shown and the user presses `Esc` and then `Shift+P`
+- **THEN** the field loses the cursor and Plan is shown
+
+#### Scenario: Suggestions first
+- **WHEN** suggestions are shown under the focus field and the user presses `Esc` twice
+- **THEN** the first `Esc` closes the suggestions and the second takes the cursor out of the field
+
+#### Scenario: In a sheet
+- **WHEN** the cursor is in the title of the New task sheet and the user presses `Esc`
+- **THEN** the sheet closes
+
 ### Requirement: Shortcut overlay
 `?` SHALL open an overlay that lists every shortcut with its key, grouped as Global, Home and Focus mode. `Esc` or `?` SHALL close it.
 
@@ -62,7 +77,7 @@ Buttons and navigation entries that have a shortcut SHALL show it in their toolt
 - **THEN** the tooltip reads "New task (T)"
 
 ### Requirement: To do list keys
-On Home, `J` or the down arrow SHALL highlight the next To do task (the first one when none or a habit is highlighted) and `K` or the up arrow the previous one; the up arrow on the first task SHALL highlight the first habit due today. The left and right arrows SHALL highlight the previous and next habit (the first one when none is highlighted). `1`–`9` SHALL highlight the 1st–9th To do task; a number without a task does nothing. For a highlighted task, `Space` SHALL start a focus session, `X` SHALL complete it (as its checkbox does, with Undo) and `Enter` SHALL open its page; for a highlighted habit, `Space` SHALL start a focus session and `X` or `Enter` SHALL check or uncheck it. The highlight SHALL be visible, scroll into view and clear when the mouse clicks elsewhere.
+On Home, `J` or the down arrow SHALL highlight the next To do task and `K` or the up arrow the previous one, wrapping from the last task to the first and from the first to the last (the first task when none or a habit is highlighted). The left and right arrows SHALL highlight the previous and next habit due today (the first one when none is highlighted). `1`–`9` SHALL highlight the 1st–9th To do task and `Shift+1`–`Shift+9` the 1st–9th habit, by the digit key whatever character the keyboard layout gives; a number without a task or habit does nothing. For a highlighted task, `Space` SHALL start a focus session, `X` SHALL complete it (as its checkbox does, with Undo) and `Enter` SHALL open its page; for a highlighted habit, `Space` SHALL start a focus session and `X` or `Enter` SHALL check or uncheck it. The highlight SHALL be visible, scroll into view and clear when the mouse clicks elsewhere.
 
 #### Scenario: Move and start
 - **WHEN** the To do list is "Email supervisor", "Rerun benchmarks" and the user presses `J`, `J` and `Space`
@@ -83,6 +98,14 @@ On Home, `J` or the down arrow SHALL highlight the next To do task (the first on
 #### Scenario: Number beyond the list
 - **WHEN** the To do list has two tasks and the user presses `5`
 - **THEN** nothing happens
+
+#### Scenario: Up from the first task
+- **WHEN** the To do list has four tasks, the first is highlighted and the user presses the up arrow
+- **THEN** the fourth task is highlighted
+
+#### Scenario: Habit by number
+- **WHEN** the habits due today are "Stretch", "Run 5 km" and the user presses `Shift+2`
+- **THEN** "Run 5 km" is highlighted
 
 #### Scenario: Habits with the side arrows
 - **WHEN** the habits due today are "Stretch", "Run 5 km" and the user presses the right arrow twice and `X`

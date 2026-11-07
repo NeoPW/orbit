@@ -9,6 +9,19 @@ import { screenHandler, type ScreenMatch } from './screen-keys.ts';
 import { focusFieldRequest } from './requests.ts';
 import { ShortcutOverlay } from './ShortcutOverlay.tsx';
 
+/**
+ * Esc in a text field outside a dialog or sheet leaves the field (inside one, Esc closes it as before). A field that
+ * uses Esc itself, like closing its suggestions, prevents the default and keeps it.
+ */
+function leaveField(event: KeyboardEvent): boolean {
+  if (event.key !== 'Escape' || !(event.target instanceof HTMLElement)) return false;
+  const input = keyInput(event);
+  if (!input.editable || event.target.closest('dialog')) return false;
+  event.preventDefault();
+  event.target.blur();
+  return true;
+}
+
 /** Where a key event happened, as `matchShortcut` needs it. */
 export function keyInput(event: KeyboardEvent): KeyInput {
   const target = event.target instanceof Element ? event.target : null;
@@ -16,6 +29,7 @@ export function keyInput(event: KeyboardEvent): KeyInput {
   const toggle = field instanceof HTMLInputElement && ['checkbox', 'radio', 'button', 'submit', 'range'].includes(field.type);
   return {
     key: event.key,
+    code: event.code,
     shiftKey: event.shiftKey,
     ctrlKey: event.ctrlKey,
     altKey: event.altKey,
@@ -36,6 +50,7 @@ const SCREEN_ACTIONS = new Set<string>([
   'habit-prev',
   'habit-next',
   'todo-select-n',
+  'habit-select-n',
   'focus-toggle',
   'focus-complete',
   'focus-leave',
@@ -58,6 +73,7 @@ export function ShortcutProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return;
+      if (leaveField(event)) return;
       const match = matchShortcut(keyInput(event), scope);
       if (!match) return;
       if (SCREEN_ACTIONS.has(match.action)) {
