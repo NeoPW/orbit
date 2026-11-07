@@ -1,6 +1,7 @@
 import { TriangleAlert } from 'lucide-react';
-import { lazy, Suspense, type ComponentType } from 'react';
-import { useRoute } from '../core/routing/useRoute.ts';
+import { lazy, Suspense, useEffect, type ComponentType } from 'react';
+import { navigate, useRoute } from '../core/routing/useRoute.ts';
+import { useIsPhone } from '../core/ui/useIsPhone.ts';
 import { sectionOf, type RouteName } from '../core/routing/routes.ts';
 import { MessageHost } from '../core/ui/messages/MessageHost.tsx';
 import { GoalPage } from '../features/goals/ui/GoalPage.tsx';
@@ -15,9 +16,11 @@ import { SettingsScreen } from '../features/settings/ui/SettingsScreen.tsx';
 import { CompleteTaskProvider } from '../features/tasks/ui/CompleteTaskProvider.tsx';
 import { TaskPage } from '../features/tasks/ui/TaskPage.tsx';
 import { FocusMode } from '../features/timer/ui/FocusMode.tsx';
+import { TodayScreen } from '../features/timeline/ui/TodayScreen.tsx';
 import { NotFound } from './NotFound.tsx';
 import { useServices } from './services.ts';
 import { Sidebar } from './Sidebar.tsx';
+import { BottomNav } from './BottomNav.tsx';
 import styles from './Shell.module.css';
 
 // The gallery is only imported in development; the production bundle has no trace of it.
@@ -27,6 +30,7 @@ const ComponentGallery: ComponentType | null = import.meta.env.DEV ? lazy(() => 
 // without an entry shows NotFound; later changes add their pages here.
 const SCREENS: Partial<Record<RouteName, ComponentType>> = {
   home: HomeScreen,
+  today: TodayScreen,
   plan: PlanScreen,
   goal: GoalPage,
   project: ProjectPage,
@@ -42,9 +46,16 @@ const SCREENS: Partial<Record<RouteName, ComponentType>> = {
 export function Shell() {
   const route = useRoute();
   const { storage } = useServices();
+  const isPhone = useIsPhone();
   const Screen = SCREENS[route.name] ?? NotFound;
 
-  // Focus mode fills the window without the sidebar.
+  // The Today screen exists only in the phone layout; wide windows show the timeline on Home.
+  const todayOnWide = route.name === 'today' && !isPhone;
+  useEffect(() => {
+    if (todayOnWide) navigate({ name: 'home' });
+  }, [todayOnWide]);
+
+  // Focus mode fills the window without the sidebar or the bottom navigation.
   if (route.name === 'focus') {
     return (
       <CompleteTaskProvider>
@@ -58,8 +69,8 @@ export function Shell() {
 
   return (
     <CompleteTaskProvider>
-      <div className={styles.shell}>
-        <Sidebar current={sectionOf(route)} />
+      <div className={`${styles.shell} ${isPhone ? styles.phone : ''}`}>
+        {!isPhone && <Sidebar current={sectionOf(route)} />}
         <div className={styles.main}>
           {storage === 'memory' && (
             <p className={styles.banner} role="alert">
@@ -73,6 +84,7 @@ export function Shell() {
             </Suspense>
           </main>
         </div>
+        {isPhone && <BottomNav current={sectionOf(route)} />}
         <MessageHost />
       </div>
     </CompleteTaskProvider>

@@ -57,6 +57,11 @@ describe('detail paths', () => {
     }
   });
 
+  it('opens the Today screen at /today', () => {
+    expect(parsePath('/today').route).toEqual({ name: 'today' });
+    expect(pathOf({ name: 'today' })).toBe('/today');
+  });
+
   it('falls back to Home for a detail path without id', () => {
     expect(parsePath('/projects/').route).toEqual({ name: 'home' });
     expect(parsePath('/goals/a/b').route).toEqual({ name: 'home' });
@@ -76,5 +81,6 @@ describe('sectionOf', () => {
     expect(sectionOf({ name: 'review-last-week' })).toBe('review');
     expect(sectionOf({ name: 'home' })).toBe('home');
     expect(sectionOf({ name: 'settings' })).toBe('settings');
+    expect(sectionOf({ name: 'today' })).toBe('today');
   });
 });

@@ -248,3 +248,17 @@ input:focus-visible + .box {
   background: var(--color-primary);
   color: var(--color-on-primary);
 }
+
+/* Touch targets on the phone: the whole label area of a switch or checkbox is at least 44 px. */
+@media (max-width: 639px) {
+  .toggle {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 639px) {
+  .segment {
+    min-height: 44px;
+  }
+}

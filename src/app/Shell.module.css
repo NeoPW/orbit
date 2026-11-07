@@ -44,4 +44,26 @@
 
 .fullWindow {
   height: 100%;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  box-sizing: border-box;
+}
+
+/* Phone layout: one column, the bottom navigation below the content, clear of the system bars. */
+.phone {
+  display: flex;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top, 0px);
+  box-sizing: border-box;
+}
+
+.phone .main {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+}
+
+@media (max-width: 639px) {
+  .content {
+    padding: var(--space-4) calc(var(--space-4) + env(safe-area-inset-right, 0px)) var(--space-6) calc(var(--space-4) + env(safe-area-inset-left, 0px));
+  }
 }

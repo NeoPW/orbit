@@ -2,6 +2,7 @@ import { ArrowLeft, Square, Timer, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, type CSSProperties } from 'react';
 import { useLiveQuery } from '../../../core/db/live.ts';
 import { navigate } from '../../../core/routing/useRoute.ts';
+import { useIsPhone } from '../../../core/ui/useIsPhone.ts';
 import { Chip } from '../../../core/ui/components/Chip.tsx';
 import { Button } from '../../../core/ui/components/Button.tsx';
 import { EmptyState } from '../../../core/ui/components/EmptyState.tsx';
@@ -44,11 +45,12 @@ function FocusSession({ view }: { view: TimerView }) {
   const ended = useCallback(() => leave(), []);
   const stop = useStopTimer(view, ended);
   const { timer } = view;
+  const isPhone = useIsPhone();
   return (
     <div className={styles.focus} style={view.projectColor ? ({ '--pc': view.projectColor } as CSSProperties) : undefined}>
       <header className={styles.top}>
         <Button icon={<ArrowLeft />} onClick={leave}>
-          Leave focus mode (Esc)
+          {isPhone ? 'Back' : 'Leave focus mode (Esc)'}
         </Button>
       </header>
       <main className={styles.main}>

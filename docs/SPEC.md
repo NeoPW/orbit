@@ -7,7 +7,7 @@ A personal, local-first app for tracking work: projects, tasks, habits and the w
 **Goals**
 - A desktop app first: the main place to plan, work and review is the PC, and it works fully offline. All data lives on the device first.
 - The same app also runs in a browser, for using it on another computer.
-- Later, a small Android companion app to look at tasks and track time.
+- A small Android companion app to look at tasks and track time.
 - Syncs between the desktop, the browser and the phone through a small server of its own.
 - See at a glance what to do today, ranked by what matters most, and start focused work on it in one step.
 - See at a glance which goals your projects and work serve.
@@ -34,7 +34,7 @@ A personal, local-first app for tracking work: projects, tasks, habits and the w
 | Login | One long secret token per device, entered once; no accounts. Cloudflare Access can be put in front of the browser build later |
 | Sync | Custom, last-write-wins per row (see §7) |
 | Notifications | Desktop notifications from the Tauri app while it runs (§8) |
-| Android (later) | A companion app for tasks and time tracking; Tauri mobile or native Kotlin, decided when it is built |
+| Android | A companion app for tasks and time tracking: the same Tauri app and frontend built for Android (Tauri mobile), with native SQLite in the app's storage; native Kotlin only where Android needs it (notifications, later a widget and a quick-settings tile) |
 | Quality | Strict TypeScript, ESLint, Vitest (`npm run check`) |
 
 The app must be fully usable with no sync server configured. Sync is an add-on, but it is what connects the desktop, the browser and the phone: until sync exists, each has its own local data.
@@ -309,6 +309,7 @@ The app should feel calm, clear and quick. These guidelines hold for every scree
 - **Visual identity:** dark only, clean and modular: tiles (14–20 px radii, 1 px borders) on a calm ground, no textures or illustrations. All text is **Inter** (bundled), with tabular numerals for timers.
 - **Colour themes:** five dark themes (Slate, Forest, Ember, Plum, Graphite), switchable live from the sidebar and Settings; only colours change. Each theme has a ground, surfaces, one accent, red for overdue, amber for soon and eight project colours. The choice is a local setting.
 - **Colour coding:** every project has its own colour (a slot of the theme palette), shown the same everywhere it appears: a rail and tint on its tile and page, a chip with its name on its tasks and habits, a rail on its next steps. Goals use the same palette; areas stay small chips with a dot. The name always accompanies the colour. Body text meets 4.5:1 contrast. Keyboard focus shows a visible ring; pointer clicks do not.
+- **Phone layout:** below 640 px width (the Android app and narrow browser windows) the app is one column with a bottom navigation (Home, Today, Settings) instead of the sidebar, clear of the system bars, with touch targets of at least 44 px and no hover-only controls. Home drops the timeline and the active projects (the timeline is the Today screen, one day at a time with previous/next and swipe); Plan and Review are desktop screens.
 - **Dropdowns:** a field that picks one value from a list is a styled dropdown (a field-like button and a popup list on the app's own surface), not the browser's native select. It supports groups, optional colour dots (project colours), the keyboard (arrows, Enter, Escape, type-ahead) and works inside sheets.
 - **Less text, more structure:** metadata as chips, icons and badges instead of text lines: importance as dots, status as a colored chip, deadlines as a badge colored by urgency ("Overdue" in red; "Today", "Tomorrow" or "In N days" in amber within the lead time; otherwise the date). Absent values are left out instead of written out ("No area", "No deadline").
 - **Compact lists:** dense rows and no duplicate rows for the same item on one screen.
@@ -352,12 +353,11 @@ The app is rebuilt from scratch in this order, one OpenSpec change each (feature
 3. **Sync server:** Cloudflare Worker + D1, token login, push/pull sync, deploy of the Worker and the browser build.
 4. **App shell:** navigation, theme, shared components, messages.
 5. **Features** (one change, `features`): areas, goals and measures; projects and tasks (with next steps and task importance); habits; work log, timer and focus mode; Home; Plan; Review with weekly notes; Settings; desktop notifications.
-6. **Android companion:** tasks and time tracking on the phone.
+6. **Android companion** (Tauri mobile): phone layout below 640 px (bottom navigation Home, Today, Settings), Home with focus, habits, To do and Done today, quick add, the Today timeline with day navigation and swipe, sync with the deployed server; then Android notifications (habit and deadline reminders, the ongoing timer notification).
 7. **Later:** stats, Windows/macOS builds.
 
 ## 10. Open questions
 
 - Solar system: the solar system of goals (planets), projects (moons) and loose projects (asteroids) is kept as an idea, but where it appears in the new app is decided later.
-- Android companion: Tauri mobile (shares the TypeScript code) or native Kotlin (best for the timer notification, a quick-settings tile and a widget).
 - Habit schedules: are `daily`, `weekdays` and `times_per_week` enough?
 - Area list: fixed defaults (Job, Personal, Sport, Uni) or fully user-defined from the start?

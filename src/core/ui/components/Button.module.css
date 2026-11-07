@@ -133,3 +133,15 @@
 .iconButton[data-tooltip]:focus-visible::after {
   transition-delay: 0ms;
 }
+
+/* Touch targets on the phone: at least 44 px. */
+@media (max-width: 639px) {
+  .button {
+    min-height: 44px;
+  }
+
+  .iconButton {
+    width: 44px;
+    height: 44px;
+  }
+}

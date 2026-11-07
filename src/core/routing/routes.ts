@@ -1,6 +1,8 @@
 /** A place in the app. */
 export type Route =
   | { name: 'home' }
+  /** The day timeline on its own screen (phone layout only). */
+  | { name: 'today' }
   | { name: 'plan' }
   | { name: 'review' }
   | { name: 'settings' }
@@ -17,11 +19,12 @@ export type Route =
 export type RouteName = Route['name'];
 
 /** The sidebar destination a route belongs to. */
-export type Section = 'home' | 'plan' | 'review' | 'settings';
+export type Section = 'home' | 'today' | 'plan' | 'review' | 'settings';
 
 /** Routes without parameters, by path. */
 const STATIC_PATHS = {
   home: '/home',
+  today: '/today',
   plan: '/plan',
   review: '/review',
   settings: '/settings',
@@ -70,6 +73,8 @@ export function sectionOf(route: Route): Section | null {
     case 'review-history':
     case 'review-last-week':
       return 'review';
+    case 'today':
+      return 'today';
     case 'settings':
       return 'settings';
     case 'dev-components':

@@ -127,3 +127,10 @@
   justify-content: space-between;
   gap: var(--space-2);
 }
+
+/* Phone: the field takes the whole width; lengths and Start go below it. */
+@media (max-width: 639px) {
+  .choose {
+    flex-basis: 100%;
+  }
+}

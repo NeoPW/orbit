@@ -18,10 +18,13 @@
   animation: fade-in var(--motion-normal) var(--ease-out);
 }
 
-@media (max-width: 599px) {
+/* Full screen on the phone, clear of the system bars. */
+@media (max-width: 639px) {
   .sheet {
     width: 100vw;
     border-left: 0;
+    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+    box-sizing: border-box;
   }
 }
 
