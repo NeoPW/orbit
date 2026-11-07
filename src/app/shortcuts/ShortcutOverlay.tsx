@@ -4,7 +4,7 @@ import { IconButton } from '../../core/ui/components/Button.tsx';
 import { SHORTCUTS, type Shortcut } from './keys.ts';
 import styles from './ShortcutOverlay.module.css';
 
-const GROUPS: Shortcut['group'][] = ['Global', 'To do list', 'Focus mode'];
+const GROUPS: Shortcut['group'][] = ['Global', 'Home', 'Focus mode'];
 
 /** Every shortcut with its key, grouped; `?` or Esc closes it. Render it only while it is open. */
 export function ShortcutOverlay({ onClose }: { onClose: () => void }) {

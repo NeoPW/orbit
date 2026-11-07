@@ -48,7 +48,7 @@ Single-key and `Shift` shortcuts SHALL NOT act while the cursor is in a text fie
 - **THEN** the command palette opens
 
 ### Requirement: Shortcut overlay
-`?` SHALL open an overlay that lists every shortcut with its key, grouped as Global, To do list and Focus mode. `Esc` or `?` SHALL close it.
+`?` SHALL open an overlay that lists every shortcut with its key, grouped as Global, Home and Focus mode. `Esc` or `?` SHALL close it.
 
 #### Scenario: Open and close
 - **WHEN** the user presses `?` and then `Esc`
@@ -62,7 +62,7 @@ Buttons and navigation entries that have a shortcut SHALL show it in their toolt
 - **THEN** the tooltip reads "New task (T)"
 
 ### Requirement: To do list keys
-On Home, `J` or the down arrow SHALL highlight the next To do task (the first one when none is highlighted) and `K` or the up arrow the previous one, scrolling it into view. For the highlighted task, `Space` SHALL start a focus session, `X` SHALL complete it (as its checkbox does, with Undo) and `Enter` SHALL open its page. `1`–`9` SHALL start a focus session on the 1st–9th To do task, whether or not one is highlighted; a number without a task does nothing. The highlight SHALL be visible and clear when the mouse clicks elsewhere.
+On Home, `J` or the down arrow SHALL highlight the next To do task (the first one when none or a habit is highlighted) and `K` or the up arrow the previous one; the up arrow on the first task SHALL highlight the first habit due today. The left and right arrows SHALL highlight the previous and next habit (the first one when none is highlighted). `1`–`9` SHALL highlight the 1st–9th To do task; a number without a task does nothing. For a highlighted task, `Space` SHALL start a focus session, `X` SHALL complete it (as its checkbox does, with Undo) and `Enter` SHALL open its page; for a highlighted habit, `Space` SHALL start a focus session and `X` or `Enter` SHALL check or uncheck it. The highlight SHALL be visible, scroll into view and clear when the mouse clicks elsewhere.
 
 #### Scenario: Move and start
 - **WHEN** the To do list is "Email supervisor", "Rerun benchmarks" and the user presses `J`, `J` and `Space`
@@ -76,13 +76,21 @@ On Home, `J` or the down arrow SHALL highlight the next To do task (the first on
 - **WHEN** "Rerun benchmarks" is highlighted and the user presses `Enter`
 - **THEN** its task page opens
 
-#### Scenario: Start by number
+#### Scenario: Highlight by number
 - **WHEN** the To do list has three tasks and the user presses `3`
-- **THEN** a focus session for the third task starts
+- **THEN** the third task is highlighted and no session starts
 
 #### Scenario: Number beyond the list
 - **WHEN** the To do list has two tasks and the user presses `5`
 - **THEN** nothing happens
+
+#### Scenario: Habits with the side arrows
+- **WHEN** the habits due today are "Stretch", "Run 5 km" and the user presses the right arrow twice and `X`
+- **THEN** "Run 5 km" is highlighted and checked for today
+
+#### Scenario: Focus on a habit
+- **WHEN** "Stretch" is highlighted and the user presses `Space`
+- **THEN** a focus session for "Stretch" starts
 
 ### Requirement: Focus mode keys
 In focus mode `Space` SHALL pause a running session and resume a paused one, `Enter` SHALL open the complete dialog (where `Enter` completes), `Esc` SHALL leave focus mode, `Delete` SHALL discard (with the confirmation while running), `L` SHALL open the time limit menu, and `+` and `−` SHALL raise or lower the time limit by 5 minutes. `−` SHALL remove a limit of 5 minutes or less; `+` without a limit SHALL set 5 minutes above the worked time, rounded up to whole 5 minutes.

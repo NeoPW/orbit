@@ -269,3 +269,9 @@
     margin: 0;
   }
 }
+
+/* A habit chip highlighted by the keyboard (left/right on Home). */
+.highlighted .habit {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 45%, transparent);
+}

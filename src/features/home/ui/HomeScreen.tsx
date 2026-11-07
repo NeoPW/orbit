@@ -59,11 +59,19 @@ export function HomeScreen() {
   );
   const [creating, setCreating] = useState(false);
   const [logging, setLogging] = useState(false);
-  const [highlight, setHighlight] = useState<number | null>(null);
+  // One keyboard highlight on Home: a To do task or a habit chip.
+  const [highlight, setHighlight] = useState<{ list: 'task' | 'habit'; index: number } | null>(null);
   const todoTasks = data?.todo.map((item) => item.task) ?? [];
-  const highlighted = highlight === null || todoTasks.length === 0 ? null : Math.min(highlight, todoTasks.length - 1);
+  const habitItems = data?.habits ?? [];
+  const listLength = (list: 'task' | 'habit') => (list === 'task' ? todoTasks.length : habitItems.length);
+  const highlighted =
+    highlight === null || listLength(highlight.list) === 0
+      ? null
+      : { ...highlight, index: Math.min(highlight.index, listLength(highlight.list) - 1) };
+  const highlightedTask = highlighted?.list === 'task' ? todoTasks[highlighted.index] : undefined;
+  const highlightedHabit = highlighted?.list === 'habit' ? habitItems[highlighted.index] : undefined;
 
-  // A click anywhere ends keyboard navigation of the list.
+  // A click anywhere ends keyboard navigation.
   useEffect(() => {
     if (highlight === null) return;
     const clear = () => setHighlight(null);
@@ -71,26 +79,43 @@ export function HomeScreen() {
     return () => window.removeEventListener('mousedown', clear);
   }, [highlight]);
 
-  // J/K or arrows, Space, X, Enter and 1–9 on the To do list (see openspec keyboard-shortcuts, "To do list keys").
+  // J/K and up/down through the To do list (up from the first task reaches the habits), left/right through the habits,
+  // 1–9 highlight a task; Space, X and Enter act on what is highlighted (see openspec keyboard-shortcuts).
   useScreenShortcuts((match) => {
-    const count = todoTasks.length;
-    if (count === 0) return;
-    const current = highlighted === null ? null : todoTasks[highlighted];
+    const tasks = todoTasks.length;
+    const habitCount = habitItems.length;
+    const at = highlighted;
     switch (match.action) {
       case 'todo-next':
-        return setHighlight(highlighted === null ? 0 : Math.min(highlighted + 1, count - 1));
+        if (tasks === 0) return;
+        return setHighlight({ list: 'task', index: at?.list === 'task' ? Math.min(at.index + 1, tasks - 1) : 0 });
       case 'todo-prev':
-        return setHighlight(highlighted === null ? 0 : Math.max(highlighted - 1, 0));
-      case 'todo-start':
-        return current ? void start({ taskId: current.id }) : undefined;
-      case 'todo-complete':
-        return current ? void complete(current) : undefined;
-      case 'todo-open':
-        return current ? navigate({ name: 'task', id: current.id }) : undefined;
-      case 'todo-start-n': {
-        const task = todoTasks[match.index ?? -1];
-        return task ? void start({ taskId: task.id }) : undefined;
+        if (at?.list === 'task' && at.index === 0 && habitCount > 0) return setHighlight({ list: 'habit', index: 0 });
+        if (at?.list === 'habit' || tasks === 0) return;
+        return setHighlight({ list: 'task', index: at ? Math.max(at.index - 1, 0) : 0 });
+      case 'habit-prev':
+      case 'habit-next': {
+        if (habitCount === 0) return;
+        const step = match.action === 'habit-next' ? 1 : -1;
+        const index = at?.list === 'habit' ? Math.min(Math.max(at.index + step, 0), habitCount - 1) : 0;
+        return setHighlight({ list: 'habit', index });
       }
+      case 'todo-select-n':
+        return (match.index ?? -1) < tasks ? setHighlight({ list: 'task', index: match.index ?? 0 }) : undefined;
+      case 'todo-start':
+        if (highlightedTask) return void start({ taskId: highlightedTask.id });
+        if (highlightedHabit) return void start({ habitId: highlightedHabit.id });
+        return;
+      case 'todo-complete':
+      case 'todo-open':
+        if (highlightedTask)
+          return match.action === 'todo-complete' ? void complete(highlightedTask) : navigate({ name: 'task', id: highlightedTask.id });
+        if (highlightedHabit) {
+          void (highlightedHabit.checked
+            ? uncheckHabit(db, clock, highlightedHabit.id, today)
+            : checkHabit(db, clock, highlightedHabit.id, today));
+        }
+        return;
     }
   });
 
@@ -145,7 +170,12 @@ export function HomeScreen() {
             ) : (
               <div className={styles.habits}>
                 {habits.map((habit) => (
-                  <div key={habit.id} className={styles.habitRow}>
+                  <div
+                    key={habit.id}
+                    ref={highlightedHabit?.id === habit.id ? (node) => node?.scrollIntoView({ block: 'nearest' }) : undefined}
+                    className={`${styles.habitRow} ${highlightedHabit?.id === habit.id ? styles.highlighted : ''}`}
+                    data-highlighted={highlightedHabit?.id === habit.id || undefined}
+                  >
                     <button
                       type="button"
                       className={`${styles.habit} ${habit.checked ? styles.checked : ''}`}
@@ -199,7 +229,7 @@ export function HomeScreen() {
                   label="To do"
                   rowProps={(task) => ({
                     compact: true,
-                    highlighted: highlighted !== null && todoTasks[highlighted]?.id === task.id,
+                    highlighted: highlightedTask?.id === task.id,
                     importance: itemByTask.get(task.id)?.importance,
                     context: itemByTask.get(task.id)?.context ?? undefined,
                     projectColor: itemByTask.get(task.id)?.projectColor,

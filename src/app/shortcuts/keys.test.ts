@@ -63,8 +63,13 @@ describe('To do keys on Home', () => {
     expect(action(press('t'), 'home')).toBe('new-task');
   });
 
-  it('starts the nth task with 1–9', () => {
-    expect(matchShortcut(press('3'), 'home')).toEqual({ action: 'todo-start-n', index: 2 });
+  it('moves through the habits with the side arrows', () => {
+    expect(action(press('ArrowLeft'), 'home')).toBe('habit-prev');
+    expect(action(press('ArrowRight'), 'home')).toBe('habit-next');
+  });
+
+  it('highlights the nth task with 1–9', () => {
+    expect(matchShortcut(press('3'), 'home')).toEqual({ action: 'todo-select-n', index: 2 });
     expect(matchShortcut(press('0'), 'home')).toBeNull();
   });
 

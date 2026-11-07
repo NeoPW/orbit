@@ -2,7 +2,8 @@
 
 export type GlobalAction =
   'new-task' | 'log-work' | 'focus-field' | 'go-home' | 'go-plan' | 'go-review' | 'go-settings' | 'overlay' | 'palette';
-export type TodoAction = 'todo-next' | 'todo-prev' | 'todo-start' | 'todo-complete' | 'todo-open' | 'todo-start-n';
+export type TodoAction =
+  'todo-next' | 'todo-prev' | 'habit-prev' | 'habit-next' | 'todo-start' | 'todo-complete' | 'todo-open' | 'todo-select-n';
 export type FocusAction =
   'focus-toggle' | 'focus-complete' | 'focus-leave' | 'focus-discard' | 'focus-limit' | 'focus-limit-up' | 'focus-limit-down';
 export type ShortcutAction = GlobalAction | TodoAction | FocusAction;
@@ -15,7 +16,7 @@ export interface Shortcut {
   /** As shown to the user, e.g. `Shift+P`. */
   keys: string;
   label: string;
-  group: 'Global' | 'To do list' | 'Focus mode';
+  group: 'Global' | 'Home' | 'Focus mode';
 }
 
 export const SHORTCUTS: Shortcut[] = [
@@ -28,12 +29,14 @@ export const SHORTCUTS: Shortcut[] = [
   { action: 'go-settings', keys: 'Shift+S', label: 'Settings', group: 'Global' },
   { action: 'palette', keys: 'Ctrl+K', label: 'Command palette', group: 'Global' },
   { action: 'overlay', keys: '?', label: 'All shortcuts', group: 'Global' },
-  { action: 'todo-next', keys: 'J / ↓', label: 'Next task', group: 'To do list' },
-  { action: 'todo-prev', keys: 'K / ↑', label: 'Previous task', group: 'To do list' },
-  { action: 'todo-start', keys: 'Space', label: 'Start focus on the highlighted task', group: 'To do list' },
-  { action: 'todo-complete', keys: 'X', label: 'Complete the highlighted task', group: 'To do list' },
-  { action: 'todo-open', keys: 'Enter', label: 'Open the highlighted task', group: 'To do list' },
-  { action: 'todo-start-n', keys: '1–9', label: 'Start focus on the 1st–9th task', group: 'To do list' },
+  { action: 'todo-next', keys: 'J / ↓', label: 'Next task', group: 'Home' },
+  { action: 'todo-prev', keys: 'K / ↑', label: 'Previous task (up to the habits)', group: 'Home' },
+  { action: 'habit-prev', keys: '←', label: 'Previous habit', group: 'Home' },
+  { action: 'habit-next', keys: '→', label: 'Next habit', group: 'Home' },
+  { action: 'todo-select-n', keys: '1–9', label: 'Highlight the 1st–9th task', group: 'Home' },
+  { action: 'todo-start', keys: 'Space', label: 'Start focus on the highlighted task or habit', group: 'Home' },
+  { action: 'todo-complete', keys: 'X', label: 'Complete the task / check the habit', group: 'Home' },
+  { action: 'todo-open', keys: 'Enter', label: 'Open the task / check the habit', group: 'Home' },
   { action: 'focus-toggle', keys: 'Space', label: 'Pause / resume', group: 'Focus mode' },
   { action: 'focus-complete', keys: 'Enter', label: 'Complete', group: 'Focus mode' },
   { action: 'focus-leave', keys: 'Esc', label: 'Leave focus mode', group: 'Focus mode' },
@@ -66,7 +69,7 @@ export interface KeyInput {
 
 export interface ShortcutMatch {
   action: ShortcutAction;
-  /** For `todo-start-n`: 0 for key 1. */
+  /** For `todo-select-n`: 0 for key 1. */
   index?: number;
 }
 
@@ -85,6 +88,8 @@ const TODO_KEYS: Record<string, TodoAction> = {
   arrowdown: 'todo-next',
   k: 'todo-prev',
   arrowup: 'todo-prev',
+  arrowleft: 'habit-prev',
+  arrowright: 'habit-next',
   ' ': 'todo-start',
   x: 'todo-complete',
   enter: 'todo-open',
@@ -124,7 +129,7 @@ export function matchShortcut(input: KeyInput, scope: ShortcutScope): ShortcutMa
     if (action) return { action };
   }
   if (scope === 'home') {
-    if (!input.shiftKey && /^[1-9]$/.test(key)) return { action: 'todo-start-n', index: Number(key) - 1 };
+    if (!input.shiftKey && /^[1-9]$/.test(key)) return { action: 'todo-select-n', index: Number(key) - 1 };
     const action = TODO_KEYS[named];
     if (action) return { action };
   }
