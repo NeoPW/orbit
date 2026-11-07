@@ -19,6 +19,16 @@ export function workedMs(session: SessionClock, now: Date): number {
   return session.pausedAt === null ? logged + elapsedMs(session.startedAt, now) : logged;
 }
 
+/**
+ * The time limit after `+` (`step` 5) or `−` (`step` -5) in focus mode. `−` removes a limit of 5 minutes or less;
+ * `+` without a limit sets 5 minutes above the worked time, rounded up to whole 5 minutes.
+ */
+export function stepLimit(limit: number | null, worked: number, step: 5 | -5): number | null {
+  if (step < 0) return limit === null || limit <= 5 ? null : limit - 5;
+  if (limit !== null) return limit + 5;
+  return Math.ceil((worked / 60_000 + 5) / 5) * 5;
+}
+
 /** `m:ss`, and `h:mm:ss` from one hour on. */
 export function formatElapsed(ms: number): string {
   const total = Math.floor(Math.max(0, ms) / 1000);

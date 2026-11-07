@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { ArrowRight, Play } from 'lucide-react';
 import { navigate } from '../../../core/routing/useRoute.ts';
 import { AnimatedList } from '../../../core/ui/components/AnimatedList.tsx';
@@ -30,6 +31,8 @@ export interface TaskRowProps {
   projectName?: string;
   /** A quieter row (Home's To do): only the project (dot and name in its colour) and the deadline as small text at the right, the start button on hover. */
   compact?: boolean;
+  /** Highlighted by the keyboard (Home's To do): outlined, scrolled into view, start button shown. */
+  highlighted?: boolean;
 }
 
 /**
@@ -38,8 +41,22 @@ export interface TaskRowProps {
  * next-step marker, optional importance and context, and the due date.
  * Clicking the row opens the task page. A row has no menu of its own.
  */
-export function TaskRow({ task, importance, context, onStartFocus, projectColor, projectName, compact = false }: TaskRowProps) {
+export function TaskRow({
+  task,
+  importance,
+  context,
+  onStartFocus,
+  projectColor,
+  projectName,
+  compact = false,
+  highlighted = false,
+}: TaskRowProps) {
   const complete = useCompleteTask();
+  const wrapper = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (highlighted) wrapper.current?.scrollIntoView({ block: 'nearest' });
+  }, [highlighted]);
+  const mark = highlighted ? ` ${styles.highlighted}` : '';
   const isPhone = useIsPhone();
   const colored = Boolean(projectColor && projectName);
   const hasTags = task.isNextStep || importance || context || task.dueDate || colored;
@@ -92,11 +109,18 @@ export function TaskRow({ task, importance, context, onStartFocus, projectColor,
     />
   );
   return colored ? (
-    <div className={`${styles.colored} ${compact ? styles.outlined : ''}`} style={{ '--pc': projectColor } as CSSProperties}>
+    <div
+      ref={wrapper}
+      className={`${styles.colored} ${compact ? styles.outlined : ''}${mark}`}
+      data-highlighted={highlighted || undefined}
+      style={{ '--pc': projectColor } as CSSProperties}
+    >
       {row}
     </div>
   ) : compact ? (
-    <div className={`${styles.outlined} ${styles.neutral}`}>{row}</div>
+    <div ref={wrapper} className={`${styles.outlined} ${styles.neutral}${mark}`} data-highlighted={highlighted || undefined}>
+      {row}
+    </div>
   ) : (
     row
   );

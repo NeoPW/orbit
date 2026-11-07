@@ -89,3 +89,13 @@ div:hover > div > .startOnHover,
     white-space: normal;
   }
 }
+
+/* Highlighted by the keyboard (J/K on Home): a clear outline, and the start button shows. */
+.highlighted {
+  border-color: var(--pc);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--pc) 55%, transparent);
+}
+
+.highlighted .startOnHover {
+  opacity: 1;
+}

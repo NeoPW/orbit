@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { promptAfterStop, elapsedMs, workedMs, formatElapsed, formatOvertime, loggedMinutes } from './timer.ts';
+import { promptAfterStop, elapsedMs, stepLimit, workedMs, formatElapsed, formatOvertime, loggedMinutes } from './timer.ts';
 
 describe('timer', () => {
   it('shows a running timer as h:mm:ss', () => {
@@ -34,6 +34,18 @@ describe('timer', () => {
     const worked = workedMs(session, new Date('2026-11-07T10:12:10Z'));
     expect(formatOvertime(worked, 30)).toBe('+2:10');
     expect(formatOvertime(worked, null)).toBeNull();
+  });
+
+  it('raises the limit by 5 minutes and lowers it to no limit', () => {
+    expect(stepLimit(30, 0, 5)).toBe(35);
+    expect(stepLimit(30, 0, -5)).toBe(25);
+    expect(stepLimit(5, 0, -5)).toBeNull();
+    expect(stepLimit(null, 0, -5)).toBeNull();
+  });
+
+  it('sets a limit 5 minutes above the worked time, in whole 5 minutes, when there is none', () => {
+    expect(stepLimit(null, 12 * 60_000, 5)).toBe(20);
+    expect(stepLimit(null, 15 * 60_000, 5)).toBe(20);
   });
 
   it('logs at least one minute', () => {

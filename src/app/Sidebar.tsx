@@ -4,21 +4,23 @@ import orbitIcon from '../../assets/icon/orbit.png';
 import { navigate } from '../core/routing/useRoute.ts';
 import { pathOf, type Route, type Section } from '../core/routing/routes.ts';
 import styles from './Sidebar.module.css';
+import { SHORTCUTS, withShortcut, type GlobalAction } from './shortcuts/keys.ts';
 
 interface Entry {
   route: Route;
   section: Section;
   label: string;
   icon: LucideIcon;
+  shortcut: GlobalAction;
 }
 
 const MAIN: Entry[] = [
-  { route: { name: 'home' }, section: 'home', label: 'Home', icon: House },
-  { route: { name: 'plan' }, section: 'plan', label: 'Plan', icon: CalendarRange },
-  { route: { name: 'review' }, section: 'review', label: 'Review', icon: NotebookPen },
+  { route: { name: 'home' }, section: 'home', label: 'Home', icon: House, shortcut: 'go-home' },
+  { route: { name: 'plan' }, section: 'plan', label: 'Plan', icon: CalendarRange, shortcut: 'go-plan' },
+  { route: { name: 'review' }, section: 'review', label: 'Review', icon: NotebookPen, shortcut: 'go-review' },
 ];
 
-const SETTINGS: Entry = { route: { name: 'settings' }, section: 'settings', label: 'Settings', icon: Settings };
+const SETTINGS: Entry = { route: { name: 'settings' }, section: 'settings', label: 'Settings', icon: Settings, shortcut: 'go-settings' };
 
 function NavLink({ entry, current }: { entry: Entry; current: Section | null }) {
   const selected = entry.section === current;
@@ -37,11 +39,14 @@ function NavLink({ entry, current }: { entry: Entry; current: Section | null }) 
       className={styles.link}
       aria-current={selected ? 'page' : undefined}
       aria-label={entry.label}
-      data-tooltip={entry.label}
+      data-tooltip={withShortcut(entry.label, entry.shortcut)}
       onClick={onClick}
     >
       <Icon className={styles.icon} aria-hidden="true" />
       <span className={styles.label}>{entry.label}</span>
+      <span className={styles.key} aria-hidden="true">
+        {SHORTCUTS.find((s) => s.action === entry.shortcut)?.keys}
+      </span>
     </a>
   );
 }

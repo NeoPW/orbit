@@ -1,5 +1,6 @@
 import { CircleCheck, Focus, Maximize2, Pause, Play } from 'lucide-react';
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { focusFieldRequest } from '../../../app/shortcuts/requests.ts';
 import { useNow } from '../../../core/dates/today.ts';
 import { Chip } from '../../../core/ui/components/Chip.tsx';
 import { workedMs, type SessionClock } from '../domain/timer.ts';
@@ -39,6 +40,18 @@ function Idle({ projects }: FocusPanelProps) {
   const habitOptions = useLiveQuery(listActiveHabitOptions, []);
   const [text, setText] = useState('');
   const [picked, setPicked] = useState<{ id: string; kind: 'task' | 'habit' } | null>(null);
+  const panel = useRef<HTMLElement>(null);
+
+  // `F` puts the cursor in the field, also when it asked before Home was shown.
+  useEffect(
+    () =>
+      focusFieldRequest.subscribe(() => {
+        const input = panel.current?.querySelector<HTMLInputElement>('input');
+        input?.focus();
+        input?.scrollIntoView({ block: 'nearest' });
+      }),
+    [],
+  );
 
   const taskOptions = [
     ...(openTasks ?? []).map((v) => ({
@@ -90,7 +103,7 @@ function Idle({ projects }: FocusPanelProps) {
   }
 
   return (
-    <section className={styles.panel} aria-label="Focus">
+    <section ref={panel} className={styles.panel} aria-label="Focus">
       <h2 className={styles.heading}>
         <Focus aria-hidden="true" /> Focus
       </h2>

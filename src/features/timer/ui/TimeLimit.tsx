@@ -1,5 +1,5 @@
 import { Hourglass } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Button } from '../../../core/ui/components/Button.tsx';
 import { Menu } from '../../../core/ui/components/Menu.tsx';
 import { TextField } from '../../../core/ui/components/TextField.tsx';
@@ -11,10 +11,16 @@ export interface TimeLimitProps {
   /** The current limit in worked minutes, or null. */
   minutes: number | null;
   onChange: (minutes: number | null) => void;
+  /** Receives a function that opens the menu, for the `L` key. */
+  onOpener?: (open: () => void) => void;
 }
 
 /** "Time limit" menu of focus mode: 15, 30, 45, 60 or 90 minutes, a custom number of minutes, or none. */
-export function TimeLimit({ minutes, onChange }: TimeLimitProps) {
+export function TimeLimit({ minutes, onChange, onOpener }: TimeLimitProps) {
+  const anchor = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    onOpener?.(() => anchor.current?.querySelector('button')?.click());
+  }, [onOpener]);
   const [custom, setCustom] = useState(false);
   const [text, setText] = useState('');
   const value = Number(text);
@@ -49,25 +55,27 @@ export function TimeLimit({ minutes, onChange }: TimeLimitProps) {
   }
   const isPreset = minutes !== null && PRESETS.includes(minutes);
   return (
-    <Menu
-      label="Time limit"
-      trigger={(props) => (
-        <Button variant="ghost" icon={<Hourglass />} {...props}>
-          {minutes === null ? 'Time limit' : `Limit: ${minutes} min`}
-        </Button>
-      )}
-      items={[
-        ...PRESETS.map((preset) => ({ label: `${preset} minutes`, checked: minutes === preset, onSelect: () => onChange(preset) })),
-        {
-          label: 'Custom…',
-          checked: minutes !== null && !isPreset,
-          onSelect: () => {
-            setText(minutes === null ? '' : String(minutes));
-            setCustom(true);
+    <div ref={anchor}>
+      <Menu
+        label="Time limit"
+        trigger={(props) => (
+          <Button variant="ghost" icon={<Hourglass />} {...props}>
+            {minutes === null ? 'Time limit' : `Limit: ${minutes} min`}
+          </Button>
+        )}
+        items={[
+          ...PRESETS.map((preset) => ({ label: `${preset} minutes`, checked: minutes === preset, onSelect: () => onChange(preset) })),
+          {
+            label: 'Custom…',
+            checked: minutes !== null && !isPreset,
+            onSelect: () => {
+              setText(minutes === null ? '' : String(minutes));
+              setCustom(true);
+            },
           },
-        },
-        { label: 'No limit', checked: minutes === null, onSelect: () => onChange(null) },
-      ]}
-    />
+          { label: 'No limit', checked: minutes === null, onSelect: () => onChange(null) },
+        ]}
+      />
+    </div>
   );
 }
