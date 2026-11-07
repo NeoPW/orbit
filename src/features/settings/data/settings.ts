@@ -16,8 +16,6 @@ export interface Settings {
   reviewDay: number;
   /** `HH:mm`. */
   reviewTime: string;
-  /** Planned minutes last chosen for a focus session; `null` is open-ended (the default). */
-  focusMinutes: number | null;
   /** Colour theme of this device (not synced). */
   theme: ThemeId;
 }
@@ -30,7 +28,6 @@ export const DEFAULT_SETTINGS: Settings = {
   leadDays: DEFAULT_LEAD_DAYS,
   reviewDay: 7,
   reviewTime: '18:00',
-  focusMinutes: null,
   theme: DEFAULT_THEME,
 };
 
@@ -41,7 +38,6 @@ const STORAGE_KEYS: Record<SettingKey, string> = {
   leadDays: 'lead_days',
   reviewDay: 'review_day',
   reviewTime: 'review_time',
-  focusMinutes: 'focus_minutes',
   theme: 'theme',
 };
 
@@ -61,25 +57,14 @@ export function isValidSetting<K extends SettingKey>(key: K, value: Settings[K])
       return typeof value === 'number' && isWholeNumber(value, 1, 30);
     case 'reviewDay':
       return typeof value === 'number' && isWholeNumber(value, 1, 7);
-    case 'focusMinutes':
-      return value === null || (typeof value === 'number' && isWholeNumber(value, 1, 24 * 60));
     case 'theme':
       return isThemeId(value);
   }
 }
 
-/** `'none'` is open-ended; 25 and 50 minutes from an earlier version read as 30 and 60. */
-function decodeFocusMinutes(stored: string): number | null {
-  if (stored === 'none') return null;
-  const minutes = Number(stored);
-  const value = minutes === 25 ? 30 : minutes === 50 ? 60 : minutes;
-  return isValidSetting('focusMinutes', value) ? value : null;
-}
-
 function decode<K extends SettingKey>(key: K, stored: string | undefined): Settings[K] {
   const fallback = DEFAULT_SETTINGS[key];
   if (stored === undefined) return fallback;
-  if (key === 'focusMinutes') return decodeFocusMinutes(stored) as Settings[K];
   const value = typeof fallback === 'boolean' ? stored === '1' : typeof fallback === 'number' ? Number(stored) : stored;
   return isValidSetting(key, value as Settings[K]) ? (value as Settings[K]) : fallback;
 }

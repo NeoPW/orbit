@@ -71,3 +71,15 @@
   border-radius: var(--radius-pill);
   background: var(--pc, var(--color-primary));
 }
+
+.paused {
+  color: var(--color-amber);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.large .paused {
+  text-align: center;
+}

@@ -9,6 +9,8 @@ import { Section } from '../../../core/ui/components/Section.tsx';
 import { Tile } from '../../../core/ui/components/Tile.tsx';
 import { listHabits, listLinkColors, listLinkTitles, type Habit } from '../data/habits-repository.ts';
 import { scheduleSummary } from '../domain/habits.ts';
+import { habitTotals } from '../../work-log/data/log-repository.ts';
+import { formatTotal } from '../../work-log/domain/work-log.ts';
 import { HabitSheet } from './HabitSheet.tsx';
 import styles from './HabitsSection.module.css';
 
@@ -25,14 +27,14 @@ function link(id: string | null, titles: Map<string, string>, colors: Map<string
   return title === undefined || !id ? undefined : { title, color: colors.get(id) };
 }
 
-/** Habits as rows (title, links, schedule, reminder; inactive marked); a click opens the sheet. */
+/** Habits as rows (title, links, schedule, reminder; inactive marked; time worked at the right); a click opens the sheet. */
 export function HabitsSection({ projectId, goalId, tileColor }: HabitsSectionProps) {
   const scoped = projectId !== undefined || goalId !== undefined;
   const data = useLiveQuery(
     async (db) => {
-      const [all, titles, colors] = await Promise.all([listHabits(db), listLinkTitles(db), listLinkColors(db)]);
+      const [all, titles, colors, totals] = await Promise.all([listHabits(db), listLinkTitles(db), listLinkColors(db), habitTotals(db)]);
       const habits = all.filter((h) => !scoped || (projectId !== undefined ? h.projectId === projectId : h.goalId === goalId));
-      return { habits, titles, colors };
+      return { habits, titles, colors, totals };
     },
     [projectId, goalId, scoped],
   );
@@ -76,6 +78,11 @@ export function HabitsSection({ projectId, goalId, tileColor }: HabitsSectionPro
                   title={habit.title}
                   muted={!habit.active}
                   onOpen={() => setSheet({ habit })}
+                  trailing={
+                    <span className={styles.total} aria-label="Time worked">
+                      {formatTotal(data.totals.get(habit.id) ?? 0)}
+                    </span>
+                  }
                   meta={
                     <>
                       <span>{scheduleSummary(habit)}</span>

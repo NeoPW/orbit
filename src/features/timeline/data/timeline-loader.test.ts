@@ -3,7 +3,7 @@ import { openTestDatabase } from '../../../core/db/testing.ts';
 import { createHabit } from '../../habits/data/habits-repository.ts';
 import { createGoal } from '../../goals/data/goals-repository.ts';
 import { createProject } from '../../projects/data/projects-repository.ts';
-import { startTimer, stopTimer } from '../../timer/data/timer-repository.ts';
+import { completeTimer, pauseTimer, resumeTimer, startTimer } from '../../timer/data/timer-repository.ts';
 import { completeTask, createTask } from '../../tasks/data/tasks-repository.ts';
 import { addManualEntry } from '../../work-log/data/log-repository.ts';
 import { loadTimeline } from './timeline-loader.ts';
@@ -75,7 +75,7 @@ describe('timeline loader', () => {
   it('shows the running timer as a block up to now', async () => {
     const { db } = await openTestDatabase();
     const taskId = await createTask(db, clockAt('08:00'), { ...task, title: 'Rerun benchmarks' });
-    await startTimer(db, clockAt('09:00'), { taskId }, null);
+    await startTimer(db, clockAt('09:00'), { taskId });
     const [item] = await loadTimeline(db, FROM, TO, new Date('2026-10-14T09:20:00.000Z'));
     expect(item).toMatchObject({ running: true, kind: 'block', label: 'Rerun benchmarks', minutes: 20, target: { taskId } });
     expect(item?.end).toEqual(new Date('2026-10-14T09:20:00.000Z'));
@@ -95,8 +95,8 @@ describe('timeline loader', () => {
       active: true,
     });
     if (!made.ok) throw new Error('habit invalid');
-    await startTimer(db, clockAt('07:00'), { habitId: made.id }, null);
-    await stopTimer(db, clockAt('07:40'), '');
+    await startTimer(db, clockAt('07:00'), { habitId: made.id });
+    await completeTimer(db, clockAt('07:40'), '');
     const [item] = await loadTimeline(db, FROM, TO);
     expect(item).toMatchObject({
       kind: 'block',
@@ -106,5 +106,54 @@ describe('timeline loader', () => {
       projectName: 'Training block 3',
       target: { projectId },
     });
+  });
+
+  it('joins stretches that are at most 10 minutes apart into one block without the pause', async () => {
+    const { db } = await openTestDatabase();
+    const taskId = await createTask(db, clockAt('08:00'), { ...task, title: 'Thesis' });
+    await startTimer(db, clockAt('10:00'), { taskId });
+    await pauseTimer(db, clockAt('10:30'));
+    await resumeTimer(db, clockAt('10:35'));
+    await pauseTimer(db, clockAt('11:00'));
+    const items = await loadTimeline(db, FROM, TO);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ kind: 'block', minutes: 55, label: 'Thesis' });
+    expect(items[0]?.start).toEqual(new Date('2026-10-14T10:00:00.000Z'));
+    expect(items[0]?.end).toEqual(new Date('2026-10-14T11:00:00.000Z'));
+  });
+
+  it('keeps stretches more than 10 minutes apart separate', async () => {
+    const { db } = await openTestDatabase();
+    const taskId = await createTask(db, clockAt('08:00'), { ...task, title: 'Thesis' });
+    await startTimer(db, clockAt('10:00'), { taskId });
+    await pauseTimer(db, clockAt('10:30'));
+    await resumeTimer(db, clockAt('10:45'));
+    await pauseTimer(db, clockAt('11:00'));
+    expect(await loadTimeline(db, FROM, TO)).toHaveLength(2);
+  });
+
+  it('draws a running stretch after a short pause as one running block, and no block while paused', async () => {
+    const { db } = await openTestDatabase();
+    const taskId = await createTask(db, clockAt('08:00'), { ...task, title: 'Thesis' });
+    await startTimer(db, clockAt('09:00'), { taskId });
+    await pauseTimer(db, clockAt('09:30'));
+    const paused = await loadTimeline(db, FROM, TO, new Date('2026-10-14T09:32:00.000Z'));
+    expect(paused).toMatchObject([{ running: false, minutes: 30 }]);
+    await resumeTimer(db, clockAt('09:35'));
+    const [item] = await loadTimeline(db, FROM, TO, new Date('2026-10-14T09:50:00.000Z'));
+    expect(item).toMatchObject({ running: true, minutes: 45 });
+    expect(item?.start).toEqual(new Date('2026-10-14T09:00:00.000Z'));
+    expect(item?.end).toEqual(new Date('2026-10-14T09:50:00.000Z'));
+  });
+
+  it('does not join stretches of different items or a manual entry', async () => {
+    const { db } = await openTestDatabase();
+    const a = await createTask(db, clockAt('08:00'), { ...task, title: 'Thesis' });
+    const b = await createTask(db, clockAt('08:00'), { ...task, title: 'Garden' });
+    await addManualEntry(db, clockAt('10:00'), { target: { taskId: a }, durationMinutes: 60, note: '' });
+    await startTimer(db, clockAt('10:05'), { taskId: a });
+    await startTimer(db, clockAt('10:30'), { taskId: b });
+    await completeTimer(db, clockAt('10:40'), '');
+    expect(await loadTimeline(db, FROM, TO)).toHaveLength(4);
   });
 });

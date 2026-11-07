@@ -6,104 +6,50 @@ Lets the user time work as it happens: one running timer per account for a proje
 
 ## Requirements
 
-### Requirement: Start a focus session
-The user SHALL be able to start a focus session for an open task, an active project or a habit from Home's focus panel, from a row of Home's To do, from the start button of a chip in "Habits due today", and from a task page, with a planned length of 30, 60 or 90 minutes or open-ended. Open-ended SHALL be the default, and the last chosen length (open-ended included) SHALL be remembered on the device. Starting SHALL start the timer (recording what it runs for, the start time and the planned length) and open focus mode. The timer SHALL count from its start time, also while the app is closed or restarted.
-
-#### Scenario: Start from the focus panel
-- **WHEN** the user picks the project "Thesis" and 60 minutes in the focus panel and starts
-- **THEN** a timer for "Thesis" with 60 planned minutes runs and focus mode opens
-
-#### Scenario: Start from a habit chip
-- **WHEN** the user uses the start button of the chip "Run 5 km" in "Habits due today"
-- **THEN** a focus session for the habit "Run 5 km" starts with the planned length last chosen
-
-#### Scenario: Start from a row
-- **WHEN** the user uses the start action of the To do row "Book venue"
-- **THEN** a focus session for "Book venue" starts with the planned length last chosen
-
-#### Scenario: Keeps running while closed
-- **WHEN** a timer was started at 09:00 and the app is closed and opened again at 09:40
-- **THEN** the timer shows 40 minutes elapsed
-
-#### Scenario: Open-ended by default
-- **WHEN** the user opens Home on a new installation
-- **THEN** "Open-ended" is selected in the focus panel and a session started without changing it has no planned length
-
-#### Scenario: Last choice remembered
-- **WHEN** the user starts a 90-minute session and later returns to Home
-- **THEN** 90 minutes is selected
-
-#### Scenario: Open-ended remembered
-- **WHEN** the user started a 60-minute session and then a session with "Open-ended"
-- **THEN** a start from a To do row has no planned length
-
-#### Scenario: Older stored length
-- **WHEN** the stored last length is 25 or 50 minutes from an earlier version
-- **THEN** 30 or 60 minutes is selected
-
 ### Requirement: One timer at a time
-At most one timer SHALL run at a time. Starting a timer while another one runs SHALL first stop the running timer, logging its time as defined in "Stop a timer".
+At most one focus session SHALL exist at a time, running or paused. Starting a session while another one exists SHALL first log the other session's running stretch, if any (as in "Pause and resume"), and end it without completing what it ran for.
 
 #### Scenario: Switch to another project
 - **WHEN** a timer for "Thesis" has run for 30 minutes and the user starts a timer for "Garden"
 - **THEN** a 30-minute timer entry for "Thesis" is logged and a timer for "Garden" runs
 
-### Requirement: Stop a timer
-Stopping a timer SHALL ask "What did you get done?" with an optional answer, then create a log entry with source `timer`, the answer as its note, the timer's start time as its time, the elapsed whole minutes as its duration (at least 1), and the timer's project, or its task together with the task's project or goal, or its habit together with the habit's project or goal. Stopping SHALL end the timer, close focus mode and show "Work logged". For a habit that is not yet checked today, the dialog SHALL also offer "Mark as done today", on by default; when it is on, stopping SHALL check the habit for today (see habits, "Check habit"). When the timer ran for a task that is done by then and was its project's last next step, the next-step prompt (see tasks) SHALL follow.
-
-#### Scenario: Stop after 45 minutes
-- **WHEN** a timer for "Thesis" started at 09:00 is stopped at 09:45
-- **THEN** a log entry for "Thesis" at 09:00 with 45 minutes and source timer exists, and no timer runs
-
-#### Scenario: Very short timer
-- **WHEN** a timer is stopped after 20 seconds
-- **THEN** the entry has a duration of 1 minute
-
-#### Scenario: Timer for a task
-- **WHEN** a timer for the task "Book physio", assigned to the goal "Get fit", is stopped
-- **THEN** the entry belongs to the task and the goal and is listed on the task page
-
-#### Scenario: Stop note
-- **WHEN** the user stops a timer and answers "Drafted chapter 2"
-- **THEN** the entry's note is "Drafted chapter 2"
-
-#### Scenario: Habit session logged
-- **WHEN** a timer for the habit "Run 5 km" of "Training block 3" is stopped after 40 minutes
-- **THEN** a log entry of 40 minutes belongs to the habit and to "Training block 3", counts for its goal, and is shown as a block on the timeline
-
-#### Scenario: Mark habit done on stop
-- **WHEN** the user stops a habit session with "Mark as done today" on
-- **THEN** the habit is checked for today and shown checked on Home
-
-#### Scenario: Habit not marked
-- **WHEN** the user turns "Mark as done today" off and stops a habit session
-- **THEN** the time is logged and the habit stays unchecked
-
-#### Scenario: Habit already checked
-- **WHEN** a habit that is already checked today is stopped
-- **THEN** the dialog does not offer "Mark as done today"
+#### Scenario: Switch from a paused session
+- **WHEN** a session for the task "Book venue" is paused and the user starts a session for "Garden"
+- **THEN** no further entry for "Book venue" is logged, "Book venue" stays open and a session for "Garden" runs
 
 ### Requirement: Discard a timer
-The user SHALL be able to discard a running timer. Discarding SHALL end the timer without creating a log entry.
+The user SHALL be able to discard the session from the top-right corner of focus mode. Discarding SHALL throw away only the running stretch, after a confirmation, and end the session; stretches already logged by pausing SHALL stay. Discarding a paused session SHALL end it without a confirmation.
 
 #### Scenario: Discard
-- **WHEN** the user discards a running timer
-- **THEN** no timer runs and no log entry was created
+- **WHEN** the user discards a session that has run since its start without a pause
+- **THEN** no session exists and no log entry was created
+
+#### Scenario: Discard after a pause
+- **WHEN** a session logged a 30-minute stretch, was resumed and is discarded 10 minutes later
+- **THEN** the 30-minute entry stays, no 10-minute entry exists and no session exists
+
+#### Scenario: Discard while paused
+- **WHEN** the user discards a paused session
+- **THEN** no confirmation is asked, no session exists and the logged stretches stay
 
 ### Requirement: Focus panel on Home
-Without a running timer, Home's focus panel SHALL offer a text field "What are you working on?" (see "Start with a new task"), the planned lengths 30, 60 and 90 minutes and open-ended, and Start. While the user types, the field SHALL suggest at most 8 open tasks and active habits whose title contains the text (ignoring case), each with its project's colour and name (a habit marked "Habit"); arrow keys and Enter or a click pick a suggestion, and Tab accepts the highlighted suggestion, or the first one when none is highlighted, without starting (Tab without suggestions moves focus on). While a timer runs, the panel SHALL show what the timer runs for, the elapsed time counting up every second (`m:ss`, from one hour on `h:mm:ss`), the planned length and the overtime after it, Stop, Discard and "Focus mode".
+Without a session, Home's focus panel SHALL offer a text field "What are you working on?" (see "Start with a new task") and Start, with no choice of length. While the user types, the field SHALL suggest at most 8 open tasks and active habits whose title contains the text (ignoring case), each with its project's colour and name (a habit marked "Habit"); arrow keys and Enter or a click pick a suggestion, and Tab accepts the highlighted suggestion, or the first one when none is highlighted, without starting (Tab without suggestions moves focus on). With a session, the panel SHALL show what it runs for, the worked time (counting up every second while running, `m:ss`, from one hour on `h:mm:ss`), the time limit and overtime, Pause or Resume, Complete and "Focus mode"; a paused session SHALL be marked "Paused".
 
 #### Scenario: Running timer
-- **WHEN** a timer for "Thesis" without planned length has run for 1 hour, 5 minutes and 3 seconds
-- **THEN** the focus panel shows "Thesis", "1:05:03", Stop, Discard and "Focus mode"
+- **WHEN** a timer for "Thesis" without a time limit has run for 1 hour, 5 minutes and 3 seconds
+- **THEN** the focus panel shows "Thesis", "1:05:03", Pause, Complete and "Focus mode"
+
+#### Scenario: Paused session
+- **WHEN** a session for "Thesis" is paused at 25 minutes worked
+- **THEN** the focus panel shows "Thesis", "Paused", "25:00", Resume, Complete and "Focus mode"
 
 #### Scenario: Overtime
-- **WHEN** a 30-minute session has run for 32 minutes and 10 seconds
+- **WHEN** a session with a 30-minute limit has 32 minutes and 10 seconds worked
 - **THEN** the panel shows that the 30 minutes are over and "+2:10" overtime, and the timer keeps running
 
 #### Scenario: No timer
-- **WHEN** no timer runs
-- **THEN** the focus panel offers the text field, the planned lengths and Start
+- **WHEN** no session exists
+- **THEN** the focus panel offers the text field and Start, and no lengths
 
 #### Scenario: Suggestions
 - **WHEN** the user types "bench" and the open task "Rerun benchmarks" of "Chapter 4: Evaluation" exists
@@ -125,34 +71,27 @@ Without a running timer, Home's focus panel SHALL offer a text field "What are y
 - **WHEN** suggestions are shown and the user presses the down arrow and Enter
 - **THEN** the first suggestion is chosen and Start starts a session for it
 
-### Requirement: Timer across devices
-The running timer SHALL be synced like other records, so a timer started on one device is shown, and can be stopped or discarded, on the other device after sync. There SHALL be one timer record per account: when timers are started on two devices before they sync, the later start SHALL win and the earlier one SHALL end without a log entry.
-
-#### Scenario: Stop in the browser
-- **WHEN** a timer started on the phone has synced and the user stops it in the browser
-- **THEN** the browser logs the entry, and after the next sync the phone shows no timer and the entry
-
-#### Scenario: Started on both devices
-- **WHEN** the phone starts a timer for "Thesis" at 09:00 and the browser, not yet synced, starts one for "Garden" at 09:05
-- **THEN** after both have synced, the timer for "Garden" runs on both devices
-
 ### Requirement: Target removed while running
-When the project or task a timer runs for is deleted, completed or otherwise no longer active, the timer SHALL keep running and SHALL still be stoppable; its entry SHALL keep the link to that project or task.
+When the project, task or habit a session runs for is deleted, completed or otherwise no longer active, the session SHALL keep running or stay paused and SHALL still be pausable, resumable, completable and discardable; its entries SHALL keep the link to that project, task or habit. Completing a session for a task that is already done SHALL log the time and leave the task done.
 
 #### Scenario: Task completed while timing
 - **WHEN** a timer runs for the task "Tax return" and the task is completed
-- **THEN** the focus panel still shows "Tax return" and stopping it logs the time on that task
+- **THEN** the focus panel still shows "Tax return" and completing the session logs the time on that task
 
 ### Requirement: Focus mode
-Focus mode SHALL fill the window with only what the timer runs for, its notes (a task's notes or a project's description), a large timer with the planned length and overtime, Stop and Discard. Escape or "Leave focus mode" SHALL return to the previous screen while the timer keeps running.
+Focus mode SHALL fill the window with only what the session runs for, its notes (a task's notes or a project's description), a large timer with the worked time, the time limit and overtime, the time limit control, Pause or Resume and Complete, with Discard in the top-right corner. A paused session SHALL be marked "Paused". Escape or "Leave focus mode" SHALL return to the previous screen while the session stays as it is.
 
 #### Scenario: Open focus mode
 - **WHEN** a focus session for "Book venue" with notes "Call three venues" starts
-- **THEN** the window shows only "Book venue", "Call three venues", the timer, Stop and Discard
+- **THEN** the window shows only "Book venue", "Call three venues", the timer, the time limit control, Pause, Complete and Discard in the top-right corner
+
+#### Scenario: Pause in focus mode
+- **WHEN** the user pauses in focus mode
+- **THEN** focus mode stays open, shows "Paused" and offers Resume instead of Pause
 
 #### Scenario: Leave without stopping
 - **WHEN** the user presses Escape in focus mode
-- **THEN** the previous screen is shown and the timer still runs
+- **THEN** the previous screen is shown and the session is still running
 
 ### Requirement: Start with a new task
 Text in the focus panel's field that is not a picked suggestion SHALL be read as `title # project`: the text before the last `#` is the title, the text after it names a project. After `#` the field SHALL suggest the active projects whose name contains the typed text, with their colours. Start SHALL then:
@@ -189,8 +128,123 @@ and start the session. A project name SHALL match an active project exactly (ign
 - **WHEN** the user types "draft intro # port"
 - **THEN** "Portfolio site" is suggested with its colour
 
-### Requirement: Focus on the phone
-The phone SHALL offer the same focus panel, start actions, running session and stop dialog as the desktop (see "Start a focus session", "Stop a timer" and "Focus panel on Home"). A running session SHALL keep its start time while the app is in the background, the screen is off or the app was closed, and show the correct elapsed time when the app is opened again. Starting a session on the phone SHALL replace a session running on another device after they sync, as there is one timer for all devices.
+### Requirement: Pause and resume
+A focus session SHALL be running or paused. Pause SHALL, without a dialog, log the stretch since the last start or resume (as in "Complete a session", without a note) and leave the session paused. Resume SHALL start a new stretch from now. The session's worked time SHALL be the exact time of its stretches (to the second, not their rounded entries) plus the running stretch; it SHALL stand still while paused. The session SHALL stay, running or paused, when focus mode or the app is left.
+
+#### Scenario: Pause logs the stretch
+- **WHEN** a session for "Thesis" started at 09:00 is paused at 09:30
+- **THEN** a 30-minute timer entry for "Thesis" at 09:00 exists, no dialog was shown and the session is paused at 30 minutes worked
+
+#### Scenario: Resume
+- **WHEN** that session is resumed at 09:35 and it is 09:50
+- **THEN** the session runs and shows 45 minutes worked
+
+#### Scenario: Paused while away
+- **WHEN** the user pauses a session, leaves focus mode and returns an hour later
+- **THEN** the session is still paused with the same worked time and offers Resume
+
+#### Scenario: Short stretch
+- **WHEN** a session is paused 20 seconds after it was resumed
+- **THEN** the logged stretch has 1 minute and the session shows 20 more seconds worked, not a full minute
+
+#### Scenario: Exact over several pauses
+- **WHEN** a session has five stretches of 50 seconds each and is paused
+- **THEN** the session shows 4:10 worked
+
+### Requirement: Complete a session
+Complete SHALL ask "What did you get done?" with an optional note and then end the session. A running stretch SHALL be logged with the note; when paused, a non-empty note SHALL be set on the last logged stretch. An entry has source `timer`, the stretch's start as its time, its whole minutes (at least 1) and the session's project, or task with its project or goal, or habit with its project or goal. Completing SHALL mark a task done (with the next-step prompt, see tasks), offer "Mark as done today" for a habit not yet checked today (on by default) and only end a project session; it then shows "Work logged".
+
+#### Scenario: Complete a task session
+- **WHEN** a session for the task "Book venue" started at 14:00 is completed at 14:40 with the note "Called three venues"
+- **THEN** a 40-minute entry at 14:00 with that note exists, "Book venue" is done and no session exists
+
+#### Scenario: Complete while paused
+- **WHEN** a session for "Thesis" is paused and then completed with the note "Drafted chapter 2"
+- **THEN** no new entry is created, the last logged stretch has the note "Drafted chapter 2" and no session exists
+
+#### Scenario: Complete a habit session
+- **WHEN** a session for the habit "Run 5 km" of "Training block 3" is completed after 40 minutes with "Mark as done today" on
+- **THEN** a 40-minute entry belongs to the habit and "Training block 3", and the habit is checked for today
+
+#### Scenario: Habit not marked
+- **WHEN** the user turns "Mark as done today" off and completes a habit session
+- **THEN** the time is logged and the habit stays unchecked
+
+#### Scenario: Habit already checked
+- **WHEN** a session for a habit that is already checked today is completed
+- **THEN** the dialog does not offer "Mark as done today"
+
+#### Scenario: Complete a project session
+- **WHEN** a session for the project "Thesis" is completed
+- **THEN** the stretch is logged on "Thesis", the project stays as it was and no session exists
+
+#### Scenario: Task for a goal
+- **WHEN** a session for the task "Book physio", assigned to the goal "Get fit", is completed
+- **THEN** the entry belongs to the task and the goal and is listed on the task page
+
+#### Scenario: Last next step
+- **WHEN** a session for the last open next step of an active project is completed
+- **THEN** the task is done and "What's the next step?" follows
+
+### Requirement: Time limit
+Focus mode SHALL offer a time limit for the session: 15, 30, 45, 60 or 90 minutes, any other whole number of minutes, or no limit. It SHALL be changeable and removable while the session runs or is paused. The limit SHALL apply to the session's worked time; after it, the timer SHALL show the overtime and keep running. A new session SHALL start without a limit.
+
+#### Scenario: Set a limit
+- **WHEN** the user sets a 45-minute limit in focus mode of a session that has 10 minutes worked
+- **THEN** the timer shows the 45-minute limit and keeps counting the worked time
+
+#### Scenario: Overtime
+- **WHEN** a session with a 30-minute limit has 32 minutes and 10 seconds worked
+- **THEN** the timer shows that the 30 minutes are over and "+2:10" overtime, and keeps running
+
+#### Scenario: Custom limit
+- **WHEN** the user enters 20 minutes as the limit
+- **THEN** the session's limit is 20 minutes
+
+#### Scenario: Remove the limit
+- **WHEN** the user chooses "No limit" for a session with a limit
+- **THEN** the timer shows no limit and no overtime
+
+### Requirement: Start a session
+The user SHALL be able to start a focus session for an open task, an active project or a habit from Home's focus panel, from a row of Home's To do, from the start button of a chip in "Habits due today", and from a task page. Starting SHALL NOT ask for a length: the session SHALL start running without a time limit (see "Time limit"), recording what it runs for and the start time, and open focus mode. The timer SHALL count from its start time, also while the app is closed or restarted.
+
+#### Scenario: Start from the focus panel
+- **WHEN** the user picks the project "Thesis" in the focus panel and starts
+- **THEN** a session for "Thesis" without a time limit runs and focus mode opens
+
+#### Scenario: Start from a habit chip
+- **WHEN** the user uses the start button of the chip "Run 5 km" in "Habits due today"
+- **THEN** a session for the habit "Run 5 km" without a time limit runs
+
+#### Scenario: Start from a row
+- **WHEN** the user uses the start action of the To do row "Book venue"
+- **THEN** a session for "Book venue" without a time limit runs
+
+#### Scenario: Start from a task page
+- **WHEN** the user uses "Start focus" on the task page of "Book venue"
+- **THEN** a session for "Book venue" runs without first choosing a length
+
+#### Scenario: Keeps running while closed
+- **WHEN** a timer was started at 09:00 and the app is closed and opened again at 09:40
+- **THEN** the timer shows 40 minutes elapsed
+
+### Requirement: Session across devices
+The session SHALL be synced like other records, so a session started on one device is shown, and can be paused, resumed, completed or discarded, on the other device after sync, with the same state (running or paused), worked time and time limit. There SHALL be one timer record per account: when sessions are started on two devices before they sync, the later start SHALL win and the earlier one SHALL end without a log entry for its running stretch.
+
+#### Scenario: Complete in the browser
+- **WHEN** a session started on the phone has synced and the user completes it in the browser
+- **THEN** the browser logs the entry, and after the next sync the phone shows no session and the entry
+
+#### Scenario: Paused on another device
+- **WHEN** the desktop pauses a session and both devices sync
+- **THEN** the phone shows the session as paused with the same worked time
+
+#### Scenario: Started on both devices
+- **WHEN** the phone starts a timer for "Thesis" at 09:00 and the browser, not yet synced, starts one for "Garden" at 09:05
+- **THEN** after both have synced, the timer for "Garden" runs on both devices
+
+### Requirement: Focus session on the phone
+The phone SHALL offer the same focus panel, start actions, focus mode, pause, resume, complete dialog, discard and time limit as the desktop (see "Start a session", "Pause and resume", "Complete a session" and "Focus panel on Home"). A running session SHALL keep its start time while the app is in the background, the screen is off or the app was closed, and show the correct worked time when the app is opened again. Starting a session on the phone SHALL replace a session on another device after they sync, as there is one timer for all devices.
 
 #### Scenario: Start on the phone
 - **WHEN** the user types a task in the focus panel on the phone and starts
@@ -198,11 +252,11 @@ The phone SHALL offer the same focus panel, start actions, running session and s
 
 #### Scenario: Screen off
 - **WHEN** a session started at 09:00 runs while the phone's screen is off and the app is opened again at 09:40
-- **THEN** the timer shows 40 minutes elapsed
+- **THEN** the timer shows 40 minutes worked
 
-#### Scenario: Stop on the phone
-- **WHEN** the user stops the session and answers "Drafted chapter 2"
-- **THEN** a log entry with that note and the elapsed minutes exists and "Work logged" is shown
+#### Scenario: Complete on the phone
+- **WHEN** the user completes the session on the phone and answers "Drafted chapter 2"
+- **THEN** a log entry with that note and the stretch's minutes exists and "Work logged" is shown
 
 #### Scenario: Started on the phone, seen on the desktop
 - **WHEN** a session is started on the phone and both devices sync

@@ -109,8 +109,16 @@ export const columns = {
     projectId: text('project_id'),
     taskId: text('task_id'),
     habitId: text('habit_id'),
+    /** Start of the current stretch (a resumed session starts a new one). */
     startedAt: text('started_at').notNull(),
+    /** The session's time limit in worked minutes; null for no limit. */
     plannedMinutes: integer('planned_minutes'),
+    /** Set while the session is paused; null while it runs. */
+    pausedAt: text('paused_at'),
+    /** Exact time of the earlier stretches of this session, in seconds (not their rounded entries). */
+    workedSeconds: integer('worked_seconds').notNull().default(0),
+    /** The log entry of the last logged stretch. */
+    lastEntryId: text('last_entry_id'),
   }),
   reviewMeasureSnapshots: () => ({
     ...shared(),

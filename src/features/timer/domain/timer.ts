@@ -3,6 +3,22 @@ export function elapsedMs(startedAt: string, now: Date): number {
   return Math.max(0, now.getTime() - new Date(startedAt).getTime());
 }
 
+/** What the worked time of a session depends on: the current stretch and the minutes logged by earlier ones. */
+export interface SessionClock {
+  /** Start of the current stretch (ISO). */
+  startedAt: string;
+  /** Set while paused. */
+  pausedAt: string | null;
+  /** Exact seconds of the earlier stretches (not their rounded entries). */
+  workedSeconds: number;
+}
+
+/** Milliseconds worked in the session: the earlier stretches plus the running one; it stands still while paused. */
+export function workedMs(session: SessionClock, now: Date): number {
+  const logged = session.workedSeconds * 1000;
+  return session.pausedAt === null ? logged + elapsedMs(session.startedAt, now) : logged;
+}
+
 /** `m:ss`, and `h:mm:ss` from one hour on. */
 export function formatElapsed(ms: number): string {
   const total = Math.floor(Math.max(0, ms) / 1000);
@@ -12,7 +28,7 @@ export function formatElapsed(ms: number): string {
   return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`;
 }
 
-/** Milliseconds past the planned length, or null while within it or without a plan. */
+/** Milliseconds past the time limit (`plannedMinutes`) of the worked time, or null while within it or without a plan. */
 export function overtimeMs(elapsed: number, plannedMinutes: number | null): number | null {
   if (plannedMinutes === null) return null;
   const over = elapsed - plannedMinutes * 60_000;

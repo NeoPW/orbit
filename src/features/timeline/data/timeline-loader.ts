@@ -4,7 +4,7 @@ import { notDeleted } from '../../../core/db/records.ts';
 import { goals, habits, logEntries, projects, tasks } from '../../../core/db/schema.ts';
 import { goalColor, projectColor } from '../../../core/ui/colors.ts';
 import { getTimer } from '../../timer/data/timer-repository.ts';
-import { blockTimes } from '../domain/day-timeline.ts';
+import { blockTimes, mergeStretches, stretchKey } from '../domain/day-timeline.ts';
 
 /** What clicking an item opens. */
 export type TimelineTarget = { taskId: string } | { projectId: string } | { goalId: string };
@@ -24,6 +24,8 @@ export interface TimelineItem {
   /** A CSS colour (project, else goal), or null for neutral. */
   color: string | null;
   target: TimelineTarget | null;
+  /** The task, habit or project of a timer stretch, for merging; null for other work. */
+  mergeKey: string | null;
   /** The running focus session; its `end` is the time of loading and the view moves it. */
   running: boolean;
 }
@@ -31,7 +33,8 @@ export interface TimelineItem {
 /**
  * The work between two UTC instants (`from` inclusive, `to` exclusive) as timeline items:
  * a block for each log entry with a duration, a marker for each without, and the running
- * timer (if it started in the range) as a running block ending at `now`.
+ * stretch of a session (if it started in the range) as a running block ending at `now`. Timer blocks of
+ * one item at most 10 minutes apart are joined into one block.
  */
 export async function loadTimeline(db: Db, from: string, to: string, now: Date = new Date()): Promise<TimelineItem[]> {
   const [entries, timer, projectRows, taskRows, goalRows, habitRows] = await Promise.all([
@@ -85,11 +88,12 @@ export async function loadTimeline(db: Db, from: string, to: string, now: Date =
       note: entry.note,
       minutes: isBlock ? (entry.durationMinutes ?? 0) : 0,
       running: false,
+      mergeKey: entry.source === 'timer' ? stretchKey(entry) : null,
       ...describe(entry, entry.note),
     };
   });
 
-  if (timer && timer.startedAt >= from && timer.startedAt < to) {
+  if (timer && timer.pausedAt === null && timer.startedAt >= from && timer.startedAt < to) {
     const start = new Date(timer.startedAt);
     items.push({
       id: timer.id,
@@ -99,8 +103,9 @@ export async function loadTimeline(db: Db, from: string, to: string, now: Date =
       note: '',
       minutes: Math.max(0, Math.floor((now.getTime() - start.getTime()) / 60000)),
       running: true,
+      mergeKey: stretchKey(timer),
       ...describe({ taskId: timer.taskId, habitId: timer.habitId, projectId: timer.projectId, goalId: null }, ''),
     });
   }
-  return items.sort((a, b) => a.start.getTime() - b.start.getTime());
+  return mergeStretches(items);
 }

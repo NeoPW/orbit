@@ -1,15 +1,18 @@
-import { ArrowLeft, Square, Timer, Trash2 } from 'lucide-react';
+import { ArrowLeft, CircleCheck, Pause, Play, Timer, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, type CSSProperties } from 'react';
+import { useServices } from '../../../app/services.ts';
 import { useLiveQuery } from '../../../core/db/live.ts';
 import { navigate } from '../../../core/routing/useRoute.ts';
 import { useIsPhone } from '../../../core/ui/useIsPhone.ts';
 import { Chip } from '../../../core/ui/components/Chip.tsx';
-import { Button } from '../../../core/ui/components/Button.tsx';
+import { Button, IconButton } from '../../../core/ui/components/Button.tsx';
 import { EmptyState } from '../../../core/ui/components/EmptyState.tsx';
 import { getTimerView, type TimerView } from '../data/timer-view.ts';
 import styles from './FocusMode.module.css';
 import { TimerReadout } from './TimerReadout.tsx';
-import { useStopTimer } from './useStopTimer.tsx';
+import { setTimerLimit } from '../data/timer-repository.ts';
+import { TimeLimit } from './TimeLimit.tsx';
+import { useSessionActions } from './useSessionActions.tsx';
 
 /** Back to the previous screen; the timer keeps running. */
 function leave() {
@@ -17,7 +20,7 @@ function leave() {
   else navigate({ name: 'home' });
 }
 
-/** Full-window focus mode at `/focus`: only what the timer runs for, its notes, the timer, Stop and Discard. */
+/** Full-window focus mode at `/focus`: only what the session runs for, its notes, the timer, the time limit, Pause or Resume, Complete and Discard (top right). */
 export function FocusMode() {
   const view = useLiveQuery(getTimerView, []);
 
@@ -43,8 +46,10 @@ export function FocusMode() {
 
 function FocusSession({ view }: { view: TimerView }) {
   const ended = useCallback(() => leave(), []);
-  const stop = useStopTimer(view, ended);
+  const actions = useSessionActions(view, ended);
+  const { db } = useServices();
   const { timer } = view;
+  const paused = timer.pausedAt !== null;
   const isPhone = useIsPhone();
   return (
     <div className={styles.focus} style={view.projectColor ? ({ '--pc': view.projectColor } as CSSProperties) : undefined}>
@@ -52,19 +57,29 @@ function FocusSession({ view }: { view: TimerView }) {
         <Button icon={<ArrowLeft />} onClick={leave}>
           {isPhone ? 'Back' : 'Leave focus mode (Esc)'}
         </Button>
+        <IconButton label="Discard" icon={<Trash2 />} onClick={actions.askDiscard} />
       </header>
       <main className={styles.main}>
         <div className={styles.column}>
           {view.projectColor && view.projectName && <Chip projectColor={view.projectColor}>{view.projectName}</Chip>}
           <h1>{view.title}</h1>
-          <TimerReadout startedAt={timer.startedAt} plannedMinutes={timer.plannedMinutes} large />
+          <TimerReadout session={timer} limitMinutes={timer.plannedMinutes} large />
           <div className={styles.actions}>
-            <Button variant="primary" icon={<Square />} onClick={stop.askStop}>
-              Stop
+            {paused ? (
+              <Button variant="primary" icon={<Play />} onClick={actions.resume}>
+                Resume
+              </Button>
+            ) : (
+              <Button variant="primary" icon={<Pause />} onClick={actions.pause}>
+                Pause
+              </Button>
+            )}
+            <Button icon={<CircleCheck />} onClick={actions.askComplete}>
+              Complete
             </Button>
-            <Button icon={<Trash2 />} onClick={stop.askDiscard}>
-              Discard
-            </Button>
+          </div>
+          <div className={styles.limit}>
+            <TimeLimit minutes={timer.plannedMinutes} onChange={(minutes) => void setTimerLimit(db, () => new Date(), minutes)} />
           </div>
           {view.notes && (
             <section className={styles.notes} aria-label="Notes">
@@ -74,7 +89,7 @@ function FocusSession({ view }: { view: TimerView }) {
           )}
         </div>
       </main>
-      {stop.dialogs}
+      {actions.dialogs}
     </div>
   );
 }

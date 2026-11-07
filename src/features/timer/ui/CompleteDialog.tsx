@@ -3,21 +3,21 @@ import { Button } from '../../../core/ui/components/Button.tsx';
 import { Checkbox } from '../../../core/ui/components/Checkbox.tsx';
 import { TextField } from '../../../core/ui/components/TextField.tsx';
 import { formatElapsed } from '../domain/timer.ts';
-import styles from './StopDialog.module.css';
+import styles from './CompleteDialog.module.css';
 
-export interface StopDialogProps {
+export interface CompleteDialogProps {
   /** What the timer ran for. */
   title: string;
-  elapsedMs: number;
+  workedMs: number;
   /** Offers "Mark as done today" (a habit session whose habit is not checked yet). */
   offerMarkDone?: boolean;
-  /** Stops the timer with the (possibly empty) answer. */
-  onStop: (note: string, markDone: boolean) => void;
+  /** Completes the session with the (possibly empty) answer. */
+  onComplete: (note: string, markDone: boolean) => void;
   onCancel: () => void;
 }
 
-/** "What did you get done?": the optional answer becomes the note of the log entry. Render it only while it is open. */
-export function StopDialog({ title, elapsedMs, offerMarkDone = false, onStop, onCancel }: StopDialogProps) {
+/** "What did you get done?": the optional answer becomes the note of the last logged stretch. Render it only while it is open. */
+export function CompleteDialog({ title, workedMs, offerMarkDone = false, onComplete, onCancel }: CompleteDialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const [note, setNote] = useState('');
@@ -33,7 +33,7 @@ export function StopDialog({ title, elapsedMs, offerMarkDone = false, onStop, on
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    onStop(note, offerMarkDone && markDone);
+    onComplete(note, offerMarkDone && markDone);
   }
 
   return (
@@ -49,7 +49,7 @@ export function StopDialog({ title, elapsedMs, offerMarkDone = false, onStop, on
       <form className={styles.form} onSubmit={submit} noValidate>
         <h2 id={titleId}>What did you get done?</h2>
         <p className={styles.hint}>
-          {title} &middot; {formatElapsed(elapsedMs)}
+          {title} &middot; {formatElapsed(workedMs)}
         </p>
         <TextField label="Note (optional)" type="text" value={note} onChange={(event) => setNote(event.target.value)} />
         {offerMarkDone && <Checkbox label="Mark as done today" checked={markDone} onChange={setMarkDone} />}
@@ -58,7 +58,7 @@ export function StopDialog({ title, elapsedMs, offerMarkDone = false, onStop, on
             Cancel
           </Button>
           <Button type="submit" variant="primary">
-            Stop and log
+            Complete
           </Button>
         </div>
       </form>

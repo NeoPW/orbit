@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 import type { Db } from '../../../core/db/drizzle.ts';
 import { createFields, deleteFields, newId, notDeleted, type Clock } from '../../../core/db/records.ts';
 import { habitChecks, habits, logEntries, projects, tasks, type LogSource } from '../../../core/db/schema.ts';
@@ -98,6 +98,16 @@ export function listEntriesForTask(db: Db, taskId: string): Promise<LogEntry[]> 
     .from(logEntries)
     .where(and(eq(logEntries.taskId, taskId), notDeleted(logEntries)))
     .orderBy(desc(logEntries.occurredAt));
+}
+
+/** Total minutes worked per habit (its focus sessions and Log work entries), for the habits that have any. */
+export async function habitTotals(db: Db): Promise<Map<string, number>> {
+  const rows = await db
+    .select({ habitId: logEntries.habitId, minutes: sql<number>`sum(${logEntries.durationMinutes})` })
+    .from(logEntries)
+    .where(and(isNotNull(logEntries.habitId), notDeleted(logEntries)))
+    .groupBy(logEntries.habitId);
+  return new Map(rows.filter((r) => r.habitId !== null && Number(r.minutes) > 0).map((r) => [r.habitId as string, Number(r.minutes)]));
 }
 
 /** All entries, for the "recently used first" ordering of Log work. */

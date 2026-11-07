@@ -24,8 +24,8 @@ export interface ReminderInput {
   projects: { id: string; title: string; deadline: string }[];
   /** Weeks (Mondays) whose review is completed. */
   completedReviewWeeks: string[];
-  /** The running timer, when it has a planned length. */
-  focus: { title: string; startedAt: string; plannedMinutes: number } | null;
+  /** The running (not paused) session, when it has a time limit: its current stretch start, seconds worked before it, and the limit in minutes. */
+  focus: { title: string; startedAt: string; workedSeconds: number; limitMinutes: number } | null;
 }
 
 export type ReminderSettings = Pick<Settings, 'remindersOn' | 'reminderTime' | 'leadDays' | 'reviewDay' | 'reviewTime'>;
@@ -59,12 +59,13 @@ export function planReminders(input: ReminderInput, settings: ReminderSettings, 
     if (reminder.at >= now && reminder.at <= until) result.push(reminder);
   };
 
-  if (input.focus) {
-    const at = new Date(new Date(input.focus.startedAt).getTime() + input.focus.plannedMinutes * 60_000);
+  // The limit counts worked time, so it falls when the minutes still missing have passed since this stretch began.
+  if (input.focus && input.focus.limitMinutes * 60 > input.focus.workedSeconds) {
+    const at = new Date(new Date(input.focus.startedAt).getTime() + (input.focus.limitMinutes * 60 - input.focus.workedSeconds) * 1000);
     add({
-      key: `focus:${input.focus.startedAt}`,
+      key: `focus:${input.focus.startedAt}:${input.focus.limitMinutes}`,
       at,
-      title: `${input.focus.title}: ${plural(input.focus.plannedMinutes, 'minute')} done`,
+      title: `${input.focus.title}: ${plural(input.focus.limitMinutes, 'minute')} done`,
       body: 'The timer keeps running',
       route: '/focus',
     });

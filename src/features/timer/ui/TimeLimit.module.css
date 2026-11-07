@@ -1,0 +1,7 @@
+.custom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}

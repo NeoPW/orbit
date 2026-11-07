@@ -62,7 +62,7 @@ function EditTitleSheet({ initial, onSave, onClose }: { initial: string; onSave:
 /** Sample work of today for the timeline variants. */
 function sampleItems(day: string): TimelineItem[] {
   const at = (hhmm: string) => new Date(`${day}T${hhmm}:00`);
-  const base = { note: '', target: null, running: false, projectName: null as string | null };
+  const base = { note: '', target: null, running: false, mergeKey: null as string | null, projectName: null as string | null };
   return [
     { ...base, id: 'a', kind: 'block', start: at('09:00'), end: at('10:15'), minutes: 75, label: 'Thesis', color: 'var(--pc0)' },
     { ...base, id: 'b', kind: 'block', start: at('09:30'), end: at('10:30'), minutes: 60, label: 'Portfolio site', color: 'var(--pc1)' },

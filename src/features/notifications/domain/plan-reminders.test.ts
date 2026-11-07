@@ -17,8 +17,12 @@ const habit = (extra: Partial<ReminderHabit> = {}): ReminderHabit => ({
   ...extra,
 });
 /** Wednesday 2026-10-14. */
-const day = (input: Partial<ReminderInput>, s: Partial<ReminderSettings> = {}, now = local(2026, 10, 14, 0, 0), until = local(2026, 10, 14, 23, 59)) =>
-  planReminders({ ...empty, ...input }, { ...settings, ...s }, now, until);
+const day = (
+  input: Partial<ReminderInput>,
+  s: Partial<ReminderSettings> = {},
+  now = local(2026, 10, 14, 0, 0),
+  until = local(2026, 10, 14, 23, 59),
+) => planReminders({ ...empty, ...input }, { ...settings, ...s }, now, until);
 
 describe('habit reminders', () => {
   it('uses the own reminder time and shows the title and link', () => {
@@ -32,7 +36,9 @@ describe('habit reminders', () => {
   });
 
   it('skips a day on which the habit is not due', () => {
-    expect(day({ habits: [habit({ scheduleType: 'weekdays', weekdays: [1, 3, 5] })] }, {}, local(2026, 10, 13), local(2026, 10, 13, 23, 59))).toEqual([]);
+    expect(
+      day({ habits: [habit({ scheduleType: 'weekdays', weekdays: [1, 3, 5] })] }, {}, local(2026, 10, 13), local(2026, 10, 13, 23, 59)),
+    ).toEqual([]);
   });
 
   it('skips inactive habits', () => {
@@ -45,7 +51,10 @@ describe('habit reminders', () => {
 
   it('skips a habit whose weekly target is reached', () => {
     const h = habit({ scheduleType: 'times_per_week', timesPerWeek: 2 });
-    const checks = [{ habitId: 'h1', date: '2026-10-12' }, { habitId: 'h1', date: '2026-10-13' }];
+    const checks = [
+      { habitId: 'h1', date: '2026-10-12' },
+      { habitId: 'h1', date: '2026-10-13' },
+    ];
     expect(day({ habits: [h], checks }, {}, local(2026, 10, 14), local(2026, 10, 16, 23, 59))).toEqual([]);
   });
 
@@ -80,12 +89,17 @@ describe('deadline reminders', () => {
   });
 
   it('reminds for an active project with its own deadline', () => {
-    const list = notReview(planReminders({ ...empty, projects: [{ id: 'p1', title: 'Garden', deadline: '2026-10-20' }] }, settings, ...range));
+    const list = notReview(
+      planReminders({ ...empty, projects: [{ id: 'p1', title: 'Garden', deadline: '2026-10-20' }] }, settings, ...range),
+    );
     expect(list.map((r) => r.route)).toEqual(['/projects/p1', '/projects/p1']);
   });
 
   it('follows a moved deadline through new keys', () => {
-    const keys = (due: string) => notReview(planReminders({ ...empty, tasks: [{ ...task, dueDate: due }] }, settings, local(2026, 10, 1), local(2026, 11, 1))).map((r) => r.key);
+    const keys = (due: string) =>
+      notReview(planReminders({ ...empty, tasks: [{ ...task, dueDate: due }] }, settings, local(2026, 10, 1), local(2026, 11, 1))).map(
+        (r) => r.key,
+      );
     expect(keys('2026-10-20').filter((k) => keys('2026-10-25').includes(k))).toEqual([]);
   });
 });
@@ -113,7 +127,7 @@ describe('reminders off and focus end', () => {
   const everything: Partial<ReminderInput> = {
     habits: [habit()],
     tasks: [{ id: 't1', title: 'x', dueDate: '2026-10-14' }],
-    focus: { title: 'Thesis', startedAt: local(2026, 10, 14, 10, 0).toISOString(), plannedMinutes: 25 },
+    focus: { title: 'Thesis', startedAt: local(2026, 10, 14, 10, 0).toISOString(), workedSeconds: 0, limitMinutes: 25 },
   };
 
   it('keeps only the focus end when reminders are off', () => {
@@ -125,6 +139,18 @@ describe('reminders off and focus end', () => {
     const [r] = day({ focus: everything.focus ?? null }, { remindersOn: false });
     expect(r).toMatchObject({ title: 'Thesis: 25 minutes done', route: '/focus' });
     expect(r?.at).toEqual(local(2026, 10, 14, 10, 25));
+  });
+
+  it('counts the minutes worked before the current stretch toward the limit', () => {
+    const focus = { title: 'Thesis', startedAt: local(2026, 10, 14, 11, 0).toISOString(), workedSeconds: 1200, limitMinutes: 30 };
+    const [r] = day({ focus }, { remindersOn: false });
+    expect(r?.at).toEqual(local(2026, 10, 14, 11, 10));
+  });
+
+  it('plans nothing when no session has a limit or the limit is already reached', () => {
+    expect(day({ focus: null }, { remindersOn: false })).toEqual([]);
+    const reached = { title: 'Thesis', startedAt: local(2026, 10, 14, 11, 0).toISOString(), workedSeconds: 1200, limitMinutes: 15 };
+    expect(day({ focus: reached }, { remindersOn: false })).toEqual([]);
   });
 
   it('returns the reminders in time order', () => {
