@@ -1,5 +1,7 @@
 import { Check, FolderKanban, ListTodo, NotebookPen, Play, Plus, Repeat } from 'lucide-react';
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
+import { withShortcut } from '../../../app/shortcuts/keys.ts';
+import { useScreenShortcuts } from '../../../app/shortcuts/screen-keys.ts';
 import { useServices } from '../../../app/services.ts';
 import { formatDate } from '../../../core/dates/format.ts';
 import { useToday } from '../../../core/dates/today.ts';
@@ -57,6 +59,40 @@ export function HomeScreen() {
   );
   const [creating, setCreating] = useState(false);
   const [logging, setLogging] = useState(false);
+  const [highlight, setHighlight] = useState<number | null>(null);
+  const todoTasks = data?.todo.map((item) => item.task) ?? [];
+  const highlighted = highlight === null || todoTasks.length === 0 ? null : Math.min(highlight, todoTasks.length - 1);
+
+  // A click anywhere ends keyboard navigation of the list.
+  useEffect(() => {
+    if (highlight === null) return;
+    const clear = () => setHighlight(null);
+    window.addEventListener('mousedown', clear);
+    return () => window.removeEventListener('mousedown', clear);
+  }, [highlight]);
+
+  // J/K or arrows, Space, X, Enter and 1–9 on the To do list (see openspec keyboard-shortcuts, "To do list keys").
+  useScreenShortcuts((match) => {
+    const count = todoTasks.length;
+    if (count === 0) return;
+    const current = highlighted === null ? null : todoTasks[highlighted];
+    switch (match.action) {
+      case 'todo-next':
+        return setHighlight(highlighted === null ? 0 : Math.min(highlighted + 1, count - 1));
+      case 'todo-prev':
+        return setHighlight(highlighted === null ? 0 : Math.max(highlighted - 1, 0));
+      case 'todo-start':
+        return current ? void start({ taskId: current.id }) : undefined;
+      case 'todo-complete':
+        return current ? void complete(current) : undefined;
+      case 'todo-open':
+        return current ? navigate({ name: 'task', id: current.id }) : undefined;
+      case 'todo-start-n': {
+        const task = todoTasks[match.index ?? -1];
+        return task ? void start({ taskId: task.id }) : undefined;
+      }
+    }
+  });
 
   if (!data) return null;
   const { todo, projects, habits, done } = data;
@@ -75,10 +111,10 @@ export function HomeScreen() {
             <IconButton label="New task" tooltip="none" icon={<Plus />} className={styles.quickAdd} onClick={() => setCreating(true)} />
           ) : (
             <>
-              <Button variant="primary" icon={<Plus />} onClick={() => setCreating(true)}>
+              <Button variant="primary" icon={<Plus />} onClick={() => setCreating(true)} title={withShortcut('New task', 'new-task')}>
                 New task
               </Button>
-              <Button icon={<NotebookPen />} onClick={() => setLogging(true)}>
+              <Button icon={<NotebookPen />} onClick={() => setLogging(true)} title={withShortcut('Log work', 'log-work')}>
                 Log work
               </Button>
             </>
@@ -163,6 +199,7 @@ export function HomeScreen() {
                   label="To do"
                   rowProps={(task) => ({
                     compact: true,
+                    highlighted: highlighted !== null && todoTasks[highlighted]?.id === task.id,
                     importance: itemByTask.get(task.id)?.importance,
                     context: itemByTask.get(task.id)?.context ?? undefined,
                     projectColor: itemByTask.get(task.id)?.projectColor,

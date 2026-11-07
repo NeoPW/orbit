@@ -1,5 +1,9 @@
 import { ArrowLeft, CircleCheck, Pause, Play, Timer, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, type CSSProperties } from 'react';
+import { useCallback, useEffect, useRef, type CSSProperties } from 'react';
+import { useScreenShortcuts } from '../../../app/shortcuts/screen-keys.ts';
+import { withShortcut } from '../../../app/shortcuts/keys.ts';
+import { focusModeRequest } from '../../../app/shortcuts/requests.ts';
+import { stepLimit, workedMs } from '../domain/timer.ts';
 import { useServices } from '../../../app/services.ts';
 import { useLiveQuery } from '../../../core/db/live.ts';
 import { navigate } from '../../../core/routing/useRoute.ts';
@@ -24,24 +28,24 @@ function leave() {
 export function FocusMode() {
   const view = useLiveQuery(getTimerView, []);
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      // Escape inside a dialog (stop, discard, next step) closes that dialog only.
-      if (event.key === 'Escape' && !document.querySelector('dialog[open]')) leave();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-
   if (view === undefined) return null;
   if (view === null) {
     return (
       <div className={styles.empty}>
+        <LeaveOnEscape />
         <EmptyState icon={Timer} text="No timer running" action={<Button onClick={() => navigate({ name: 'home' })}>Go to Home</Button>} />
       </div>
     );
   }
   return <FocusSession view={view} />;
+}
+
+/** Without a session only Esc does something. */
+function LeaveOnEscape() {
+  useScreenShortcuts((match) => {
+    if (match.action === 'focus-leave') leave();
+  });
+  return null;
 }
 
 function FocusSession({ view }: { view: TimerView }) {
@@ -51,13 +55,42 @@ function FocusSession({ view }: { view: TimerView }) {
   const { timer } = view;
   const paused = timer.pausedAt !== null;
   const isPhone = useIsPhone();
+  const openLimit = useRef<(() => void) | null>(null);
+  const setOpener = useCallback((open: () => void) => {
+    openLimit.current = open;
+  }, []);
+  const setLimit = (minutes: number | null) => void setTimerLimit(db, () => new Date(), minutes);
+
+  // Esc, Space, Enter, Delete, L, + and − (see openspec keyboard-shortcuts, "Focus mode keys"); a dialog closes first,
+  // as no shortcut fires while one is open.
+  useScreenShortcuts((match) => {
+    if (match.action === 'focus-leave') leave();
+    else if (match.action === 'focus-toggle') (paused ? actions.resume : actions.pause)();
+    else if (match.action === 'focus-complete') actions.askComplete();
+    else if (match.action === 'focus-discard') actions.askDiscard();
+    else if (match.action === 'focus-limit') openLimit.current?.();
+    else if (match.action === 'focus-limit-up' || match.action === 'focus-limit-down') {
+      setLimit(stepLimit(timer.plannedMinutes, workedMs(timer, new Date()), match.action === 'focus-limit-up' ? 5 : -5));
+    }
+  });
+
+  // "Complete" and "Set time limit" from the command palette.
+  useEffect(
+    () =>
+      focusModeRequest.subscribe((what) => {
+        if (what === 'complete') actions.askComplete();
+        else openLimit.current?.();
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
   return (
     <div className={styles.focus} style={view.projectColor ? ({ '--pc': view.projectColor } as CSSProperties) : undefined}>
       <header className={styles.top}>
         <Button icon={<ArrowLeft />} onClick={leave}>
           {isPhone ? 'Back' : 'Leave focus mode (Esc)'}
         </Button>
-        <IconButton label="Discard" icon={<Trash2 />} onClick={actions.askDiscard} />
+        <IconButton label={withShortcut('Discard', 'focus-discard')} icon={<Trash2 />} onClick={actions.askDiscard} />
       </header>
       <main className={styles.main}>
         <div className={styles.column}>
@@ -66,20 +99,20 @@ function FocusSession({ view }: { view: TimerView }) {
           <TimerReadout session={timer} limitMinutes={timer.plannedMinutes} large />
           <div className={styles.actions}>
             {paused ? (
-              <Button variant="primary" icon={<Play />} onClick={actions.resume}>
+              <Button variant="primary" icon={<Play />} onClick={actions.resume} title={withShortcut('Resume', 'focus-toggle')}>
                 Resume
               </Button>
             ) : (
-              <Button variant="primary" icon={<Pause />} onClick={actions.pause}>
+              <Button variant="primary" icon={<Pause />} onClick={actions.pause} title={withShortcut('Pause', 'focus-toggle')}>
                 Pause
               </Button>
             )}
-            <Button icon={<CircleCheck />} onClick={actions.askComplete}>
+            <Button icon={<CircleCheck />} onClick={actions.askComplete} title={withShortcut('Complete', 'focus-complete')}>
               Complete
             </Button>
           </div>
           <div className={styles.limit}>
-            <TimeLimit minutes={timer.plannedMinutes} onChange={(minutes) => void setTimerLimit(db, () => new Date(), minutes)} />
+            <TimeLimit minutes={timer.plannedMinutes} onChange={setLimit} onOpener={setOpener} />
           </div>
           {view.notes && (
             <section className={styles.notes} aria-label="Notes">

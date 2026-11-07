@@ -103,7 +103,8 @@
     height: 20px;
   }
 
-  .label {
+  .label,
+  .key {
     display: none;
   }
 
@@ -139,4 +140,19 @@
   .link:focus-visible::after {
     opacity: 1;
   }
+}
+
+/* The shortcut, faint at the right of a wide entry (the narrow sidebar shows it in the tooltip). */
+.key {
+  margin-left: auto;
+  color: var(--color-text-faint);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--ease-out);
+}
+
+.link:hover .key,
+.link:focus-visible .key {
+  opacity: 1;
 }

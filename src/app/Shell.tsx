@@ -22,6 +22,8 @@ import { useServices } from './services.ts';
 import { Sidebar } from './Sidebar.tsx';
 import { BottomNav } from './BottomNav.tsx';
 import styles from './Shell.module.css';
+import { AppSheets } from './shortcuts/AppSheets.tsx';
+import { ShortcutProvider } from './shortcuts/ShortcutProvider.tsx';
 
 // The gallery is only imported in development; the production bundle has no trace of it.
 const ComponentGallery: ComponentType | null = import.meta.env.DEV ? lazy(() => import('./dev/ComponentGallery.tsx')) : null;
@@ -59,9 +61,13 @@ export function Shell() {
   if (route.name === 'focus') {
     return (
       <CompleteTaskProvider>
-        <div className={styles.fullWindow}>
-          <FocusMode />
-        </div>
+        <AppSheets>
+          <ShortcutProvider>
+            <div className={styles.fullWindow}>
+              <FocusMode />
+            </div>
+          </ShortcutProvider>
+        </AppSheets>
         <MessageHost />
       </CompleteTaskProvider>
     );
@@ -69,24 +75,28 @@ export function Shell() {
 
   return (
     <CompleteTaskProvider>
-      <div className={`${styles.shell} ${isPhone ? styles.phone : ''}`}>
-        {!isPhone && <Sidebar current={sectionOf(route)} />}
-        <div className={styles.main}>
-          {storage === 'memory' && (
-            <p className={styles.banner} role="alert">
-              <TriangleAlert aria-hidden="true" />
-              This browser offers no storage for Orbit: data is not saved and is lost when the page is closed.
-            </p>
-          )}
-          <main className={styles.content}>
-            <Suspense fallback={null}>
-              <Screen />
-            </Suspense>
-          </main>
-        </div>
-        {isPhone && <BottomNav current={sectionOf(route)} />}
-        <MessageHost />
-      </div>
+      <AppSheets>
+        <ShortcutProvider>
+          <div className={`${styles.shell} ${isPhone ? styles.phone : ''}`}>
+            {!isPhone && <Sidebar current={sectionOf(route)} />}
+            <div className={styles.main}>
+              {storage === 'memory' && (
+                <p className={styles.banner} role="alert">
+                  <TriangleAlert aria-hidden="true" />
+                  This browser offers no storage for Orbit: data is not saved and is lost when the page is closed.
+                </p>
+              )}
+              <main className={styles.content}>
+                <Suspense fallback={null}>
+                  <Screen />
+                </Suspense>
+              </main>
+            </div>
+            {isPhone && <BottomNav current={sectionOf(route)} />}
+            <MessageHost />
+          </div>
+        </ShortcutProvider>
+      </AppSheets>
     </CompleteTaskProvider>
   );
 }
