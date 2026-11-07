@@ -29,6 +29,13 @@
       "when": 1794057381623,
       "tag": "0003_striped_donald_blake",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1794092241401,
+      "tag": "0004_nappy_frank_castle",
+      "breakpoints": true
     }
   ]
 }

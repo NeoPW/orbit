@@ -126,6 +126,13 @@ export const columns = {
     measureId: text('measure_id').notNull(),
     progress: real('progress').notNull(),
   }),
+  measureChanges: () => ({
+    ...shared(),
+    measureId: text('measure_id').notNull(),
+    /** The value before the change; null when the measure had none. */
+    fromValue: real('from_value'),
+    toValue: real('to_value').notNull(),
+  }),
   habitChecks: () => ({
     ...shared(),
     habitId: text('habit_id').notNull(),
@@ -154,6 +161,8 @@ export const areas = sqliteTable('areas', columns.areas());
 export const goals = sqliteTable('goals', columns.goals());
 
 export const measures = sqliteTable('measures', columns.measures());
+
+export const measureChanges = sqliteTable('measure_changes', columns.measureChanges());
 
 export const projects = sqliteTable('projects', columns.projects());
 
@@ -190,6 +199,7 @@ export const SYNCED_TABLES = {
   areas: areas,
   goals: goals,
   measures: measures,
+  measure_changes: measureChanges,
   projects: projects,
   tasks: tasks,
   habits: habits,

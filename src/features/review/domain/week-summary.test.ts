@@ -9,6 +9,7 @@ const TODAY = '2026-10-14';
 
 const empty = (): WeekRows => ({
   goals: [],
+  areas: [],
   measures: [],
   projects: [],
   tasks: [],
@@ -22,16 +23,27 @@ const project = (id: string, title: string, goalId: string | null = null, extra:
   id,
   title,
   goalId,
+  areaId: null,
+  color: null,
   status: 'active',
   completedAt: null,
   deletedAt: null,
   ...extra,
 });
 const goal = (id: string, title: string) => ({ id, title, status: 'active' as const, color: null });
-const entry = (projectId: string | null, date: string, durationMinutes: number | null) => ({ projectId, goalId: null, taskId: null, occurredAt: at(date), durationMinutes });
+const entry = (projectId: string | null, date: string, durationMinutes: number | null) => ({
+  projectId,
+  goalId: null,
+  taskId: null,
+  habitId: null,
+  occurredAt: at(date),
+  durationMinutes,
+});
 const habit = (extra: Partial<WeekRows['habits'][number]>): WeekRows['habits'][number] => ({
   id: 'h1',
   title: 'Run',
+  projectId: null,
+  goalId: null,
   active: true,
   scheduleType: 'daily',
   weekdays: null,
@@ -48,41 +60,10 @@ const numeric = (id: string, goalId: string, current: number) => ({
   targetValue: 100,
   currentValue: current,
   habitId: null,
+  unit: null,
   checkIns: 0,
-});
-
-describe('work per project', () => {
-  it('counts entries and minutes, entries without duration add no time', () => {
-    const rows = { ...empty(), projects: [project('p1', 'Thesis')], logEntries: [entry('p1', '2026-10-06', 30), entry('p1', '2026-10-07', 45), entry('p1', '2026-10-08', null)] };
-    const [group] = summarizeWeek(rows, week, TODAY).work;
-    expect(group?.projects[0]).toMatchObject({ title: 'Thesis', count: 3, minutes: 75 });
-  });
-
-  it('leaves out entries outside the week', () => {
-    const rows = { ...empty(), projects: [project('p1', 'Thesis')], logEntries: [entry('p1', '2026-10-04', 30), entry('p1', '2026-10-12', 30)] };
-    expect(summarizeWeek(rows, week, TODAY).work).toEqual([]);
-  });
-
-  it('groups under the goal, then projects without a goal, and "No project" last', () => {
-    const rows = {
-      ...empty(),
-      goals: [goal('g1', 'Graduate')],
-      projects: [project('p1', 'Thesis', 'g1'), project('p2', 'Garden')],
-      logEntries: [entry('p1', '2026-10-06', 30), entry('p2', '2026-10-06', 60), entry(null, '2026-10-06', 90)],
-    };
-    const { work } = summarizeWeek(rows, week, TODAY);
-    expect(work.map((g) => g.goalTitle)).toEqual(['Graduate', null]);
-    expect(work[1]?.projects.map((p) => p.title)).toEqual(['Garden', 'No project']);
-  });
-
-  it('orders projects of a group by minutes, then entries', () => {
-    const rows = {
-      ...empty(),
-      projects: [project('a', 'A'), project('b', 'B'), project('c', 'C')],
-      logEntries: [entry('a', '2026-10-06', 10), entry('b', '2026-10-06', 30), entry('c', '2026-10-06', 10), entry('c', '2026-10-07', null)],
-    };
-    expect(summarizeWeek(rows, week, TODAY).work[0]?.projects.map((p) => p.title)).toEqual(['B', 'C', 'A']);
-  });
+  checkDates: [] as string[],
+  changes: [] as { at: string; from: number | null }[],
 });
 
 describe('habit adherence', () => {
@@ -90,7 +71,10 @@ describe('habit adherence', () => {
     const rows = {
       ...empty(),
       habits: [habit({ scheduleType: 'weekdays', weekdays: [1, 3, 5] })],
-      habitChecks: [{ habitId: 'h1', date: '2026-10-05' }, { habitId: 'h1', date: '2026-10-09' }],
+      habitChecks: [
+        { habitId: 'h1', date: '2026-10-05' },
+        { habitId: 'h1', date: '2026-10-09' },
+      ],
     };
     expect(summarizeWeek(rows, week, '2026-10-12').habits[0]).toMatchObject({ done: 2, expected: 3 });
   });
@@ -141,7 +125,10 @@ describe('completed tasks and finished projects', () => {
   it('lists a project finished in the week, not a reopened one', () => {
     const rows = {
       ...empty(),
-      projects: [project('p1', 'Garden', null, { status: 'completed', completedAt: at('2026-10-06') }), project('p2', 'Shed', null, { status: 'active', completedAt: null })],
+      projects: [
+        project('p1', 'Garden', null, { status: 'completed', completedAt: at('2026-10-06') }),
+        project('p2', 'Shed', null, { status: 'active', completedAt: null }),
+      ],
     };
     expect(summarizeWeek(rows, week, TODAY).finishedProjects.map((p) => p.title)).toEqual(['Garden']);
   });
@@ -156,26 +143,65 @@ describe('goals in the summary', () => {
     snapshots: [{ weeklyReviewId: 'r0', measureId: 'm1', progress: 0.4 }],
   });
 
-  it('shows the change since the previous review', () => {
-    const [g] = summarizeWeek(base(), weekRange('2026-10-12'), TODAY).goals;
+  const raised = (): WeekRows => ({ ...base(), measures: [{ ...numeric('m1', 'g1', 55), changes: [{ at: at('2026-10-15'), from: 40 }] }] });
+
+  it('shows the value at the start and end of the week and the change of the goal', () => {
+    const [g] = summarizeWeek(raised(), weekRange('2026-10-12'), TODAY).goals;
     expect(g).toMatchObject({ progress: 0.55, change: 15 });
-    expect(g?.measures[0]).toMatchObject({ progress: 0.55, change: 15 });
+    expect(g?.gain).toBeCloseTo(0.15);
+    expect(g?.measures[0]).toMatchObject({ value: 55, from: 40, target: 100 });
+    expect(g?.measures[0]?.gain).toBeCloseTo(0.15);
   });
 
-  it('shows no change without an earlier review', () => {
-    const [g] = summarizeWeek({ ...base(), reviews: [], snapshots: [] }, weekRange('2026-10-12'), TODAY).goals;
-    expect(g?.progress).toBe(0.55);
+  it('shows only the value of a measure that did not change in the week', () => {
+    const [g] = summarizeWeek(base(), weekRange('2026-10-12'), TODAY).goals;
     expect(g?.change).toBeNull();
+    expect(g?.measures[0]).toMatchObject({ value: 55, from: null, gain: 0 });
   });
 
-  it('ignores drafts as the earlier review', () => {
-    const rows = base();
-    rows.reviews = [{ id: 'r0', weekStart: '2026-09-28', completedAt: null }];
-    expect(summarizeWeek(rows, weekRange('2026-10-12'), TODAY).goals[0]?.change).toBeNull();
+  it('counts a change in the week it was made', () => {
+    const [g] = summarizeWeek(raised(), weekRange('2026-10-19'), '2026-10-25').goals;
+    expect(g?.measures[0]).toMatchObject({ value: 55, from: null });
+  });
+
+  it('shows a yes/no measure switched to achieved', () => {
+    const done = {
+      ...numeric('m1', 'g1', 1),
+      measureType: 'boolean' as const,
+      startValue: null,
+      targetValue: null,
+      changes: [{ at: at('2026-10-14'), from: 0 }],
+    };
+    const [g] = summarizeWeek({ ...base(), measures: [done] }, weekRange('2026-10-12'), TODAY).goals;
+    expect(g?.measures[0]).toMatchObject({ measureType: 'boolean', value: 1, from: 0 });
+    expect(g?.change).toBe(100);
+  });
+
+  it('shows the check-ins of a habit measure before and after the week', () => {
+    const dates = [...Array.from({ length: 12 }, (_, i) => `2026-09-${i + 10}`), '2026-10-12', '2026-10-13', '2026-10-14'];
+    const habitMeasure = {
+      ...numeric('m1', 'g1', 0),
+      measureType: 'habit' as const,
+      habitId: 'h1',
+      targetValue: 30,
+      checkDates: dates,
+      checkIns: 15,
+    };
+    const [g] = summarizeWeek({ ...base(), measures: [habitMeasure] }, weekRange('2026-10-12'), TODAY).goals;
+    expect(g?.measures[0]).toMatchObject({ value: 15, from: 12, target: 30 });
   });
 
   it('shows the work on the goal in the week', () => {
-    const rows = { ...base(), projects: [project('p1', 'Run club', 'g1')], logEntries: [entry('p1', '2026-10-13', 60), entry('p1', '2026-10-14', 30), entry('p1', '2026-10-14', 30), entry('p1', '2026-10-06', 99)] };
+    const rows = {
+      ...base(),
+      projects: [project('p1', 'Run club', 'g1')],
+      logEntries: [
+        entry('p1', '2026-10-13', 60),
+        entry('p1', '2026-10-14', 30),
+        entry('p1', '2026-10-14', 30),
+        entry('p1', '2026-10-06', 99),
+      ],
+    };
     expect(summarizeWeek(rows, weekRange('2026-10-12'), TODAY).goals[0]?.work).toEqual({ count: 3, minutes: 120 });
   });
 

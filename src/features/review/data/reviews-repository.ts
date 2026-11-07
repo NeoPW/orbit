@@ -2,6 +2,7 @@ import { and, desc, eq, isNotNull } from 'drizzle-orm';
 import type { Db } from '../../../core/db/drizzle.ts';
 import { createFields, deleteFields, naturalId, newId, notDeleted, type Clock } from '../../../core/db/records.ts';
 import { reviewMeasureSnapshots, weeklyReviews } from '../../../core/db/schema.ts';
+import { addDays } from '../../../core/dates/today.ts';
 import { measureProgress } from '../../goals/domain/goals.ts';
 import { listActiveGoals } from '../../goals/data/goals-repository.ts';
 
@@ -23,6 +24,13 @@ export type SaveReviewResult = { ok: true; id: string } | { ok: false; error: st
 export async function getReview(db: Db, weekStart: string): Promise<WeeklyReview | undefined> {
   const [row] = await db.select().from(weeklyReviews).where(and(eq(weeklyReviews.weekStart, weekStart), notDeleted(weeklyReviews)));
   return row;
+}
+
+/** The plan for the week starting on `weekStart`: the plan of the completed review of the week before it, or null. */
+export async function getPlanForWeek(db: Db, weekStart: string): Promise<string | null> {
+  const review = await getReview(db, addDays(weekStart, -7));
+  const plan = review?.completedAt ? review.planNextWeek.trim() : '';
+  return plan === '' ? null : plan;
 }
 
 /** A review by its id, for the history page. */

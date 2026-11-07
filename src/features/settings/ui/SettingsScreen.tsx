@@ -5,6 +5,7 @@ import { SyncPanel } from '../../sync/ui/SyncPanel.tsx';
 import { useSettings } from '../data/settings.ts';
 import { ExampleDataSection } from './ExampleDataSection.tsx';
 import { ReminderSettings } from './ReminderSettings.tsx';
+import { ReviewSettings } from './ReviewSettings.tsx';
 import styles from './SettingsScreen.module.css';
 
 export function SettingsScreen() {
@@ -17,6 +18,9 @@ export function SettingsScreen() {
       </Section>
       <Section tile title="Reminders">
         <ReminderSettings />
+      </Section>
+      <Section tile title="Review">
+        <ReviewSettings />
       </Section>
       <Section tile title="Sync">
         <SyncPanel />

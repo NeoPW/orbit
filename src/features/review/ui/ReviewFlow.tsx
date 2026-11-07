@@ -8,7 +8,7 @@ import { SegmentedControl } from '../../../core/ui/components/SegmentedControl.t
 import { TextArea } from '../../../core/ui/components/TextField.tsx';
 import { useMessages } from '../../../core/ui/messages/MessageProvider.tsx';
 import { getReview, MAX_SCORE, MIN_SCORE, saveDraft, saveReview, type ReviewDraft } from '../data/reviews-repository.ts';
-import { formatWeekRange, reviewWeekStart } from '../domain/review-week.ts';
+import { formatWeekFull, reviewWeekStart } from '../domain/review-week.ts';
 import { GoalsStep } from './GoalsStep.tsx';
 import { ProjectsStep } from './ProjectsStep.tsx';
 import styles from './ReviewFlow.module.css';
@@ -84,7 +84,7 @@ function FlowBody({ weekStart, initial, step }: BodyProps) {
         <div className={styles.topRow}>
           <h1 className={styles.stepName}>{STEP_NAMES[step - 1]}</h1>
           <span className={styles.stepCount}>
-            Step {step} of {LAST} · {formatWeekRange(weekStart)}
+            Step {step} of {LAST} · {formatWeekFull(weekStart)}
           </span>
           <Button variant="ghost" icon={<X />} onClick={leave}>
             Leave

@@ -36,7 +36,7 @@ const DETAIL_ROUTES: Route[] = [
   { name: 'review-history', id: 'r-1' },
   { name: 'review-flow' },
   { name: 'review-flow', step: 'goals' },
-  { name: 'review-last-week' },
+  { name: 'review', week: '2026-10-26' },
   { name: 'focus' },
 ];
 
@@ -47,7 +47,7 @@ describe('detail paths', () => {
     expect(pathOf({ name: 'task', id: 'abc' })).toBe('/tasks/abc');
     expect(pathOf({ name: 'review-flow' })).toBe('/review/flow');
     expect(pathOf({ name: 'review-history', id: 'abc' })).toBe('/review/history/abc');
-    expect(pathOf({ name: 'review-last-week' })).toBe('/review/last-week');
+    expect(pathOf({ name: 'review', week: '2026-10-26' })).toBe('/review?week=2026-10-26');
     expect(pathOf({ name: 'focus' })).toBe('/focus');
   });
 
@@ -55,6 +55,15 @@ describe('detail paths', () => {
     for (const route of DETAIL_ROUTES) {
       expect(parsePath(pathOf(route)), pathOf(route)).toEqual({ route });
     }
+  });
+
+  it('opens the Review tab on the current week without a valid week', () => {
+    expect(parsePath('/review').route).toEqual({ name: 'review' });
+    expect(parsePath('/review?week=soon').route).toEqual({ name: 'review' });
+  });
+
+  it('no longer has a Last week page', () => {
+    expect(parsePath('/review/last-week').route).toEqual({ name: 'home' });
   });
 
   it('opens the Today screen at /today', () => {
@@ -78,7 +87,6 @@ describe('sectionOf', () => {
   it('marks Review on the review pages and the destinations on themselves', () => {
     expect(sectionOf({ name: 'review-flow' })).toBe('review');
     expect(sectionOf({ name: 'review-history', id: 'r' })).toBe('review');
-    expect(sectionOf({ name: 'review-last-week' })).toBe('review');
     expect(sectionOf({ name: 'home' })).toBe('home');
     expect(sectionOf({ name: 'settings' })).toBe('settings');
     expect(sectionOf({ name: 'today' })).toBe('today');

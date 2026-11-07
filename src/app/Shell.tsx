@@ -8,7 +8,6 @@ import { GoalPage } from '../features/goals/ui/GoalPage.tsx';
 import { HomeScreen } from '../features/home/ui/HomeScreen.tsx';
 import { ProjectPage } from '../features/projects/ui/ProjectPage.tsx';
 import { PlanScreen } from '../features/plan/ui/PlanScreen.tsx';
-import { LastWeekPage } from '../features/review/ui/LastWeekPage.tsx';
 import { ReviewFlow } from '../features/review/ui/ReviewFlow.tsx';
 import { ReviewHistoryPage } from '../features/review/ui/ReviewHistoryPage.tsx';
 import { ReviewScreen } from '../features/review/ui/ReviewScreen.tsx';
@@ -40,7 +39,6 @@ const SCREENS: Partial<Record<RouteName, ComponentType>> = {
   review: ReviewScreen,
   'review-flow': ReviewFlow,
   'review-history': ReviewHistoryPage,
-  'review-last-week': LastWeekPage,
   settings: SettingsScreen,
   'dev-components': ComponentGallery ?? undefined,
 };

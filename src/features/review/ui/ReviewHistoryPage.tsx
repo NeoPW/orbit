@@ -9,7 +9,7 @@ import { getGoal } from '../../goals/data/goals-repository.ts';
 import { getProject } from '../../projects/data/projects-repository.ts';
 import { listNotesForWeek } from '../../notes/data/notes-repository.ts';
 import { getReviewById } from '../data/reviews-repository.ts';
-import { formatWeekRange } from '../domain/review-week.ts';
+import { formatWeek, formatWeekRange } from '../domain/review-week.ts';
 import styles from './ReviewScreen.module.css';
 import { useWeekSummary } from './useWeekSummary.ts';
 import { WeekSummaryView } from './WeekSummaryView.tsx';
@@ -38,7 +38,10 @@ export function ReviewHistoryPage() {
       const notes = await listNotesForWeek(db, review.weekStart);
       const items = await Promise.all(
         notes.map(async (note) => {
-          const title = note.targetType === 'goal' ? (await getGoal(db, note.targetId))?.goal.title : (await getProject(db, note.targetId))?.project.title;
+          const title =
+            note.targetType === 'goal'
+              ? (await getGoal(db, note.targetId))?.goal.title
+              : (await getProject(db, note.targetId))?.project.title;
           return title === undefined ? null : { note, title };
         }),
       );
@@ -53,7 +56,15 @@ export function ReviewHistoryPage() {
   const { review, notes } = loaded;
   return (
     <div className={styles.page}>
-      <PageHeader title={`Week ${formatWeekRange(review.weekStart)}`} meta={review.score !== null && <Chip tone="primary">{`Score ${review.score}`}</Chip>} />
+      <PageHeader
+        title={formatWeek(review.weekStart)}
+        meta={
+          <>
+            <span>{formatWeekRange(review.weekStart)}</span>
+            {review.score !== null && <Chip tone="primary">{`Score ${review.score}`}</Chip>}
+          </>
+        }
+      />
       <div className={styles.sections}>
         {review.reflection.trim() && <Text title="Reflection" text={review.reflection.trim()} />}
         {review.planNextWeek.trim() && <Text title="Plan for the next week" text={review.planNextWeek.trim()} />}

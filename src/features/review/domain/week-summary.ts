@@ -1,10 +1,11 @@
 import { localToday } from '../../../core/dates/deadline.ts';
 import { addDays } from '../../../core/dates/today.ts';
 import type { GoalStatus, MeasureType, ScheduleType } from '../../../core/db/schema.ts';
-import { goalProgress, measureProgress } from '../../goals/domain/goals.ts';
-import { isoWeekday } from '../../habits/domain/habits.ts';
+import { goalProgress, measureProgress, valueAt, type ValueChange } from '../../goals/domain/goals.ts';
+import { isoWeekday, weekStartOf } from '../../habits/domain/habits.ts';
 import { workOnGoal, type WorkLinks } from '../../work-log/domain/work-log.ts';
 import type { WeekRange } from './review-week.ts';
+import { recentWeeks, weekTime, type RecentWeeks, type WeekTime } from './week-time.ts';
 
 /** Plain rows of what a week summary needs; the loader fills them, soft-deleted rows included where noted. */
 export interface WeekRows {
@@ -20,10 +21,26 @@ export interface WeekRows {
     targetValue: number | null;
     currentValue: number | null;
     habitId: string | null;
+    unit: string | null;
     checkIns: number;
+    /** Local dates of the linked habit's checks since the goal's start. */
+    checkDates: string[];
+    /** Recorded value changes (see measures, "Value history"). */
+    changes: ValueChange[];
   }[];
+  /** Areas (not deleted). */
+  areas: { id: string; name: string; color: string }[];
   /** Projects, deleted ones included (their entries then count as "No project"). */
-  projects: { id: string; title: string; goalId: string | null; status: string; completedAt: string | null; deletedAt: string | null }[];
+  projects: {
+    id: string;
+    title: string;
+    goalId: string | null;
+    areaId: string | null;
+    color: string | null;
+    status: string;
+    completedAt: string | null;
+    deletedAt: string | null;
+  }[];
   /** Tasks, deleted ones included (for the links of log entries). */
   tasks: {
     id: string;
@@ -37,6 +54,8 @@ export interface WeekRows {
   habits: {
     id: string;
     title: string;
+    projectId: string | null;
+    goalId: string | null;
     active: boolean;
     scheduleType: ScheduleType;
     weekdays: number[] | null;
@@ -46,7 +65,14 @@ export interface WeekRows {
   /** Habit checks of the week (not deleted). */
   habitChecks: { habitId: string; date: string }[];
   /** Log entries (not deleted); entries outside the week are ignored. */
-  logEntries: { projectId: string | null; goalId: string | null; taskId: string | null; occurredAt: string; durationMinutes: number | null }[];
+  logEntries: {
+    projectId: string | null;
+    goalId: string | null;
+    taskId: string | null;
+    habitId: string | null;
+    occurredAt: string;
+    durationMinutes: number | null;
+  }[];
   /** Completed reviews (not deleted) and the snapshots stored with them. */
   reviews: { id: string; weekStart: string; completedAt: string | null }[];
   snapshots: { weeklyReviewId: string; measureId: string; progress: number }[];
@@ -57,8 +83,15 @@ export interface MeasureSummary {
   title: string;
   /** 0 to 1. */
   progress: number;
-  /** Change in percentage points since the earlier review, or null. */
-  change: number | null;
+  measureType: MeasureType;
+  unit: string | null;
+  target: number | null;
+  /** The value at the end of the week (check-ins for a habit measure, 0 or 1 for yes/no). */
+  value: number;
+  /** The value at the start of the week; null when the measure did not change in the week. */
+  from: number | null;
+  /** Progress (0 to 1) gained during the week, for the bar; 0 when it did not rise. */
+  gain: number;
 }
 
 export interface GoalSummary {
@@ -69,24 +102,12 @@ export interface GoalSummary {
   index: number;
   /** 0 to 1; null without measures. */
   progress: number | null;
+  /** Change of the progress during the week in percentage points; null when zero or unknown. */
   change: number | null;
+  /** Progress (0 to 1) the goal gained during the week, for the bar. */
+  gain: number;
   measures: MeasureSummary[];
   work: { count: number; minutes: number };
-}
-
-export interface ProjectWork {
-  /** Null for entries without a project. */
-  projectId: string | null;
-  title: string;
-  count: number;
-  minutes: number;
-}
-
-export interface WorkGroup {
-  /** Null for projects without a goal (which also holds "No project"). */
-  goalId: string | null;
-  goalTitle: string | null;
-  projects: ProjectWork[];
 }
 
 export interface HabitAdherence {
@@ -115,50 +136,26 @@ export interface WeekSummary {
   weekStart: string;
   weekEnd: string;
   goals: GoalSummary[];
-  work: WorkGroup[];
+  time: WeekTime;
+  trend: RecentWeeks;
   habits: HabitAdherence[];
   completedTasks: CompletedTaskSummary[];
   finishedProjects: FinishedProject[];
 }
 
-const NO_PROJECT = 'No project';
-
 const localDate = (iso: string) => localToday(new Date(iso));
-const byRecent = <T extends { completedAt: string }>(a: T, b: T) => (a.completedAt < b.completedAt ? 1 : a.completedAt > b.completedAt ? -1 : 0);
+const byRecent = <T extends { completedAt: string }>(a: T, b: T) =>
+  a.completedAt < b.completedAt ? 1 : a.completedAt > b.completedAt ? -1 : 0;
 const round = (n: number) => Math.round(n * 100);
-
-function summarizeWork(rows: WeekRows, week: WeekRange): WorkGroup[] {
-  const projects = new Map(rows.projects.filter((p) => p.deletedAt === null).map((p) => [p.id, p]));
-  const totals = new Map<string | null, ProjectWork>();
-  for (const e of rows.logEntries) {
-    if (e.occurredAt < week.from || e.occurredAt >= week.to) continue;
-    const project = e.projectId ? projects.get(e.projectId) : undefined;
-    const key = project?.id ?? null;
-    const row = totals.get(key) ?? { projectId: key, title: project?.title ?? NO_PROJECT, count: 0, minutes: 0 };
-    row.count += 1;
-    row.minutes += e.durationMinutes ?? 0;
-    totals.set(key, row);
-  }
-  const order = (a: ProjectWork, b: ProjectWork) => b.minutes - a.minutes || b.count - a.count || a.title.localeCompare(b.title);
-  const groups: WorkGroup[] = [];
-  for (const goal of rows.goals) {
-    const list = [...totals.values()].filter((w) => w.projectId !== null && projects.get(w.projectId)?.goalId === goal.id).sort(order);
-    if (list.length > 0) groups.push({ goalId: goal.id, goalTitle: goal.title, projects: list });
-  }
-  const goalIds = new Set(rows.goals.map((g) => g.id));
-  const loose = [...totals.values()].filter((w) => w.projectId !== null && !goalIds.has(projects.get(w.projectId)?.goalId ?? '')).sort(order);
-  const none = totals.get(null);
-  if (none) loose.push(none);
-  if (loose.length > 0) groups.push({ goalId: null, goalTitle: null, projects: loose });
-  return groups;
-}
 
 function summarizeHabits(rows: WeekRows, week: WeekRange, today: string): HabitAdherence[] {
   const lastDay = today < week.end ? today : week.end;
   return rows.habits
     .filter((h) => h.active)
     .map((h) => {
-      const done = new Set(rows.habitChecks.filter((c) => c.habitId === h.id && c.date >= week.start && c.date <= week.end).map((c) => c.date)).size;
+      const done = new Set(
+        rows.habitChecks.filter((c) => c.habitId === h.id && c.date >= week.start && c.date <= week.end).map((c) => c.date),
+      ).size;
       let expected = 0;
       if (h.scheduleType === 'times_per_week') expected = h.timesPerWeek ?? 0;
       else {
@@ -172,17 +169,26 @@ function summarizeHabits(rows: WeekRows, week: WeekRange, today: string): HabitA
     .sort((a, b) => a.title.localeCompare(b.title));
 }
 
+/** A measure's value and progress at one moment of the week; `checks` counts a habit measure's check-ins by then. */
+function measureAt(m: WeekRows['measures'][number], instant: string, lastDate: (date: string) => boolean) {
+  if (m.measureType === 'habit') {
+    const checks = m.checkDates.filter(lastDate).length;
+    return { value: checks, progress: measureProgress(m, checks) };
+  }
+  const value = valueAt(m.currentValue, m.changes, instant);
+  return { value: value ?? 0, progress: measureProgress({ ...m, currentValue: value }) };
+}
+
 function summarizeGoals(rows: WeekRows, week: WeekRange): GoalSummary[] {
   const measureById = new Map(rows.measures.map((m) => [m.id, m]));
   const goalById = new Map(rows.goals.map((g) => [g.id, g]));
   const completed = rows.reviews.filter((r) => r.completedAt !== null);
-  const snapshotsOf = (reviewId: string) => rows.snapshots.filter((s) => s.weeklyReviewId === reviewId && measureById.has(s.measureId));
   const thisReview = completed.find((r) => r.weekStart === week.start);
 
   /** Progress per measure of each goal in this week's view. */
   const current = new Map<string, Map<string, number>>();
   if (thisReview) {
-    for (const s of snapshotsOf(thisReview.id)) {
+    for (const s of rows.snapshots.filter((s) => s.weeklyReviewId === thisReview.id && measureById.has(s.measureId))) {
       const goalId = measureById.get(s.measureId)?.goalId;
       if (goalId && goalById.has(goalId)) current.set(goalId, (current.get(goalId) ?? new Map()).set(s.measureId, s.progress));
     }
@@ -192,7 +198,6 @@ function summarizeGoals(rows: WeekRows, week: WeekRange): GoalSummary[] {
     }
   }
 
-  const earlier = completed.filter((r) => r.weekStart < week.start).sort((a, b) => (a.weekStart < b.weekStart ? 1 : -1));
   const projectGoals = new Map(rows.projects.map((p) => [p.id, p.goalId]));
   const links: WorkLinks = { projectGoals, tasks: new Map(rows.tasks.map((t) => [t.id, { projectId: t.projectId, goalId: t.goalId }])) };
 
@@ -201,37 +206,45 @@ function summarizeGoals(rows: WeekRows, week: WeekRange): GoalSummary[] {
     .map((goal) => {
       const now = current.get(goal.id)!;
       const progress = goalProgress([...now.values()]);
-      // The most recent earlier review that stored snapshots for this goal's measures.
-      let before: Map<string, number> | null = null;
-      for (const review of earlier) {
-        const snaps = snapshotsOf(review.id).filter((s) => measureById.get(s.measureId)?.goalId === goal.id);
-        if (snaps.length > 0) {
-          before = new Map(snaps.map((s) => [s.measureId, s.progress]));
-          break;
-        }
-      }
-      const beforeGoal = before ? goalProgress([...before.values()]) : null;
-      const work = workOnGoal(rows.logEntries, goal.id, links, week).week;
+      const atStart = new Map<string, number>();
+      const atEnd = new Map<string, number>();
+      const measures = [...now].map(([measureId, p]): MeasureSummary => {
+        const m = measureById.get(measureId)!;
+        const start = measureAt(m, week.from, (d) => d < week.start);
+        const end = measureAt(m, week.to, (d) => d <= week.end);
+        atStart.set(measureId, start.progress);
+        atEnd.set(measureId, end.progress);
+        return {
+          measureId,
+          title: m.title,
+          progress: p,
+          measureType: m.measureType,
+          unit: m.unit,
+          target: m.targetValue,
+          value: end.value,
+          from: start.value !== end.value ? start.value : null,
+          gain: Math.max(0, Math.min(p, end.progress) - start.progress),
+        };
+      });
+      const endProgress = goalProgress([...atEnd.values()]) ?? 0;
+      const startProgress = goalProgress([...atStart.values()]) ?? 0;
+      const delta = round(endProgress) - round(startProgress);
       return {
         goalId: goal.id,
         title: goal.title,
         color: goal.color,
         index: rows.goals.indexOf(goal),
         progress,
-        change: progress !== null && beforeGoal !== null ? round(progress) - round(beforeGoal) : null,
-        measures: [...now].map(([measureId, p]) => ({
-          measureId,
-          title: measureById.get(measureId)?.title ?? '',
-          progress: p,
-          change: before?.has(measureId) ? round(p) - round(before.get(measureId)!) : null,
-        })),
-        work,
+        change: delta === 0 ? null : delta,
+        gain: Math.max(0, Math.min(progress ?? 0, endProgress) - startProgress),
+        measures,
+        work: workOnGoal(rows.logEntries, goal.id, links, week).week,
       };
     });
 }
 
 /** Summary of the Monday–Sunday `week` over plain rows. `today` caps the expected habit days of the current week. */
-export function summarizeWeek(rows: WeekRows, week: WeekRange, today: string): WeekSummary {
+export function summarizeWeek(rows: WeekRows, week: WeekRange, today: string, options: { targetHours?: number | null } = {}): WeekSummary {
   const projectsById = new Map(rows.projects.filter((p) => p.deletedAt === null).map((p) => [p.id, p]));
   const goalTitle = (id: string | null) => rows.goals.find((g) => g.id === id)?.title ?? null;
   const inWeek = (iso: string | null): iso is string => iso !== null && localDate(iso) >= week.start && localDate(iso) <= week.end;
@@ -245,7 +258,11 @@ export function summarizeWeek(rows: WeekRows, week: WeekRange, today: string): W
         taskId: t.id,
         title: t.title,
         completedAt: t.completedAt!,
-        assignedTo: project ? { kind: 'project', id: project.id, title: project.title } : goal ? { kind: 'goal', id: goal.id, title: goal.title } : null,
+        assignedTo: project
+          ? { kind: 'project', id: project.id, title: project.title }
+          : goal
+            ? { kind: 'goal', id: goal.id, title: goal.title }
+            : null,
       };
     })
     .sort(byRecent);
@@ -259,7 +276,8 @@ export function summarizeWeek(rows: WeekRows, week: WeekRange, today: string): W
     weekStart: week.start,
     weekEnd: week.end,
     goals: summarizeGoals(rows, week),
-    work: summarizeWork(rows, week),
+    time: weekTime(rows, week, today, options.targetHours ?? null),
+    trend: recentWeeks(rows, week.start, weekStartOf(today)),
     habits: summarizeHabits(rows, week, today),
     completedTasks,
     finishedProjects,

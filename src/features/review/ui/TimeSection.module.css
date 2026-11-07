@@ -1,0 +1,167 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--space-4);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.statLabel {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-faint);
+}
+
+.statValue {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.statNote {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bars li {
+  display: grid;
+  grid-template-columns: minmax(80px, 1fr) minmax(0, 2fr) 9ch;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.itemTitle,
+.link {
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link {
+  cursor: pointer;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.track {
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-raised);
+}
+
+.fill {
+  height: 100%;
+  min-width: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--item-color);
+}
+
+.itemTime {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.empty {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.trendHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.headline {
+  font-size: var(--text-lg);
+  color: var(--color-text);
+}
+
+.chart {
+  width: 100%;
+  height: auto;
+}
+
+.axis {
+  stroke: var(--color-border);
+}
+
+.barOther {
+  fill: color-mix(in srgb, var(--color-primary) 35%, var(--color-surface-raised));
+}
+
+.barShown {
+  fill: var(--color-primary);
+}
+
+.line {
+  fill: none;
+  stroke: var(--color-text);
+  stroke-width: 1.5;
+}
+
+.dot {
+  fill: var(--color-surface);
+  stroke: var(--color-text);
+  stroke-width: 1.5;
+}
+
+.label,
+.labelStrong,
+.labelFaint {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.label {
+  fill: var(--color-text-muted);
+}
+
+.labelStrong {
+  fill: var(--color-text);
+  font-weight: 600;
+}
+
+.labelFaint {
+  fill: var(--color-text-faint);
+  font-size: 10px;
+}

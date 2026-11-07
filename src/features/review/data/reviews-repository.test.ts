@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createFields } from '../../../core/db/records.ts';
 import { goals, logEntries, measures, projects, reviewMeasureSnapshots } from '../../../core/db/schema.ts';
 import { openTestDatabase } from '../../../core/db/testing.ts';
-import { getOrCreateDraft, getReview, listCompletedReviews, saveDraft, saveReview } from './reviews-repository.ts';
+import { getOrCreateDraft, getPlanForWeek, getReview, listCompletedReviews, saveDraft, saveReview } from './reviews-repository.ts';
 import { loadWeek } from './week-loader.ts';
 
 const clock = () => new Date('2026-10-11T18:00:00Z');
@@ -12,7 +12,14 @@ async function withGoal() {
   const { db } = await openTestDatabase();
   const goal = { ...createFields(clock), title: 'Get fit', startDate: '2026-01-01', endDate: '2026-12-31' };
   await db.insert(goals).values(goal);
-  const base = { ...createFields(clock), goalId: goal.id, measureType: 'numeric' as const, startValue: 0, targetValue: 100, currentValue: 40 };
+  const base = {
+    ...createFields(clock),
+    goalId: goal.id,
+    measureType: 'numeric' as const,
+    startValue: 0,
+    targetValue: 100,
+    currentValue: 40,
+  };
   await db.insert(measures).values([
     { ...base, id: 'm1', title: 'Run' },
     { ...base, id: 'm2', title: 'Swim', currentValue: 60 },
@@ -75,9 +82,35 @@ describe('reviews repository', () => {
     const { db } = await openTestDatabase();
     const project = { ...createFields(clock), title: 'Thesis' };
     await db.insert(projects).values(project);
-    const entry = (date: string) => ({ ...createFields(clock), projectId: project.id, occurredAt: new Date(`${date}T10:00:00`).toISOString(), durationMinutes: 20 });
+    const entry = (date: string) => ({
+      ...createFields(clock),
+      projectId: project.id,
+      occurredAt: new Date(`${date}T10:00:00`).toISOString(),
+      durationMinutes: 20,
+    });
     await db.insert(logEntries).values([entry('2026-09-28'), entry('2026-10-01'), entry('2026-10-04'), entry('2026-10-05')]);
     const summary = await loadWeek(db, '2026-09-28', '2026-10-14');
-    expect(summary.work[0]?.projects[0]).toMatchObject({ title: 'Thesis', count: 3, minutes: 60 });
+    expect(summary.time.byProject[0]).toMatchObject({ title: 'Thesis', minutes: 60 });
+  });
+
+  describe('plan of a week', () => {
+    it('is the plan written in the completed review of the week before', async () => {
+      const { db } = await openTestDatabase();
+      await saveReview(db, clock, '2026-10-19', { score: 7, reflection: '', planNextWeek: ' Draft chapter 4 ' });
+      expect(await getPlanForWeek(db, '2026-10-26')).toBe('Draft chapter 4');
+      expect(await getPlanForWeek(db, '2026-11-02')).toBeNull();
+    });
+
+    it('is none when the week before was not reviewed', async () => {
+      const { db } = await openTestDatabase();
+      await saveReview(db, clock, '2026-10-05', { score: 7, reflection: '', planNextWeek: 'old' });
+      expect(await getPlanForWeek(db, '2026-10-26')).toBeNull();
+    });
+
+    it('ignores a draft', async () => {
+      const { db } = await openTestDatabase();
+      await saveDraft(db, clock, '2026-10-19', { score: null, reflection: '', planNextWeek: 'plan' });
+      expect(await getPlanForWeek(db, '2026-10-26')).toBeNull();
+    });
   });
 });

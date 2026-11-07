@@ -109,7 +109,7 @@ describe('weekly review reminder', () => {
 
   it('comes on the review day at the review time and names the week', () => {
     const [r] = planReminders(empty, settings, ...sunday);
-    expect(r).toMatchObject({ title: 'Weekly review', body: 'Week 05-10-2026 – 11-10-2026', route: '/review/flow' });
+    expect(r).toMatchObject({ title: 'Weekly review', body: 'CW 41 · 05-10-2026 – 11-10-2026', route: '/review/flow' });
     expect(r?.at).toEqual(local(2026, 10, 11, 18));
   });
 

@@ -12,6 +12,7 @@ describe('settings', () => {
       reviewDay: 7,
       reviewTime: '18:00',
       theme: 'slate',
+      weeklyTargetHours: null,
     });
   });
 
@@ -74,5 +75,22 @@ describe('settings', () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+
+  it('has no weekly hour target by default, saves one and clears it', async () => {
+    const { db } = await openTestDatabase();
+    expect((await readSettings(db)).weeklyTargetHours).toBeNull();
+    expect(await saveSetting(db, 'weeklyTargetHours', 20)).toBe(true);
+    expect((await readSettings(db)).weeklyTargetHours).toBe(20);
+    expect(await saveSetting(db, 'weeklyTargetHours', null)).toBe(true);
+    expect((await readSettings(db)).weeklyTargetHours).toBeNull();
+  });
+
+  it('does not save a weekly hour target of 0 or 200', async () => {
+    const { db } = await openTestDatabase();
+    await saveSetting(db, 'weeklyTargetHours', 20);
+    expect(await saveSetting(db, 'weeklyTargetHours', 0)).toBe(false);
+    expect(await saveSetting(db, 'weeklyTargetHours', 200)).toBe(false);
+    expect((await readSettings(db)).weeklyTargetHours).toBe(20);
   });
 });

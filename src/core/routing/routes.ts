@@ -4,7 +4,8 @@ export type Route =
   /** The day timeline on its own screen (phone layout only). */
   | { name: 'today' }
   | { name: 'plan' }
-  | { name: 'review' }
+  /** The Review tab; `week` (a Monday, `yyyy-mm-dd`) is kept in the address (`?week=`), the current week when missing. */
+  | { name: 'review'; week?: string }
   | { name: 'settings' }
   | { name: 'goal'; id: string }
   | { name: 'project'; id: string }
@@ -12,7 +13,6 @@ export type Route =
   /** The guided review; `step` is kept in the address (`?step=`) so reload returns to it. */
   | { name: 'review-flow'; step?: string }
   | { name: 'review-history'; id: string }
-  | { name: 'review-last-week' }
   | { name: 'focus' }
   | { name: 'dev-components' };
 
@@ -29,7 +29,6 @@ const STATIC_PATHS = {
   review: '/review',
   settings: '/settings',
   'review-flow': '/review/flow',
-  'review-last-week': '/review/last-week',
   focus: '/focus',
   'dev-components': '/dev/components',
 } as const;
@@ -54,6 +53,7 @@ export function pathOf(route: Route): string {
   }
   const path = STATIC_PATHS[route.name as StaticName];
   if (route.name === 'review-flow' && route.step) return `${path}?step=${encodeURIComponent(route.step)}`;
+  if (route.name === 'review' && route.week) return `${path}?week=${encodeURIComponent(route.week)}`;
   return path;
 }
 
@@ -71,7 +71,6 @@ export function sectionOf(route: Route): Section | null {
     case 'review':
     case 'review-flow':
     case 'review-history':
-    case 'review-last-week':
       return 'review';
     case 'today':
       return 'today';
@@ -109,6 +108,10 @@ function routeOfPath(path: string, query: URLSearchParams, dev: boolean): Route 
     if (name === 'review-flow') {
       const step = query.get('step');
       return step ? { name, step } : { name };
+    }
+    if (name === 'review') {
+      const week = query.get('week');
+      return week && /^\d{4}-\d{2}-\d{2}$/.test(week) ? { name, week } : { name };
     }
     return { name } as Route;
   }
