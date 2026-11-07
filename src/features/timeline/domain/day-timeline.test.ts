@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { axisFor, blockTimes, layoutDay, localRange, type TimeSpan } from './day-timeline.ts';
+import { axisFor, blockTimes, layoutDay, localRange, shiftDay, type TimeSpan } from './day-timeline.ts';
 
 const at = (hhmm: string, day = '2026-10-14') => new Date(`${day}T${hhmm}:00`);
 const block = (from: string, to: string, day?: string): TimeSpan => ({ kind: 'block', start: at(from, day), end: at(to, day) });
@@ -78,5 +78,17 @@ describe('localRange', () => {
     const range = localRange('2026-10-14', '2026-10-15');
     expect(range.from).toBe(new Date(2026, 9, 14).toISOString());
     expect(range.to).toBe(new Date(2026, 9, 15).toISOString());
+  });
+});
+
+describe('shiftDay', () => {
+  it('goes to the previous day, across months', () => {
+    expect(shiftDay('2026-11-12', -1, '2026-11-12')).toBe('2026-11-11');
+    expect(shiftDay('2026-11-01', -1, '2026-11-12')).toBe('2026-10-31');
+  });
+
+  it('goes to the next day but not beyond today', () => {
+    expect(shiftDay('2026-11-10', 1, '2026-11-12')).toBe('2026-11-11');
+    expect(shiftDay('2026-11-12', 1, '2026-11-12')).toBe('2026-11-12');
   });
 });

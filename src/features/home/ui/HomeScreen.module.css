@@ -228,3 +228,44 @@
 .stepOpen:hover {
   text-decoration: underline;
 }
+
+/* Quick add next to the date on the phone. */
+.quickAdd {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.quickAdd svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* Touch targets on the phone. */
+@media (max-width: 639px) {
+  .habit {
+    min-height: 44px;
+    padding-right: 50px;
+  }
+
+  .habitStart {
+    right: 2px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .habitRow {
+    max-width: 100%;
+  }
+
+  .habit {
+    max-width: 100%;
+    text-align: left;
+  }
+
+  .todoList {
+    margin: 0;
+  }
+}

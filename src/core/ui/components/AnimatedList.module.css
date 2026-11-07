@@ -8,9 +8,12 @@
 .exit {
   display: grid;
   grid-template-rows: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 
+/* min-width: 0 lets long titles shorten with an ellipsis instead of widening the list. */
 .inner {
+  min-width: 0;
   min-height: 0;
 }
 

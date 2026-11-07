@@ -1,6 +1,6 @@
 # orbit
 
-Personal, local-first app for goals, projects, tasks, habits, focused work and a weekly review. A desktop app first (works offline), with a browser build of the same app; a small Android companion follows later.
+Personal, local-first app for goals, projects, tasks, habits, focused work and a weekly review. A desktop app first (works offline), with a browser build of the same app and a small Android companion (tasks, focus and the day timeline on the phone).
 
 - Product spec: `docs/SPEC.md`
 - Implemented behavior: `openspec/specs/`

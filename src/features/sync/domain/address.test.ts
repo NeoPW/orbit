@@ -9,8 +9,9 @@ describe('suggestedAddress', () => {
     expect(suggestedAddress('browser', hosted)).toBe('https://orbit.example.workers.dev');
   });
 
-  it('suggests nothing on a development address or on the desktop', () => {
+  it('suggests nothing on a development address, on the desktop or on Android', () => {
     expect(suggestedAddress('browser', dev)).toBe('');
     expect(suggestedAddress('desktop', hosted)).toBe('');
+    expect(suggestedAddress('android', hosted)).toBe('');
   });
 });

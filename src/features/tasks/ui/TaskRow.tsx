@@ -9,6 +9,7 @@ import { useToday } from '../../../core/dates/today.ts';
 import { useSettings } from '../../settings/data/settings.ts';
 import { DeadlineBadge } from '../../../core/ui/components/DeadlineBadge.tsx';
 import { ImportanceDots } from '../../../core/ui/components/ImportanceDots.tsx';
+import { useIsPhone } from '../../../core/ui/useIsPhone.ts';
 import { ListRow } from '../../../core/ui/components/ListRow.tsx';
 import type { CSSProperties } from 'react';
 import type { Task } from '../data/tasks-repository.ts';
@@ -39,6 +40,7 @@ export interface TaskRowProps {
  */
 export function TaskRow({ task, importance, context, onStartFocus, projectColor, projectName, compact = false }: TaskRowProps) {
   const complete = useCompleteTask();
+  const isPhone = useIsPhone();
   const colored = Boolean(projectColor && projectName);
   const hasTags = task.isNextStep || importance || context || task.dueDate || colored;
   const tags = hasTags ? (
@@ -65,15 +67,22 @@ export function TaskRow({ task, importance, context, onStartFocus, projectColor,
       }
       title={task.title}
       onOpen={() => navigate({ name: 'task', id: task.id })}
-      meta={tags && !compact ? tags : undefined}
+      // On the phone the compact tags go under the title, and the start button is always shown (no hover).
+      meta={
+        compact && isPhone ? (
+          <CompactTags task={task} context={context} projectColor={colored ? projectColor : null} projectName={projectName} />
+        ) : tags && !compact ? (
+          tags
+        ) : undefined
+      }
       trailing={
         compact || onStartFocus ? (
           <>
-            {compact && (
+            {compact && !isPhone && (
               <CompactTags task={task} context={context} projectColor={colored ? projectColor : null} projectName={projectName} />
             )}
             {onStartFocus && (
-              <span className={compact ? styles.startOnHover : undefined}>
+              <span className={compact && !isPhone ? styles.startOnHover : undefined}>
                 <IconButton label={`Start focus on ${task.title}`} icon={<Play />} onClick={onStartFocus} />
               </span>
             )}

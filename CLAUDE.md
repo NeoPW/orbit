@@ -29,6 +29,7 @@ Personal local-first app for goals, projects, tasks, habits, focused work and a 
 - Some tests: `npx vitest run <paths>`
 - Generate a migration after changing src/core/db/schema.ts: npm run db:generate; then npm run db:generate:server for the sync server
 - Sync server (local, http://localhost:8787): `npm run server:dev`; check it with `npm run server:smoke -- <url> <token>`; new device token: `npm run server:token`
+- Android (debug, Tauri mobile): `npm run android` (dev on emulator/phone), `npm run android:build -- --target aarch64` (APK in `src-tauri/gen/android/app/build/outputs/apk/`; `--target x86_64` for the emulator). `scripts/android.sh` sets ANDROID_HOME/NDK_HOME/JAVA_HOME from `~/Android/Sdk` and Android Studio's JDK when unset.
 - Node 24 is pinned in `.node-version` (fnm); Rust comes from `~/.cargo/bin`.
 
 ## Conventions

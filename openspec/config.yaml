@@ -12,7 +12,8 @@ context: |
   Tech stack:
   - Tauri 2 desktop app (Linux), main target, works fully offline; the same
     React + TypeScript frontend (Vite) also runs as a browser build.
-    Android companion (tasks + time tracking) comes later.
+    Android companion via Tauri mobile (same frontend, phone layout below
+    640 px) is work in progress; notifications come next.
   - Desktop-only features (tray, hotkey, notifications, native SQLite) sit
     behind src/platform/; feature code never checks the platform itself,
     and the browser build must start without Tauri APIs.

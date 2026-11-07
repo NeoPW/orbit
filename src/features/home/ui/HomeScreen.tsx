@@ -6,7 +6,8 @@ import { useToday } from '../../../core/dates/today.ts';
 import { useLiveQuery } from '../../../core/db/live.ts';
 import { navigate } from '../../../core/routing/useRoute.ts';
 import { AnimatedList } from '../../../core/ui/components/AnimatedList.tsx';
-import { Button } from '../../../core/ui/components/Button.tsx';
+import { Button, IconButton } from '../../../core/ui/components/Button.tsx';
+import { useIsPhone } from '../../../core/ui/useIsPhone.ts';
 import { Chip } from '../../../core/ui/components/Chip.tsx';
 import { ListRow } from '../../../core/ui/components/ListRow.tsx';
 import { Checkbox } from '../../../core/ui/components/Checkbox.tsx';
@@ -39,6 +40,7 @@ function weekday(date: string): string {
 export function HomeScreen() {
   const { db } = useServices();
   const today = useToday();
+  const isPhone = useIsPhone();
   const complete = useCompleteTask();
   const { startWithLastLength } = useStartFocus();
   const data = useLiveQuery(
@@ -69,14 +71,18 @@ export function HomeScreen() {
       <PageHeader
         title={`${weekday(today)} ${formatDate(today)}`}
         actions={
-          <>
-            <Button variant="primary" icon={<Plus />} onClick={() => setCreating(true)}>
-              New task
-            </Button>
-            <Button icon={<NotebookPen />} onClick={() => setLogging(true)}>
-              Log work
-            </Button>
-          </>
+          isPhone ? (
+            <IconButton label="New task" tooltip="none" icon={<Plus />} className={styles.quickAdd} onClick={() => setCreating(true)} />
+          ) : (
+            <>
+              <Button variant="primary" icon={<Plus />} onClick={() => setCreating(true)}>
+                New task
+              </Button>
+              <Button icon={<NotebookPen />} onClick={() => setLogging(true)}>
+                Log work
+              </Button>
+            </>
+          )
         }
       />
       <div className={styles.layout}>
@@ -97,7 +103,8 @@ export function HomeScreen() {
               <EmptyState
                 icon={Repeat}
                 text="No habits due today"
-                action={<Button onClick={() => navigate({ name: 'plan' })}>Open Plan</Button>}
+                // Plan is a desktop screen; the phone has no action to offer here.
+                action={isPhone ? undefined : <Button onClick={() => navigate({ name: 'plan' })}>Open Plan</Button>}
               />
             ) : (
               <div className={styles.habits}>
@@ -200,71 +207,73 @@ export function HomeScreen() {
           )}
         </div>
 
-        <aside className={styles.side}>
-          <TodayTile onLogWork={() => setLogging(true)} />
-          <div className={styles.sideHead}>
-            <h2 className={styles.tileTitle}>Active projects</h2>
-            <span className={styles.count}>{projects.length}</span>
-          </div>
-          <div className={styles.sideBody}>
-            {projects.length === 0 ? (
-              <EmptyState
-                icon={FolderKanban}
-                text="No active projects"
-                action={<Button onClick={() => navigate({ name: 'plan' })}>Open Plan</Button>}
-              />
-            ) : (
-              <div className={styles.projects}>
-                {projects.map(({ view, area, nextSteps }) => (
-                  <Tile
-                    key={view.project.id}
-                    as="article"
-                    color={view.color}
-                    tinted
-                    title={
-                      <button
-                        type="button"
-                        className={styles.projectTitle}
-                        onClick={() => navigate({ name: 'project', id: view.project.id })}
-                      >
-                        {area && (
-                          <span
-                            className={styles.dot}
-                            style={{ '--area-color': area.color } as CSSProperties}
-                            title={area.name}
-                            aria-hidden="true"
-                          />
-                        )}
-                        {view.project.title}
-                      </button>
-                    }
-                    actions={view.deadline && <DeadlineBadge deadline={view.deadline.date} inherited={view.deadline.inherited} />}
-                  >
-                    {nextSteps.length > 0 && (
-                      <AnimatedList
-                        items={nextSteps}
-                        getKey={(task: Task) => task.id}
-                        label={`Next steps of ${view.project.title}`}
-                        renderItem={(task: Task) => (
-                          <div className={styles.step}>
-                            <Checkbox
-                              checked={false}
-                              label={<span className="visually-hidden">Complete {task.title}</span>}
-                              onChange={() => void complete(task)}
+        {!isPhone && (
+          <aside className={styles.side}>
+            <TodayTile onLogWork={() => setLogging(true)} />
+            <div className={styles.sideHead}>
+              <h2 className={styles.tileTitle}>Active projects</h2>
+              <span className={styles.count}>{projects.length}</span>
+            </div>
+            <div className={styles.sideBody}>
+              {projects.length === 0 ? (
+                <EmptyState
+                  icon={FolderKanban}
+                  text="No active projects"
+                  action={<Button onClick={() => navigate({ name: 'plan' })}>Open Plan</Button>}
+                />
+              ) : (
+                <div className={styles.projects}>
+                  {projects.map(({ view, area, nextSteps }) => (
+                    <Tile
+                      key={view.project.id}
+                      as="article"
+                      color={view.color}
+                      tinted
+                      title={
+                        <button
+                          type="button"
+                          className={styles.projectTitle}
+                          onClick={() => navigate({ name: 'project', id: view.project.id })}
+                        >
+                          {area && (
+                            <span
+                              className={styles.dot}
+                              style={{ '--area-color': area.color } as CSSProperties}
+                              title={area.name}
+                              aria-hidden="true"
                             />
-                            <button type="button" className={styles.stepOpen} onClick={() => navigate({ name: 'task', id: task.id })}>
-                              {task.title}
-                            </button>
-                          </div>
-                        )}
-                      />
-                    )}
-                  </Tile>
-                ))}
-              </div>
-            )}
-          </div>
-        </aside>
+                          )}
+                          {view.project.title}
+                        </button>
+                      }
+                      actions={view.deadline && <DeadlineBadge deadline={view.deadline.date} inherited={view.deadline.inherited} />}
+                    >
+                      {nextSteps.length > 0 && (
+                        <AnimatedList
+                          items={nextSteps}
+                          getKey={(task: Task) => task.id}
+                          label={`Next steps of ${view.project.title}`}
+                          renderItem={(task: Task) => (
+                            <div className={styles.step}>
+                              <Checkbox
+                                checked={false}
+                                label={<span className="visually-hidden">Complete {task.title}</span>}
+                                onChange={() => void complete(task)}
+                              />
+                              <button type="button" className={styles.stepOpen} onClick={() => navigate({ name: 'task', id: task.id })}>
+                                {task.title}
+                              </button>
+                            </div>
+                          )}
+                        />
+                      )}
+                    </Tile>
+                  ))}
+                </div>
+              )}
+            </div>
+          </aside>
+        )}
       </div>
       {creating && <TaskSheet onClose={() => setCreating(false)} />}
       {logging && <LogWorkSheet onClose={() => setLogging(false)} />}

@@ -116,3 +116,11 @@ export function localRange(from: string, to: string): { from: string; to: string
   };
   return { from: midnight(from), to: midnight(to) };
 }
+
+/** The day `delta` days from `day` (`yyyy-mm-dd`), never later than `today`. */
+export function shiftDay(day: string, delta: number, today: string): string {
+  const [y, m, d] = day.split('-').map(Number);
+  const moved = new Date(Date.UTC(y ?? 1970, (m ?? 1) - 1, (d ?? 1) + delta));
+  const next = moved.toISOString().slice(0, 10);
+  return next > today ? today : next;
+}

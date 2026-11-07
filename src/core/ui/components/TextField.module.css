@@ -51,3 +51,10 @@
   font-size: var(--text-sm);
   color: var(--color-red);
 }
+
+/* Touch targets on the phone: fields and dropdowns at least 44 px high. */
+@media (max-width: 639px) {
+  .control {
+    min-height: 44px;
+  }
+}

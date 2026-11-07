@@ -1,5 +1,5 @@
 import type { Storage } from '../../core/db/database.ts';
-import { platform } from '../platform.ts';
+import { isNativeApp } from '../platform.ts';
 import type { SqlDriver } from './driver.ts';
 
 export type PlatformDriver =
@@ -8,11 +8,11 @@ export type PlatformDriver =
 
 /**
  * Picks the SQL driver for the running platform. Each driver is loaded with a
- * dynamic import, so the browser build never loads Tauri code and the desktop
- * app never loads the WASM worker.
+ * dynamic import, so the browser build never loads Tauri code and the Tauri apps
+ * (desktop and Android) never load the WASM worker.
  */
 export async function openPlatformDriver(): Promise<PlatformDriver> {
-  if (platform === 'desktop') {
+  if (isNativeApp) {
     const { createDesktopDriver } = await import('./desktop.ts');
     return { status: 'ready', driver: createDesktopDriver(), storage: 'file' };
   }
