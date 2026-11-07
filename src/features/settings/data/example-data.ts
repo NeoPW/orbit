@@ -4,7 +4,7 @@ import type { Db } from '../../../core/db/drizzle.ts';
 import type { Clock } from '../../../core/db/records.ts';
 import { projects } from '../../../core/db/schema.ts';
 import { listAreas } from '../../areas/data/areas-repository.ts';
-import { addMeasure, type MeasureFields } from '../../goals/data/measures-repository.ts';
+import { addMeasure, setMeasureValue, type MeasureFields } from '../../goals/data/measures-repository.ts';
 import { createGoal, setGoalStatus } from '../../goals/data/goals-repository.ts';
 import { checkHabit, createHabit, type HabitInput } from '../../habits/data/habits-repository.ts';
 import { saveNote } from '../../notes/data/notes-repository.ts';
@@ -103,10 +103,13 @@ export async function loadExampleData(db: Db, clock: Clock, today: string): Prom
   for (const offset of [-30, -23, -16, -9]) await check(interviews, offset);
 
   // Measures
-  await addMeasure(db, clock, frontend, numeric('Applications sent', 0, 20, 9, 'applications'));
+  // Raised this week, so the week summary shows 7 → 9 and 11 → 14.
+  const applications = await addMeasure(db, clock, frontend, numeric('Applications sent', 0, 20, 7, 'applications'));
+  await setMeasureValue(db, clock, applications, 9);
   await addMeasure(db, clock, frontend, { title: 'Portfolio live', description: '', measureType: 'boolean', startValue: null, targetValue: null, currentValue: 1, unit: null, step: 1, habitId: null });
   await addMeasure(db, clock, frontend, { title: 'Mock interviews', description: '', measureType: 'habit', startValue: null, targetValue: 10, currentValue: null, unit: null, step: 1, habitId: interviews });
-  await addMeasure(db, clock, marathon, numeric('Long run', 5, 21, 14, 'km', 1));
+  const longRun = await addMeasure(db, clock, marathon, numeric('Long run', 5, 21, 11, 'km', 1));
+  await setMeasureValue(db, clock, longRun, 14);
   await addMeasure(db, clock, marathon, { title: 'Runs logged', description: '', measureType: 'habit', startValue: null, targetValue: 36, currentValue: null, unit: null, step: 1, habitId: run });
   await addMeasure(db, clock, thesis, numeric('Chapters drafted', 0, 6, 3, 'chapters'));
 
@@ -140,6 +143,17 @@ export async function loadExampleData(db: Db, clock: Clock, today: string): Prom
   await log(portfolio, -2, 9, 75, 'Focus: responsive grid', 'timer');
   await log(training, -3, 18, 30, 'Focus: mobility routine', 'timer');
   await log(chapter4, -4, 9, 90, 'Focus: literature notes', 'timer', 30);
+
+  // The seven weeks before, for the trend of the review
+  const monday = currentWeekStart(today);
+  const dayOffset = (date: string) => Math.round((Date.parse(`${date}T12:00:00`) - Date.parse(`${today}T12:00:00`)) / 86_400_000);
+  const weekTotals = [420, 300, 600, 840, 540, 1200, 960];
+  for (const [i, total] of weekTotals.entries()) {
+    const first = dayOffset(addDays(monday, -7 * (i + 1) + 1));
+    await log(chapter4, first, 11, Math.round(total * 0.4), 'Thesis writing');
+    await log(portfolio, first + 1, 11, Math.round(total * 0.3), 'Portfolio work');
+    await log(orbit, first + 2, 11, Math.round(total * 0.3), 'App work');
+  }
 
   // Weekly notes of this week
   const week = currentWeekStart(today);

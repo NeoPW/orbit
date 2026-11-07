@@ -1,7 +1,7 @@
 import { and, eq, max } from 'drizzle-orm';
 import type { Db } from '../../../core/db/drizzle.ts';
 import { createFields, deleteFields, notDeleted, updateFields, type Clock } from '../../../core/db/records.ts';
-import { measures, type Measure, type MeasureType } from '../../../core/db/schema.ts';
+import { measureChanges, measures, type Measure, type MeasureType } from '../../../core/db/schema.ts';
 
 export interface MeasureFields {
   title: string;
@@ -72,11 +72,23 @@ export async function addMeasure(db: Db, clock: Clock, goalId: string, input: Me
   return fields.id;
 }
 
+/** The query that records a value change of a measure (see measures, "Value history"). */
+function recordChangeQuery(db: Db, clock: Clock, measureId: string, from: number | null, to: number) {
+  return db.insert(measureChanges).values({ ...createFields(clock), measureId, fromValue: from, toValue: to });
+}
+
 export async function updateMeasure(db: Db, clock: Clock, id: string, input: MeasureFields): Promise<void> {
-  await db
+  const before = await getMeasure(db, id);
+  const fields = normalized(input);
+  const update = db
     .update(measures)
-    .set({ ...updateFields(clock), ...normalized(input) })
+    .set({ ...updateFields(clock), ...fields })
     .where(and(eq(measures.id, id), notDeleted(measures)));
+  // Only a value change within the same type is history; a new type starts a new series.
+  const changed =
+    before && before.measureType === fields.measureType && fields.currentValue !== null && before.currentValue !== fields.currentValue;
+  if (changed) await db.batch([update, recordChangeQuery(db, clock, id, before.currentValue, fields.currentValue!)]);
+  else await update;
 }
 
 export async function deleteMeasure(db: Db, clock: Clock, id: string): Promise<void> {
@@ -102,10 +114,14 @@ export async function stepMeasure(db: Db, clock: Clock, id: string, direction: 1
 }
 
 export async function setMeasureValue(db: Db, clock: Clock, id: string, value: number): Promise<void> {
-  await db
+  const before = await getMeasure(db, id);
+  if (!before) return;
+  const update = db
     .update(measures)
     .set({ ...updateFields(clock), currentValue: value })
     .where(and(eq(measures.id, id), notDeleted(measures)));
+  if (before.currentValue === value) await update;
+  else await db.batch([update, recordChangeQuery(db, clock, id, before.currentValue, value)]);
 }
 
 /** Marks a boolean measure achieved (current value 1) or not (0). */

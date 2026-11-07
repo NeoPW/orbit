@@ -3,7 +3,7 @@ import { useLiveQuery } from '../../../core/db/live.ts';
 import type { NoteTargetType } from '../../../core/db/schema.ts';
 import { EmptyState } from '../../../core/ui/components/EmptyState.tsx';
 import { Section } from '../../../core/ui/components/Section.tsx';
-import { formatWeekRange } from '../../review/domain/review-week.ts';
+import { formatWeekFull } from '../../review/domain/review-week.ts';
 import { listNotesForTarget } from '../data/notes-repository.ts';
 import styles from './NotesSection.module.css';
 
@@ -16,7 +16,7 @@ export function NotesSection({ targetType, targetId, color }: { targetType: Note
       {notes && notes.length === 0 && <EmptyState icon={NotebookPen} text="No weekly notes yet" />}
       {notes?.map((note) => (
         <article key={note.id} className={styles.note}>
-          <h3>{formatWeekRange(note.weekStart)}</h3>
+          <h3>{formatWeekFull(note.weekStart)}</h3>
           <p>{note.note}</p>
         </article>
       ))}

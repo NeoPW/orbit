@@ -148,12 +148,16 @@ A project's next steps are its tasks with `is_next_step` set (see Task); the pro
 - `plan_next_week` (text)
 - `completed_at` nullable (a review without it is a draft)
 
+### MeasureChange
+- `measure_id`, `from_value` (nullable), `to_value`; `created_at` is the time of the change.
+- One row per change of a numeric measure's value or a yes/no measure's achieved state (not for creating a measure, saving the same value, or changing the type). Insert-only; it gives the value of a measure at any moment since the history began.
+
 ### ReviewMeasureSnapshot
 - `weekly_review_id`, `measure_id`
 - `progress` (0–1, the measure's progress when the review was saved)
 
 ### Settings (local only, not synced)
-- Reminders on/off (default on), default reminder time (default 08:00; used by habits without own time and by deadline reminders), deadline lead time (default 7 days, 1–30), weekly review day and time (default Sunday 18:00).
+- Reminders on/off (default on), default reminder time (default 08:00; used by habits without own time and by deadline reminders), deadline lead time (default 7 days, 1–30), weekly review day and time (default Sunday 18:00), weekly hour target (whole hours 1–168, default none).
 - Sync server address and the device's token; sync bookkeeping (watermarks, last sync).
 - Stored in a local-only key-value table, never synced.
 
@@ -222,7 +226,9 @@ Measured in local calendar days from today to a deadline:
 - The **current week** is the Monday–Sunday week containing today; **last week** is the one before.
 - The **review week** (for the weekly review) is on Sunday the current week, on any other day last week.
 - A week's summary is computed from the stored log entries, habit checks, completed tasks and completed projects, so it stays available for every past week. Habit adherence uses the habits' current schedules.
-- **Goal progress in a week:** a past week shows the progress saved with its completed review; a week without a completed review (the current week, or last week before it is reviewed) shows the current progress. The **change** is measured against the most recent completed review before that week. Without such a review, no change is shown.
+- **Goal progress in a week:** a past week shows the progress saved with its completed review; a week without a completed review (the current week, or last week before it is reviewed) shows the current progress.
+- **Change in a week:** the value of each measure at the start of the week (Monday 00:00) and at its end (now, for the current week), from the `measure_changes` history; a habit measure counts its check-ins by date. A goal's change is the difference of its progress between those two moments, in percentage points. A change made before the history began is not known and shows no change.
+- **Time in a week:** the sum of the week's log entry durations. An entry belongs to a project directly, through its task or through its habit, to an area through its project, and to a goal as in "Work per goal". The daily average divides by the days up to today in the current week, else by 7. The 4-week average of a week is the mean of that week and the 3 before it.
 
 ### Completing tasks and projects
 - Marking a task done always creates a `LogEntry` (`source = task`, the task title as note, linked to the task and to its project or goal). An Undo right after completing reopens the task and removes the entry.
@@ -278,19 +284,19 @@ Designed for desktop widths: one page with sections (Goals, Projects without a g
 
 ### 6.5 Review
 The review is the main place where projects and goals are updated.
+- **Calendar weeks:** weeks are named by their ISO number, "CW 45", with the date range beside it where there is room.
 - **Review week:** on Sunday the Monday–Sunday week ending today, on any other day the previous Monday–Sunday week. One review per week.
 - **Week summary**, used in all places below, top to bottom:
-  - **Goals:** each active goal with its progress and the change since the last completed review (§5, "Weeks"), its measures with their change below it, and the work logged on it that week.
+  - **Goals:** each active goal with its progress and its change in the week (§5, "Weeks"), its measures below it with their value at the start and end of the week ("7 → 9 / 10 km", "+2"), the progress gained in the week as a lighter segment at the end of each progress bar, and the work logged on it that week.
+  - **Time:** time worked (against the weekly hour target when set), the daily average and the share of time on goals; the time by area, goal or project as bars (a switch; unassigned time as "Other"); and the last 8 weeks as bars with the 4-week average line and headline.
   - **Days:** the work of each day, Monday to Sunday, as seven timelines (as on Home) side by side on one shared hour axis.
-  - **Work:** work logged per project (count and total duration), grouped by the goal the project serves, then projects without a goal.
   - **Finished:** projects completed and tasks completed that week.
   - **Habits:** adherence per habit (done of expected).
 - **Default view**, top to bottom:
-  - this week's plan, from the most recently completed review
-  - the summary of the **current week** so far, on every day of the week
+  - the plan for the shown week: the plan written in the completed review of the week before it (each review keeps its plan)
+  - the summary of the **shown week**: the current week so far, unless another week is chosen with the **week switcher** (‹ week ›, and "This week" while another week is shown, in the header; the week is kept in the address)
   - a "Start / Continue / Edit weekly review" button (for the review week, §5)
   - the history
-  - a **Last week** button, opening a page with last week's summary.
 - **Guided flow**, as full pages with a progress indicator and Back / Next:
   1. **Look back:** the review week's summary: the work done.
   2. **Projects:** go through each active project and update it: status, next steps (mark, unmark, add), importance and deadline, and write its weekly note. Changes apply immediately.
@@ -301,10 +307,11 @@ The review is the main place where projects and goals are updated.
 
   Score, reflection and plan are kept as a draft when changing steps or leaving, so a review can be continued later. Weekly notes are saved as they are written. A completed review can be edited and saved again.
 - **History:** list of past reviews with score and plan; each opens in full, with that week's summary (goal progress saved with the review) and the weekly notes of that week.
-- Later: longer-term stats (score trends, time per area/goal/project, habit streaks).
+- Later: longer-term stats (score trends, habit streaks).
 
 ### 6.6 Settings
 - Reminders, default reminder time, weekly review day and time, deadline lead time.
+- **Review:** the weekly hour target (empty for none), shown in the week summary.
 - **Sync:** the server address and this device's token, the time of the last successful sync and whether the last attempt failed (and why: no connection, token refused, different schema version, server error), "Sync now" and "Disconnect".
 
 ### 6.7 Design and interaction

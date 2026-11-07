@@ -18,6 +18,8 @@ export interface Settings {
   reviewTime: string;
   /** Colour theme of this device (not synced). */
   theme: ThemeId;
+  /** Weekly hour target for the week summary, whole hours 1–168; null for none. */
+  weeklyTargetHours: number | null;
 }
 
 export type SettingKey = keyof Settings;
@@ -29,6 +31,7 @@ export const DEFAULT_SETTINGS: Settings = {
   reviewDay: 7,
   reviewTime: '18:00',
   theme: DEFAULT_THEME,
+  weeklyTargetHours: null,
 };
 
 /** Column `key` of the settings table for each setting. */
@@ -39,6 +42,7 @@ const STORAGE_KEYS: Record<SettingKey, string> = {
   reviewDay: 'review_day',
   reviewTime: 'review_time',
   theme: 'theme',
+  weeklyTargetHours: 'weekly_target_hours',
 };
 
 function isWholeNumber(value: number, min: number, max: number): boolean {
@@ -59,12 +63,18 @@ export function isValidSetting<K extends SettingKey>(key: K, value: Settings[K])
       return typeof value === 'number' && isWholeNumber(value, 1, 7);
     case 'theme':
       return isThemeId(value);
+    case 'weeklyTargetHours':
+      return value === null || (typeof value === 'number' && isWholeNumber(value, 1, 168));
   }
 }
 
 function decode<K extends SettingKey>(key: K, stored: string | undefined): Settings[K] {
   const fallback = DEFAULT_SETTINGS[key];
   if (stored === undefined) return fallback;
+  if (key === 'weeklyTargetHours') {
+    const hours = stored === 'none' ? null : Number(stored);
+    return (isValidSetting(key, hours as Settings[K]) ? hours : fallback) as Settings[K];
+  }
   const value = typeof fallback === 'boolean' ? stored === '1' : typeof fallback === 'number' ? Number(stored) : stored;
   return isValidSetting(key, value as Settings[K]) ? (value as Settings[K]) : fallback;
 }

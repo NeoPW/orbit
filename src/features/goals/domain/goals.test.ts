@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { goalProgress, measureProgress, validateGoal, validateMeasure, type ProgressMeasure } from './goals.ts';
+import { goalProgress, measureProgress, validateGoal, validateMeasure, valueAt, type ProgressMeasure } from './goals.ts';
 
 const numeric = (startValue: number, targetValue: number, currentValue: number): ProgressMeasure => ({
   measureType: 'numeric',
@@ -17,11 +17,23 @@ describe('measureProgress', () => {
   it('numeric: target equals start, reached', () => expect(measureProgress(numeric(5, 5, 5))).toBe(1));
   it('numeric: target equals start, not reached', () => expect(measureProgress(numeric(5, 5, 6))).toBe(0));
 
-  const bool = (currentValue: number | null): ProgressMeasure => ({ measureType: 'boolean', startValue: null, targetValue: null, currentValue, habitId: null });
+  const bool = (currentValue: number | null): ProgressMeasure => ({
+    measureType: 'boolean',
+    startValue: null,
+    targetValue: null,
+    currentValue,
+    habitId: null,
+  });
   it('boolean: achieved', () => expect(measureProgress(bool(1))).toBe(1));
   it('boolean: not achieved', () => expect(measureProgress(bool(0))).toBe(0));
 
-  const habit = (habitId: string | null): ProgressMeasure => ({ measureType: 'habit', startValue: null, targetValue: 20, currentValue: null, habitId });
+  const habit = (habitId: string | null): ProgressMeasure => ({
+    measureType: 'habit',
+    startValue: null,
+    targetValue: 20,
+    currentValue: null,
+    habitId,
+  });
   it('habit: halfway', () => expect(measureProgress(habit('h'), 10)).toBe(0.5));
   it('habit: no linked habit', () => expect(measureProgress(habit(null), 10)).toBe(0));
 });
@@ -34,7 +46,8 @@ describe('goalProgress', () => {
 describe('validateGoal', () => {
   it('accepts a valid goal', () => expect(validateGoal({ title: 'Get fit', startDate: '2026-10-01', endDate: '2026-12-31' })).toEqual({}));
   it('requires a title', () => expect(validateGoal({ title: '  ', startDate: '2026-10-01', endDate: '2026-12-31' }).title).toBeDefined());
-  it('rejects an end before the start', () => expect(validateGoal({ title: 'x', startDate: '2026-10-02', endDate: '2026-10-01' }).endDate).toBeDefined());
+  it('rejects an end before the start', () =>
+    expect(validateGoal({ title: 'x', startDate: '2026-10-02', endDate: '2026-10-01' }).endDate).toBeDefined());
 });
 
 describe('validateMeasure', () => {
@@ -48,6 +61,22 @@ describe('validateMeasure', () => {
     expect(validateMeasure({ ...base, measureType: 'habit', targetValue: 5 })).toEqual({});
   });
   it('ignores numeric fields for a boolean measure', () => {
-    expect(validateMeasure({ title: 'x', measureType: 'boolean', startValue: null, targetValue: null, currentValue: null, step: null })).toEqual({});
+    expect(
+      validateMeasure({ title: 'x', measureType: 'boolean', startValue: null, targetValue: null, currentValue: null, step: null }),
+    ).toEqual({});
   });
+});
+
+describe('valueAt', () => {
+  const changes = [
+    { at: '2026-10-06T10:00:00Z', from: 7 },
+    { at: '2026-10-08T10:00:00Z', from: 8 },
+  ];
+  it('is the value before the first later change', () => {
+    expect(valueAt(9, changes, '2026-10-05T00:00:00Z')).toBe(7);
+    expect(valueAt(9, changes, '2026-10-07T00:00:00Z')).toBe(8);
+  });
+  it('is the current value after the last change', () => expect(valueAt(9, changes, '2026-10-09T00:00:00Z')).toBe(9));
+  it('is the current value without any change', () => expect(valueAt(5, [], '2026-10-05T00:00:00Z')).toBe(5));
+  it('does not depend on the order of the changes', () => expect(valueAt(9, [...changes].reverse(), '2026-10-05T00:00:00Z')).toBe(7));
 });

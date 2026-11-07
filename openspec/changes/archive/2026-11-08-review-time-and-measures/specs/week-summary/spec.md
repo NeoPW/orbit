@@ -1,0 +1,128 @@
+## REMOVED Requirements
+
+### Requirement: Work per project
+**Reason**: Replaced by the time section ("Time worked in the week", "Time by area, goal and project"), which shows durations as bars and can group by area, goal or project.
+**Migration**: The per-project durations appear under "Time by area, goal and project" with Project selected; the number of entries per goal stays in the Goals section.
+
+### Requirement: Goals in the summary
+**Reason**: The change since the previous review becomes the change within the week, derived from the measure value history (see "Goals and their change in the week").
+**Migration**: None; the Goals section stays first and keeps progress, measures and work on the goal.
+
+## ADDED Requirements
+
+### Requirement: Time worked in the week
+The summary SHALL show, after the goals, three figures for the week:
+- **Total time worked:** the sum of the durations of the week's log entries. When a weekly hour target is set (see settings), it SHALL be shown with the target and the share of the target reached, as a whole percentage.
+- **Daily average:** the total divided by the days of the week up to and including today for the current week, or by 7 for a past week.
+- **Time on goals:** the share of the total that counts as work on any goal (see goals, "Work on a goal"), as a whole percentage, with both durations.
+
+Entries without a duration SHALL add no time. Without any time in the week, the figures SHALL show zero and the share on goals SHALL be left out.
+
+#### Scenario: Total with target
+- **WHEN** 15 h 44 min were logged in the week and the weekly hour target is 20 h
+- **THEN** the total reads "15 h 44 min / 20 h" with "79 % of target"
+
+#### Scenario: No target
+- **WHEN** no weekly hour target is set
+- **THEN** the total is shown without a target or share
+
+#### Scenario: Daily average of the current week
+- **WHEN** today is Tuesday and 15 h 44 min were logged since Monday
+- **THEN** the daily average is 7 h 52 min
+
+#### Scenario: Daily average of a past week
+- **WHEN** a past week has 14 h in total
+- **THEN** its daily average is 2 h
+
+#### Scenario: Share on goals
+- **WHEN** 10 h of the week's 12 h 30 min were logged on projects, tasks or habits that serve a goal
+- **THEN** time on goals shows 80 %, with 10 h of 12 h 30 min
+
+### Requirement: Time by area, goal and project
+The summary SHALL show the week's time grouped by area, by goal or by project, chosen with a switch (Area first and selected by default). Each item SHALL be shown with its colour, its total duration and a bar proportional to the largest item, ordered by duration (highest first). Time that belongs to no item of the chosen grouping SHALL be shown last as "Other".
+- An entry SHALL belong to a project directly, through its task, or through its habit.
+- An entry SHALL belong to an area through its project.
+- An entry SHALL belong to a goal as described in goals, "Work on a goal".
+
+Tapping a goal or a project SHALL open it.
+
+#### Scenario: By area
+- **WHEN** 3 h were logged on projects in the area "Work", 1 h on a project without an area, and 30 min on a task without a project
+- **THEN** with Area selected, "Work" shows 3 h and "Other" shows 1 h 30 min, in that order
+
+#### Scenario: By project through a task
+- **WHEN** an entry of 45 min is linked to a task of the project "Thesis"
+- **THEN** with Project selected, the 45 min count for "Thesis"
+
+#### Scenario: Habit time
+- **WHEN** a focus session of 20 min ran on a habit that belongs to the project "Fitness"
+- **THEN** the 20 min count for "Fitness" and for that project's area and goal
+
+#### Scenario: Open a project
+- **WHEN** the user taps "Thesis" with Project selected
+- **THEN** the project page of "Thesis" opens
+
+### Requirement: Recent weeks
+The summary SHALL show the total time worked in each of the 8 weeks ending with the summarized week, as bars labelled with the total and the week's dates. The summarized week SHALL be highlighted, and the current week SHALL be marked "so far".
+
+The summary SHALL also show a line of the 4-week average: for each week, the average of that week and the 3 weeks before it. The current week SHALL get no point on this line.
+
+As a headline, the summary SHALL show the 4-week average of the summarized week, or of the 4 weeks before it when the summarized week is the current week.
+
+#### Scenario: Eight weeks
+- **WHEN** the summary of the week of 2026-11-02 is shown
+- **THEN** bars for the weeks from 2026-09-14 to 2026-11-02 are shown, the last one highlighted
+
+#### Scenario: Current week headline
+- **WHEN** the current week is shown and the 4 weeks before it had 40 h, 32 h, 50 h and 30 h
+- **THEN** the headline 4-week average is 38 h per week, and the current week's bar is marked "so far"
+
+#### Scenario: Weeks without work
+- **WHEN** nothing was logged in one of the 8 weeks
+- **THEN** that week is shown with 0 and counts as 0 in the averages
+
+### Requirement: Goals and their change in the week
+The summary SHALL start with the goals. Each goal SHALL show:
+- its progress
+- its measures, with their progress and value
+- the number of entries and the total duration of work on the goal in that week (see goals, "Work on a goal")
+- the change of its progress during the week, in percentage points
+
+The change SHALL compare the progress at the start of the week with the progress at its end (now, for the current week). Both SHALL be computed from the measures' values at those moments (see measures, "Value history") and, for habit measures, from the check-ins up to those moments. A change of zero SHALL NOT be shown.
+
+A measure whose value changed during the week SHALL show its value at the start and at the end of the week:
+- **Numeric:** "7 → 9 / 10 km" and the difference ("+2").
+- **Yes/no:** "Achieved" when it was achieved during the week.
+- **Habit:** "12 → 15 / 30 check-ins".
+
+An unchanged measure SHALL show only its value.
+
+The progress bars of a goal and of a measure SHALL show the progress gained during the week as a distinct, lighter segment at the end of the filled part. A bar without a gain SHALL look as before.
+
+#### Scenario: Numeric measure raised during the week
+- **WHEN** a measure with target 10 was at 7 on Monday at 00:00 and was set to 9 on Thursday
+- **THEN** it shows "7 → 9 / 10" with "+2", and its goal shows the change in progress (for a goal with only this measure, starting from 0: +20)
+
+#### Scenario: Gain in the bar
+- **WHEN** a goal went from 40 % to 55 % during the week
+- **THEN** its bar is filled to 55 % with the last 15 % in a lighter shade
+
+#### Scenario: Unchanged measure
+- **WHEN** a measure's value did not change during the week
+- **THEN** it shows only its value and no change
+
+#### Scenario: Yes/no achieved
+- **WHEN** a yes/no measure was switched to achieved on Wednesday of the week
+- **THEN** it shows "Achieved" as its change in the week
+
+#### Scenario: Habit check-ins
+- **WHEN** a habit measure with target 30 had 12 check-ins before the week and 3 during it
+- **THEN** it shows "12 → 15 / 30 check-ins"
+
+#### Scenario: Change before the history existed
+- **WHEN** a measure's value was changed before value changes were recorded
+- **THEN** no change is shown for it in that week
+
+#### Scenario: Work on the goal
+- **WHEN** 3 entries with 2 hours in total were logged on projects serving "Get fit" in the week
+- **THEN** "Get fit" shows 3 entries and 2 h

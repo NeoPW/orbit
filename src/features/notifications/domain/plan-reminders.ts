@@ -1,7 +1,7 @@
 import { localToday } from '../../../core/dates/deadline.ts';
 import { addDays } from '../../../core/dates/today.ts';
 import { isDue, isoWeekday, type HabitSchedule } from '../../habits/domain/habits.ts';
-import { formatWeekRange, reviewWeekStart } from '../../review/domain/review-week.ts';
+import { formatWeekFull, reviewWeekStart } from '../../review/domain/review-week.ts';
 import type { Settings } from '../../settings/data/settings.ts';
 
 export interface ReminderHabit extends HabitSchedule {
@@ -108,7 +108,7 @@ export function planReminders(input: ReminderInput, settings: ReminderSettings, 
       if (isoWeekday(date) === settings.reviewDay) {
         const week = reviewWeekStart(date);
         if (!input.completedReviewWeeks.includes(week)) {
-          add({ key: `review:${date}`, at: localInstant(date, settings.reviewTime), title: 'Weekly review', body: `Week ${formatWeekRange(week)}`, route: '/review/flow' });
+          add({ key: `review:${date}`, at: localInstant(date, settings.reviewTime), title: 'Weekly review', body: formatWeekFull(week), route: '/review/flow' });
         }
       }
     }

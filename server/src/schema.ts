@@ -11,6 +11,7 @@ const serverSeq = () => ({ serverSeq: integer('server_seq').notNull() });
 export const areas = sqliteTable('areas', { ...columns.areas(), ...serverSeq() }, (t) => [index('areas_server_seq').on(t.serverSeq)]);
 export const goals = sqliteTable('goals', { ...columns.goals(), ...serverSeq() }, (t) => [index('goals_server_seq').on(t.serverSeq)]);
 export const measures = sqliteTable('measures', { ...columns.measures(), ...serverSeq() }, (t) => [index('measures_server_seq').on(t.serverSeq)]);
+export const measureChanges = sqliteTable('measure_changes', { ...columns.measureChanges(), ...serverSeq() }, (t) => [index('measure_changes_server_seq').on(t.serverSeq)]);
 export const projects = sqliteTable('projects', { ...columns.projects(), ...serverSeq() }, (t) => [index('projects_server_seq').on(t.serverSeq)]);
 export const tasks = sqliteTable('tasks', { ...columns.tasks(), ...serverSeq() }, (t) => [index('tasks_server_seq').on(t.serverSeq)]);
 export const habits = sqliteTable('habits', { ...columns.habits(), ...serverSeq() }, (t) => [index('habits_server_seq').on(t.serverSeq)]);

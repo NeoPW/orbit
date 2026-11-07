@@ -46,3 +46,9 @@
   white-space: pre-wrap;
   color: var(--color-text);
 }
+
+.switcher {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}

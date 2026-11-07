@@ -9,7 +9,9 @@ import { Section } from '../../../core/ui/components/Section.tsx';
 import { goalColor } from '../../../core/ui/colors.ts';
 import { WeekTimeline } from '../../timeline/ui/WeekTimeline.tsx';
 import { formatDuration } from '../../work-log/domain/work-log.ts';
+import { measureWeekText } from '../domain/measure-text.ts';
 import type { GoalSummary, WeekSummary } from '../domain/week-summary.ts';
+import { TimeSection } from './TimeSection.tsx';
 import styles from './WeekSummaryView.module.css';
 
 /** "+15", "−3" or "0" in percentage points. */
@@ -21,7 +23,7 @@ function Change({ value }: { value: number | null }) {
   if (value === null) return null;
   const tone = value > 0 ? styles.up : value < 0 ? styles.down : styles.flat;
   return (
-    <span className={`${styles.change} ${tone}`} title="Change in percentage points since the previous review">
+    <span className={`${styles.change} ${tone}`} title="Change in percentage points this week">
       {formatChange(value)}
     </span>
   );
@@ -40,17 +42,23 @@ function GoalBlock({ goal }: { goal: GoalSummary }) {
         </button>
         <Change value={goal.change} />
       </div>
-      {goal.progress !== null && <ProgressBar value={goal.progress} color={color} label={`Progress of ${goal.title}`} />}
+      {goal.progress !== null && <ProgressBar value={goal.progress} gain={goal.gain} color={color} label={`Progress of ${goal.title}`} />}
       {goal.work.count > 0 && <span className={styles.muted}>{workText(goal.work)}</span>}
       {goal.measures.length > 0 && (
         <ul className={styles.measures}>
-          {goal.measures.map((m) => (
-            <li key={m.measureId}>
-              <span className={styles.measureTitle}>{m.title}</span>
-              <ProgressBar value={m.progress} color={color} label={m.title} />
-              <Change value={m.change} />
-            </li>
-          ))}
+          {goal.measures.map((m) => {
+            const { text, delta } = measureWeekText(m);
+            return (
+              <li key={m.measureId}>
+                <span className={styles.measureTitle}>{m.title}</span>
+                <ProgressBar value={m.progress} gain={m.gain} color={color} label={m.title} />
+                <span className={`${styles.measureValue} ${m.from === null ? '' : styles.measureChanged}`}>
+                  {text}
+                  {delta && <span className={delta.startsWith('+') ? styles.up : styles.down}> {delta}</span>}
+                </span>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
@@ -61,10 +69,10 @@ export interface WeekSummaryViewProps {
   summary: WeekSummary;
 }
 
-/** A week at a glance: goals, work per goal, finished projects, completed tasks and habit adherence. */
+/** A week at a glance: goals, time, finished projects, completed tasks and habit adherence. */
 export function WeekSummaryView({ summary }: WeekSummaryViewProps) {
-  const { goals, work, finishedProjects, completedTasks, habits } = summary;
-  const empty = [goals, work, finishedProjects, completedTasks, habits].every((list) => list.length === 0);
+  const { goals, time, trend, finishedProjects, completedTasks, habits } = summary;
+  const empty = time.totalMinutes === 0 && [goals, finishedProjects, completedTasks, habits].every((list) => list.length === 0);
   if (empty) return <EmptyState icon={CalendarCheck} text="Nothing recorded this week" />;
 
   return (
@@ -78,27 +86,10 @@ export function WeekSummaryView({ summary }: WeekSummaryViewProps) {
           </div>
         </Section>
       )}
+      <TimeSection time={time} trend={trend} />
       <Section tile title="Days">
         <WeekTimeline weekStart={summary.weekStart} />
       </Section>
-      {work.length > 0 && (
-        <Section tile title="Work">
-          {work.map((group) => (
-            <div key={group.goalId ?? 'none'} className={styles.group}>
-              {group.goalTitle !== null && <h3 className={styles.groupTitle}>{group.goalTitle}</h3>}
-              {group.goalTitle === null && work.length > 1 && <h3 className={styles.groupTitle}>Without a goal</h3>}
-              {group.projects.map((p) => (
-                <ListRow
-                  key={p.projectId ?? 'none'}
-                  title={p.title}
-                  onOpen={p.projectId ? () => navigate({ name: 'project', id: p.projectId! }) : undefined}
-                  trailing={<span className={styles.muted}>{workText(p)}</span>}
-                />
-              ))}
-            </div>
-          ))}
-        </Section>
-      )}
       {finishedProjects.length > 0 && (
         <Section tile title="Finished projects" count={finishedProjects.length}>
           {finishedProjects.map((p) => (

@@ -2,16 +2,34 @@ import { describe, expect, it } from 'vitest';
 import { openTestDatabase } from '../../../core/db/testing.ts';
 import { addMeasure, setMeasureValue, type MeasureFields } from '../../goals/data/measures-repository.ts';
 import { createGoal } from '../../goals/data/goals-repository.ts';
+import { createFields } from '../../../core/db/records.ts';
+import { logEntries } from '../../../core/db/schema.ts';
 import { saveReview } from './reviews-repository.ts';
-import { loadWeek } from './week-loader.ts';
+import { loadWeek, loadWeekRows } from './week-loader.ts';
 
 const clock = () => new Date('2026-10-11T18:00:00Z');
-const measure: MeasureFields = { title: 'Run', description: '', measureType: 'numeric', startValue: 0, targetValue: 100, currentValue: 40, unit: null, step: 1, habitId: null };
+const measure: MeasureFields = {
+  title: 'Run',
+  description: '',
+  measureType: 'numeric',
+  startValue: 0,
+  targetValue: 100,
+  currentValue: 40,
+  unit: null,
+  step: 1,
+  habitId: null,
+};
 
 describe('week loader', () => {
   it('shows the snapshots of a reviewed week, not the current progress', async () => {
     const { db } = await openTestDatabase();
-    const goalId = await createGoal(db, clock, { title: 'Get fit', description: '', startDate: '2026-01-01', endDate: '2026-12-31', color: null });
+    const goalId = await createGoal(db, clock, {
+      title: 'Get fit',
+      description: '',
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      color: null,
+    });
     const id = await addMeasure(db, clock, goalId, measure);
     await saveReview(db, clock, '2026-10-05', { score: 7, reflection: '', planNextWeek: '' });
     await setMeasureValue(db, clock, id, 70);
@@ -21,5 +39,26 @@ describe('week loader', () => {
     expect(current.goals[0]?.measures[0]?.progress).toBe(0.7);
     const live = await loadWeek(db, '2026-10-05', '2026-10-20', { live: true });
     expect(live.goals[0]?.measures[0]?.progress).toBe(0.7);
+  });
+
+  it('loads entries of the weeks before the week but counts only the week on a goal', async () => {
+    const { db } = await openTestDatabase();
+    const goalId = await createGoal(db, clock, {
+      title: 'Get fit',
+      description: '',
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      color: null,
+    });
+    const entry = (date: string) => ({
+      ...createFields(clock),
+      goalId,
+      occurredAt: new Date(`${date}T10:00:00`).toISOString(),
+      durationMinutes: 20,
+    });
+    await db.insert(logEntries).values([entry('2026-08-10'), entry('2026-10-06')]);
+    await addMeasure(db, clock, goalId, measure);
+    expect((await loadWeekRows(db, '2026-10-05')).logEntries).toHaveLength(2);
+    expect((await loadWeek(db, '2026-10-05', '2026-10-20')).goals[0]?.work).toEqual({ count: 1, minutes: 20 });
   });
 });

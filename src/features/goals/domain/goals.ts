@@ -97,3 +97,18 @@ export function measureValueText(measure: ProgressMeasure & { unit: string | nul
   const unit = measure.unit ? ` ${measure.unit}` : '';
   return `${measure.currentValue ?? 0} / ${measure.targetValue ?? 0}${unit}`;
 }
+
+/** A recorded value change: `at` is the ISO instant, `from` the value before it. */
+export interface ValueChange {
+  at: string;
+  from: number | null;
+}
+
+/** A measure's value at `instant`: the value before the first change after it, or the current value when none follows. */
+export function valueAt(currentValue: number | null, changes: readonly ValueChange[], instant: string): number | null {
+  let first: ValueChange | undefined;
+  for (const change of changes) {
+    if (change.at >= instant && (!first || change.at < first.at)) first = change;
+  }
+  return first ? first.from : currentValue;
+}

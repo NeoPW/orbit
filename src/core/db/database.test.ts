@@ -32,7 +32,7 @@ describe('openDatabase', () => {
   it('seeds Job, Personal, Sport, Uni in order on the first open', async () => {
     const result = await openDatabase(driverFor('a.db'), 'file');
     if (result.status !== 'ready') throw new Error('not ready');
-    expect(result.schemaVersion).toBe(4);
+    expect(result.schemaVersion).toBe(5);
     expect(result.storage).toBe('file');
     const rows = await result.db.select().from(areas).orderBy(asc(areas.sortOrder));
     expect(rows.map((r) => [r.name, r.color])).toEqual([
