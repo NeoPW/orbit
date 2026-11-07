@@ -25,12 +25,14 @@ describe('loadReminderInput', () => {
       { ...createFields(clock), title: 'In shed', dueDate: '2026-10-22', projectId: paused.id },
       { ...createFields(clock), title: 'No date' },
     ]);
-    await db.insert(timers).values({ ...createFields(clock, TIMER_ID), projectId: active.id, startedAt: '2026-10-14T09:00:00.000Z', plannedMinutes: 25 });
+    await db
+      .insert(timers)
+      .values({ ...createFields(clock, TIMER_ID), projectId: active.id, startedAt: '2026-10-14T09:00:00.000Z', plannedMinutes: 25 });
 
     const input = await loadReminderInput(db, '2026-10-14');
     expect(input.habits.map((h) => [h.title, h.linkTitle])).toEqual([['Run', 'Get fit']]);
     expect(input.tasks.map((t) => t.title).sort()).toEqual(['In garden', 'Loose']);
     expect(input.projects).toEqual([{ id: active.id, title: 'Garden', deadline: '2026-10-20' }]);
-    expect(input.focus).toEqual({ title: 'Garden', startedAt: '2026-10-14T09:00:00.000Z', plannedMinutes: 25 });
+    expect(input.focus).toEqual({ title: 'Garden', startedAt: '2026-10-14T09:00:00.000Z', workedSeconds: 0, limitMinutes: 25 });
   });
 });

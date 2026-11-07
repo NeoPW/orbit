@@ -42,7 +42,7 @@ export function HomeScreen() {
   const today = useToday();
   const isPhone = useIsPhone();
   const complete = useCompleteTask();
-  const { startWithLastLength } = useStartFocus();
+  const { start } = useStartFocus();
   const data = useLiveQuery(
     async (database) => {
       const [todo, projects, habits, done] = await Promise.all([
@@ -135,7 +135,7 @@ export function HomeScreen() {
                       className={styles.habitStart}
                       aria-label={`Start focus on ${habit.title}`}
                       title="Start focus"
-                      onClick={() => void startWithLastLength({ habitId: habit.id })}
+                      onClick={() => void start({ habitId: habit.id })}
                     >
                       <Play aria-hidden="true" />
                     </button>
@@ -167,7 +167,7 @@ export function HomeScreen() {
                     context: itemByTask.get(task.id)?.context ?? undefined,
                     projectColor: itemByTask.get(task.id)?.projectColor,
                     projectName: itemByTask.get(task.id)?.projectTitle ?? undefined,
-                    onStartFocus: () => void startWithLastLength({ taskId: task.id }),
+                    onStartFocus: () => void start({ taskId: task.id }),
                   })}
                 />
               </div>

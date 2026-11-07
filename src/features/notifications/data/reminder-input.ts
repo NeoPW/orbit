@@ -22,10 +22,15 @@ export async function loadReminderInput(db: Db, today: string): Promise<Reminder
   const goalTitle = new Map(goalRows.map((g) => [g.id, g.title]));
 
   let focus: ReminderInput['focus'] = null;
-  if (timer?.plannedMinutes) {
+  if (timer?.plannedMinutes && timer.pausedAt === null) {
     const [task] = timer.taskId ? await db.select({ title: tasks.title }).from(tasks).where(eq(tasks.id, timer.taskId)) : [];
     const project = timer.projectId ? projectById.get(timer.projectId)?.title : undefined;
-    focus = { title: task?.title ?? project ?? 'Focus session', startedAt: timer.startedAt, plannedMinutes: timer.plannedMinutes };
+    focus = {
+      title: task?.title ?? project ?? 'Focus session',
+      startedAt: timer.startedAt,
+      workedSeconds: timer.workedSeconds,
+      limitMinutes: timer.plannedMinutes,
+    };
   }
 
   return {

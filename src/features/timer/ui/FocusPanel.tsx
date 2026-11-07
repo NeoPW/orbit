@@ -1,14 +1,12 @@
-import { Focus, Maximize2, Play, Square, Trash2 } from 'lucide-react';
+import { CircleCheck, Focus, Maximize2, Pause, Play } from 'lucide-react';
 import { useState, type CSSProperties } from 'react';
 import { useNow } from '../../../core/dates/today.ts';
 import { Chip } from '../../../core/ui/components/Chip.tsx';
-import { elapsedMs } from '../domain/timer.ts';
+import { workedMs, type SessionClock } from '../domain/timer.ts';
 import { useLiveQuery } from '../../../core/db/live.ts';
 import { navigate } from '../../../core/routing/useRoute.ts';
 import { Button } from '../../../core/ui/components/Button.tsx';
-import { SegmentedControl } from '../../../core/ui/components/SegmentedControl.tsx';
 import { useServices } from '../../../app/services.ts';
-import { useSettings } from '../../settings/data/settings.ts';
 import type { ActiveProjectItem } from '../../home/data/home-queries.ts';
 import { listActiveHabitOptions } from '../../home/data/home-queries.ts';
 import { createTask, listOpenTasks } from '../../tasks/data/tasks-repository.ts';
@@ -18,24 +16,16 @@ import { quickStartPlan, type QuickStartPlan } from '../domain/quick-start.ts';
 import { QuickStartField } from './QuickStartField.tsx';
 import { TimerReadout } from './TimerReadout.tsx';
 import { useStartFocus } from './useStartFocus.ts';
-import { useStopTimer } from './useStopTimer.tsx';
+import { useSessionActions } from './useSessionActions.tsx';
 
 const clock = () => new Date();
-
-/** Planned lengths in minutes; 0 stands for open-ended. */
-const LENGTHS = [
-  { value: 30, label: '30 min' },
-  { value: 60, label: '60 min' },
-  { value: 90, label: '90 min' },
-  { value: 0, label: 'Open-ended' },
-];
 
 export interface FocusPanelProps {
   /** The active projects, for `# project` and for starting on a project. */
   projects: ActiveProjectItem[];
 }
 
-/** Home's focus panel: type what to work on and start, or the running session with Stop, Discard and Focus mode. */
+/** Home's focus panel: type what to work on and start, or the session with Pause or Resume, Complete and Focus mode. */
 export function FocusPanel({ projects }: FocusPanelProps) {
   const view = useLiveQuery(getTimerView, []);
   if (view === undefined) return <section className={styles.panel} aria-label="Focus" />;
@@ -44,15 +34,11 @@ export function FocusPanel({ projects }: FocusPanelProps) {
 
 function Idle({ projects }: FocusPanelProps) {
   const { db } = useServices();
-  const { settings } = useSettings();
   const { start } = useStartFocus();
   const openTasks = useLiveQuery(listOpenTasks, []);
   const habitOptions = useLiveQuery(listActiveHabitOptions, []);
   const [text, setText] = useState('');
   const [picked, setPicked] = useState<{ id: string; kind: 'task' | 'habit' } | null>(null);
-  const [minutes, setMinutes] = useState<number | null>(null);
-  const stored = settings.focusMinutes ?? 0;
-  const length = minutes ?? (LENGTHS.some((l) => l.value === stored) ? stored : 0);
 
   const taskOptions = [
     ...(openTasks ?? []).map((v) => ({
@@ -87,10 +73,9 @@ function Idle({ projects }: FocusPanelProps) {
 
   async function begin() {
     if (!canStart) return;
-    const planned = length === 0 ? null : length;
-    if (plan.kind === 'task') await start({ taskId: plan.taskId }, planned);
-    else if (plan.kind === 'habit') await start({ habitId: plan.habitId }, planned);
-    else if (plan.kind === 'project') await start({ projectId: plan.projectId }, planned);
+    if (plan.kind === 'task') await start({ taskId: plan.taskId });
+    else if (plan.kind === 'habit') await start({ habitId: plan.habitId });
+    else if (plan.kind === 'project') await start({ projectId: plan.projectId });
     else if (plan.kind === 'new') {
       const taskId = await createTask(db, clock, {
         title: plan.title,
@@ -100,7 +85,7 @@ function Idle({ projects }: FocusPanelProps) {
         projectId: plan.projectId,
         goalId: null,
       });
-      await start({ taskId }, planned);
+      await start({ taskId });
     }
   }
 
@@ -127,7 +112,6 @@ function Idle({ projects }: FocusPanelProps) {
             error={error}
           />
         </div>
-        <SegmentedControl label="Planned length" options={LENGTHS} value={length} onChange={setMinutes} />
         <Button variant="primary" icon={<Play />} disabled={!canStart} onClick={() => void begin()}>
           Start
         </Button>
@@ -141,9 +125,9 @@ function runningProject(view: TimerView): { name: string; color: string } | null
   return view.projectColor && view.projectName ? { name: view.projectName, color: view.projectColor } : null;
 }
 
-function SessionProgress({ startedAt, plannedMinutes }: { startedAt: string; plannedMinutes: number }) {
+function SessionProgress({ session, limitMinutes }: { session: SessionClock; limitMinutes: number }) {
   const now = useNow(1000);
-  const percent = Math.min(100, Math.round((elapsedMs(startedAt, now) / (plannedMinutes * 60000)) * 100));
+  const percent = Math.min(100, Math.round((workedMs(session, now) / (limitMinutes * 60000)) * 100));
   return (
     <div
       className={styles.progress}
@@ -159,9 +143,10 @@ function SessionProgress({ startedAt, plannedMinutes }: { startedAt: string; pla
 }
 
 function Running({ view }: { view: TimerView }) {
-  const stop = useStopTimer(view);
+  const actions = useSessionActions(view);
   const { timer } = view;
   const project = runningProject(view);
+  const paused = timer.pausedAt !== null;
   return (
     <section
       className={`${styles.panel} ${styles.raised}`}
@@ -173,31 +158,37 @@ function Running({ view }: { view: TimerView }) {
           <div className={styles.tags}>
             <span className={styles.state}>
               <span className={styles.stateDot} aria-hidden="true" />
-              Running
+              {paused ? 'Paused' : 'Running'}
             </span>
             {project && <Chip projectColor={project.color}>{project.name}</Chip>}
           </div>
           <span className={styles.title}>{view.title}</span>
         </div>
         <div className={styles.readout}>
-          <TimerReadout startedAt={timer.startedAt} plannedMinutes={timer.plannedMinutes} />
+          <TimerReadout session={timer} limitMinutes={timer.plannedMinutes} />
         </div>
       </div>
-      {timer.plannedMinutes !== null && <SessionProgress startedAt={timer.startedAt} plannedMinutes={timer.plannedMinutes} />}
+      {timer.plannedMinutes !== null && <SessionProgress session={timer} limitMinutes={timer.plannedMinutes} />}
       <div className={styles.buttons}>
         <div className={styles.actions}>
-          <Button variant="primary" icon={<Square />} onClick={stop.askStop}>
-            Stop
-          </Button>
-          <Button variant="ghost" icon={<Trash2 />} onClick={stop.askDiscard}>
-            Discard
+          {paused ? (
+            <Button variant="primary" icon={<Play />} onClick={actions.resume}>
+              Resume
+            </Button>
+          ) : (
+            <Button variant="primary" icon={<Pause />} onClick={actions.pause}>
+              Pause
+            </Button>
+          )}
+          <Button icon={<CircleCheck />} onClick={actions.askComplete}>
+            Complete
           </Button>
         </div>
         <Button icon={<Maximize2 />} onClick={() => navigate({ name: 'focus' })}>
           Focus mode
         </Button>
       </div>
-      {stop.dialogs}
+      {actions.dialogs}
     </section>
   );
 }

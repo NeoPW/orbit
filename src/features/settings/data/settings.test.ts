@@ -1,6 +1,4 @@
 import { describe, expect, it, vi } from 'vitest';
-import { eq } from 'drizzle-orm';
-import { settings as settingsTable } from '../../../core/db/schema.ts';
 import { openTestDatabase } from '../../../core/db/testing.ts';
 import { DEFAULT_SETTINGS, readSettings, saveSetting, subscribeSettings } from './settings.ts';
 
@@ -13,26 +11,8 @@ describe('settings', () => {
       leadDays: 7,
       reviewDay: 7,
       reviewTime: '18:00',
-      focusMinutes: null,
       theme: 'slate',
     });
-  });
-
-  it('has open-ended focus by default and remembers it', async () => {
-    const { db } = await openTestDatabase();
-    expect((await readSettings(db)).focusMinutes).toBeNull();
-    await saveSetting(db, 'focusMinutes', 90);
-    expect((await readSettings(db)).focusMinutes).toBe(90);
-    expect(await saveSetting(db, 'focusMinutes', null)).toBe(true);
-    expect((await readSettings(db)).focusMinutes).toBeNull();
-  });
-
-  it('reads an older stored length of 25 or 50 as 30 or 60', async () => {
-    const { db } = await openTestDatabase();
-    await db.insert(settingsTable).values({ key: 'focus_minutes', value: '25' });
-    expect((await readSettings(db)).focusMinutes).toBe(30);
-    await db.update(settingsTable).set({ value: '50' }).where(eq(settingsTable.key, 'focus_minutes'));
-    expect((await readSettings(db)).focusMinutes).toBe(60);
   });
 
   it('keeps saved values when read again from the same database', async () => {
@@ -53,9 +33,9 @@ describe('settings', () => {
     const { db } = await openTestDatabase();
     let settingsCalls = 0;
     const stop = subscribeSettings(() => settingsCalls++);
-    await saveSetting(db, 'focusMinutes', 50);
+    await saveSetting(db, 'leadDays', 5);
     stop();
-    await saveSetting(db, 'focusMinutes', 90);
+    await saveSetting(db, 'leadDays', 6);
     expect(settingsCalls).toBe(1);
   });
 

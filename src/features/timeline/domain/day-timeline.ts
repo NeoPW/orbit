@@ -27,6 +27,52 @@ export function blockTimes(entry: { source: string; occurredAt: string; duration
     : { start: new Date(at.getTime() - length), end: at };
 }
 
+/** Longest gap between two stretches of one session's work that is still drawn as one block. */
+export const MERGE_GAP_MINUTES = 10;
+
+/** What a timer stretch needs for merging; `mergeKey` is null for work that never merges (not from a timer). */
+export interface Stretch extends TimeSpan {
+  /** The task, habit or project the stretch is for, e.g. `task:<id>`; null when it must not merge. */
+  mergeKey: string | null;
+  minutes: number;
+  note: string;
+  running: boolean;
+}
+
+/** The merge key of a timer stretch: its task, else its habit, else its project; null without any. */
+export function stretchKey(links: { taskId: string | null; habitId: string | null; projectId: string | null }): string | null {
+  if (links.taskId) return `task:${links.taskId}`;
+  if (links.habitId) return `habit:${links.habitId}`;
+  return links.projectId ? `project:${links.projectId}` : null;
+}
+
+/**
+ * Joins timer blocks of the same item that are at most `maxGapMinutes` apart (also over several pauses) into one block
+ * from the first start to the last end. Minutes are summed, so the pauses are not counted. Other items stay as they are.
+ */
+export function mergeStretches<T extends Stretch & { id: string }>(items: T[], maxGapMinutes: number = MERGE_GAP_MINUTES): T[] {
+  const sorted = [...items].sort((a, b) => a.start.getTime() - b.start.getTime());
+  const result: T[] = [];
+  const last = new Map<string, number>();
+  for (const item of sorted) {
+    const index = item.mergeKey && item.kind === 'block' ? last.get(item.mergeKey) : undefined;
+    const previous = index === undefined ? undefined : result[index];
+    if (previous && item.start.getTime() - previous.end.getTime() <= maxGapMinutes * 60000) {
+      result[index as number] = {
+        ...previous,
+        end: item.end > previous.end ? item.end : previous.end,
+        minutes: previous.minutes + item.minutes,
+        note: [previous.note, item.note].filter((n) => n.trim() !== '').join(' \u00b7 '),
+        running: item.running,
+      };
+      continue;
+    }
+    if (item.mergeKey && item.kind === 'block') last.set(item.mergeKey, result.length);
+    result.push(item);
+  }
+  return result;
+}
+
 function localDate(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;

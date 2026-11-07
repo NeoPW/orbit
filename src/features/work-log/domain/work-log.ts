@@ -8,6 +8,16 @@ export function formatDuration(minutes: number): string {
   return m === 0 ? `${h} h` : `${h} h ${m} min`;
 }
 
+/** Minutes of the entries that have a duration; entries without one (checks, completions) count 0. */
+export function totalMinutes(entries: { durationMinutes: number | null }[]): number {
+  return entries.reduce((sum, entry) => sum + (entry.durationMinutes ?? 0), 0);
+}
+
+/** "1 h 15 min" for the total time worked, or "No time logged". */
+export function formatTotal(minutes: number): string {
+  return minutes > 0 ? formatDuration(minutes) : 'No time logged';
+}
+
 export type DurationResult = { ok: true; minutes: number | null } | { ok: false; error: string };
 
 /** A duration is empty or a whole number of minutes from 1 to 1440. */

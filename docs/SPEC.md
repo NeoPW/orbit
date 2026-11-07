@@ -49,7 +49,7 @@ Desktop-only features (native SQLite, tray, global hotkey, notifications) are re
 - **Task:** a concrete to-do with its own page, a small project of its own. It can stand alone or be assigned to exactly one project or goal, has an optional deadline, an optional importance and notes, and work can be logged on it. Tasks of a project can be marked as its next steps; tasks are not only next steps.
 - **Habit:** a recurring task belonging to a project, a goal, both or neither, with a schedule. Checking it off logs work automatically. A measure can count a habit's check-ins.
 - **Log entry:** a record of work done (when, optionally how long, what, for which project, goal or task).
-- **Timer / focus session:** a running stopwatch for work on a project or task, optionally with a planned length. At most one runs at a time, also across devices. Stopping it logs the elapsed time as a log entry.
+- **Timer / focus session:** a stopwatch for work on a project, task or habit that can be paused and resumed, optionally with a time limit. At most one exists at a time, also across devices. Each stretch of work is logged as a log entry when it is paused or completed.
 - **Weekly note:** a short "where does this stand" note on a project or goal for one week, written in the weekly review. Together they form the project's or goal's history.
 - **Weekly review:** a per-week record with a score, a reflection and a plan for next week.
 
@@ -127,9 +127,12 @@ A project's next steps are its tasks with `is_next_step` set (see Task); the pro
 
 ### Timer
 - `project_id` nullable, `task_id` nullable, `habit_id` nullable: exactly one of them is set
-- `started_at` (UTC)
-- `planned_minutes` nullable: the planned length of a focus session (30, 60 or 90 from the quick choices, or any other number); null for an open-ended session
-- There is at most one row: it has a fixed ID, so starting a timer on two devices gives one record (the later start wins). Stopping soft-deletes it.
+- `started_at` (UTC): the start of the current stretch (resuming sets it again)
+- `planned_minutes` nullable: the session's time limit in worked minutes (set in focus mode); null for no limit
+- `paused_at` nullable: set while the session is paused
+- `worked_seconds`: the exact time of the earlier stretches of the session in seconds, not their rounded entries (default 0)
+- `last_entry_id` nullable: the log entry of the last logged stretch
+- There is at most one row: it has a fixed ID, so starting a session on two devices gives one record (the later start wins). Completing or discarding soft-deletes it.
 
 ### Note
 - `target_type`: `project | goal`
@@ -204,11 +207,12 @@ Measured in local calendar days from today to a deadline:
 - Completing the project's **last** open next step prompts: "What's the next step?": create a new task, pick one or more existing open tasks, or skip (no next step). Cancelling the prompt leaves the task open.
 
 ### Timer and focus
-- Starting a timer while another runs stops the running one first (and logs it).
-- With `planned_minutes`, the end of the planned time is marked by a desktop notification and a sound; the timer keeps counting into overtime and is not stopped automatically.
-- Stopping asks "What did you get done?"; the answer becomes the log entry's note. It then creates a `LogEntry` (`source = timer`, `occurred_at` = start, linked to the project, or to the task and its project or goal, or to the habit and its project or goal) with the elapsed whole minutes, at least 1. For a habit that is not yet checked today the stop dialog offers "Mark as done today" (on by default), which checks the habit. When the session ran for a task that is completed at that point and was a next step, the next-step prompt follows.
-- The timer can also be discarded without logging.
-- The elapsed time is computed from `started_at`, so the timer keeps running while the app is closed.
+- Starting a session while another exists logs the other one's running stretch (a paused one just ends). A session starts without a time limit.
+- **Pause** logs the stretch since the last start or resume as a `LogEntry` (`source = timer`, `occurred_at` = the stretch's start, whole minutes, at least 1, linked to the project, or to the task and its project or goal, or to the habit and its project or goal), without a dialog, and leaves the session paused. **Resume** starts a new stretch. The session may be left (focus mode closed, app closed) while running or paused.
+- **Complete** asks "What did you get done?"; a running stretch is logged with the answer as its note, for a paused session a non-empty answer is set on the last logged stretch. It then ends the session: a task is marked done, for a habit that is not yet checked today the dialog offers "Mark as done today" (on by default), which checks the habit, and a project is left as it is. When the completed task was its project's last next step, the next-step prompt follows.
+- **Discard** (top right of focus mode) drops only the running stretch and ends the session; stretches logged by pausing stay. A paused session is discarded without a confirmation.
+- With a time limit (worked minutes, set in focus mode: 15, 30, 45, 60, 90, custom or none), reaching it while running is marked by a desktop notification and a sound; the timer keeps counting into overtime and does not pause automatically.
+- The worked time is `worked_seconds` plus the time since `started_at` while running (exact to the second, while each entry is whole minutes), so the timer keeps running while the app is closed.
 
 ### Work per goal
 - Work on a goal is every log entry linked to the goal itself, to one of its projects, or to a task of the goal or of one of its projects. Work is counted per entry and by total duration.
@@ -234,32 +238,32 @@ Desktop layout with a main column and a side column.
 
 **Main column**, top to bottom:
 1. **Today:** the weekday and date.
-2. **Focus panel:** a text field "What are you working on?" that suggests matching open tasks and active habits (with their project colour and name) while typing (Tab accepts the highlighted or first suggestion), a planned length (30, 60 or 90 minutes, or open-ended; open-ended is the default and the last choice is remembered on the device) and Start. Text that is not an existing task creates one when starting: `title # project` puts the new task in that project (after `#` the active projects are suggested; a prefix is enough when it is unique), without `#` it is a standalone task, and `# project` alone starts on the project itself. An unknown project name shows an error and disables Start. While a timer runs, the panel shows what it runs for, the elapsed time counting live (and the overtime after a planned length), **Stop** and **Discard**, and a button to enter focus mode again.
+2. **Focus panel:** a text field "What are you working on?" that suggests matching open tasks and active habits (with their project colour and name) while typing (Tab accepts the highlighted or first suggestion), and Start (no length is chosen; sessions start without a time limit). Text that is not an existing task creates one when starting: `title # project` puts the new task in that project (after `#` the active projects are suggested; a prefix is enough when it is unique), without `#` it is a standalone task, and `# project` alone starts on the project itself. An unknown project name shows an error and disables Start. While a session exists, the panel shows what it runs for, the worked time counting live while running (marked Paused otherwise; with the time limit and overtime if set), **Pause** or **Resume**, **Complete**, and a button to enter focus mode again.
 3. **Habits due today:** in their own row, as compact chips labeled with their project or goal; clicking a chip checks or unchecks it, and its small start button starts a focus session on the habit (a habit is like a recurring task: it can be focused on and its time is logged on it). Habits are not ranked with tasks.
 4. **To do:** the open next-step tasks of active projects and the open tasks outside projects (standalone or assigned to a goal), ranked by task rank (§5). Each row shows a checkbox, the title, its project or goal, importance dots and a deadline badge; a row can be started as a focus session directly. Clicking a row opens the task page.
 5. **Done today:** the tasks completed today, newest first, each with a checked checkbox (unchecking reopens it), its title, project chip and completion time; hidden while nothing was completed today.
 
 **Side column:**
-1. **Today:** the work already logged today, plotted as blocks on an hour axis (06:00–22:00, extended for earlier or later work), colored like their project and labeled with the task, project or goal. A timer entry starts at its time, any other entry ends at its time (the work was done before it was logged); entries without a duration (a completed task, a habit check) are small dots at the left edge of the column, without text (details on hover), so only focus sessions and tracked time are blocks; a block shows its title, its time range and project when it is high enough; a running focus session is a striped block growing to the current time; overlapping blocks sit side by side; a line marks now. Clicking a block opens its task, project or goal. A view only, no planning.
+1. **Today:** the work already logged today, plotted as blocks on an hour axis (06:00–22:00, extended for earlier or later work), colored like their project and labeled with the task, project or goal. A timer entry starts at its time, any other entry ends at its time (the work was done before it was logged); entries without a duration (a completed task, a habit check) are small dots at the left edge of the column, without text (details on hover), so only focus sessions and tracked time are blocks; a block shows its title, its time range and project when it is high enough; a running focus session is a striped block growing to the current time (a paused one has none); timer blocks of the same task, habit or project with at most 10 minutes between them are drawn as one block from the first start to the last end, counting only the worked minutes; overlapping blocks sit side by side; a line marks now. Clicking a block opens its task, project or goal. A view only, no planning.
 2. A compact overview of the active projects, ordered by project score (§5), each with its title, area color, deadline badge and its next steps. Clicking a project opens its detail.
 
 Also on Home: **New task** (title, optional deadline, importance and assignment; saving a plain task takes a title and Enter) and **Log work** (record work done without a timer: optional start time, duration and note, then the project or task; without a start time the work ended now, with one it ended at the start plus the duration).
 
-**Focus mode:** starting a focus session opens a full-window view showing only the task or project, its notes and a large timer (with the planned length and overtime, if set), with Stop and Discard. Stopping follows §5 (Timer and focus).
+**Focus mode:** starting a focus session opens a full-window view showing only the task, habit or project, its notes and a large timer (with the time limit and overtime, if set), a "Time limit" menu, **Pause** or **Resume** and **Complete**, with **Discard** in the top-right corner. Pause and Resume have no dialog; Complete follows §5 (Timer and focus). Leaving focus mode keeps the session as it is.
 
 ### 6.2 Project detail
 - A header with title, status chip, area chip, importance dots and deadline badge (marked when taken from the goal), then description and the goal it serves (clicking it opens the goal page).
 - **Next steps** (marked in the task list instead of being shown twice) and the open tasks; add, complete and delete tasks, mark and unmark next steps; clicking a task opens its task page. Open tasks are ordered by due date; manual reordering is deferred.
 - **Weekly notes:** the project's notes, newest week first.
 - Habits belonging to this project.
-- Log entries for this project (most recent first).
+- Log entries for this project (most recent first), with the total time worked on it (including its tasks and habits) in the section header.
 - Status: changed through the status chip in the header, which offers the other statuses (active, paused, backlog, completed).
 
 ### 6.3 Task page
 - Title, notes, deadline, importance (its own, or shown as inherited), status and what the task is assigned to (project or goal, clicking it opens that item), or "Standalone".
 - Marked when it is one of its project's next steps.
 - Actions: complete (with Undo), reopen a done task, edit, delete, log work, start a focus session, and "Mark as next step" / "Remove from next steps" for a project's task.
-- Log entries for this task (most recent first).
+- Log entries for this task (most recent first), with the total time worked on it in the section header.
 
 ### 6.4 Plan
 Designed for desktop widths: one page with sections (Goals, Projects without a goal, Backlog, Habits, Areas, Archive) and a **New** menu; goals, projects and tasks open as their own pages. What it contains:
@@ -267,7 +271,7 @@ Designed for desktop widths: one page with sections (Goals, Projects without a g
 - Active projects without a goal, and active projects whose goal is not active (showing the goal's title), in their own section.
 - **Backlog:** all projects with status `backlog` or `paused`, filterable by area. Activating one makes it active.
 - **Archive** of completed goals and projects.
-- **Habits** and **Areas** lists.
+- **Habits** (each with its total time worked at the right) and **Areas** lists.
 - Create and edit goals, measures, projects, tasks, habits and areas. Clicking a goal, project or task opens its page; each page has Edit.
 - **Goal page:** header with title, progress, date range, status and deadline badge, and the description; **measures** with progress bars and their controls in the row (− / + by step, direct editing of the value, a done switch for yes/no, read-only check-ins for a habit measure); the **projects** serving the goal (active first, then backlog and paused; completed ones counted); open tasks and habits of the goal; **work** logged on the goal this week and in total (§5); its **weekly notes**, newest first.
 - No planets or other space visuals in Plan.
@@ -339,7 +343,7 @@ The app should feel calm, clear and quick. These guidelines hold for every scree
 Desktop notifications, shown by the Tauri app while it runs (it can keep running in the tray). The browser build shows none.
 - **Habits:** a reminder at each habit's `reminder_time` (or the default reminder time) on every day it is due and not yet checked.
 - **Deadlines:** for open tasks and active projects with an own deadline, a reminder at the default reminder time when the deadline enters the lead time, and one on the day itself.
-- **Focus session:** at the end of a session's planned length, a notification and a sound (§5).
+- **Focus session:** when the worked time reaches the session's time limit, a notification and a sound (§5).
 - **Weekly review:** at the configured review day and time (default Sunday 18:00), opening the review flow; skipped when that week's review is already completed.
 
 Clicking a reminder opens its screen: Home for habits, the task page for tasks, the project detail for projects. The Android companion will get its own notifications, including an ongoing one for the running timer.

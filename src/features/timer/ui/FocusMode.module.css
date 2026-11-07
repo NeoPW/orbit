@@ -78,3 +78,7 @@
   align-items: center;
   justify-content: center;
 }
+
+.limit {
+  margin-top: var(--space-4);
+}
