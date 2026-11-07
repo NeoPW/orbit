@@ -18,11 +18,11 @@ In the browser, the app SHALL ask the browser to keep its storage persistent. If
 - **THEN** no storage warning is shown and saved data survives a reload
 
 ### Requirement: Complete schema from the start
-The database SHALL contain tables for all entities of the product spec: Area, Goal, Measure, Project, Task, Habit, HabitCheck, LogEntry, Timer, Note, WeeklyReview and ReviewMeasureSnapshot, with the fields defined in `docs/SPEC.md` §4 (including a task's importance and next-step flag, a project's colour, the timer's planned length and the note's target and week), and a local-only settings table that is not synced. A project SHALL NOT store a next step of its own.
+The database SHALL contain tables for all entities of the product spec: Area, Goal, Measure, MeasureChange, Project, Task, Habit, HabitCheck, LogEntry, Timer, Note, WeeklyReview and ReviewMeasureSnapshot, with the fields defined in `docs/SPEC.md` §4 (including a task's importance and next-step flag, a project's colour, the timer's time limit and session state, and the note's target and week), and a local-only settings table that is not synced. A project SHALL NOT store a next step of its own.
 
 #### Scenario: Fresh install
 - **WHEN** the database is created for the first time
-- **THEN** all twelve entity tables and the settings table exist and the schema version is 2
+- **THEN** all thirteen entity tables and the settings table exist and the schema version is that of the latest migration
 
 #### Scenario: Unique habit check per day
 - **WHEN** a second HabitCheck row is inserted for the same habit and the same date

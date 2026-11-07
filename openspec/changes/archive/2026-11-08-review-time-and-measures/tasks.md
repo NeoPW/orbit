@@ -53,7 +53,7 @@
   - §6.5: the Review tab with the week switcher and the summary with Time and recent weeks, without the Last week page
   - §6.6: the Review section in Settings
 - [x] 5.2 Run `npm run check` (full suite) and fix what fails.
-- [ ] 5.3 Verify in the browser and in the desktop app:
+- [x] 5.3 Verify in the browser and in the desktop app:
   - week switching and "This week"
   - the Time tile with and without a target
   - raising a measure, after which the Goals section shows "7 → 9" for this week
