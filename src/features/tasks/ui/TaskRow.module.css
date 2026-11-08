@@ -63,7 +63,7 @@ div:hover > div > .startOnHover,
 /* Compact rows: a thin outline in the project colour instead of the left rail. */
 .outlined {
   margin: 4px 0;
-  border: 1px solid color-mix(in srgb, var(--pc) 45%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pc) 70%, transparent);
   border-radius: var(--radius-md);
 }
 
