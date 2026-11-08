@@ -1,19 +1,23 @@
-import { ListTodo, Plus } from 'lucide-react';
+import { ListTodo, Plus, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import { useLiveQuery } from '../../../core/db/live.ts';
 import { Button } from '../../../core/ui/components/Button.tsx';
 import { EmptyState } from '../../../core/ui/components/EmptyState.tsx';
 import { Section } from '../../../core/ui/components/Section.tsx';
-import { listOpenTasksOfProject } from '../../tasks/data/tasks-repository.ts';
-import { effectiveImportance } from '../../tasks/domain/tasks.ts';
+import { useServices } from '../../../app/services.ts';
+import { listOpenTasksOfProject, moveTask, resetTaskOrder } from '../../tasks/data/tasks-repository.ts';
+import { effectiveImportance, hasManualOrder } from '../../tasks/domain/tasks.ts';
 import { TaskList } from '../../tasks/ui/TaskRow.tsx';
 import { TaskSheet } from '../../tasks/ui/TaskSheet.tsx';
 import type { ProjectSectionProps } from './ProjectPage.tsx';
 
+const clock = () => new Date();
+
 /** The project's open tasks once, next steps first (marked), with Add task. */
 export function ProjectTasksSection({ view }: ProjectSectionProps) {
   const { project } = view;
-  const tasks = useLiveQuery((db) => listOpenTasksOfProject(db, project.id), [project.id]);
+  const { db } = useServices();
+  const tasks = useLiveQuery((database) => listOpenTasksOfProject(database, project.id), [project.id]);
   const [adding, setAdding] = useState(false);
 
   return (
@@ -23,9 +27,16 @@ export function ProjectTasksSection({ view }: ProjectSectionProps) {
       color={view.color}
       count={tasks?.length}
       actions={
-        <Button variant="ghost" icon={<Plus />} onClick={() => setAdding(true)}>
-          Add task
-        </Button>
+        <>
+          {tasks && hasManualOrder(tasks) && (
+            <Button variant="ghost" icon={<RotateCcw />} onClick={() => void resetTaskOrder(db, clock, project.id)}>
+              Reset order
+            </Button>
+          )}
+          <Button variant="ghost" icon={<Plus />} onClick={() => setAdding(true)}>
+            Add task
+          </Button>
+        </>
       }
     >
       {tasks && tasks.length === 0 && (
@@ -43,6 +54,7 @@ export function ProjectTasksSection({ view }: ProjectSectionProps) {
         <TaskList
           tasks={tasks}
           label="Open tasks"
+          onMove={(taskId, toIndex) => void moveTask(db, clock, taskId, toIndex)}
           rowProps={(task) => ({
             projectColor: view.color,
             projectName: project.title,

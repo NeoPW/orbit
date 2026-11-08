@@ -80,6 +80,8 @@ export const columns = {
     isNextStep: integer('is_next_step', { mode: 'boolean' }).notNull().default(false),
     status: text('status', { enum: TASK_STATUSES }).notNull().default('open'),
     completedAt: text('completed_at'),
+    /** Manual position in the project's open task list; null until the list is reordered. */
+    sortOrder: real('sort_order'),
   }),
   habits: () => ({
     ...shared(),

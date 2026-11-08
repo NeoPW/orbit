@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { ArrowRight, Play } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ArrowRight, GripVertical, Play } from 'lucide-react';
 import { AnimatedList } from '../../../core/ui/components/AnimatedList.tsx';
 import { IconButton } from '../../../core/ui/components/Button.tsx';
 import { Checkbox } from '../../../core/ui/components/Checkbox.tsx';
@@ -166,16 +166,136 @@ export interface TaskListProps {
   /** Extras for a row, for example `importance` or `context`. */
   rowProps?: (task: Task) => Omit<TaskRowProps, 'task'>;
   label?: string;
+  /**
+   * Makes the rows reorderable (a project's open tasks): called with the task and its new index within its group
+   * (the next steps, or the other tasks). Rows can be dragged by their handle, or moved with `Alt+↑` / `Alt+↓` on it.
+   */
+  onMove?: (taskId: string, toIndex: number) => void;
+}
+
+interface Drag {
+  id: string;
+  /** Pointer movement since the drag started, in pixels. */
+  dy: number;
+  /** Where the task would land in its group. */
+  target: number;
 }
 
 /** Open tasks as `TaskRow`s in an `AnimatedList`, so a completed task leaves with a short animation. */
-export function TaskList({ tasks, rowProps, label }: TaskListProps) {
+export function TaskList({ tasks, rowProps, label, onMove }: TaskListProps) {
+  const container = useRef<HTMLDivElement>(null);
+  const [drag, setDrag] = useState<Drag | null>(null);
+  const [announcement, setAnnouncement] = useState('');
+  const refocus = useRef<string | null>(null);
+
+  // After a keyboard move the row is re-rendered in its new place; give the handle its focus back.
+  useEffect(() => {
+    if (!refocus.current) return;
+    const handle = container.current?.querySelector<HTMLElement>(`[data-task-id="${refocus.current}"] [data-handle]`);
+    handle?.focus();
+    refocus.current = null;
+  }, [tasks]);
+
+  if (!onMove) {
+    return (
+      <AnimatedList items={tasks} getKey={(task) => task.id} label={label} renderItem={(task) => <TaskRow task={task} {...rowProps?.(task)} />} />
+    );
+  }
+
+  const groupOf = (task: Task) => tasks.filter((t) => t.isNextStep === task.isNextStep);
+
+  function move(task: Task, to: number) {
+    const group = groupOf(task);
+    const clamped = Math.max(0, Math.min(to, group.length - 1));
+    onMove?.(task.id, clamped);
+    setAnnouncement(`${task.title} moved to place ${clamped + 1} of ${group.length}`);
+  }
+
+  function startDrag(event: React.PointerEvent<HTMLButtonElement>, task: Task) {
+    if (event.button !== 0) return;
+    const handle = event.currentTarget;
+    handle.setPointerCapture(event.pointerId);
+    const group = groupOf(task);
+    const from = group.findIndex((t) => t.id === task.id);
+    const rows = group.map((t) => container.current?.querySelector<HTMLElement>(`[data-task-id="${t.id}"]`)?.getBoundingClientRect());
+    const own = rows[from];
+    if (!own) return;
+    const startY = event.clientY;
+    const center = own.top + own.height / 2;
+    const targetFor = (dy: number) => rows.filter((r, i) => i !== from && r && r.top + r.height / 2 < center + dy).length;
+    setDrag({ id: task.id, dy: 0, target: from });
+
+    const onMoveEvent = (e: PointerEvent) => {
+      const dy = e.clientY - startY;
+      setDrag({ id: task.id, dy, target: targetFor(dy) });
+    };
+    const finish = (e: PointerEvent, commit: boolean) => {
+      handle.removeEventListener('pointermove', onMoveEvent);
+      handle.removeEventListener('pointerup', onUp);
+      handle.removeEventListener('pointercancel', onCancel);
+      if (handle.hasPointerCapture(e.pointerId)) handle.releasePointerCapture(e.pointerId);
+      const target = targetFor(e.clientY - startY);
+      setDrag(null);
+      if (commit && target !== from) move(task, target);
+    };
+    const onUp = (e: PointerEvent) => finish(e, true);
+    const onCancel = (e: PointerEvent) => finish(e, false);
+    handle.addEventListener('pointermove', onMoveEvent);
+    handle.addEventListener('pointerup', onUp);
+    handle.addEventListener('pointercancel', onCancel);
+  }
+
+  function onHandleKey(event: React.KeyboardEvent, task: Task) {
+    if (!event.altKey || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const group = groupOf(task);
+    const from = group.findIndex((t) => t.id === task.id);
+    const to = from + (event.key === 'ArrowUp' ? -1 : 1);
+    if (to < 0 || to >= group.length) return;
+    refocus.current = task.id;
+    move(task, to);
+  }
+
   return (
-    <AnimatedList
-      items={tasks}
-      getKey={(task) => task.id}
-      label={label}
-      renderItem={(task) => <TaskRow task={task} {...rowProps?.(task)} />}
-    />
+    <div ref={container}>
+      <AnimatedList
+        items={tasks}
+        getKey={(task) => task.id}
+        label={label}
+        renderItem={(task) => {
+          const dragged = drag?.id === task.id;
+          const group = drag ? groupOf(tasks.find((t) => t.id === drag.id) as Task) : [];
+          const others = group.filter((t) => t.id !== drag?.id);
+          const dropBefore = drag && !dragged && group.some((t) => t.id === task.id) && others[drag.target]?.id === task.id;
+          const dropAfter = drag && !dragged && drag.target >= others.length && others[others.length - 1]?.id === task.id;
+          return (
+            <div
+              className={`${styles.sortable} ${dragged ? styles.dragging : ''} ${dropBefore ? styles.dropBefore : ''} ${dropAfter ? styles.dropAfter : ''}`}
+              data-task-id={task.id}
+              style={dragged ? { transform: `translateY(${drag.dy}px)` } : undefined}
+            >
+              <button
+                type="button"
+                className={styles.handle}
+                data-handle
+                aria-label={`Move ${task.title}`}
+                aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
+                onPointerDown={(e) => startDrag(e, task)}
+                onKeyDown={(e) => onHandleKey(e, task)}
+              >
+                <GripVertical aria-hidden="true" />
+              </button>
+              <div className={styles.sortableRow}>
+                <TaskRow task={task} {...rowProps?.(task)} />
+              </div>
+            </div>
+          );
+        }}
+      />
+      <div className="visually-hidden" role="status" aria-live="polite">
+        {announcement}
+      </div>
+    </div>
   );
 }

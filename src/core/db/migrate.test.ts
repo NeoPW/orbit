@@ -21,19 +21,19 @@ async function scalar(driver: SqlDriver, sql: string) {
 }
 
 const EXTRA_OK = {
-  version: 6,
+  version: 7,
   sql: 'ALTER TABLE `areas` ADD `icon` text;--> statement-breakpoint\nCREATE TABLE `extra` (`id` text);',
 };
 const EXTRA_FAILING = {
-  version: 6,
+  version: 7,
   sql: 'CREATE TABLE `half` (`id` text);--> statement-breakpoint\nINSERT INTO `no_such_table` VALUES (1);',
 };
 
 describe('migrations', () => {
-  it('creates 13 entity tables and settings on a fresh install at version 5', async () => {
+  it('creates 13 entity tables and settings on a fresh install at version 6', async () => {
     const { driver, schemaVersion } = await openTestDatabase();
-    expect(schemaVersion).toBe(5);
-    expect(await scalar(driver, 'PRAGMA user_version')).toBe(5);
+    expect(schemaVersion).toBe(6);
+    expect(await scalar(driver, 'PRAGMA user_version')).toBe(6);
     const tables = await driver.query("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name", [], 'all');
     const names = tables.rows.map((r) => r[0]);
     expect(names).toHaveLength(14);
@@ -50,7 +50,7 @@ describe('migrations', () => {
     await migrate(driver);
     await driver.query('CREATE TABLE marker (x)', [], 'run');
     const result = await migrate(driver);
-    expect(result).toEqual({ fromVersion: 5, schemaVersion: 5 });
+    expect(result).toEqual({ fromVersion: 6, schemaVersion: 6 });
   });
 
   it('upgrades with a newer migration and keeps existing rows', async () => {
@@ -63,10 +63,11 @@ describe('migrations', () => {
       { version: 3, sql: 'SELECT 1' },
       { version: 4, sql: 'SELECT 1' },
       { version: 5, sql: 'SELECT 1' },
+      { version: 6, sql: 'SELECT 1' },
       EXTRA_OK,
     ]);
-    expect(result).toEqual({ fromVersion: 5, schemaVersion: 6 });
-    expect(await scalar(driver, 'PRAGMA user_version')).toBe(6);
+    expect(result).toEqual({ fromVersion: 6, schemaVersion: 7 });
+    expect(await scalar(driver, 'PRAGMA user_version')).toBe(7);
     expect(await scalar(driver, "SELECT name FROM areas WHERE id = 'a'")).toBe('Job');
     expect(await scalar(driver, 'SELECT count(*) FROM extra')).toBe(0);
   });
@@ -81,10 +82,11 @@ describe('migrations', () => {
         { version: 3, sql: 'SELECT 1' },
         { version: 4, sql: 'SELECT 1' },
         { version: 5, sql: 'SELECT 1' },
+        { version: 6, sql: 'SELECT 1' },
         EXTRA_FAILING,
       ]),
     ).rejects.toThrow();
-    expect(await scalar(driver, 'PRAGMA user_version')).toBe(5);
+    expect(await scalar(driver, 'PRAGMA user_version')).toBe(6);
     expect(await scalar(driver, "SELECT count(*) FROM sqlite_master WHERE name = 'half'")).toBe(0);
   });
 
@@ -107,7 +109,7 @@ describe('project colour migration', () => {
     await migrate(driver, all.slice(0, 1));
     await driver.query("INSERT INTO projects (id, created_at, updated_at, title) VALUES ('p', 't', 't', 'Garden')", [], 'run');
     const result = await migrate(driver);
-    expect(result).toEqual({ fromVersion: 1, schemaVersion: 5 });
+    expect(result).toEqual({ fromVersion: 1, schemaVersion: 6 });
     expect(await scalar(driver, "SELECT title FROM projects WHERE id = 'p'")).toBe('Garden');
     expect(await scalar(driver, "SELECT color FROM projects WHERE id = 'p'")).toBeNull();
   });
@@ -119,7 +121,7 @@ describe('habit link migration', () => {
     await migrate(driver, bundledMigrationsForTest().slice(0, 2));
     await driver.query("INSERT INTO log_entries (id, created_at, updated_at, occurred_at) VALUES ('l', 't', 't', 't')", [], 'run');
     const result = await migrate(driver);
-    expect(result).toEqual({ fromVersion: 2, schemaVersion: 5 });
+    expect(result).toEqual({ fromVersion: 2, schemaVersion: 6 });
     expect(await scalar(driver, "SELECT occurred_at FROM log_entries WHERE id = 'l'")).toBe('t');
     expect(await scalar(driver, "SELECT habit_id FROM log_entries WHERE id = 'l'")).toBeNull();
     expect(await scalar(driver, 'SELECT count(*) FROM timers WHERE habit_id IS NULL')).toBe(0);
@@ -136,7 +138,7 @@ describe('timer session migration', () => {
       'run',
     );
     const result = await migrate(driver);
-    expect(result).toEqual({ fromVersion: 3, schemaVersion: 5 });
+    expect(result).toEqual({ fromVersion: 3, schemaVersion: 6 });
     expect(await scalar(driver, "SELECT planned_minutes FROM timers WHERE id = 't'")).toBe(30);
     expect(await scalar(driver, "SELECT paused_at FROM timers WHERE id = 't'")).toBeNull();
     expect(await scalar(driver, "SELECT worked_seconds FROM timers WHERE id = 't'")).toBe(0);

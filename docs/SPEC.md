@@ -103,6 +103,7 @@ A project's next steps are its tasks with `is_next_step` set (see Task); the pro
 - `is_next_step`: bool, default false; only meaningful for a task of a project. A project can have several next steps. The flag lives on the task so that marking next steps on two devices before they sync keeps both.
 - `status`: `open | done`
 - `completed_at` nullable
+- `sort_order` nullable real: the task's manual position in its project's open task list; null until the user reorders that list (see §6.2). A move writes only the moved task, with a position halfway between its new neighbours; the first move numbers the project's open tasks 0, 1, 2 …. It is cleared when the task is assigned elsewhere.
 
 ### Habit
 - `title`
@@ -188,7 +189,7 @@ Measured in local calendar days from today to a deadline:
 - `rank = importance × urgency`
 - **Importance:** the task's own `importance`; else, for a task of a project, the project's importance; else 3 (goals have no importance, so a task of a goal or a standalone task without its own importance counts as 3).
 - **Urgency:** from the task's `due_date`; else from its project's effective deadline; else from its goal's end date; else 1.
-- Sort by rank descending; ties broken by nearest due date or inherited deadline (none last), then creation (oldest first).
+- Sort by rank descending; ties broken by nearest due date or inherited deadline (none last), then creation (oldest first). Among tied tasks of one project that have a manual position (§6.2), the position decides their order instead of creation; tasks of other projects keep their places.
 - The numeric rank is not shown; importance and deadline appear as dots and a badge.
 
 ### Habits
@@ -260,7 +261,7 @@ Also on Home: **New task** (title, optional deadline, importance and assignment;
 
 ### 6.2 Project detail
 - A header with title, status chip, area chip, importance dots and deadline badge (marked when taken from the goal), then description and the goal it serves (clicking it opens the goal page).
-- **Next steps** (marked in the task list instead of being shown twice) and the open tasks; add, complete and delete tasks, mark and unmark next steps; clicking a task opens the task popup. Open tasks are ordered by due date; manual reordering is deferred.
+- **Next steps** (marked in the task list instead of being shown twice) and the open tasks; add, complete and delete tasks, mark and unmark next steps; clicking a task opens the task popup. Open tasks are ordered by due date, then age, until the user reorders them: each row has a handle to drag (or `Alt+↑` / `Alt+↓` on the focused handle), within its group (the next steps stay on top of the other tasks). After a move the list follows the user's order, new tasks come after the ordered ones, and "Reset order" returns to due-date order.
 - **Weekly notes:** the project's notes, newest week first.
 - Habits belonging to this project.
 - Log entries for this project (most recent first), with the total time worked on it (including its tasks and habits) in the section header.

@@ -39,6 +39,7 @@ export function task(id: string, updatedAt: string, projectId: string | null = n
     is_next_step: 0,
     status: 'open',
     completed_at: null,
+    sort_order: null,
     ...extra,
   };
 }

@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { effectiveImportance, nextStepOutcome, sortByRank, sortOpenTasks, taskRank, type RankInput } from './tasks.ts';
+import {
+  applyProjectOrder,
+  effectiveImportance,
+  hasManualOrder,
+  nextStepOutcome,
+  positionBetween,
+  positionTooClose,
+  sortByRank,
+  sortOpenTasks,
+  taskRank,
+  type RankInput,
+} from './tasks.ts';
 
 const today = '2026-10-05';
 const t = (over: Partial<RankInput> & { name?: string }): RankInput & { name?: string } => ({
@@ -58,6 +69,77 @@ describe('sortOpenTasks', () => {
     const a = { name: 'A', dueDate: '2026-10-10', createdAt: '1' };
     const b = { name: 'B', dueDate: null, createdAt: '2', isNextStep: true };
     expect(sortOpenTasks([a, b], { nextStepsFirst: true }).map((x) => x.name)).toEqual(['B', 'A']);
+  });
+});
+
+describe('manual task order', () => {
+  const a = { name: 'A', dueDate: null, createdAt: '1', sortOrder: null as number | null };
+  const b = { name: 'B', dueDate: '2026-10-20', createdAt: '2', sortOrder: null as number | null };
+  const c = { name: 'C', dueDate: '2026-10-10', createdAt: '3', sortOrder: null as number | null };
+
+  it('keeps the due-date order until the list is reordered', () => {
+    expect(sortOpenTasks([a, b, c]).map((x) => x.name)).toEqual(['C', 'B', 'A']);
+    expect(hasManualOrder([a, b, c])).toBe(false);
+  });
+
+  it('puts positioned tasks first, by position', () => {
+    const list = [{ ...a, sortOrder: 0 }, { ...b, sortOrder: 2 }, { ...c, sortOrder: 1 }];
+    expect(sortOpenTasks(list).map((x) => x.name)).toEqual(['A', 'C', 'B']);
+    expect(hasManualOrder(list)).toBe(true);
+  });
+
+  it('lists a new task after the ordered ones, by due date', () => {
+    const d = { name: 'D', dueDate: '2026-10-01', createdAt: '4', sortOrder: null };
+    const list = [{ ...a, sortOrder: 0 }, { ...b, sortOrder: 1 }, { ...c, sortOrder: 2 }, d];
+    expect(sortOpenTasks(list).map((x) => x.name)).toEqual(['A', 'B', 'C', 'D']);
+  });
+
+  it('keeps next steps on top of the manual order', () => {
+    const list = [{ ...a, sortOrder: 0 }, { ...b, sortOrder: 1, isNextStep: true }];
+    expect(sortOpenTasks(list, { nextStepsFirst: true }).map((x) => x.name)).toEqual(['B', 'A']);
+  });
+});
+
+describe('positions', () => {
+  it('finds a position between neighbours and at the ends', () => {
+    expect(positionBetween(null, null)).toBe(0);
+    expect(positionBetween(1, 3)).toBe(2);
+    expect(positionBetween(null, 4)).toBe(3);
+    expect(positionBetween(4, null)).toBe(5);
+  });
+
+  it('notices when the gap is too small to halve again', () => {
+    expect(positionTooClose(1.5, 1, 2)).toBe(false);
+    expect(positionTooClose(1 + 1e-9, 1, 2)).toBe(true);
+  });
+});
+
+describe('project order as the Home tie-break', () => {
+  const info = (x: { projectId: string; sortOrder: number | null; importance?: number | null; createdAt?: string }): RankInput & { projectId: string; sortOrder: number | null } => ({
+    importance: x.importance ?? 3,
+    dueDate: null,
+    createdAt: x.createdAt ?? '2026-10-01T00:00:00Z',
+    projectId: x.projectId,
+    sortOrder: x.sortOrder,
+  });
+  const intro = { name: 'Write intro', projectId: 'p', sortOrder: 1, createdAt: '2026-10-01T00:00:00Z' };
+  const venue = { name: 'Book venue', projectId: 'p', sortOrder: 0, createdAt: '2026-10-02T00:00:00Z' };
+
+  it('lets the project order decide among tied tasks of one project', () => {
+    const sorted = [intro, venue];
+    expect(applyProjectOrder(sorted, today, info).map((x) => x.name)).toEqual(['Book venue', 'Write intro']);
+  });
+
+  it('leaves the rank in charge', () => {
+    const high = { ...intro, importance: 5 };
+    const sorted = sortByRank([high, venue].map((x) => ({ ...x, ...info(x) })), today);
+    expect(applyProjectOrder(sorted, today, info).map((x) => x.name)).toEqual(['Write intro', 'Book venue']);
+  });
+
+  it('keeps the places of other projects', () => {
+    const other = { name: 'Other', projectId: 'q', sortOrder: null, createdAt: '2026-10-01T12:00:00Z' };
+    const sorted = [intro, other, venue];
+    expect(applyProjectOrder(sorted, today, info).map((x) => x.name)).toEqual(['Book venue', 'Other', 'Write intro']);
   });
 });
 
