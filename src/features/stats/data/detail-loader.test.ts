@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createFields } from '../../../core/db/records.ts';
-import { logEntries } from '../../../core/db/schema.ts';
+import { logEntries, tasks } from '../../../core/db/schema.ts';
 import { openTestDatabase } from '../../../core/db/testing.ts';
 import { parsePeriod } from '../domain/period.ts';
 import { loadStatsDetail } from './detail-loader.ts';
@@ -24,5 +24,24 @@ describe('detail loader', () => {
     const detail = await loadStatsDetail(db, parsePeriod('all', today), today);
     expect(detail.entries).toHaveLength(2);
     expect(detail.allStart).toBe('2024-06-01');
+  });
+
+  it('sums the lifetime minutes of a project over all years', async () => {
+    const { db } = await openTestDatabase();
+    const withProject = (date: string, minutes: number) => ({ ...entry(date), projectId: 'p', durationMinutes: minutes });
+    await db.insert(logEntries).values([withProject('2024-06-01', 60), withProject('2026-10-05', 30)]);
+    const detail = await loadStatsDetail(db, parsePeriod('2026-10', today), today);
+    expect(detail.lifetime.find((r) => r.projectId === 'p')?.minutes).toBe(90);
+    expect(detail.entries).toHaveLength(1);
+  });
+
+  it('loads tasks with their dates, deleted ones flagged', async () => {
+    const { db } = await openTestDatabase();
+    await db.insert(tasks).values([
+      { ...createFields(clock), title: 'Kept' },
+      { ...createFields(clock), title: 'Gone', deletedAt: clock().toISOString() },
+    ]);
+    const detail = await loadStatsDetail(db, parsePeriod('2026-10', today), today);
+    expect(detail.links.tasks.map((t) => t.deletedAt !== null)).toEqual(expect.arrayContaining([true, false]));
   });
 });

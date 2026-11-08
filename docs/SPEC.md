@@ -318,7 +318,10 @@ A desktop screen (`/stats`, `Shift+S`) for how work, review scores, habits and f
 - **Work calendar:** a full year of days, one column per week, shaded in four steps by the time worked as a share of the busiest day; the days of the shown period are emphasised, the others dimmed. For all time it shows the 53 weeks up to the current week.
 - **When you work:** a weekday × hour heatmap of the shown period; an entry's time is spread over the hours between its start and end (as on the day timeline).
 - **Habits:** every active habit with its current and best streak, check-ins kept of expected in the period and the time logged on it, longest current streak first; a habit opens its calendar of checked, missed (a due, unchecked day before today) and neutral days.
-- Planned next: where time goes and task output, goal progress and projected finish.
+- **Time by:** the period's time grouped by area, goal or project, as in the week summary (same switch, colours and attribution).
+- **Projects:** the projects with time in the period, most first, each with its time in the period and in total (all time) and, for a completed project, the days from creation to completion.
+- **Tasks:** tasks completed and created in the period, the median time from creation to completion (days, or hours under a day) and a chart of tasks completed per week or month. Output is counted in tasks, not projects, so a long project does not look like a failure.
+- Planned next: goal progress over time and projected finish.
 
 ### 6.6 Settings
 - Reminders, default reminder time, weekly review day and time, deadline lead time.

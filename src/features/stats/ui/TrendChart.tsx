@@ -39,12 +39,15 @@ export function TrendChart({
   points,
   max,
   format,
+  bare = false,
 }: {
   title: string;
   points: ChartPoint[];
   /** Top of the scale; the highest value when missing. */
   max?: number;
   format: (value: number) => string;
+  /** Without its own tile, to sit inside another panel. */
+  bare?: boolean;
 }) {
   const top = max ?? Math.max(1, ...points.map((p) => p.value ?? 0));
   const slot = (W - LEFT - RIGHT) / Math.max(1, points.length);
@@ -53,8 +56,8 @@ export function TrendChart({
   const placed = points.map((p, i) => ({ x: xs[i] ?? 0, y: p.value === null ? null : y(p.value) }));
   const every = Math.ceil(points.length / 13);
   const hasValue = points.some((p) => p.value !== null);
-  return (
-    <Section tile title={title}>
+  const body = (
+    <>
       <svg className={styles.chart} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={title}>
         <line x1={LEFT} x2={W - RIGHT} y1={BASE} y2={BASE} className={styles.axis} />
         <line x1={LEFT} x2={W - RIGHT} y1={TOP} y2={TOP} className={styles.grid} />
@@ -85,6 +88,7 @@ export function TrendChart({
         ))}
       </svg>
       {!hasValue && <p className={styles.chartEmpty}>Nothing to show</p>}
-    </Section>
+    </>
   );
+  return bare ? body : <Section tile title={title}>{body}</Section>;
 }

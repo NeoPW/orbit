@@ -89,13 +89,13 @@ function TrendChart({ trend }: { trend: RecentWeeks }) {
 }
 
 /** "Time by": the week's time grouped by area, goal or project. */
-export function TimeByPanel({ time }: { time: WeekTime }) {
+export function TimeByPanel({ time, title = 'Time by' }: { time: Pick<WeekTime, 'byArea' | 'byGoal' | 'byProject'>; title?: string }) {
   const [grouping, setGrouping] = useState<TimeGrouping>('area');
   const items = grouping === 'area' ? time.byArea : grouping === 'goal' ? time.byGoal : time.byProject;
   return (
     <Section
       tile
-      title="Time by"
+      title={title}
       actions={<SegmentedControl label="Group time by" options={GROUPINGS} value={grouping} onChange={setGrouping} />}
     >
       <Bars items={items} grouping={grouping} />
