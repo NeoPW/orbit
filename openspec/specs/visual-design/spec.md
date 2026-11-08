@@ -157,15 +157,23 @@ Cards, top bars and the navigation SHALL be slightly translucent so the backgrou
 - **THEN** no text of Home shows through the sheet
 
 ### Requirement: App icon and loading screen
-The app icon SHALL be a glowing planet with a ringed orbit and a cyan moon on a starry night sky, as the desktop app icon and as the web icon. While the app loads, the desktop window and the browser page SHALL show the night sky with that planet instead of a white screen.
+The app icon SHALL be two crossed, tapered rings woven over and under each other, in the app's indigo and off-white, on a dark rounded tile in the colours of the app's ground. It SHALL be used as the desktop app icon, the web icon, the Android launcher icon (round, legacy and adaptive) and the brand mark in the sidebar. The Android status-bar notification icon SHALL be a single-colour version of the crossed rings. While the app loads, the desktop window and the browser page SHALL show the app's dark ground with the icon instead of a white screen.
 
 #### Scenario: Desktop start
 - **WHEN** the desktop app is started
-- **THEN** the window is dark with the planet until the app is drawn, not white
+- **THEN** the window is dark with the icon until the app is drawn, not white
 
 #### Scenario: Web loading
 - **WHEN** the web app is loading
-- **THEN** the page shows the night sky and the planet until the app is drawn
+- **THEN** the page shows the app's dark ground and the icon until the app is drawn
+
+#### Scenario: Sidebar brand
+- **WHEN** the sidebar is shown
+- **THEN** its brand mark is the new icon next to the name "Orbit"
+
+#### Scenario: Android launcher
+- **WHEN** the Android app is installed
+- **THEN** the launcher shows the crossed rings on the dark ground, inside the adaptive icon's safe zone
 
 ### Requirement: Deadline badge text
 A deadline badge SHALL count local calendar days from today to the deadline. It SHALL read "Overdue" in red after the deadline, "Today" on the day itself, "Tomorrow" one day before, and "In N days" when the deadline is within the deadline lead time, in amber. A deadline further away SHALL show its date as `dd-mm-yyyy` without an urgency color.

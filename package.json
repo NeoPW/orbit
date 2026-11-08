@@ -25,7 +25,8 @@
     "server:token": "node -e \"console.log(require('crypto').randomBytes(32).toString('base64url'))\"",
     "server:smoke": "node server/smoke.mjs",
     "db:generate": "drizzle-kit generate",
-    "db:generate:server": "drizzle-kit generate --config drizzle.server.config.ts"
+    "db:generate:server": "drizzle-kit generate --config drizzle.server.config.ts",
+    "icons": "node scripts/make-icons.mjs"
   },
   "dependencies": {
     "@sqlite.org/sqlite-wasm": "^3.54.1-build1",

@@ -8,7 +8,7 @@ export type StartState = { kind: 'loading' } | { kind: 'other-tab' } | { kind: '
 export function StartScreen({ state }: { state: StartState }) {
   return (
     <main className={styles.screen}>
-      <img className={styles.planet} src={orbitIcon} alt={state.kind === 'loading' ? 'Orbit is loading' : ''} />
+      <img className={styles.logo} src={orbitIcon} alt={state.kind === 'loading' ? 'Orbit is loading' : ''} />
       {state.kind === 'other-tab' && (
         <div className={styles.card}>
           <Copy className={styles.icon} aria-hidden="true" />
