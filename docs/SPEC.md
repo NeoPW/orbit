@@ -1,4 +1,4 @@
-# Project Tracker: Application Spec
+# Orbit: Application Spec
 
 A personal, local-first app for tracking work: projects, tasks, habits and the work done on them, and which goals that work serves, with focused work sessions and a weekly review. Single user.
 
@@ -21,7 +21,6 @@ A personal, local-first app for tracking work: projects, tasks, habits and the w
 - A cap on the number of active projects (explicitly not wanted).
 - Rich text, file attachments, calendar integration.
 - Windows and macOS builds.
-- Advanced statistics (later milestone).
 
 ## 2. Tech stack
 
@@ -230,7 +229,7 @@ Measured in local calendar days from today to a deadline:
 - A week's summary is computed from the stored log entries, habit checks, completed tasks and completed projects, so it stays available for every past week. Habit adherence uses the habits' current schedules.
 - **Goal progress in a week:** a past week shows the progress saved with its completed review; a week without a completed review (the current week, or last week before it is reviewed) shows the current progress.
 - **Change in a week:** the value of each measure at the start of the week (Monday 00:00) and at its end (now, for the current week), from the `measure_changes` history; a habit measure counts its check-ins by date. A goal's change is the difference of its progress between those two moments, in percentage points. A change made before the history began is not known and shows no change.
-- **Time in a week:** the sum of the week's log entry durations. An entry belongs to a project directly, through its task or through its habit, to an area through its project, and to a goal as in "Work per goal". The daily average divides by the days up to today in the current week, else by 7. The 4-week average of a week is the mean of that week and the 3 before it.
+- **Time in a week:** the sum of the week's log entry durations. An entry belongs to a project directly, through its task or through its habit, to an area through its project, and to a goal as in "Work per goal". The daily average divides by the days up to today in the current week, else by 7. The 4-week average of a week is the mean of that week and the 3 before it, leaving out weeks before the week of first use (see §6.5a).
 
 ### Completing tasks and projects
 - Marking a task done always creates a `LogEntry` (`source = task`, the task title as note, linked to the task and to its project or goal). An Undo right after completing reopens the task and removes the entry.
@@ -312,7 +311,7 @@ The review is the main place where projects and goals are updated.
 
 ### 6.5a Stats
 
-A desktop screen (`/stats`, `Shift+S`) for how work, review scores, habits and focus on goals develop over calendar periods. The header has the **period picker**: month, quarter, year or all time, with ‹ › to step to the previous or next period of the same kind (› is disabled on the current one). The default is the current month; the period is kept in the address (`?period=2026-11`, `2026-Q4`, `2026`, `all`) and an invalid or future one shows the current month. "All time" starts at the earliest log entry, habit check or completed review.
+A desktop screen (`/stats`, `Shift+S`) for how work, review scores, habits and focus on goals develop over calendar periods. The header has the **period picker**: month, quarter, year or all time, with ‹ › to step to the previous or next period of the same kind (› is disabled on the current one, ‹ on the one where Orbit was first used). The default is the current month; the period is kept in the address (`?period=2026-11`, `2026-Q4`, `2026`, `all`) and an invalid or future one shows the current month. "All time" starts at the **first-use date**, the earliest log entry, habit check or completed review. Every period is cut there: days, weeks and trend points before it are left out, and there is no comparison with a period that ended before it.
 - **Figures:** time worked, daily average (up to today for the current period), average review score (one decimal, with "4 of 5 weeks reviewed"), habit adherence (check-ins kept out of expected, as in the week summary) and share of time on goals. Daily average, score and the two shares show their change from the previous period of the same kind (percent, difference, percentage points); none for all time.
 - **Trends:** four small charts (hours, review score, habit adherence, share on goals), one point per week for a month or quarter and one per month for a year or all time; the current week or month is marked "so far" and a missing value breaks the line.
 - **Weeks and periods:** values kept per week (score, habits) count for the period holding the week's Thursday; time is counted by the date of each entry, so a week's point shows the whole week while the figures use exact dates.
@@ -332,8 +331,9 @@ A desktop screen (`/stats`, `Shift+S`) for how work, review scores, habits and f
 ### 6.7 Design and interaction
 The app should feel calm, clear and quick. These guidelines hold for every screen; the shared components and design tokens that implement them are in `src/core/ui/` (in development, `/dev/components` shows them all):
 - **Desktop first:** the desktop window opens maximised; layouts use the width of a desktop window (columns, side panels) and still work in a narrower browser window. Keyboard use is first-class: Enter saves forms, Escape closes them.
-- **Keyboard shortcuts** (desktop and browser; never while typing in a field or while a dialog, sheet or menu is open, and never with Ctrl/Alt/Meta except `Ctrl+K` and `Ctrl+,`): `T` new task, `L` log work (both as sheets over the current screen), `F` Home's focus field (or focus mode while a session runs), `Shift+H` / `Shift+P` / `Shift+R` / `Shift+S` Home, Plan, Review, Stats, `Ctrl+,` Settings, `?` an overlay listing all shortcuts, `Ctrl+K` the command palette. Buttons and navigation entries show their shortcut in the tooltip or as a hint. `Esc` in a field outside a dialog or sheet leaves the field. On a project, goal or task page `Esc` goes back to the screen it was opened from (to Plan when it was opened by its address).
+- **Keyboard shortcuts** (desktop and browser; never while typing in a field or while a dialog, sheet or menu is open, and never with Ctrl/Alt/Meta except `Ctrl+K` and `Ctrl+,`): `T` new task, `L` log work (both as sheets over the current screen), `F` Home's focus field (or focus mode while a session runs), `Shift+H` / `Shift+P` / `Shift+R` / `Shift+S` Home, Plan, Review, Stats, `Ctrl+,` Settings, `?` an overlay listing all shortcuts, `Ctrl+K` the command palette. Buttons and navigation entries show their shortcut in the tooltip or as a hint. `Esc` in a field outside a dialog or sheet leaves the field; on a button or link with keyboard focus it takes the focus away; on Home it clears the To do or habit highlight. On a project, goal or task page `Esc` goes back to the screen it was opened from (to Plan when it was opened by its address).
 - **Command palette** (`Ctrl+K`): a search field over a list of commands, filtered by every typed word: create a task, project, goal, habit or area and log work; go to Home, Plan, Review, Stats, Settings or any project, goal or open task; start focus on any open task, active habit or active project, or on the typed text as Home's focus field reads it (`title # project`); while a session exists pause/resume, complete and set the time limit; switch the theme; sync now (when connected). Each entry shows its kind and shortcut; arrows move, Enter or a click runs, Esc closes.
+- **Name and icon:** Orbit; the icon is two crossed, tapered rings woven over and under each other, in the app's indigo and off-white on a tile in the colours of the app's ground, drawn by `scripts/make-icons.mjs` (`npm run icons`) for the desktop, web and Android.
 - **Visual identity:** dark only, clean and modular: tiles (14–20 px radii, 1 px borders) on a calm ground, no textures or illustrations. All text is **Inter** (bundled), with tabular numerals for timers.
 - **Colour themes:** five dark themes (Slate, Forest, Ember, Plum, Graphite), switchable live from the sidebar and Settings; only colours change. Each theme has a ground, surfaces, one accent, red for overdue, amber for soon and eight project colours. The choice is a local setting.
 - **Slate cards:** in the default theme the tiles have the colour of the ground and are set apart by their outline (inner surfaces one step lighter); its eight project colours are vivid (orange, blue, green, purple, pink, teal, lime, sand); project headers keep their tint, and To do rows are outlined clearly in their project colour.
@@ -384,16 +384,18 @@ Clicking a reminder opens its screen: Home for habits, the task page for tasks, 
 
 ## 9. Milestones
 
-The app is rebuilt from scratch in this order, one OpenSpec change each (features in small batches):
+The app was rebuilt from scratch in this order, one OpenSpec change each (features in small batches). All of it is done:
 
 1. **Rebuild foundation:** Tauri + React + TypeScript skeleton, desktop and browser builds, platform layer, quality tooling, this spec.
 2. **Local database:** Drizzle schema with the sync columns, the Tauri SQLite plugin on the desktop and SQLite WASM in the browser.
 3. **Sync server:** Cloudflare Worker + D1, token login, push/pull sync, deploy of the Worker and the browser build.
 4. **App shell:** navigation, theme, shared components, messages.
 5. **Features** (one change, `features`): areas, goals and measures; projects and tasks (with next steps and task importance); habits; work log, timer and focus mode; Home; Plan; Review with weekly notes; Settings; desktop notifications.
-6. **Android companion** (Tauri mobile): phone layout below 640 px (bottom navigation Home, Today, Settings), Home with focus, habits, To do and Done today, quick add, the Today timeline with day navigation and swipe, sync with the deployed server; then Android notifications (habit and deadline reminders checked with the server before showing, the ongoing timer notification) — done.
-7. **Later:** Windows/macOS builds. Stats are done: the Stats tab with periods, figures and trends, habit streaks, the work calendar and heatmap, time and task breakdowns, goal progress and projected finish.
+6. **Android companion** (Tauri mobile): phone layout below 640 px (bottom navigation Home, Today, Settings), Home with focus, habits, To do and Done today, quick add, the Today timeline with day navigation and swipe, sync with the deployed server; then Android notifications (habit and deadline reminders checked with the server before showing, the ongoing timer notification).
+7. **Stats:** the Stats tab with periods, figures and trends, habit streaks, the work calendar and heatmap, time and task breakdowns, goal progress and projected finish.
+
+**Later:** a signed Android release build; Windows/macOS builds.
 
 ## 10. Open questions
 
-- **Branding: decided.** The name stays Orbit. The icon is two crossed, tapered rings woven over and under each other, in the app's indigo and off-white on a tile in the colours of the app's ground; it is drawn by `scripts/make-icons.mjs` (`npm run icons`), which renders the desktop, web and Android icons. The earlier planet icon is retired.
+None at the moment.

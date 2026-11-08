@@ -1,4 +1,4 @@
-# orbit
+# Orbit
 
 Personal, local-first app for goals, projects, tasks, habits, focused work and a weekly review. A desktop app first (works offline), with a browser build of the same app and a small Android companion (tasks, focus and the day timeline on the phone).
 
@@ -13,7 +13,10 @@ The Flutter version of the app is kept under the git tag `flutter-final`.
 - **Home:** today, the focus panel (pick a task or project, 25/50/90 minutes or open-ended), habits due today, To do ranked by importance × urgency, and the active projects with their next steps. **New task** and **Log work** sit next to the date.
 - **Plan:** goals with measures, projects and tasks; projects without a goal; backlog; habits; areas; archive. **New** creates a goal, project, task or habit; goals, projects and tasks open as their own pages.
 - **Review:** this week's plan and summary, the guided weekly review (look back, projects, goals, score, plan, save), history and last week.
-- **Settings:** reminders, default reminder time, review day and time, deadline lead time, and sync.
+- **Stats:** a month, quarter, year or all time: time worked and daily average, review score, habit adherence, share on goals, trends, the work calendar and heatmap, and panels for habits, projects, tasks and goals.
+- **Settings:** reminders, default reminder time, review day and time, deadline lead time, theme and sync.
+- **Keyboard:** `?` lists every shortcut, `Ctrl+K` opens the command palette.
+- **Android:** a phone companion with Home, the Today timeline and Settings, synced through the server.
 
 ## Stack
 
@@ -53,6 +56,10 @@ The Flutter version of the app is kept under the git tag `flutter-final`.
 | Run the sync server locally (http://localhost:8787) | `npm run server:dev` |
 | Check a running sync server | `npm run server:smoke -- <url> <token>` |
 | Create a device token | `npm run server:token` |
+| Deploy the sync server and the browser build | `npm run server:deploy` |
+| Run on Android (emulator or phone, debug) | `npm run android` |
+| Build a debug APK (`--target aarch64` or `x86_64`) | `npm run android:build -- --target aarch64` |
+| Render the app icons from `assets/icon/orbit.svg` | `npm run icons` |
 
 ## Database
 
@@ -78,7 +85,7 @@ Orbit stores its data in SQLite, through Drizzle.
 
 ## Sync server
 
-`server/` is a Cloudflare Worker with a D1 database. It stores the rows of every synced table, keeps the newest version of each row (last-write-wins by `updated_at`), lets only devices with a token in, and also serves the browser build (`dist/`). The API is `GET /api/status`, `POST /api/push` and `GET /api/pull?cursor=<n>`, all with `Authorization: Bearer <token>`; push and pull also send `Orbit-Schema-Version`. The app's side of sync comes with the `sync-client` change.
+`server/` is a Cloudflare Worker with a D1 database. It stores the rows of every synced table, keeps the newest version of each row (last-write-wins by `updated_at`), lets only devices with a token in, and also serves the browser build (`dist/`). The API is `GET /api/status`, `POST /api/push` and `GET /api/pull?cursor=<n>`, all with `Authorization: Bearer <token>`; push and pull also send `Orbit-Schema-Version`. The app's side of sync is `src/features/sync/` (see Connecting a device).
 
 **Run it locally.** Create `server/.dev.vars` (not committed) with one token per device:
 

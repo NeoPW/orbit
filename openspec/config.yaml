@@ -5,9 +5,8 @@ context: |
   measures tracking their progress), projects, tasks, habits and work done,
   with focus sessions and a guided weekly review.
   Single user. The full product spec is in docs/SPEC.md; read the relevant
-  sections before writing any artifact. The app is being rebuilt: specs in
-  openspec/specs/ that describe the previous app are the brief for the
-  rebuild, not current code.
+  sections before writing any artifact. openspec/specs/ describes the
+  implemented behavior.
 
   Tech stack:
   - Tauri 2 desktop app (Linux), main target, works fully offline; the same
@@ -27,7 +26,7 @@ context: |
   - Sync server in server/: Cloudflare Worker + D1, last-write-wins per
     row, bearer token per device, also serves the browser build. Server
     tables come from the app schema (npm run db:generate:server after a
-    schema change). The app side of sync is a later change (sync-client).
+    schema change). The app side of sync is src/features/sync/.
 
   Architecture conventions:
   - Feature-first folders: src/core/ (shared), src/features/<feature>/

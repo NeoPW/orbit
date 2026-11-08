@@ -1,6 +1,6 @@
-# Project Tracker
+# Orbit
 
-Personal local-first app for goals, projects, tasks, habits, focused work and a weekly review: a Tauri desktop app (React + TypeScript) with a browser build of the same frontend; an Android companion comes later.
+Personal local-first app for goals, projects, tasks, habits, focused work and a weekly review: a Tauri desktop app (React + TypeScript) with a browser build of the same frontend and an Android companion (Tauri mobile).
 
 ## Sources of truth
 - Product spec: `docs/SPEC.md`
