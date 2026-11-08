@@ -1,7 +1,7 @@
 /** The shortcuts of the app (see openspec keyboard-shortcuts): one table for matching, the overlay, tooltips and the palette. */
 
 export type GlobalAction =
-  'new-task' | 'log-work' | 'focus-field' | 'go-home' | 'go-plan' | 'go-review' | 'go-stats' | 'go-settings' | 'go-back' | 'overlay' | 'palette';
+  'new-task' | 'log-work' | 'focus-field' | 'go-home' | 'go-plan' | 'go-review' | 'go-stats' | 'go-settings' | 'go-back' | 'release-focus' | 'overlay' | 'palette';
 export type TodoAction =
   | 'todo-next'
   | 'todo-prev'
@@ -11,6 +11,7 @@ export type TodoAction =
   | 'todo-complete'
   | 'todo-open'
   | 'todo-select-n'
+  | 'todo-clear'
   | 'habit-select-n'
   | 'session-pause'
   | 'session-resume'
@@ -40,6 +41,7 @@ export const SHORTCUTS: Shortcut[] = [
   { action: 'go-stats', keys: 'Shift+S', label: 'Stats', group: 'Global' },
   { action: 'go-settings', keys: 'Ctrl+,', label: 'Settings', group: 'Global' },
   { action: 'go-back', keys: 'Esc', label: 'Back from a project, goal or task page', group: 'Global' },
+  { action: 'release-focus', keys: 'Esc', label: 'Take the focus off a button or link', group: 'Global' },
   { action: 'palette', keys: 'Ctrl+K', label: 'Command palette', group: 'Global' },
   { action: 'overlay', keys: '?', label: 'All shortcuts', group: 'Global' },
   { action: 'todo-next', keys: 'J / ↓', label: 'Next task', group: 'Home' },
@@ -48,6 +50,7 @@ export const SHORTCUTS: Shortcut[] = [
   { action: 'habit-next', keys: '→', label: 'Next habit', group: 'Home' },
   { action: 'todo-select-n', keys: '1–9', label: 'Highlight the 1st–9th task', group: 'Home' },
   { action: 'habit-select-n', keys: 'Shift+1–9', label: 'Highlight the 1st–9th habit', group: 'Home' },
+  { action: 'todo-clear', keys: 'Esc', label: 'Clear the highlight', group: 'Home' },
   { action: 'todo-start', keys: 'Space', label: 'Start focus on the highlighted task or habit', group: 'Home' },
   { action: 'todo-complete', keys: 'X', label: 'Complete the task / check the habit', group: 'Home' },
   { action: 'todo-open', keys: 'Enter', label: 'Open the task / check the habit', group: 'Home' },
@@ -84,6 +87,8 @@ export interface KeyInput {
   dialogOpen: boolean;
   /** The target is a button or link, which handles Space and Enter itself. */
   onControl: boolean;
+  /** A button, link or other control has the keyboard focus (the focus ring), not just a mouse click's. */
+  keyboardFocus?: boolean;
 }
 
 export interface ShortcutMatch {
@@ -145,6 +150,8 @@ export function matchShortcut(input: KeyInput, scope: ShortcutScope): ShortcutMa
   if (input.editable || input.dialogOpen) return null;
   if (input.onControl && (key === ' ' || key === 'enter')) return null;
 
+  if (key === 'escape' && input.keyboardFocus) return { action: 'release-focus' };
+
   // Symbols come with Shift on most layouts, so they match whatever Shift says.
   if (key === '?') return { action: 'overlay' };
   const named = (input.shiftKey && key.length === 1 && /[a-z]/.test(key) ? 'shift+' : '') + key;
@@ -155,6 +162,7 @@ export function matchShortcut(input: KeyInput, scope: ShortcutScope): ShortcutMa
   }
   if (scope === 'detail' && key === 'escape') return { action: 'go-back' };
   if (scope === 'home') {
+    if (key === 'escape') return { action: 'todo-clear' };
     if (!input.shiftKey && /^[1-9]$/.test(key)) return { action: 'todo-select-n', index: Number(key) - 1 };
     const digit = /^Digit([1-9])$/.exec(input.code ?? '');
     if (input.shiftKey && digit) return { action: 'habit-select-n', index: Number(digit[1]) - 1 };

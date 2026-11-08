@@ -134,3 +134,21 @@ describe('focus mode keys', () => {
     expect(action(press('-'), 'focus')).toBe('focus-limit-down');
   });
 });
+
+describe('Esc releases keyboard focus', () => {
+  it('releases the focus of a control in every scope, before going back or leaving', () => {
+    for (const scope of ['global', 'home', 'detail', 'focus'] as const) {
+      expect(action(press('Escape', { keyboardFocus: true }), scope)).toBe('release-focus');
+    }
+  });
+
+  it('clears the highlight on Home, and keeps going back and leaving elsewhere', () => {
+    expect(action(press('Escape'), 'home')).toBe('todo-clear');
+    expect(action(press('Escape'), 'detail')).toBe('go-back');
+    expect(action(press('Escape'), 'focus')).toBe('focus-leave');
+  });
+
+  it('leaves Esc to a dialog', () => {
+    expect(action(press('Escape', { keyboardFocus: true, dialogOpen: true }), 'home')).toBeNull();
+  });
+});

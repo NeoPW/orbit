@@ -106,6 +106,8 @@ export function HomeScreen() {
         return (match.index ?? -1) < tasks ? setHighlight({ list: 'task', index: match.index ?? 0 }) : undefined;
       case 'habit-select-n':
         return (match.index ?? -1) < habitCount ? setHighlight({ list: 'habit', index: match.index ?? 0 }) : undefined;
+      case 'todo-clear':
+        return setHighlight(null);
       case 'todo-start':
         if (highlightedTask) return void start({ taskId: highlightedTask.id });
         if (highlightedHabit) return void start({ habitId: highlightedHabit.id });

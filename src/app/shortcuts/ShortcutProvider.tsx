@@ -22,6 +22,17 @@ function leaveField(event: KeyboardEvent): boolean {
   return true;
 }
 
+/** A control other than a text field has the keyboard focus (shown with the focus ring), not just a mouse click's. */
+function hasKeyboardFocus(): boolean {
+  const active = document.activeElement;
+  if (!(active instanceof HTMLElement) || active === document.body) return false;
+  try {
+    return active.matches(':focus-visible');
+  } catch {
+    return false;
+  }
+}
+
 /** Where a key event happened, as `matchShortcut` needs it. */
 export function keyInput(event: KeyboardEvent): KeyInput {
   const target = event.target instanceof Element ? event.target : null;
@@ -35,6 +46,7 @@ export function keyInput(event: KeyboardEvent): KeyInput {
     altKey: event.altKey,
     metaKey: event.metaKey,
     editable: field !== null && field !== undefined && !toggle,
+    keyboardFocus: hasKeyboardFocus(),
     dialogOpen: document.querySelector('dialog[open], [role="menu"]') !== null,
     onControl:
       target?.closest('button, a[href], [role="button"], summary, input[type="checkbox"], input[type="radio"]') !== null && target !== null,
@@ -51,6 +63,7 @@ const SCREEN_ACTIONS = new Set<string>([
   'habit-next',
   'todo-select-n',
   'habit-select-n',
+  'todo-clear',
   'focus-toggle',
   'focus-complete',
   'focus-leave',
@@ -93,6 +106,8 @@ export function ShortcutProvider({ children }: { children: ReactNode }) {
       }
       event.preventDefault();
       switch (match.action) {
+        case 'release-focus':
+          return void (document.activeElement instanceof HTMLElement && document.activeElement.blur());
         case 'new-task':
           return openSheet('task');
         case 'log-work':
