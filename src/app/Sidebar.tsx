@@ -1,4 +1,4 @@
-import { CalendarRange, House, NotebookPen, Settings, type LucideIcon } from 'lucide-react';
+import { CalendarRange, ChartNoAxesCombined, House, NotebookPen, Settings, type LucideIcon } from 'lucide-react';
 import type { MouseEvent } from 'react';
 import orbitIcon from '../../assets/icon/orbit.png';
 import { navigate } from '../core/routing/useRoute.ts';
@@ -18,6 +18,7 @@ const MAIN: Entry[] = [
   { route: { name: 'home' }, section: 'home', label: 'Home', icon: House, shortcut: 'go-home' },
   { route: { name: 'plan' }, section: 'plan', label: 'Plan', icon: CalendarRange, shortcut: 'go-plan' },
   { route: { name: 'review' }, section: 'review', label: 'Review', icon: NotebookPen, shortcut: 'go-review' },
+  { route: { name: 'stats' }, section: 'stats', label: 'Stats', icon: ChartNoAxesCombined, shortcut: 'go-stats' },
 ];
 
 const SETTINGS: Entry = { route: { name: 'settings' }, section: 'settings', label: 'Settings', icon: Settings, shortcut: 'go-settings' };

@@ -1,3 +1,4 @@
+import { localToday } from '../../../core/dates/deadline.ts';
 import { addDays } from '../../../core/dates/today.ts';
 import type { ScheduleType } from '../../../core/db/schema.ts';
 
@@ -35,6 +36,24 @@ export function isDue(habit: HabitSchedule, date: string, checkDates: readonly s
   const end = addDays(start, 6);
   const done = new Set(checkDates.filter((d) => d >= start && d <= end)).size;
   return done < (habit.timesPerWeek ?? 0);
+}
+
+/** Check-ins done and expected of one habit in the Monday–Sunday week `week`; days after `today` and before the habit was created are not expected. */
+export function weekAdherence(
+  habit: Pick<HabitSchedule, 'scheduleType' | 'weekdays' | 'timesPerWeek'> & { createdAt: string },
+  checkDates: readonly string[],
+  week: { start: string; end: string },
+  today: string,
+): { done: number; expected: number } {
+  const done = new Set(checkDates.filter((d) => d >= week.start && d <= week.end)).size;
+  if (habit.scheduleType === 'times_per_week') return { done, expected: habit.timesPerWeek ?? 0 };
+  const created = localToday(new Date(habit.createdAt));
+  const lastDay = today < week.end ? today : week.end;
+  let expected = 0;
+  for (let d = created > week.start ? created : week.start; d <= lastDay; d = addDays(d, 1)) {
+    if (habit.scheduleType === 'daily' || (habit.weekdays ?? []).includes(isoWeekday(d))) expected += 1;
+  }
+  return { done, expected };
 }
 
 /** "Daily", "Mon, Wed, Fri" or "3 times per week". */

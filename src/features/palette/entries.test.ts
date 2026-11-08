@@ -30,6 +30,7 @@ describe('command palette entries', () => {
     expect(entries.find((e) => e.label === 'Log work')?.command).toEqual({ type: 'sheet', sheet: 'log' });
     expect(entries.find((e) => e.label === 'New goal')?.command).toEqual({ type: 'sheet', sheet: 'goal' });
     expect(entries.find((e) => e.label === 'Plan')?.shortcut).toBe('go-plan');
+    expect(entries.find((e) => e.label === 'Stats')?.command).toEqual({ type: 'screen', screen: 'stats' });
   });
 
   it('goes to projects, goals and open tasks by title', () => {
