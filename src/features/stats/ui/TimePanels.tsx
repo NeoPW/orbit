@@ -15,7 +15,7 @@ const duration = (minutes: number) => (minutes > 0 ? formatDuration(Math.round(m
 
 /** Time by area, goal or project over the period, and the projects with their total time. */
 export function TimePanels({ detail, period, today }: { detail: StatsDetail; period: Period; today: string }) {
-  const time = useMemo(() => periodTime(detail.entries, detail.links, period, today, detail.allStart), [detail, period, today]);
+  const time = useMemo(() => periodTime(detail.entries, detail.links, period, today, detail.firstUse), [detail, period, today]);
   const rows = useMemo(() => projectRows(time, detail.lifetime, detail.links), [time, detail]);
   return (
     <div className={styles.pair}>

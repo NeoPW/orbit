@@ -37,8 +37,8 @@ export interface ProjectRow {
 }
 
 /** The period's time grouped by area, goal and project; entries count by their local date. */
-export function periodTime(entries: readonly TimeEntry[], links: TimeLinks, period: Period, today: string, allStart: string | null = null): TimeGroups {
-  const { start, end } = periodRange(period, today, allStart);
+export function periodTime(entries: readonly TimeEntry[], links: TimeLinks, period: Period, today: string, firstUse: string | null = null): TimeGroups {
+  const { start, end } = periodRange(period, today, firstUse);
   const inPeriod = entries.filter((e) => {
     const date = localToday(new Date(e.occurredAt));
     return date >= start && date <= end;

@@ -19,7 +19,7 @@ const count = (n: number, unit: 'days' | 'weeks') => `${n} ${n === 1 ? unit.slic
 function HabitCalendar({ row, detail, period, today }: { row: HabitStatsRow; detail: StatsDetail; period: Period; today: string }) {
   const habit = detail.habitRows.habits.find((h) => h.id === row.id);
   if (!habit) return null;
-  const shown = periodRange(period, today, detail.allStart);
+  const shown = periodRange(period, today, detail.firstUse);
   const grid = period.kind === 'all' ? calendarRange(period, today) : { start: weekStartOf(shown.start), end: addDays(weekStartOf(shown.end), 6) };
   const checks = detail.habitRows.checks.filter((c) => c.habitId === row.id).map((c) => c.date);
   const states = habitDayStates(habit, checks, grid.start, grid.end, today);
@@ -38,7 +38,7 @@ function HabitCalendar({ row, detail, period, today }: { row: HabitStatsRow; det
 /** Every active habit with its streaks, adherence and time in the period; a habit opens its calendar. */
 export function HabitsPanel({ detail, period, today }: { detail: StatsDetail; period: Period; today: string }) {
   const [open, setOpen] = useState<string | null>(null);
-  const rows = habitStatsRows(detail.habitRows, period, today, detail.allStart);
+  const rows = habitStatsRows(detail.habitRows, period, today, detail.firstUse);
   return (
     <Section tile title="Habits" count={rows.length || undefined}>
       {rows.length === 0 ? (

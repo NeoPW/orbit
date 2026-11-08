@@ -3,7 +3,7 @@ import { addDays } from '../../../core/dates/today.ts';
 import type { ScheduleType } from '../../../core/db/schema.ts';
 import { weekAdherence } from '../../habits/domain/habits.ts';
 import { isWorkOnGoal, type WorkLinks } from '../../work-log/domain/work-log.ts';
-import { parsePeriod, periodBuckets, periodDays, periodRange, periodWeeks, stepPeriod, type Bucket, type Period } from './period.ts';
+import { canStepBack, parsePeriod, periodBuckets, periodDays, periodRange, periodWeeks, stepPeriod, type Bucket, type Period } from './period.ts';
 
 /** Plain rows a period needs; the loader fills them for the shown and the previous period. */
 export interface StatsRows {
@@ -116,12 +116,12 @@ function scoresIn(rows: StatsRows, weeks: string[]): number[] {
 
 const average = (values: number[]) => (values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : null);
 
-/** The headline figures of a period. `allStart` is the first date with data, for "All time". */
-export function periodHeadline(rows: StatsRows, period: Period, today: string, allStart: string | null = null): Headline {
-  const { start, end } = periodRange(period, today, allStart);
+/** The headline figures of a period. `firstUse` is the first date with data, for "All time". */
+export function periodHeadline(rows: StatsRows, period: Period, today: string, firstUse: string | null = null): Headline {
+  const { start, end } = periodRange(period, today, firstUse);
   const entries = datedEntries(rows);
   const time = timeIn(entries, start, end);
-  const weeks = periodWeeks(period, today, allStart);
+  const weeks = periodWeeks(period, today, firstUse);
   let habitKept = 0;
   let habitExpected = 0;
   for (const monday of weeks) {
@@ -130,7 +130,7 @@ export function periodHeadline(rows: StatsRows, period: Period, today: string, a
     habitExpected += h.expected;
   }
   const scores = scoresIn(rows, weeks);
-  const days = periodDays(period, today, allStart);
+  const days = periodDays(period, today, firstUse);
   const score = average(scores);
   const checked = rows.habitChecks.some((c) => c.date >= start && c.date <= end);
   return {
@@ -165,17 +165,17 @@ export function comparePeriods(current: Headline, previous: Headline | null, per
 }
 
 /** Headline of the previous period of the same kind, for the comparison; null for "All time". */
-export function previousHeadline(rows: StatsRows, period: Period, today: string): Headline | null {
+export function previousHeadline(rows: StatsRows, period: Period, today: string, firstUse: string | null = null): Headline | null {
   const previous = stepPeriod(period, -1);
-  return previous ? periodHeadline(rows, previous, today) : null;
+  return previous && canStepBack(period, firstUse) ? periodHeadline(rows, previous, today, firstUse) : null;
 }
 
 /** One point per bucket (week or month); later buckets are left out, and a figure without a value is null. */
-export function periodTrend(rows: StatsRows, period: Period, today: string, allStart: string | null = null): TrendPoint[] {
+export function periodTrend(rows: StatsRows, period: Period, today: string, firstUse: string | null = null): TrendPoint[] {
   const entries = datedEntries(rows);
-  return periodBuckets(period, today, allStart).map((bucket) => {
+  return periodBuckets(period, today, firstUse).map((bucket) => {
     const time = timeIn(entries, bucket.start, bucket.end);
-    const weeks = period.kind === 'month' || period.kind === 'quarter' ? [bucket.key] : periodWeeks(parsePeriod(bucket.key, today), today);
+    const weeks = period.kind === 'month' || period.kind === 'quarter' ? [bucket.key] : periodWeeks(parsePeriod(bucket.key, today), today, firstUse);
     let kept = 0;
     let expected = 0;
     for (const monday of weeks) {

@@ -50,7 +50,7 @@ function projectionText(projection: Projection): { text: string; behind: boolean
 
 /** Active goals with their progress, change, progress over the period and projected finish. */
 export function GoalsPanel({ detail, period, today }: { detail: StatsDetail; period: Period; today: string }) {
-  const rows = useMemo(() => goalStatsRows(detail.goalRows, period, today, detail.allStart), [detail, period, today]);
+  const rows = useMemo(() => goalStatsRows(detail.goalRows, period, today, detail.firstUse), [detail, period, today]);
   const order = detail.goalRows.goals;
   return (
     <Section tile title="Goals" count={rows.length || undefined}>

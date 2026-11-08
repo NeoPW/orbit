@@ -34,9 +34,15 @@ export function currentPeriod(kind: PeriodKind, today: string): Period {
   return ALL;
 }
 
-/** First and last day of a period; "all" needs its start date. Not capped at today. */
-function fullRange(period: Period, today: string, allStart: string | null): { start: string; end: string } {
-  if (period.kind === 'all') return { start: allStart ?? today, end: today };
+/** First and last day of a period, the first cut at the first-use date. "all" starts there. Not capped at today. */
+function fullRange(period: Period, today: string, firstUse: string | null): { start: string; end: string } {
+  if (period.kind === 'all') return { start: firstUse ?? today, end: today };
+  const range = calendarRange(period);
+  return { start: firstUse && firstUse > range.start ? firstUse : range.start, end: range.end };
+}
+
+/** First and last day of a month, quarter or year. */
+function calendarRange(period: Period): { start: string; end: string } {
   const y = Number(period.key.slice(0, 4));
   if (period.kind === 'year') return { start: `${y}-01-01`, end: `${y}-12-31` };
   if (period.kind === 'quarter') {
@@ -89,6 +95,12 @@ export function stepPeriod(period: Period, delta: 1 | -1): Period | null {
   return null;
 }
 
+/** Whether ‹ is available: the previous period does not end before the first-use date. */
+export function canStepBack(period: Period, firstUse: string | null): boolean {
+  const previous = stepPeriod(period, -1);
+  return previous !== null && (firstUse === null || calendarRange(previous).end >= firstUse);
+}
+
 /** Whether › is available: there is a later period that has started. */
 export function canStepForward(period: Period, today: string): boolean {
   const next = stepPeriod(period, 1);
@@ -107,25 +119,32 @@ export function switchKind(period: Period, kind: PeriodKind, today: string): Per
   return yearPeriod(y);
 }
 
-/** First and last day of the period, the last capped at today. `allStart` is the start of "all". */
-export function periodRange(period: Period, today: string, allStart: string | null = null): { start: string; end: string } {
-  const { start, end } = fullRange(period, today, allStart);
+/** First and last day of the period, the last capped at today. `firstUse` is the start of "all". */
+export function periodRange(period: Period, today: string, firstUse: string | null = null): { start: string; end: string } {
+  const { start, end } = fullRange(period, today, firstUse);
   return { start, end: end < today ? end : today };
 }
 
 /** Days of the period up to and including today. */
-export function periodDays(period: Period, today: string, allStart: string | null = null): number {
-  const { start, end } = periodRange(period, today, allStart);
+export function periodDays(period: Period, today: string, firstUse: string | null = null): number {
+  const { start, end } = periodRange(period, today, firstUse);
   return Math.max(0, Math.round((Date.parse(end) - Date.parse(start)) / 86_400_000) + 1);
 }
 
-/** Mondays of the weeks whose Thursday falls in the period, up to the current week. */
-export function periodWeeks(period: Period, today: string, allStart: string | null = null): string[] {
-  const { start, end } = fullRange(period, today, allStart);
+/**
+ * Mondays of the weeks whose Thursday falls in the period, up to the current week. Weeks before the week of the
+ * first-use date are left out; the week of first use stays even when it was entered after its Thursday.
+ */
+export function periodWeeks(period: Period, today: string, firstUse: string | null = null): string[] {
+  const all = period.kind === 'all';
+  const { start, end } = all ? fullRange(period, today, firstUse) : calendarRange(period);
+  const floor = firstUse ? weekStartOf(firstUse) : null;
   let monday = weekStartOf(start);
-  if (addDays(monday, 3) < start) monday = addDays(monday, 7);
+  if (!all && addDays(monday, 3) < start) monday = addDays(monday, 7);
   const weeks: string[] = [];
-  for (; addDays(monday, 3) <= end && monday <= today; monday = addDays(monday, 7)) weeks.push(monday);
+  for (; (all || addDays(monday, 3) <= end) && monday <= (all ? end : today); monday = addDays(monday, 7)) {
+    if (floor === null || monday >= floor) weeks.push(monday);
+  }
   return weeks;
 }
 
@@ -147,14 +166,14 @@ export interface Bucket {
 const SHORT_MONTHS = MONTHS.map((n) => n.slice(0, 3));
 
 /** Points of the trends: weeks for a month or quarter, months for a year or all time; none after today. */
-export function periodBuckets(period: Period, today: string, allStart: string | null = null): Bucket[] {
+export function periodBuckets(period: Period, today: string, firstUse: string | null = null): Bucket[] {
   if (period.kind === 'month' || period.kind === 'quarter') {
-    return periodWeeks(period, today).map((monday) => {
+    return periodWeeks(period, today, firstUse).map((monday) => {
       const end = addDays(monday, 6);
       return { key: monday, start: monday, end, label: formatWeek(monday), soFar: end >= today };
     });
   }
-  const { start, end } = periodRange(period, today, allStart);
+  const { start, end } = periodRange(period, today, firstUse);
   const first = ymd(start);
   const last = ymd(end);
   const buckets: Bucket[] = [];

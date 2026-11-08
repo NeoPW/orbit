@@ -26,8 +26,8 @@ function median(values: number[]): number | null {
 }
 
 /** Tasks completed and created in the period (by local date, deleted ones left out) and the median time to done. */
-export function taskFigures(tasks: readonly TaskDates[], period: Period, today: string, allStart: string | null = null): TaskFigures {
-  const { start, end } = periodRange(period, today, allStart);
+export function taskFigures(tasks: readonly TaskDates[], period: Period, today: string, firstUse: string | null = null): TaskFigures {
+  const { start, end } = periodRange(period, today, firstUse);
   const inRange = (date: string | null) => date !== null && date >= start && date <= end;
   const done = tasks.filter((t) => inRange(completedDate(t)));
   return {
@@ -38,9 +38,9 @@ export function taskFigures(tasks: readonly TaskDates[], period: Period, today: 
 }
 
 /** Tasks completed in each week or month of the period. */
-export function taskTrend(tasks: readonly TaskDates[], period: Period, today: string, allStart: string | null = null): { bucket: Bucket; completed: number }[] {
+export function taskTrend(tasks: readonly TaskDates[], period: Period, today: string, firstUse: string | null = null): { bucket: Bucket; completed: number }[] {
   const dates = tasks.map(completedDate).filter((d): d is string => d !== null);
-  return periodBuckets(period, today, allStart).map((bucket) => ({
+  return periodBuckets(period, today, firstUse).map((bucket) => ({
     bucket,
     completed: dates.filter((d) => d >= bucket.start && d <= bucket.end).length,
   }));

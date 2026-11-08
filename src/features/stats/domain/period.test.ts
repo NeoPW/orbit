@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canStepForward, currentPeriod, parsePeriod, periodBuckets, periodLabel, periodOfWeek, periodWeeks, stepPeriod, switchKind } from './period.ts';
+import { canStepBack, canStepForward, periodDays, currentPeriod, parsePeriod, periodBuckets, periodLabel, periodOfWeek, periodWeeks, stepPeriod, switchKind } from './period.ts';
 
 const today = '2026-11-08';
 
@@ -57,5 +57,32 @@ describe('period', () => {
   it('starts all time at the given date', () => {
     const buckets = periodBuckets(parsePeriod('all', today), today, '2026-09-14');
     expect(buckets.map((b) => b.key)).toEqual(['2026-09', '2026-10', '2026-11']);
+  });
+});
+
+describe('first use', () => {
+  it('disables ‹ on the period holding the first-use date', () => {
+    expect(canStepBack(parsePeriod('2026-09', today), '2026-09-10')).toBe(false);
+    expect(canStepBack(parsePeriod('2026-10', today), '2026-09-10')).toBe(true);
+    expect(canStepBack(parsePeriod('2026-09', today), null)).toBe(true);
+    expect(canStepBack(parsePeriod('all', today), null)).toBe(false);
+  });
+
+  it('counts days from first use and leaves a period wholly before it empty', () => {
+    expect(periodDays(parsePeriod('2026-11', today), today, '2026-11-03')).toBe(6);
+    const october = parsePeriod('2026-10', today);
+    expect(periodDays(october, today, '2026-11-03')).toBe(0);
+    expect(periodWeeks(october, today, '2026-11-03')).toEqual([]);
+  });
+
+  it('keeps the week of first use even when first use is after its Thursday', () => {
+    // Friday 2026-10-16: weeks of 10-12 (kept), 10-19, 10-26; 10-05 is before first use
+    expect(periodWeeks(parsePeriod('2026-10', today), today, '2026-10-16')).toEqual(['2026-10-12', '2026-10-19', '2026-10-26']);
+    expect(periodWeeks(parsePeriod('all', today), today, '2026-10-16')[0]).toBe('2026-10-12');
+  });
+
+  it('starts the buckets of a year at the first-use month', () => {
+    const keys = periodBuckets(parsePeriod('2026', today), today, '2026-09-10').map((b) => b.key);
+    expect(keys).toEqual(['2026-09', '2026-10', '2026-11']);
   });
 });

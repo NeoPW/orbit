@@ -25,14 +25,22 @@ describe('period loader', () => {
     const { db } = await openTestDatabase();
     await db.insert(logEntries).values([entry('2026-03-14', 60), entry('2026-10-10', 30)]);
     const stats = await loadPeriodStats(db, parsePeriod('all', today), today);
-    expect(stats.allStart).toBe('2026-03-14');
+    expect(stats.firstUse).toBe('2026-03-14');
     expect(stats.headline.minutes).toBe(90);
   });
 
   it('has no start for all time without data', async () => {
     const { db } = await openTestDatabase();
     const stats = await loadPeriodStats(db, parsePeriod('all', today), today);
-    expect(stats.allStart).toBeNull();
+    expect(stats.firstUse).toBeNull();
     expect(stats.headline.empty).toBe(true);
+  });
+
+  it('cuts a month at the first-use date', async () => {
+    const { db } = await openTestDatabase();
+    await db.insert(logEntries).values([entry('2026-11-03', 30 * 60)]);
+    const stats = await loadPeriodStats(db, parsePeriod('2026-11', today), today);
+    expect(stats.firstUse).toBe('2026-11-03');
+    expect(stats.headline.dailyAverageMinutes).toBe(5 * 60);
   });
 });

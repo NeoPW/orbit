@@ -15,7 +15,7 @@ export function WorkCalendarPanel({ detail, period, today }: { detail: StatsDeta
   const { start, end } = detail.range;
   const days = dailyMinutes(detail.entries, start, end);
   const max = Math.max(0, ...days.values());
-  const shown = periodRange(period, today, detail.allStart);
+  const shown = periodRange(period, today, detail.firstUse);
   const cell = (date: string): CellInfo => {
     if (date > today) return { tone: 'blank' };
     const minutes = days.get(date) ?? 0;
@@ -35,7 +35,7 @@ export function WorkCalendarPanel({ detail, period, today }: { detail: StatsDeta
 
 /** Weekdays by hours of the day, shaded by the time worked in the shown period. */
 export function HeatmapPanel({ detail, period, today }: { detail: StatsDetail; period: Period; today: string }) {
-  const { start, end } = periodRange(period, today, detail.allStart);
+  const { start, end } = periodRange(period, today, detail.firstUse);
   const grid = weekdayHourMinutes(detail.entries, start, end);
   const max = Math.max(0, ...grid.flat());
   return (

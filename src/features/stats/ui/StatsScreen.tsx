@@ -8,6 +8,7 @@ import { SegmentedControl } from '../../../core/ui/components/SegmentedControl.t
 import { formatDuration } from '../../work-log/domain/work-log.ts';
 import type { PeriodStats } from '../data/period-loader.ts';
 import {
+  canStepBack,
   canStepForward,
   currentPeriod,
   PERIOD_KINDS,
@@ -123,7 +124,7 @@ export function StatsScreen() {
         actions={
           <div className={styles.picker}>
             <SegmentedControl label="Period" options={KINDS} value={period.kind} onChange={(kind) => show(switchKind(period, kind, today))} />
-            <IconButton label="Previous period" icon={<ChevronLeft />} disabled={previous === null} onClick={() => previous && show(previous)} />
+            <IconButton label="Previous period" icon={<ChevronLeft />} disabled={previous === null || (stats !== undefined && !canStepBack(period, stats.firstUse))} onClick={() => previous && show(previous)} />
             <IconButton
               label="Next period"
               icon={<ChevronRight />}

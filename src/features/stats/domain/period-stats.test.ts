@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { comparePeriods, periodHeadline, periodTrend, type StatsRows } from './period-stats.ts';
+import { comparePeriods, periodHeadline, periodTrend, previousHeadline, type StatsRows } from './period-stats.ts';
 import { parsePeriod } from './period.ts';
 
 const today = '2026-11-08';
@@ -26,7 +26,7 @@ function rows(over: Partial<StatsRows> = {}): StatsRows {
   };
 }
 
-const headline = (r: StatsRows, key: string, allStart: string | null = null) => periodHeadline(r, parsePeriod(key, today), today, allStart);
+const headline = (r: StatsRows, key: string, firstUse: string | null = null) => periodHeadline(r, parsePeriod(key, today), today, firstUse);
 
 describe('time across two months', () => {
   it('counts each entry by its local date', () => {
@@ -133,5 +133,31 @@ describe('all time', () => {
     expect(h.minutes).toBe(60);
     expect(h.empty).toBe(false);
     expect(headline(rows(), '2026-10').empty).toBe(true);
+  });
+});
+
+describe('from first use', () => {
+  it('divides the daily average by the days since first use', () => {
+    const r = rows({ logEntries: [entry('2026-11-03', 30 * 60)] });
+    expect(headline(r, '2026-11', '2026-11-03').dailyAverageMinutes).toBe(5 * 60);
+  });
+
+  it('counts the weeks reviewed from the week of first use', () => {
+    const reviews = ['2026-10-12', '2026-10-19', '2026-10-26'].map((weekStart) => ({ weekStart, score: 7 }));
+    const h = headline(rows({ reviews }), '2026-10', '2026-10-16');
+    expect(h.weeks).toBe(3);
+    expect(h.reviewedWeeks).toBe(3);
+  });
+
+  it('has no trend points before first use', () => {
+    const r = rows({ logEntries: [entry('2026-09-10', 60)] });
+    const trend = periodTrend(r, parsePeriod('2026', today), today, '2026-09-10');
+    expect(trend.map((p) => p.bucket.key)).toEqual(['2026-09', '2026-10', '2026-11']);
+  });
+
+  it('has no previous headline when the previous period ends before first use', () => {
+    const r = rows({ logEntries: [entry('2026-11-03', 60)] });
+    expect(previousHeadline(r, parsePeriod('2026-11', today), today, '2026-11-03')).toBeNull();
+    expect(previousHeadline(r, parsePeriod('2026-11', today), today, '2026-10-20')).not.toBeNull();
   });
 });

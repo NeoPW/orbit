@@ -67,9 +67,9 @@ export function projectGoal(goal: StatsGoal, measures: readonly TimedMeasure[], 
 }
 
 /** A row per active goal that had started by the end of the period: progress, change, progress per bucket and projection. */
-export function goalStatsRows(rows: GoalStatsRows, period: Period, today: string, allStart: string | null = null): GoalStatsRow[] {
-  const { start, end: asOf } = periodRange(period, today, allStart);
-  const buckets = periodBuckets(period, today, allStart);
+export function goalStatsRows(rows: GoalStatsRows, period: Period, today: string, firstUse: string | null = null): GoalStatsRow[] {
+  const { start, end: asOf } = periodRange(period, today, firstUse);
+  const buckets = periodBuckets(period, today, firstUse);
   return rows.goals
     .filter((g) => g.startDate === null || g.startDate <= asOf)
     .map((goal) => {

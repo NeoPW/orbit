@@ -54,6 +54,7 @@ function TrendChart({ trend }: { trend: RecentWeeks }) {
       <line x1="0" x2={W} y1={BASE} y2={BASE} className={styles.axis} />
       {trend.weeks.map((w, i) => {
         const x = i * slot + slot / 2;
+        if (w.beforeFirstUse) return null;
         return (
           <g key={w.weekStart}>
             <rect
@@ -110,9 +111,11 @@ export function TrendPanel({ trend }: { trend: RecentWeeks }) {
       tile
       title="Recent weeks"
       actions={
-        <span className={styles.statNote}>
-          4-week average <strong className={styles.headline}>{duration(trend.headline)}</strong>
-        </span>
+        trend.headline !== null && (
+          <span className={styles.statNote}>
+            4-week average <strong className={styles.headline}>{duration(trend.headline)}</strong>
+          </span>
+        )
       }
     >
       <TrendChart trend={trend} />

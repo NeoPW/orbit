@@ -17,6 +17,7 @@ import {
 import { addDays } from '../../../core/dates/today.ts';
 import { weekRange } from '../domain/review-week.ts';
 import { summarizeWeek, type WeekRows, type WeekSummary } from '../domain/week-summary.ts';
+import { firstUseDate } from './first-use.ts';
 
 /** Weeks of log entries loaded before the shown week: the 8 bars of the trend plus 3 weeks for the first 4-week average. */
 export const TREND_WEEKS_BEFORE = 10;
@@ -42,10 +43,12 @@ export async function loadWeekRows(db: Db, weekStart: string): Promise<WeekRows>
       db.select().from(weeklyReviews).where(notDeleted(weeklyReviews)),
       db.select().from(reviewMeasureSnapshots).where(notDeleted(reviewMeasureSnapshots)),
     ]);
+  const firstUse = await firstUseDate(db);
   const goalStart = new Map(goalRows.map((g) => [g.id, g.startDate ?? '']));
   const checkDates = (habitId: string | null, goalId: string) =>
     habitId ? allChecks.filter((c) => c.habitId === habitId && c.date >= (goalStart.get(goalId) ?? '')).map((c) => c.date) : [];
   return {
+    firstUse,
     goals: goalRows.map((g) => ({ id: g.id, title: g.title, status: g.status, color: g.color })),
     measures: measureRows.map((m) => ({
       ...m,

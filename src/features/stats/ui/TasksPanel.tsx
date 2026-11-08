@@ -17,8 +17,8 @@ function Figure({ label, value }: { label: string; value: string }) {
 
 /** Tasks completed and created in the period, the median time to done and tasks completed per week or month. */
 export function TasksPanel({ detail, period, today }: { detail: StatsDetail; period: Period; today: string }) {
-  const figures = useMemo(() => taskFigures(detail.links.tasks, period, today, detail.allStart), [detail, period, today]);
-  const trend = useMemo(() => taskTrend(detail.links.tasks, period, today, detail.allStart), [detail, period, today]);
+  const figures = useMemo(() => taskFigures(detail.links.tasks, period, today, detail.firstUse), [detail, period, today]);
+  const trend = useMemo(() => taskTrend(detail.links.tasks, period, today, detail.firstUse), [detail, period, today]);
   const points = trend.map((p) => ({
     label: p.bucket.label,
     value: p.completed,

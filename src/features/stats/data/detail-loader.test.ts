@@ -24,7 +24,7 @@ describe('detail loader', () => {
     await db.insert(logEntries).values([entry('2024-06-01'), entry('2026-10-05')]);
     const detail = await loadStatsDetail(db, parsePeriod('all', today), today);
     expect(detail.entries).toHaveLength(2);
-    expect(detail.allStart).toBe('2024-06-01');
+    expect(detail.firstUse).toBe('2024-06-01');
   });
 
   it('sums the lifetime minutes of a project over all years', async () => {

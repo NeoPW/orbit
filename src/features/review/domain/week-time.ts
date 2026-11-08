@@ -3,6 +3,7 @@ import { addDays } from '../../../core/dates/today.ts';
 import { goalColor, projectColor } from '../../../core/ui/colors.ts';
 import { isWorkOnGoal, type WorkLinks } from '../../work-log/domain/work-log.ts';
 import { weekRange, type WeekRange } from './review-week.ts';
+import { weekStartOf } from '../../habits/domain/habits.ts';
 import type { WeekRows } from './week-summary.ts';
 
 export type TimeGrouping = 'area' | 'goal' | 'project';
@@ -156,6 +157,8 @@ export interface TrendWeek {
   minutes: number;
   /** The 4-week average ending with this week; null for the current week. */
   average: number | null;
+  /** The week lies before the week of the first-use date: no bar, not part of any average. */
+  beforeFirstUse: boolean;
   shown: boolean;
   current: boolean;
 }
@@ -163,24 +166,43 @@ export interface TrendWeek {
 export interface RecentWeeks {
   weeks: TrendWeek[];
   /** The 4-week average of the shown week, or of the 4 weeks before it when the shown week is the current one. */
-  headline: number;
+  headline: number | null;
 }
 
 export const TREND_WEEKS = 8;
 const AVERAGE_WEEKS = 4;
 
-/** Total time of each of the 8 weeks ending with `shownWeek`, with the rolling 4-week average. Weeks are Monday dates. */
-export function recentWeeks(rows: Pick<WeekRows, 'logEntries'>, shownWeek: string, currentWeek: string): RecentWeeks {
+/**
+ * Total time of each of the 8 weeks ending with `shownWeek`, with the rolling 4-week average. Weeks are Monday dates.
+ * Weeks before the week of `firstUse` are left out of the averages.
+ */
+export function recentWeeks(rows: Pick<WeekRows, 'logEntries'>, shownWeek: string, currentWeek: string, firstUse: string | null = null): RecentWeeks {
+  const floor = firstUse ? weekStartOf(firstUse) : null;
+  const before = (weekStart: string) => floor !== null && weekStart < floor;
   const total = (weekStart: string) => inWeek(rows.logEntries, weekRange(weekStart)).reduce((sum, e) => sum + minutesOf(e), 0);
-  const mean = (weekStart: string) => {
+  const mean = (weekStart: string): number | null => {
     let sum = 0;
-    for (let i = 0; i < AVERAGE_WEEKS; i++) sum += total(addDays(weekStart, -7 * i));
-    return Math.round(sum / AVERAGE_WEEKS);
+    let count = 0;
+    for (let i = 0; i < AVERAGE_WEEKS; i++) {
+      const week = addDays(weekStart, -7 * i);
+      if (before(week)) continue;
+      sum += total(week);
+      count += 1;
+    }
+    return count === 0 ? null : Math.round(sum / count);
   };
   const weeks = Array.from({ length: TREND_WEEKS }, (_, i): TrendWeek => {
     const weekStart = addDays(shownWeek, -7 * (TREND_WEEKS - 1 - i));
     const current = weekStart === currentWeek;
-    return { weekStart, minutes: total(weekStart), average: current ? null : mean(weekStart), shown: weekStart === shownWeek, current };
+    const skipped = before(weekStart);
+    return {
+      weekStart,
+      minutes: skipped ? 0 : total(weekStart),
+      average: current || skipped ? null : mean(weekStart),
+      beforeFirstUse: skipped,
+      shown: weekStart === shownWeek,
+      current,
+    };
   });
   return { weeks, headline: mean(shownWeek === currentWeek ? addDays(shownWeek, -7) : shownWeek) };
 }

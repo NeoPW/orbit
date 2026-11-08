@@ -8,12 +8,12 @@ import type { HabitRows } from '../domain/habit-stats.ts';
 import type { Period } from '../domain/period.ts';
 import type { LifetimeMinutes, TimeEntry, TimeLinks } from '../domain/period-time.ts';
 import { calendarRange } from '../domain/work-calendar.ts';
-import { firstDataDate } from './period-loader.ts';
+import { firstUseDate } from '../../review/data/first-use.ts';
 
 export interface StatsDetail {
   period: Period;
   /** The first date with data, for "All time". */
-  allStart: string | null;
+  firstUse: string | null;
   /** The days the work calendar grid covers. */
   range: { start: string; end: string };
   habitRows: HabitRows;
@@ -34,7 +34,7 @@ const localMidnight = (date: string) => {
 
 /** What the work calendar, heatmap and habits panel need: all habit checks and the log entries of the calendar range. */
 export async function loadStatsDetail(db: Db, period: Period, today: string): Promise<StatsDetail> {
-  const allStart = period.kind === 'all' ? await firstDataDate(db) : null;
+  const firstUse = await firstUseDate(db);
   const range = calendarRange(period, today);
   const bounded = period.kind !== 'all';
   const [habitList, checks, entries, areaRows, goalRows, projectRows, taskRows, lifetimeRows, measureRows, changeRows] = await Promise.all([
@@ -74,7 +74,7 @@ export async function loadStatsDetail(db: Db, period: Period, today: string): Pr
   const goalStart = new Map(activeGoals.map((g) => [g.id, g.startDate ?? '']));
   return {
     period,
-    allStart,
+    firstUse,
     range,
     habitRows: { habits: habitList, checks, entries },
     entries,

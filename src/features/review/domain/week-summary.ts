@@ -8,6 +8,8 @@ import { recentWeeks, weekTime, type RecentWeeks, type WeekTime } from './week-t
 
 /** Plain rows of what a week summary needs; the loader fills them, soft-deleted rows included where noted. */
 export interface WeekRows {
+  /** The first-use date (see stats, "All time"); weeks before its week are left out of the recent-weeks trend. */
+  firstUse?: string | null;
   /** Goals in sort order (not deleted). */
   goals: { id: string; title: string; status: GoalStatus; color: string | null }[];
   /** Measures (not deleted). `checkIns` counts the checks of the linked habit since the goal's start. */
@@ -262,7 +264,7 @@ export function summarizeWeek(rows: WeekRows, week: WeekRange, today: string, op
     weekEnd: week.end,
     goals: summarizeGoals(rows, week),
     time: weekTime(rows, week, today, options.targetHours ?? null),
-    trend: recentWeeks(rows, week.start, weekStartOf(today)),
+    trend: recentWeeks(rows, week.start, weekStartOf(today), rows.firstUse ?? null),
     habits: summarizeHabits(rows, week, today),
     completedTasks,
     finishedProjects,

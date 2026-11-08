@@ -24,9 +24,9 @@ export interface HabitStatsRow {
 }
 
 /** A row per active habit: streaks, check-ins kept of expected and time in the period; longest current streak first, then by title. */
-export function habitStatsRows(rows: HabitRows, period: Period, today: string, allStart: string | null = null): HabitStatsRow[] {
-  const { start, end } = periodRange(period, today, allStart);
-  const weeks = periodWeeks(period, today, allStart);
+export function habitStatsRows(rows: HabitRows, period: Period, today: string, firstUse: string | null = null): HabitStatsRow[] {
+  const { start, end } = periodRange(period, today, firstUse);
+  const weeks = periodWeeks(period, today, firstUse);
   return rows.habits
     .filter((h) => h.active)
     .map((h) => {

@@ -185,6 +185,21 @@ describe('recent weeks', () => {
     expect(trend.weeks[0]).toMatchObject({ minutes: 0, average: 0 });
     expect(trend.weeks[7]?.average).toBe(hours(2));
   });
+
+  it('leaves weeks before first use out of the bars and the averages', () => {
+    const rows = rowsOf({ '2026-10-21': 10, '2026-10-28': 20 });
+    // first use Wednesday 2026-10-21, so the week of 2026-10-19 is the first one
+    const trend = recentWeeks(rows, '2026-11-02', '2026-11-16', '2026-10-21');
+    expect(trend.weeks.map((w) => w.beforeFirstUse)).toEqual([true, true, true, true, true, false, false, false]);
+    expect(trend.weeks[5]).toMatchObject({ minutes: hours(10), average: hours(10) });
+    expect(trend.headline).toBe(hours(10));
+  });
+
+  it('has no average when every week of the average is before first use', () => {
+    const trend = recentWeeks(empty(), '2026-11-02', '2026-11-16', '2026-11-02');
+    expect(trend.weeks[6]).toMatchObject({ beforeFirstUse: true, average: null });
+    expect(trend.weeks[7]?.average).toBe(0);
+  });
 });
 
 describe('hours per day', () => {
