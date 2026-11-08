@@ -103,11 +103,11 @@ A day without work SHALL show the axis and a short empty state instead of blocks
 - **THEN** the timeline shows the axis and a short empty state
 
 ### Requirement: Open from a block
-Clicking a block or dot SHALL open the task it belongs to, else (for a habit) its project, else its goal; an entry without any of them is not clickable.
+Clicking a block or dot SHALL open the task it belongs to in the task popup (see tasks, "Task popup"), else (for a habit) its project, else its goal; an entry without any of them is not clickable.
 
 #### Scenario: Open the task
 - **WHEN** the user clicks a block of the task "Rerun benchmarks"
-- **THEN** the task page opens
+- **THEN** the popup of "Rerun benchmarks" opens over the current screen
 
 ### Requirement: Timeline updates live
 The timeline SHALL update immediately after work is logged, a session starts or stops, or the data changes through sync, and SHALL move to the next day when the date changes.
@@ -137,7 +137,7 @@ The phone's Today screen SHALL show the timeline of one day, starting with today
 
 #### Scenario: Open a block
 - **WHEN** the user taps a block of the task "Rerun benchmarks" on the phone
-- **THEN** the task page opens
+- **THEN** the task popup opens full screen
 
 ### Requirement: Resumed stretches as one block
 Timer blocks of the same task, habit or project SHALL be drawn as one block when at most 10 minutes lie between the end of one and the start of the next, also across several pauses and including the running stretch. The block SHALL run from the first start to the last end, and its minutes SHALL be the sum of the stretches, without the pauses. Blocks with a longer gap, of different items, or not from a timer SHALL stay separate.

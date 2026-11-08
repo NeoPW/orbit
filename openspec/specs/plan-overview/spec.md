@@ -69,7 +69,7 @@ Plan's header SHALL offer "New" with a menu to create a goal, a project, a task 
 - **THEN** the page of its goal opens
 
 ### Requirement: Plan layout
-The Plan screen SHALL be one page with the sections Goals, Projects without a goal, Backlog, Habits, Areas and Archive, limited to a readable width. Clicking a goal, project or task SHALL open its page (see app-shell, "Detail page addresses"), never its edit form; going back SHALL return to Plan.
+The Plan screen SHALL be one page with the sections Goals, Projects without a goal, Backlog, Habits, Areas and Archive, limited to a readable width. Clicking a goal or project SHALL open its page (see app-shell, "Detail page addresses") and clicking a task SHALL open it in the task popup (see tasks, "Task popup"), never an edit form; going back from a page SHALL return to Plan.
 
 #### Scenario: Open a project page
 - **WHEN** the user clicks a project in the Backlog
@@ -104,7 +104,7 @@ The Goals section SHALL list every goal with status `active` in sort order. Each
 
 #### Scenario: Task under a goal
 - **WHEN** the open task "Book physio" is assigned to the active goal "Get fit"
-- **THEN** it is listed under that goal and clicking it opens its task page
+- **THEN** it is listed under that goal and clicking it opens its task popup
 
 #### Scenario: Overdue goal in the list
 - **WHEN** an active goal's end date has passed

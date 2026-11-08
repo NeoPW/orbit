@@ -45,7 +45,7 @@ The project detail SHALL list the project's open tasks once, with its next steps
 
 #### Scenario: Open a task
 - **WHEN** the user clicks the open task "Book venue"
-- **THEN** its task page opens
+- **THEN** its task popup opens over the project detail
 
 ### Requirement: Habits in detail
 The project detail SHALL list the habits linked to the project with their schedule summary and whether they are inactive, or "No habits". Tapping a habit SHALL open its edit form.

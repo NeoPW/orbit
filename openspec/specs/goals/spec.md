@@ -127,11 +127,11 @@ The goal page SHALL list the projects serving the goal: active projects first (i
 - **THEN** "Swim course" serves "Get fit" and is listed on its page
 
 ### Requirement: Tasks and habits on the goal page
-The goal page SHALL list the open tasks assigned to the goal and the habits linked to it. Tapping a task SHALL open its task page; tapping a habit SHALL open its edit form.
+The goal page SHALL list the open tasks assigned to the goal and the habits linked to it. Tapping a task SHALL open it in the task popup (see tasks, "Task popup"); tapping a habit SHALL open its edit form.
 
 #### Scenario: Assigned task
 - **WHEN** the open task "Book physio" is assigned to the goal
-- **THEN** it is listed on the goal page and tapping it opens its task page
+- **THEN** it is listed on the goal page and tapping it opens its task popup
 
 ### Requirement: Work on a goal
 Work on a goal SHALL be every log entry linked to the goal, to a project serving it, or to a task of the goal or of one of its projects. A project's work SHALL count for the goal it serves now. The goal page SHALL show the number of entries and total duration of its work in the current week and in total, and its most recent log entries, newest first.

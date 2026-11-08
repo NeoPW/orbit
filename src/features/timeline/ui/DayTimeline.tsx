@@ -1,3 +1,4 @@
+import { useOpenTask } from '../../tasks/ui/TaskPopup.tsx';
 import { NotebookPen } from 'lucide-react';
 import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { navigate } from '../../../core/routing/useRoute.ts';
@@ -40,8 +41,8 @@ const TWO_LINES_PX = 34;
 const pad = (n: number) => String(n).padStart(2, '0');
 const clockText = (date: Date) => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 
-function openTarget(target: TimelineTarget) {
-  if ('taskId' in target) navigate({ name: 'task', id: target.taskId });
+function openTarget(target: TimelineTarget, openTask: (id: string) => void) {
+  if ('taskId' in target) openTask(target.taskId);
   else if ('projectId' in target) navigate({ name: 'project', id: target.projectId });
   else navigate({ name: 'goal', id: target.goalId });
 }
@@ -64,6 +65,7 @@ interface Tip {
  * tinted in their project's colour. A view only: clicking a block opens what it belongs to.
  */
 export function DayTimeline({ days, now, today, hourHeight, label, emptyText, emptyAction, maxHeight }: DayTimelineProps) {
+  const openTask = useOpenTask();
   const [tip, setTip] = useState<Tip | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
 
@@ -174,7 +176,7 @@ export function DayTimeline({ days, now, today, hourHeight, label, emptyText, em
         {...events}
         onFocus={(e) => showTip(item, e.currentTarget)}
         onBlur={() => setTip(null)}
-        onClick={() => openTarget(target)}
+        onClick={() => openTarget(target, openTask)}
       >
         {content}
       </button>

@@ -1,0 +1,93 @@
+.popup {
+  width: min(720px, calc(100vw - var(--space-6)));
+  max-width: 100vw;
+  max-height: min(86dvh, 900px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-sheet);
+  color: var(--color-text);
+  box-shadow: var(--shadow-raised);
+  overflow: hidden;
+  animation: pop-in var(--motion-normal) var(--ease-out);
+}
+
+.popup::backdrop {
+  background: var(--color-scrim);
+  animation: fade-in var(--motion-normal) var(--ease-out);
+}
+
+/* Full screen on the phone, clear of the system bars. */
+@media (max-width: 639px) {
+  .popup {
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+    box-sizing: border-box;
+  }
+}
+
+.popup[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+/* No percentage heights here: inside a dialog with an automatic height they collapse to 0 in WebKit. */
+.panel {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  overflow-y: auto;
+}
+
+.body > * {
+  flex-shrink: 0;
+}
+
+.missing {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popup,
+  .popup::backdrop {
+    animation: none;
+  }
+}

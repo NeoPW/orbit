@@ -32,11 +32,23 @@ export function normalizeLocation(): void {
   if (redirect !== undefined) window.history.replaceState(window.history.state, '', redirect);
 }
 
+/** Position of the current history entry among the ones the app pushed (0 for the entry the app was opened on). */
+function historyIndex(): number {
+  const state = window.history.state as { orbit?: number } | null;
+  return state?.orbit ?? 0;
+}
+
 export function navigate(route: Route): void {
   const path = pathOf(route);
   if (path === currentLocation()) return;
-  window.history.pushState(null, '', path);
+  window.history.pushState({ orbit: historyIndex() + 1 }, '', path);
   window.dispatchEvent(new Event(NAVIGATE_EVENT));
+}
+
+/** Goes back to the screen the current one was opened from, or to `fallback` when it was opened directly by its address. */
+export function goBack(fallback: Route): void {
+  if (historyIndex() > 0) window.history.back();
+  else navigate(fallback);
 }
 
 export function useRoute(): Route {
