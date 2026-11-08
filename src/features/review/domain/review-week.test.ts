@@ -4,7 +4,6 @@ import {
   currentWeekStart,
   formatWeekFull,
   formatWeekRange,
-  lastWeekStart,
   resolveWeek,
   reviewWeekStart,
   weekRange,
@@ -24,9 +23,9 @@ describe('review week', () => {
     expect(formatWeekRange(reviewWeekStart('2026-10-10'))).toBe('28-09-2026 – 04-10-2026');
   });
 
-  it('gives the current and last week', () => {
+  it('gives the current week', () => {
     expect(currentWeekStart('2026-10-12')).toBe('2026-10-12');
-    expect(formatWeekRange(lastWeekStart('2026-10-07'))).toBe('28-09-2026 – 04-10-2026');
+    expect(formatWeekRange(currentWeekStart('2026-10-07'))).toBe('05-10-2026 – 11-10-2026');
   });
 
   it('spans seven local days', () => {

@@ -98,15 +98,6 @@ export async function listOpenTasksOfProject(db: Db, projectId: string): Promise
   return sortOpenTasks(rows, { nextStepsFirst: true });
 }
 
-/** A project's done tasks, most recently completed first. */
-export async function listDoneTasksOfProject(db: Db, projectId: string): Promise<Task[]> {
-  const rows = await db
-    .select()
-    .from(tasks)
-    .where(and(eq(tasks.projectId, projectId), eq(tasks.status, 'done'), notDeleted(tasks)));
-  return rows.sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''));
-}
-
 /** The project's open next-step tasks. */
 export async function listOpenNextSteps(db: Db, projectId: string): Promise<Task[]> {
   return (await listOpenTasksOfProject(db, projectId)).filter((t) => t.isNextStep);

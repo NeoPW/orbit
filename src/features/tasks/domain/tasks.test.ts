@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyProjectOrder,
+  compareByRank,
   effectiveImportance,
   hasManualOrder,
   nextStepOutcome,
   positionBetween,
   positionTooClose,
-  sortByRank,
   sortOpenTasks,
   taskRank,
   type RankInput,
@@ -38,7 +38,7 @@ describe('taskRank', () => {
     const b = t({ name: 'B', importance: 5 });
     expect(taskRank(a, today)).toBe(10);
     expect(taskRank(b, today)).toBe(5);
-    expect(sortByRank([b, a], today).map((x) => x.name)).toEqual(['A', 'B']);
+    expect([b, a].sort(compareByRank(today)).map((x) => x.name)).toEqual(['A', 'B']);
   });
   it('inherits importance and urgency from the project', () => {
     expect(taskRank(t({ projectImportance: 4, projectDeadline: '2026-10-07' }), today)).toBe(16);
@@ -52,9 +52,9 @@ describe('taskRank', () => {
   it('breaks ties by due date, then oldest first', () => {
     const dated = t({ name: 'dated', dueDate: '2027-06-01' });
     const none = t({ name: 'none' });
-    expect(sortByRank([none, dated], today).map((x) => x.name)).toEqual(['dated', 'none']);
+    expect([none, dated].sort(compareByRank(today)).map((x) => x.name)).toEqual(['dated', 'none']);
     const older = t({ name: 'older', createdAt: '2026-09-01T00:00:00Z' });
-    expect(sortByRank([none, older], today).map((x) => x.name)).toEqual(['older', 'none']);
+    expect([none, older].sort(compareByRank(today)).map((x) => x.name)).toEqual(['older', 'none']);
   });
 });
 
@@ -132,7 +132,7 @@ describe('project order as the Home tie-break', () => {
 
   it('leaves the rank in charge', () => {
     const high = { ...intro, importance: 5 };
-    const sorted = sortByRank([high, venue].map((x) => ({ ...x, ...info(x) })), today);
+    const sorted = [high, venue].map((x) => ({ ...x, ...info(x) })).sort(compareByRank(today));
     expect(applyProjectOrder(sorted, today, info).map((x) => x.name)).toEqual(['Write intro', 'Book venue']);
   });
 

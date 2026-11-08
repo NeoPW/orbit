@@ -1,3 +1,4 @@
+import { invoke } from '@tauri-apps/api/core';
 import { platform } from './platform.ts';
 
 export interface DesktopNotification {
@@ -12,7 +13,6 @@ const CLICK_EVENT = 'notification-clicked';
 /** Shows a system notification on the desktop; does nothing in the browser. */
 export async function showNotification({ title, body, route }: DesktopNotification): Promise<void> {
   if (platform !== 'desktop') return;
-  const { invoke } = await import('@tauri-apps/api/core');
   await invoke('show_notification', { title, body, route });
 }
 
@@ -57,7 +57,6 @@ export interface ReminderServer {
 }
 
 async function reminders<T>(command: string, payload?: unknown): Promise<T> {
-  const { invoke } = await import('@tauri-apps/api/core');
   return invoke<T>(`plugin:reminders|${command}`, payload === undefined ? {} : { payload });
 }
 

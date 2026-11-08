@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import type { Db } from '../../../core/db/drizzle.ts';
 import { createFields, deleteFields, notDeleted, updateFields, type Clock } from '../../../core/db/records.ts';
 import { goals, habits, projects, tasks, type GoalStatus, type ProjectStatus } from '../../../core/db/schema.ts';
@@ -84,16 +84,6 @@ export async function listProjectsByGoal(db: Db, goalId: string, ...statuses: Pr
     .select()
     .from(projects)
     .where(and(eq(projects.goalId, goalId), statuses.length ? inArray(projects.status, statuses) : undefined, notDeleted(projects)))
-    .orderBy(...byCreated);
-  return loadViews(db, rows);
-}
-
-/** Projects of a status (default active) that serve no goal. */
-export async function listProjectsWithoutGoal(db: Db, status: ProjectStatus = 'active'): Promise<ProjectView[]> {
-  const rows = await db
-    .select()
-    .from(projects)
-    .where(and(eq(projects.status, status), isNull(projects.goalId), notDeleted(projects)))
     .orderBy(...byCreated);
   return loadViews(db, rows);
 }

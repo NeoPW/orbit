@@ -41,10 +41,6 @@
   margin-top: auto;
 }
 
-.themes {
-  padding: var(--space-2);
-}
-
 .link {
   position: relative;
   display: flex;
@@ -87,20 +83,6 @@
 
   .brand {
     padding-inline: 0;
-  }
-
-  .themes {
-    padding: 0;
-  }
-
-  .themes > div {
-    flex-direction: column;
-    flex-wrap: nowrap;
-  }
-
-  .themes button > span {
-    width: 20px;
-    height: 20px;
   }
 
   .label,

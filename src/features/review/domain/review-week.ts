@@ -13,11 +13,6 @@ export function currentWeekStart(today: string): string {
   return weekStartOf(today);
 }
 
-/** Monday of the week before the current one. */
-export function lastWeekStart(today: string): string {
-  return addDays(weekStartOf(today), -7);
-}
-
 /** The Sunday of the week starting on `weekStart`. */
 export function weekEnd(weekStart: string): string {
   return addDays(weekStart, 6);

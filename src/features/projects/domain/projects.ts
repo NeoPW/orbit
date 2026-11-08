@@ -69,11 +69,6 @@ export function sortByScore<T extends OrderableProject>(projects: T[], today: st
   return [...projects].sort(compareByScore(today));
 }
 
-export function sortForPlan<T extends OrderableProject>(projects: T[]): T[] {
-  return [...projects].sort(compareForPlan);
-}
-
-
 /** Anything with a project and the end of its goal, such as `ProjectView`. */
 export interface ProjectLike {
   project: { title: string; importance: number; deadline: string | null };

@@ -53,14 +53,6 @@ function upsertReviewQuery(db: Db, clock: Clock, weekStart: string, draft: Revie
     .onConflictDoUpdate({ target: weeklyReviews.id, set: { ...values, updatedAt: clock().toISOString(), deletedAt: null } });
 }
 
-/** The review of the week; an empty draft (natural ID) is created when there is none. */
-export async function getOrCreateDraft(db: Db, clock: Clock, weekStart: string): Promise<WeeklyReview> {
-  const existing = await getReview(db, weekStart);
-  if (existing) return existing;
-  await upsertReviewQuery(db, clock, weekStart, { score: null, reflection: '', planNextWeek: '' });
-  return (await getReview(db, weekStart))!;
-}
-
 /** Stores score, reflection and plan without changing whether the review is completed. */
 export async function saveDraft(db: Db, clock: Clock, weekStart: string, draft: ReviewDraft): Promise<void> {
   await upsertReviewQuery(db, clock, weekStart, draft);
@@ -99,9 +91,4 @@ export function listCompletedReviews(db: Db): Promise<WeeklyReview[]> {
     .from(weeklyReviews)
     .where(and(notDeleted(weeklyReviews), isNotNull(weeklyReviews.completedAt)))
     .orderBy(desc(weeklyReviews.weekStart));
-}
-
-/** The most recently completed review (by week), whose plan the Review tab shows. */
-export async function getLatestCompletedReview(db: Db): Promise<WeeklyReview | undefined> {
-  return (await listCompletedReviews(db))[0];
 }

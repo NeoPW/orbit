@@ -148,11 +148,6 @@ export function periodWeeks(period: Period, today: string, firstUse: string | nu
   return weeks;
 }
 
-/** The period holding a week: the one containing its Thursday. */
-export function periodOfWeek(weekStart: string, kind: Exclude<PeriodKind, 'all'>): Period {
-  return currentPeriod(kind, addDays(weekStart, 3));
-}
-
 export interface Bucket {
   key: string;
   /** First and last day it covers (a week Monday–Sunday, or a month). */

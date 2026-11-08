@@ -191,7 +191,6 @@ export const settings = sqliteTable('settings', {
 });
 
 export type Area = typeof areas.$inferSelect;
-export type NewArea = typeof areas.$inferInsert;
 
 export type Goal = typeof goals.$inferSelect;
 export type Measure = typeof measures.$inferSelect;

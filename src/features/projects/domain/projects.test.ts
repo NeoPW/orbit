@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { effectiveDeadline, projectScore, sortByScore, sortForPlan, urgency } from './projects.ts';
+import { compareForPlan, effectiveDeadline, projectScore, sortByScore, urgency } from './projects.ts';
 
 const today = '2026-10-05';
 const p = (title: string, importance: number, deadline: string | null = null, goalEnd: string | null = null) => ({
@@ -49,7 +49,7 @@ describe('ordering', () => {
     expect(list.map((x) => x.title)).toEqual(['B', 'A']);
   });
   it('orders Plan by importance, deadline, title', () => {
-    const list = sortForPlan([p('C', 3), p('A', 3, '2026-11-01'), p('B', 5)]);
+    const list = [p('C', 3), p('A', 3, '2026-11-01'), p('B', 5)].sort(compareForPlan);
     expect(list.map((x) => x.title)).toEqual(['B', 'A', 'C']);
   });
 });

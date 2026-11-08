@@ -153,11 +153,6 @@ export function listChecksSince(db: Db, since: string, habitId?: string): Promis
   return db.select().from(habitChecks).where(filter).orderBy(habitChecks.date);
 }
 
-/** Number of check-ins of the habit on or after `since`, for habit measures. */
-export async function countCheckIns(db: Db, habitId: string, since: string): Promise<number> {
-  return (await listChecksSince(db, since, habitId)).length;
-}
-
 /** Titles of the projects and goals habits can link to, by id, to show a habit's links. */
 export async function listLinkTitles(db: Db): Promise<{ projects: Map<string, string>; goals: Map<string, string> }> {
   const [projectRows, goalRows] = await Promise.all([

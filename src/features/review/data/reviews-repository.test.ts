@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createFields } from '../../../core/db/records.ts';
 import { goals, logEntries, measures, projects, reviewMeasureSnapshots } from '../../../core/db/schema.ts';
 import { openTestDatabase } from '../../../core/db/testing.ts';
-import { getOrCreateDraft, getPlanForWeek, getReview, listCompletedReviews, saveDraft, saveReview } from './reviews-repository.ts';
+import { getPlanForWeek, getReview, listCompletedReviews, saveDraft, saveReview } from './reviews-repository.ts';
 import { loadWeek } from './week-loader.ts';
 
 const clock = () => new Date('2026-10-11T18:00:00Z');
@@ -63,10 +63,8 @@ describe('reviews repository', () => {
 
   it('keeps a draft and leaves it out of the history', async () => {
     const { db } = await openTestDatabase();
-    expect((await getOrCreateDraft(db, clock, '2026-10-05')).completedAt).toBeNull();
     await saveDraft(db, clock, '2026-10-05', draft(7));
     expect(await getReview(db, '2026-10-05')).toMatchObject({ score: 7, reflection: 'ok', completedAt: null });
-    expect((await getOrCreateDraft(db, clock, '2026-10-05')).score).toBe(7);
     expect(await listCompletedReviews(db)).toEqual([]);
   });
 

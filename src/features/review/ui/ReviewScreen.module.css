@@ -14,24 +14,6 @@
   margin: 0;
 }
 
-.action {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-}
-
-.muted {
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
-}
-
-.preview {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .score {
   min-width: 2ch;
   padding: 2px var(--space-2);

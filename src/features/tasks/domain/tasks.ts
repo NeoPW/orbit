@@ -47,10 +47,6 @@ export function compareByRank(today: string) {
     a.createdAt.localeCompare(b.createdAt);
 }
 
-export function sortByRank<T extends RankInput>(tasks: T[], today: string): T[] {
-  return [...tasks].sort(compareByRank(today));
-}
-
 export interface OrderableTask {
   dueDate: string | null;
   createdAt: string;

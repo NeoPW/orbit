@@ -14,11 +14,6 @@ import styles from './ReviewScreen.module.css';
 import { useWeekSummary } from './useWeekSummary.ts';
 import { WeekSummaryView } from './WeekSummaryView.tsx';
 
-/** The first line of a plan, for lists. */
-export function planPreview(plan: string): string {
-  return plan.trim().split('\n')[0] ?? '';
-}
-
 export function ReviewScreen() {
   const today = useToday();
   const reviewWeek = reviewWeekStart(today);

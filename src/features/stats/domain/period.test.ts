@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canStepBack, canStepForward, periodDays, currentPeriod, parsePeriod, periodBuckets, periodLabel, periodOfWeek, periodWeeks, stepPeriod, switchKind } from './period.ts';
+import { canStepBack, canStepForward, periodDays, currentPeriod, parsePeriod, periodBuckets, periodLabel, periodWeeks, stepPeriod, switchKind } from './period.ts';
 
 const today = '2026-11-08';
 
@@ -37,7 +37,6 @@ describe('period', () => {
   });
 
   it('gives a week to the period holding its Thursday', () => {
-    expect(periodOfWeek('2026-09-28', 'month').key).toBe('2026-10');
     expect(periodWeeks(parsePeriod('2026-09', today), today)).not.toContain('2026-09-28');
     expect(periodWeeks(parsePeriod('2026-10', today), today)[0]).toBe('2026-09-28');
   });
