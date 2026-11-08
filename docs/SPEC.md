@@ -197,6 +197,7 @@ Measured in local calendar days from today to a deadline:
   - `weekdays`: today is in `weekdays`
   - `times_per_week`: this week's check-ins < `times_per_week` (Monday-based week)
 - Checking a habit creates a `HabitCheck` and a `LogEntry` (`source = habit`, linked to the habit's project or goal). Unchecking removes both.
+- **Streaks:** a habit has a current and a best streak. For `daily` and `weekdays` habits it counts consecutive due days that were checked (days not due are skipped and checks on them ignored; days before the habit was created are not counted); for `times_per_week` it counts consecutive weeks that reached the target. Today, or the current week, still open does not break the current streak.
 
 ### Progress
 - Measure:
@@ -314,7 +315,10 @@ A desktop screen (`/stats`, `Shift+S`) for how work, review scores, habits and f
 - **Figures:** time worked, daily average (up to today for the current period), average review score (one decimal, with "4 of 5 weeks reviewed"), habit adherence (check-ins kept out of expected, as in the week summary) and share of time on goals. Daily average, score and the two shares show their change from the previous period of the same kind (percent, difference, percentage points); none for all time.
 - **Trends:** four small charts (hours, review score, habit adherence, share on goals), one point per week for a month or quarter and one per month for a year or all time; the current week or month is marked "so far" and a missing value breaks the line.
 - **Weeks and periods:** values kept per week (score, habits) count for the period holding the week's Thursday; time is counted by the date of each entry, so a week's point shows the whole week while the figures use exact dates.
-- Planned next: habit streaks and calendars, the year calendar of work and a weekday × hour heatmap, where time goes and task output, goal progress and projected finish.
+- **Work calendar:** a full year of days, one column per week, shaded in four steps by the time worked as a share of the busiest day; the days of the shown period are emphasised, the others dimmed. For all time it shows the 53 weeks up to the current week.
+- **When you work:** a weekday × hour heatmap of the shown period; an entry's time is spread over the hours between its start and end (as on the day timeline).
+- **Habits:** every active habit with its current and best streak, check-ins kept of expected in the period and the time logged on it, longest current streak first; a habit opens its calendar of checked, missed (a due, unchecked day before today) and neutral days.
+- Planned next: where time goes and task output, goal progress and projected finish.
 
 ### 6.6 Settings
 - Reminders, default reminder time, weekly review day and time, deadline lead time.

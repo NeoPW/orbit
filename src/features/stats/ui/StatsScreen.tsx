@@ -19,8 +19,11 @@ import {
   type PeriodKind,
 } from '../domain/period.ts';
 import styles from './StatsScreen.module.css';
+import { HabitsPanel } from './HabitsPanel.tsx';
 import { TrendChart, type ChartPoint } from './TrendChart.tsx';
 import { usePeriodStats } from './usePeriodStats.ts';
+import { useStatsDetail } from './useStatsDetail.ts';
+import { HeatmapPanel, WorkCalendarPanel } from './WorkPanels.tsx';
 
 const KIND_LABELS: Record<PeriodKind, string> = { month: 'Month', quarter: 'Quarter', year: 'Year', all: 'All time' };
 const KINDS = PERIOD_KINDS.map((value) => ({ value, label: KIND_LABELS[value] }));
@@ -100,6 +103,7 @@ export function StatsScreen() {
   const route = useRoute();
   const period = parsePeriod(route.name === 'stats' ? route.period : undefined, today);
   const stats = usePeriodStats(period);
+  const detail = useStatsDetail(period);
   const initial = currentPeriod('month', today).key;
 
   function show(next: Period) {
@@ -133,6 +137,13 @@ export function StatsScreen() {
           <div className={styles.content}>
             <Figures stats={stats} />
             <Trends stats={stats} />
+            {detail && (
+              <>
+                <WorkCalendarPanel detail={detail} period={period} today={today} />
+                <HeatmapPanel detail={detail} period={period} today={today} />
+                <HabitsPanel detail={detail} period={period} today={today} />
+              </>
+            )}
           </div>
         ))}
     </div>
