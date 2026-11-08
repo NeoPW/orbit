@@ -396,7 +396,4 @@ The app is rebuilt from scratch in this order, one OpenSpec change each (feature
 
 ## 10. Open questions
 
-- Solar system: the solar system of goals (planets), projects (moons) and loose projects (asteroids) is kept as an idea, but where it appears in the new app is decided later.
-- Habit schedules: are `daily`, `weekdays` and `times_per_week` enough?
-- Area list: fixed defaults (Job, Personal, Sport, Uni) or fully user-defined from the start?
 - **Branding: decided.** The name stays Orbit. The icon is two crossed, tapered rings woven over and under each other, in the app's indigo and off-white on a tile in the colours of the app's ground; it is drawn by `scripts/make-icons.mjs` (`npm run icons`), which renders the desktop, web and Android icons. The earlier planet icon is retired.
