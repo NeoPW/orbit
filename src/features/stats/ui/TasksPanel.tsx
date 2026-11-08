@@ -32,7 +32,9 @@ export function TasksPanel({ detail, period, today }: { detail: StatsDetail; per
         <Figure label="Created" value={String(figures.created)} />
         <Figure label="Median time to done" value={figures.medianMinutes === null ? '–' : formatTimeToDone(figures.medianMinutes)} />
       </div>
-      <TrendChart bare title="Tasks completed" points={points} format={(v) => String(v)} />
+      <div className={styles.inlineChart}>
+        <TrendChart bare title="Tasks completed" points={points} format={(v) => String(v)} />
+      </div>
     </Section>
   );
 }

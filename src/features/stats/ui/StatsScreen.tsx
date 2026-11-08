@@ -19,6 +19,7 @@ import {
   type PeriodKind,
 } from '../domain/period.ts';
 import styles from './StatsScreen.module.css';
+import { GoalsPanel } from './GoalsPanel.tsx';
 import { HabitsPanel } from './HabitsPanel.tsx';
 import { TasksPanel } from './TasksPanel.tsx';
 import { TimePanels } from './TimePanels.tsx';
@@ -144,6 +145,7 @@ export function StatsScreen() {
                 <WorkCalendarPanel detail={detail} period={period} today={today} />
                 <HeatmapPanel detail={detail} period={period} today={today} />
                 <TimePanels detail={detail} period={period} today={today} />
+                <GoalsPanel detail={detail} period={period} today={today} />
                 <TasksPanel detail={detail} period={period} today={today} />
                 <HabitsPanel detail={detail} period={period} today={today} />
               </>

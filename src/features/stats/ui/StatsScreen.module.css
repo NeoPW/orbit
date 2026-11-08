@@ -111,3 +111,8 @@
   font-size: var(--text-sm);
   color: var(--color-text-faint);
 }
+
+.inlineChart {
+  max-width: 560px;
+  margin-top: var(--space-3);
+}

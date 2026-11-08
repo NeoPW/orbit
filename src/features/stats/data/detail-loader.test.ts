@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { createFields } from '../../../core/db/records.ts';
-import { logEntries, tasks } from '../../../core/db/schema.ts';
+import { goals, logEntries, tasks } from '../../../core/db/schema.ts';
 import { openTestDatabase } from '../../../core/db/testing.ts';
 import { parsePeriod } from '../domain/period.ts';
+import { setMeasureValue, addMeasure } from '../../goals/data/measures-repository.ts';
 import { loadStatsDetail } from './detail-loader.ts';
 
 const clock = () => new Date('2026-11-08T12:00:00Z');
@@ -43,5 +44,28 @@ describe('detail loader', () => {
     ]);
     const detail = await loadStatsDetail(db, parsePeriod('2026-10', today), today);
     expect(detail.links.tasks.map((t) => t.deletedAt !== null)).toEqual(expect.arrayContaining([true, false]));
+  });
+
+  it('loads active goals with their measures and recorded changes, not completed or deleted goals', async () => {
+    const { db } = await openTestDatabase();
+    const goal = (title: string, over: object = {}) => ({ ...createFields(clock), title, ...over });
+    const [active, done, gone] = [goal('Active'), goal('Done', { status: 'completed' }), goal('Gone', { deletedAt: clock().toISOString() })];
+    await db.insert(goals).values([active, done, gone]);
+    const id = await addMeasure(db, clock, active.id, {
+      title: 'Run',
+      description: '',
+      measureType: 'numeric',
+      startValue: 0,
+      targetValue: 100,
+      currentValue: 10,
+      unit: null,
+      step: 1,
+      habitId: null,
+    });
+    await setMeasureValue(db, clock, id, 40);
+    const detail = await loadStatsDetail(db, parsePeriod('2026-10', today), today);
+    expect(detail.goalRows.goals.map((g) => g.title)).toEqual(['Active']);
+    expect(detail.goalRows.measures).toHaveLength(1);
+    expect(detail.goalRows.measures[0]?.changes).toHaveLength(1);
   });
 });

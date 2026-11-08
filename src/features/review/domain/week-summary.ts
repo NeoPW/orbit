@@ -1,6 +1,6 @@
 import { localToday } from '../../../core/dates/deadline.ts';
 import type { GoalStatus, MeasureType, ScheduleType } from '../../../core/db/schema.ts';
-import { goalProgress, measureProgress, valueAt, type ValueChange } from '../../goals/domain/goals.ts';
+import { goalProgress, measureProgress, measureStateAt, type ValueChange } from '../../goals/domain/goals.ts';
 import { weekAdherence, weekStartOf } from '../../habits/domain/habits.ts';
 import { workOnGoal, type WorkLinks } from '../../work-log/domain/work-log.ts';
 import type { WeekRange } from './review-week.ts';
@@ -164,16 +164,6 @@ function summarizeHabits(rows: WeekRows, week: WeekRange, today: string): HabitA
     .sort((a, b) => a.title.localeCompare(b.title));
 }
 
-/** A measure's value and progress at one moment of the week; `checks` counts a habit measure's check-ins by then. */
-function measureAt(m: WeekRows['measures'][number], instant: string, lastDate: (date: string) => boolean) {
-  if (m.measureType === 'habit') {
-    const checks = m.checkDates.filter(lastDate).length;
-    return { value: checks, progress: measureProgress(m, checks) };
-  }
-  const value = valueAt(m.currentValue, m.changes, instant);
-  return { value: value ?? 0, progress: measureProgress({ ...m, currentValue: value }) };
-}
-
 function summarizeGoals(rows: WeekRows, week: WeekRange): GoalSummary[] {
   const measureById = new Map(rows.measures.map((m) => [m.id, m]));
   const goalById = new Map(rows.goals.map((g) => [g.id, g]));
@@ -205,8 +195,8 @@ function summarizeGoals(rows: WeekRows, week: WeekRange): GoalSummary[] {
       const atEnd = new Map<string, number>();
       const measures = [...now].map(([measureId, p]): MeasureSummary => {
         const m = measureById.get(measureId)!;
-        const start = measureAt(m, week.from, (d) => d < week.start);
-        const end = measureAt(m, week.to, (d) => d <= week.end);
+        const start = measureStateAt(m, week.from, (d) => d < week.start);
+        const end = measureStateAt(m, week.to, (d) => d <= week.end);
         atStart.set(measureId, start.progress);
         atEnd.set(measureId, end.progress);
         return {
