@@ -393,8 +393,11 @@ The app was rebuilt from scratch in this order, one OpenSpec change each (featur
 5. **Features** (one change, `features`): areas, goals and measures; projects and tasks (with next steps and task importance); habits; work log, timer and focus mode; Home; Plan; Review with weekly notes; Settings; desktop notifications.
 6. **Android companion** (Tauri mobile): phone layout below 640 px (bottom navigation Home, Today, Settings), Home with focus, habits, To do and Done today, quick add, the Today timeline with day navigation and swipe, sync with the deployed server; then Android notifications (habit and deadline reminders checked with the server before showing, the ongoing timer notification).
 7. **Stats:** the Stats tab with periods, figures and trends, habit streaks, the work calendar and heatmap, time and task breakdowns, goal progress and projected finish.
+8. **Android release:** a release APK signed with the developer's own key (kept outside the repository), allowing only https.
 
-**Later:** a signed Android release build; Windows/macOS builds.
+Version 1.0.0 is the first release: Linux desktop (`.deb` and AppImage), the hosted browser build and the signed Android app.
+
+**Later:** Windows/macOS builds.
 
 ## 10. Open questions
 
