@@ -33,7 +33,7 @@ The user SHALL be able to discard the session from the top-right corner of focus
 - **THEN** no confirmation is asked, no session exists and the logged stretches stay
 
 ### Requirement: Focus panel on Home
-Without a session, Home's focus panel SHALL offer a text field "What are you working on?" (see "Start with a new task") and Start, with no choice of length. While the user types, the field SHALL suggest at most 8 open tasks and active habits whose title contains the text (ignoring case), each with its project's colour and name (a habit marked "Habit"); arrow keys and Enter or a click pick a suggestion, and Tab accepts the highlighted suggestion, or the first one when none is highlighted, without starting (Tab without suggestions moves focus on). With a session, the panel SHALL show what it runs for, the worked time (counting up every second while running, `m:ss`, from one hour on `h:mm:ss`), the time limit and overtime, Pause or Resume, Complete and "Focus mode"; a paused session SHALL be marked "Paused".
+Without a session or while the session is paused, Home's focus panel SHALL offer a text field "What are you working on?" (see "Start with a new task") and Start, with no choice of length. While the user types, the field SHALL suggest at most 8 open tasks and active habits whose title contains the text (ignoring case), each with its project's colour and name (a habit marked "Habit"); arrow keys and Enter or a click pick a suggestion, and Tab accepts the highlighted suggestion, or the first one when none is highlighted, without starting (Tab without suggestions moves focus on). With a session, the panel SHALL show what it runs for, the worked time (counting up every second while running, `m:ss`, from one hour on `h:mm:ss`), the time limit and overtime, Pause or Resume, Complete and "Focus mode"; a paused session SHALL be marked "Paused" and shown compactly above the text field and Start. Starting from the field while a session is paused SHALL end the paused session as in "One timer at a time" (its logged time stays, its task stays open) and start the new one.
 
 #### Scenario: Running timer
 - **WHEN** a timer for "Thesis" without a time limit has run for 1 hour, 5 minutes and 3 seconds
@@ -41,7 +41,7 @@ Without a session, Home's focus panel SHALL offer a text field "What are you wor
 
 #### Scenario: Paused session
 - **WHEN** a session for "Thesis" is paused at 25 minutes worked
-- **THEN** the focus panel shows "Thesis", "Paused", "25:00", Resume, Complete and "Focus mode"
+- **THEN** the focus panel shows "Thesis", "Paused", "25:00", Resume, Complete and "Focus mode", and below them the text field and Start
 
 #### Scenario: Overtime
 - **WHEN** a session with a 30-minute limit has 32 minutes and 10 seconds worked
@@ -71,6 +71,14 @@ Without a session, Home's focus panel SHALL offer a text field "What are you wor
 - **WHEN** suggestions are shown and the user presses the down arrow and Enter
 - **THEN** the first suggestion is chosen and Start starts a session for it
 
+#### Scenario: Start something else while paused
+- **WHEN** a session for "Thesis" is paused and the user types "Call the bank" in the focus panel and starts
+- **THEN** the session for "Thesis" ends without a further entry, the task "Call the bank" is created and a session for it runs
+
+#### Scenario: No field while running
+- **WHEN** a session runs
+- **THEN** the focus panel shows no text field
+
 ### Requirement: Target removed while running
 When the project, task or habit a session runs for is deleted, completed or otherwise no longer active, the session SHALL keep running or stay paused and SHALL still be pausable, resumable, completable and discardable; its entries SHALL keep the link to that project, task or habit. Completing a session for a task that is already done SHALL log the time and leave the task done.
 
@@ -94,8 +102,8 @@ Focus mode SHALL fill the window with only what the session runs for, its notes 
 - **THEN** the previous screen is shown and the session is still running
 
 ### Requirement: Start with a new task
-Text in the focus panel's field that is not a picked suggestion SHALL be read as `title # project`: the text before the last `#` is the title, the text after it names a project. After `#` the field SHALL suggest the active projects whose name contains the typed text, with their colours. Start SHALL then:
-- use the open task whose title equals the title (ignoring case), else the active habit with that title, creating no duplicate;
+Text in the focus panel's field that is not a picked suggestion SHALL be read as `title # project`: the text before the last `#` is the title, the text after it names a project. After `#` the field SHALL suggest the active projects whose name contains the typed text, with their colours. Without `#` it SHALL suggest the matching open tasks and active habits, then the matching active projects marked "Project"; picking a project SHALL start on that project. Start SHALL then:
+- use the open task whose title equals the title (ignoring case), else the active habit with that title, else (without `#`) the active project with that name, creating no duplicate;
 - otherwise create a task with the title, assigned to the named project, or standalone without `#`;
 - with `#` and an empty title, start on the project itself;
 and start the session. A project name SHALL match an active project exactly (ignoring case), else the only active project starting with it; when none matches, the field SHALL show "No project named …" and Start SHALL be disabled.
@@ -127,6 +135,14 @@ and start the session. A project name SHALL match an active project exactly (ign
 #### Scenario: Project suggestions
 - **WHEN** the user types "draft intro # port"
 - **THEN** "Portfolio site" is suggested with its colour
+
+#### Scenario: Project suggested without #
+- **WHEN** the user types "portf"
+- **THEN** "Portfolio site" is suggested, marked "Project" with its colour, and picking it and starting runs a session for the project
+
+#### Scenario: Project name typed
+- **WHEN** the user types "portfolio site", no open task or habit has that title, and starts
+- **THEN** a session for the project "Portfolio site" runs and no task is created
 
 ### Requirement: Pause and resume
 A focus session SHALL be running or paused. Pause SHALL, without a dialog, log the stretch since the last start or resume (as in "Complete a session", without a note) and leave the session paused. Resume SHALL start a new stretch from now. The session's worked time SHALL be the exact time of its stretches (to the second, not their rounded entries) plus the running stretch; it SHALL stand still while paused. The session SHALL stay, running or paused, when focus mode or the app is left.

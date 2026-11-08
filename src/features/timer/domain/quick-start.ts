@@ -75,5 +75,8 @@ export function quickStartPlan(text: string, tasks: QuickTask[], projects: Quick
   }
   if (title === '') return { kind: 'empty' };
   const found = findByTitle(tasks, title);
-  return found ? existing(found) : { kind: 'new', title, projectId: null };
+  if (found) return existing(found);
+  // A project's exact name starts on the project rather than creating a task named like it.
+  const project = projects.find((p) => lower(p.title) === lower(title));
+  return project ? { kind: 'project', projectId: project.id } : { kind: 'new', title, projectId: null };
 }

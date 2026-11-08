@@ -1,12 +1,12 @@
 import { CircleCheck, Focus, Maximize2, Pause, Play } from 'lucide-react';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { focusFieldRequest } from '../../../app/shortcuts/requests.ts';
+import { focusFieldRequest, sessionRequest } from '../../../app/shortcuts/requests.ts';
 import { useNow } from '../../../core/dates/today.ts';
 import { Chip } from '../../../core/ui/components/Chip.tsx';
 import { workedMs, type SessionClock } from '../domain/timer.ts';
 import { useLiveQuery } from '../../../core/db/live.ts';
 import { navigate } from '../../../core/routing/useRoute.ts';
-import { Button } from '../../../core/ui/components/Button.tsx';
+import { Button, IconButton } from '../../../core/ui/components/Button.tsx';
 import { useServices } from '../../../app/services.ts';
 import type { ActiveProjectItem } from '../../home/data/home-queries.ts';
 import { listActiveHabitOptions } from '../../home/data/home-queries.ts';
@@ -26,20 +26,22 @@ export interface FocusPanelProps {
   projects: ActiveProjectItem[];
 }
 
-/** Home's focus panel: type what to work on and start, or the session with Pause or Resume, Complete and Focus mode. */
+/** Home's focus panel: type what to work on and start (also while a session is paused), or the running session with Pause, Complete and Focus mode. */
 export function FocusPanel({ projects }: FocusPanelProps) {
   const view = useLiveQuery(getTimerView, []);
   if (view === undefined) return <section className={styles.panel} aria-label="Focus" />;
-  return view ? <Running view={view} /> : <Idle projects={projects} />;
+  if (view && view.timer.pausedAt === null) return <Running view={view} />;
+  // While paused, the field stays available: starting something else ends the paused session.
+  return <Idle projects={projects} paused={view} />;
 }
 
-function Idle({ projects }: FocusPanelProps) {
+function Idle({ projects, paused }: FocusPanelProps & { paused: TimerView | null }) {
   const { db } = useServices();
   const { start } = useStartFocus();
   const openTasks = useLiveQuery(listOpenTasks, []);
   const habitOptions = useLiveQuery(listActiveHabitOptions, []);
   const [text, setText] = useState('');
-  const [picked, setPicked] = useState<{ id: string; kind: 'task' | 'habit' } | null>(null);
+  const [picked, setPicked] = useState<{ id: string; kind: 'task' | 'habit' | 'project' } | null>(null);
   const panel = useRef<HTMLElement>(null);
 
   // `F` puts the cursor in the field, also when it asked before Home was shown.
@@ -79,7 +81,9 @@ function Idle({ projects }: FocusPanelProps) {
   const plan: QuickStartPlan = picked
     ? picked.kind === 'habit'
       ? { kind: 'habit', habitId: picked.id }
-      : { kind: 'task', taskId: picked.id }
+      : picked.kind === 'project'
+        ? { kind: 'project', projectId: picked.id }
+        : { kind: 'task', taskId: picked.id }
     : quickStartPlan(text, taskOptions, projectOptions);
   const error = plan.kind === 'error' ? plan.message : null;
   const canStart = plan.kind !== 'empty' && plan.kind !== 'error';
@@ -107,6 +111,7 @@ function Idle({ projects }: FocusPanelProps) {
       <h2 className={styles.heading}>
         <Focus aria-hidden="true" /> Focus
       </h2>
+      {paused && <PausedSession view={paused} />}
       <div className={styles.row}>
         <div className={styles.choose}>
           <QuickStartField
@@ -120,6 +125,10 @@ function Idle({ projects }: FocusPanelProps) {
             onPickTask={(task) => {
               setText(task.title);
               setPicked({ id: task.id, kind: task.kind });
+            }}
+            onPickProject={(project) => {
+              setText(project.title);
+              setPicked({ id: project.id, kind: 'project' });
             }}
             onSubmit={() => void begin()}
             error={error}
@@ -155,8 +164,45 @@ function SessionProgress({ session, limitMinutes }: { session: SessionClock; lim
   );
 }
 
+/** `P`, `R` and `C` on Home (sent only while a session exists): pause a running session, resume a paused one, open the Complete dialog. */
+function useSessionKeys({ pause, resume, askComplete }: { pause: () => void; resume: () => void; askComplete: () => void }) {
+  useEffect(
+    () => sessionRequest.subscribe((what) => (what === 'pause' ? pause() : what === 'resume' ? resume() : askComplete())),
+    [pause, resume, askComplete],
+  );
+}
+
+/** A paused session, compact above the field: what it ran for, its time, Resume, Complete and Focus mode. */
+function PausedSession({ view }: { view: TimerView }) {
+  const actions = useSessionActions(view);
+  useSessionKeys(actions);
+  const project = runningProject(view);
+  return (
+    <div className={styles.paused} style={project ? ({ '--pc': project.color } as CSSProperties) : undefined}>
+      <div className={styles.pausedWhat}>
+        {project && <Chip projectColor={project.color}>{project.name}</Chip>}
+        <span className={styles.pausedTitle}>{view.title}</span>
+      </div>
+      <div className={styles.pausedReadout}>
+        <TimerReadout session={view.timer} limitMinutes={view.timer.plannedMinutes} />
+      </div>
+      <div className={styles.actions}>
+        <Button icon={<Play />} onClick={actions.resume}>
+          Resume
+        </Button>
+        <Button icon={<CircleCheck />} onClick={actions.askComplete}>
+          Complete
+        </Button>
+        <IconButton label="Focus mode" icon={<Maximize2 />} onClick={() => navigate({ name: 'focus' })} />
+      </div>
+      {actions.dialogs}
+    </div>
+  );
+}
+
 function Running({ view }: { view: TimerView }) {
   const actions = useSessionActions(view);
+  useSessionKeys(actions);
   const { timer } = view;
   const project = runningProject(view);
   const paused = timer.pausedAt !== null;

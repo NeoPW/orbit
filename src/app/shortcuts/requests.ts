@@ -32,5 +32,7 @@ export function createRequest<T>(): Request<T> {
 
 /** Put the cursor in Home's focus field. */
 export const focusFieldRequest = createRequest<void>();
+/** Pause the running session, resume the paused one or open its Complete dialog, from Home's focus panel. */
+export const sessionRequest = createRequest<'pause' | 'resume' | 'complete'>();
 /** Open the complete dialog or the time limit menu in focus mode. */
 export const focusModeRequest = createRequest<'complete' | 'limit'>();

@@ -11,7 +11,10 @@ export type TodoAction =
   | 'todo-complete'
   | 'todo-open'
   | 'todo-select-n'
-  | 'habit-select-n';
+  | 'habit-select-n'
+  | 'session-pause'
+  | 'session-resume'
+  | 'session-complete';
 export type FocusAction =
   'focus-toggle' | 'focus-complete' | 'focus-leave' | 'focus-discard' | 'focus-limit' | 'focus-limit-up' | 'focus-limit-down';
 export type ShortcutAction = GlobalAction | TodoAction | FocusAction;
@@ -47,6 +50,9 @@ export const SHORTCUTS: Shortcut[] = [
   { action: 'todo-start', keys: 'Space', label: 'Start focus on the highlighted task or habit', group: 'Home' },
   { action: 'todo-complete', keys: 'X', label: 'Complete the task / check the habit', group: 'Home' },
   { action: 'todo-open', keys: 'Enter', label: 'Open the task / check the habit', group: 'Home' },
+  { action: 'session-pause', keys: 'P', label: 'Pause the running session', group: 'Home' },
+  { action: 'session-resume', keys: 'R', label: 'Resume the paused session', group: 'Home' },
+  { action: 'session-complete', keys: 'C', label: 'Complete the session', group: 'Home' },
   { action: 'focus-toggle', keys: 'Space', label: 'Pause / resume', group: 'Focus mode' },
   { action: 'focus-complete', keys: 'Enter', label: 'Complete', group: 'Focus mode' },
   { action: 'focus-leave', keys: 'Esc', label: 'Leave focus mode', group: 'Focus mode' },
@@ -105,6 +111,9 @@ const TODO_KEYS: Record<string, TodoAction> = {
   ' ': 'todo-start',
   x: 'todo-complete',
   enter: 'todo-open',
+  p: 'session-pause',
+  r: 'session-resume',
+  c: 'session-complete',
 };
 
 const FOCUS_KEYS: Record<string, FocusAction> = {

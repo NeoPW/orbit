@@ -6,7 +6,7 @@ import { CommandPalette } from '../../features/palette/CommandPalette.tsx';
 import { useOpenAppSheet } from './AppSheets.tsx';
 import { matchShortcut, type KeyInput, type ShortcutScope } from './keys.ts';
 import { screenHandler, type ScreenMatch } from './screen-keys.ts';
-import { focusFieldRequest } from './requests.ts';
+import { focusFieldRequest, sessionRequest } from './requests.ts';
 import { ShortcutOverlay } from './ShortcutOverlay.tsx';
 
 /**
@@ -75,7 +75,8 @@ export function ShortcutProvider({ children }: { children: ReactNode }) {
         : route.name === 'goal' || route.name === 'project' || route.name === 'task'
           ? 'detail'
           : 'global';
-  const hasSession = session !== undefined;
+  // A paused session leaves `F` to the focus field, where something else can be started.
+  const running = session !== undefined && session.pausedAt === null;
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -97,7 +98,7 @@ export function ShortcutProvider({ children }: { children: ReactNode }) {
         case 'log-work':
           return openSheet('log');
         case 'focus-field':
-          if (hasSession) return navigate({ name: 'focus' });
+          if (running) return navigate({ name: 'focus' });
           navigate({ name: 'home' });
           return focusFieldRequest.request();
         case 'go-home':
@@ -108,6 +109,16 @@ export function ShortcutProvider({ children }: { children: ReactNode }) {
           return navigate({ name: 'review' });
         case 'go-settings':
           return navigate({ name: 'settings' });
+        case 'session-pause':
+          if (running) sessionRequest.request('pause');
+          return;
+        case 'session-resume':
+          // Only a paused session resumes; a request without a session would wait for the next panel.
+          if (session && session.pausedAt !== null) sessionRequest.request('resume');
+          return;
+        case 'session-complete':
+          if (session) sessionRequest.request('complete');
+          return;
         case 'go-back':
           return goBack({ name: 'plan' });
         case 'overlay':
@@ -118,7 +129,7 @@ export function ShortcutProvider({ children }: { children: ReactNode }) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [openSheet, scope, hasSession]);
+  }, [openSheet, scope, running, session]);
 
   return (
     <>

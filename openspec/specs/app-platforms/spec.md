@@ -99,3 +99,10 @@ The app SHALL report its platform as `android` when it runs in the Android app. 
 #### Scenario: Desktop and browser unchanged
 - **WHEN** the app runs as the desktop app or in a browser
 - **THEN** it reports desktop or browser as before
+
+### Requirement: Window opens maximised
+The desktop app's window SHALL open maximised (filling the screen with its title bar, not fullscreen), in the release and the development build. It SHALL stay resizable.
+
+#### Scenario: Start the app
+- **WHEN** the user starts the desktop app
+- **THEN** its window fills the screen and can be restored to a smaller size

@@ -27,6 +27,8 @@ export interface QuickStartFieldProps {
   projects: QuickProjectOption[];
   /** A suggested task was chosen. */
   onPickTask: (task: QuickTaskOption) => void;
+  /** A suggested project was chosen (typed without `#`). */
+  onPickProject: (project: QuickProjectOption) => void;
   /** Enter with no suggestion highlighted. */
   onSubmit: () => void;
   error?: string | null;
@@ -41,10 +43,10 @@ interface Suggestion {
 }
 
 /**
- * A text field for "what are you working on": suggests open tasks while typing and
- * the active projects after a `#`. The popup is placed like the `Select` popup.
+ * A text field for "what are you working on": suggests open tasks, habits and then projects while typing,
+ * and the active projects after a `#`. The popup is placed like the `Select` popup.
  */
-export function QuickStartField({ value, onChange, tasks, projects, onPickTask, onSubmit, error }: QuickStartFieldProps) {
+export function QuickStartField({ value, onChange, tasks, projects, onPickTask, onPickProject, onSubmit, error }: QuickStartFieldProps) {
   const id = useId();
   const listId = `${id}-list`;
   const [open, setOpen] = useState(false);
@@ -61,13 +63,22 @@ export function QuickStartField({ value, onChange, tasks, projects, onPickTask, 
         color: p.color,
         choose: () => onChange(`${parsed.title ? `${parsed.title} ` : ''}# ${p.title}`),
       }))
-    : matchTasks(value, tasks).map((t) => ({
-        key: t.id,
-        label: t.title,
-        hint: t.kind === 'habit' ? ['Habit', t.projectTitle].filter(Boolean).join(' · ') : t.projectTitle,
-        color: t.projectColor,
-        choose: () => onPickTask(t),
-      }));
+    : [
+        ...matchTasks(value, tasks).map((t) => ({
+          key: t.id,
+          label: t.title,
+          hint: t.kind === 'habit' ? ['Habit', t.projectTitle].filter(Boolean).join(' · ') : t.projectTitle,
+          color: t.projectColor,
+          choose: () => onPickTask(t),
+        })),
+        ...matchProjects(value, projects, 4).map((p) => ({
+          key: `project-${p.id}`,
+          label: p.title,
+          hint: 'Project',
+          color: p.color,
+          choose: () => onPickProject(p),
+        })),
+      ];
   const shown = open && suggestions.length > 0;
 
   usePopoverPlacement(shown, anchor, popup);

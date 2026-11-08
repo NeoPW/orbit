@@ -19,6 +19,7 @@
         "minWidth": 800,
         "minHeight": 600,
         "resizable": true,
+        "maximized": true,
         "center": true,
         "backgroundColor": "#0b1026"
       }
