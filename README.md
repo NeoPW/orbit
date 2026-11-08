@@ -122,6 +122,27 @@ The address and token are stored in the device's local settings and are never sy
 
 To check sync by hand, create an area in Plan → Areas on one device and watch it appear on the other.
 
+## Android release
+
+`npm run android:release` builds a release APK for 64-bit ARM phones (`src-tauri/gen/android/app/build/outputs/apk/universal/release/`). It is signed when `src-tauri/gen/android/keystore.properties` exists; without it the APK is unsigned and Android will not install it. (`npm run android:build` is the debug build for the emulator.)
+
+**Create the key (once).** Keep the keystore outside the repository and back it up: a phone only accepts an update signed with the same key, so losing it means uninstalling Orbit and losing its local data (sync it first).
+
+```
+keytool -genkeypair -v -keystore ~/keys/orbit-release.jks -alias orbit -keyalg RSA -keysize 4096 -validity 10000
+```
+
+Then create `src-tauri/gen/android/keystore.properties` (ignored by git, as are `*.jks` and `*.keystore`):
+
+```
+storeFile=/home/<you>/keys/orbit-release.jks
+storePassword=<password>
+keyAlias=orbit
+keyPassword=<password>
+```
+
+**Install.** Copy the APK to the phone and open it (allow installing from that source), or run `adb install -r <apk>` with USB debugging on. The release app only talks to https servers: connect it to `https://orbit.<subdomain>.workers.dev` (see Connecting a device). Raise `version` in `package.json` for each update; the debug build keeps its own, separate cleartext setting.
+
 ## Desktop builds
 
 `npm run desktop:build` writes the packages to `src-tauri/target/release/bundle/`:

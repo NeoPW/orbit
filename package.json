@@ -19,6 +19,7 @@
     "desktop:build": "tauri build",
     "android": "sh scripts/android.sh dev",
     "android:build": "sh scripts/android.sh build --debug --apk",
+    "android:release": "sh scripts/android.sh build --apk --target aarch64",
     "server:dev": "npm run build && wrangler d1 migrations apply orbit --local -c server/wrangler.jsonc && wrangler dev -c server/wrangler.jsonc",
     "server:migrate": "wrangler d1 migrations apply orbit --remote -c server/wrangler.jsonc",
     "server:deploy": "npm run build && npm run server:migrate && wrangler deploy -c server/wrangler.jsonc",
