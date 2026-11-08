@@ -33,7 +33,7 @@ The project detail SHALL start with a header showing the title, a status chip, t
 - **THEN** the detail shows five of five importance dots after saving
 
 ### Requirement: Next steps and open tasks in detail
-The project detail SHALL list the project's open tasks once, with its next steps marked and listed first, each group ordered as in tasks ("Open task order"). It SHALL offer adding a task, and the task rows SHALL work as defined in tasks ("Task rows"). Without open tasks the section SHALL show an empty state with "Add task".
+The project detail SHALL list the project's open tasks once, with its next steps marked and listed first, each group ordered as in tasks ("Open task order"). Each row SHALL have a handle for reordering (see tasks, "Reorder open tasks"), and the section SHALL offer "Reset order" while the list has a manual order. It SHALL offer adding a task, and the task rows SHALL work as defined in tasks ("Task rows"). Without open tasks the section SHALL show an empty state with "Add task".
 
 #### Scenario: Next steps first
 - **WHEN** the project has the open tasks "Book venue" (next step), "Send invites" and "Write intro" (next step)
@@ -46,6 +46,10 @@ The project detail SHALL list the project's open tasks once, with its next steps
 #### Scenario: Open a task
 - **WHEN** the user clicks the open task "Book venue"
 - **THEN** its task popup opens over the project detail
+
+#### Scenario: Handles and reset
+- **WHEN** the user has dragged a task to a new place in the list
+- **THEN** every row shows its handle and the section offers "Reset order"
 
 ### Requirement: Habits in detail
 The project detail SHALL list the habits linked to the project with their schedule summary and whether they are inactive, or "No habits". Tapping a habit SHALL open its edit form.
