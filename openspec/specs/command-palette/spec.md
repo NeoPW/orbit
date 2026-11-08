@@ -32,11 +32,15 @@ The palette SHALL offer "New task", "New project", "New goal", "New habit", "New
 - **THEN** the goal form opens over Home
 
 ### Requirement: Go to entries
-The palette SHALL offer Home, Plan, Review and Settings, and every project, goal and open task by its title, each opening its screen or page.
+The palette SHALL offer Home, Plan, Review, Stats and Settings, and every project, goal and open task by its title, each opening its screen or page.
 
 #### Scenario: Go to a project
 - **WHEN** the user types "thesis" and runs the project "Thesis"
 - **THEN** the project page of "Thesis" opens
+
+#### Scenario: Go to Stats
+- **WHEN** the user types "stats" and runs "Stats"
+- **THEN** the Stats screen is shown
 
 ### Requirement: Focus entries
 The palette SHALL offer "Focus: <title>" for every open task, active habit and active project, starting a focus session on it. For any typed text the palette SHALL also offer, as its last entry, "Focus: <text>", which starts as Home's focus field does with the same text (see work-timer, "Start with a new task"): an existing task or habit of that title, else a new task, with `# project` assigning it.
