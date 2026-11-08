@@ -66,9 +66,22 @@ function items(totals: Map<string | null, number>, info: (id: string) => { title
   return list;
 }
 
-/** The week's time: totals, the share on goals and the time grouped by area, goal and project. `targetHours` is the weekly target. */
-export function weekTime(rows: WeekRows, week: WeekRange, today: string, targetHours: number | null): WeekTime {
-  const entries = inWeek(rows.logEntries, week);
+export interface TimeGroups {
+  totalMinutes: number;
+  /** Minutes that are work on any goal. */
+  goalMinutes: number;
+  byArea: TimeItem[];
+  byGoal: TimeItem[];
+  byProject: TimeItem[];
+}
+
+type GroupedEntry = Pick<WeekRows['logEntries'][number], 'projectId' | 'goalId' | 'taskId' | 'occurredAt' | 'durationMinutes'>;
+
+/** Groups the minutes of `entries` by area, goal and project, with the attribution rules of week-summary, "Time by area, goal and project". */
+export function groupTime(
+  entries: readonly GroupedEntry[],
+  rows: Pick<WeekRows, 'projects' | 'areas' | 'tasks' | 'goals'>,
+): TimeGroups {
   const total = entries.reduce((sum, e) => sum + minutesOf(e), 0);
   const projects = new Map(rows.projects.filter((p) => p.deletedAt === null).map((p) => [p.id, p]));
   const areas = new Map(rows.areas.map((a) => [a.id, a]));
@@ -96,20 +109,10 @@ export function weekTime(rows: WeekRows, week: WeekRange, today: string, targetH
   goalMinutes = Math.min(goalMinutes, total);
   byGoal.set(null, total - goalMinutes);
 
-  const targetMinutes = targetHours === null ? null : targetHours * 60;
   const goals = new Map(rows.goals.map((g) => [g.id, g]));
-  const dayMinutes = Array.from({ length: 7 }, (_, i) => {
-    const date = addDays(week.start, i);
-    return entries.filter((e) => localToday(new Date(e.occurredAt)) === date).reduce((sum, e) => sum + minutesOf(e), 0);
-  });
   return {
-    dayMinutes,
     totalMinutes: total,
-    targetMinutes,
-    targetShare: targetMinutes === null ? null : percent(total, targetMinutes),
-    dailyAverageMinutes: Math.round(total / daysOf(week, today)),
     goalMinutes,
-    goalShare: total > 0 ? percent(goalMinutes, total) : null,
     byArea: items(byArea, (id) => {
       const a = areas.get(id);
       return a && { title: a.name, color: a.color };
@@ -122,6 +125,29 @@ export function weekTime(rows: WeekRows, week: WeekRange, today: string, targetH
       const p = projects.get(id);
       return p && { title: p.title, color: projectColor(p) };
     }),
+  };
+}
+
+/** The week's time: totals, the share on goals and the time grouped by area, goal and project. `targetHours` is the weekly target. */
+export function weekTime(rows: WeekRows, week: WeekRange, today: string, targetHours: number | null): WeekTime {
+  const entries = inWeek(rows.logEntries, week);
+  const { totalMinutes: total, goalMinutes, byArea, byGoal, byProject } = groupTime(entries, rows);
+  const targetMinutes = targetHours === null ? null : targetHours * 60;
+  const dayMinutes = Array.from({ length: 7 }, (_, i) => {
+    const date = addDays(week.start, i);
+    return entries.filter((e) => localToday(new Date(e.occurredAt)) === date).reduce((sum, e) => sum + minutesOf(e), 0);
+  });
+  return {
+    dayMinutes,
+    totalMinutes: total,
+    targetMinutes,
+    targetShare: targetMinutes === null ? null : percent(total, targetMinutes),
+    dailyAverageMinutes: Math.round(total / daysOf(week, today)),
+    goalMinutes,
+    goalShare: total > 0 ? percent(goalMinutes, total) : null,
+    byArea,
+    byGoal,
+    byProject,
   };
 }
 
