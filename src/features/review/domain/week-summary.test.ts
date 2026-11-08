@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { weekRange } from './review-week.ts';
-import { summarizeWeek, type WeekRows } from './week-summary.ts';
+import { habitsFigure, summarizeWeek, type WeekRows } from './week-summary.ts';
 
 /** A local date and time as an ISO instant, whatever the time zone of the test run. */
 const at = (date: string, time = '12:00') => new Date(`${date}T${time}:00`).toISOString();
@@ -219,5 +219,19 @@ describe('goals in the summary', () => {
     const rows = base();
     rows.goals = [goal('g1', 'Get fit'), { ...goal('g2', 'Done goal'), status: 'completed' as never }];
     expect(summarizeWeek(rows, weekRange('2026-10-12'), TODAY).goals.map((g) => g.title)).toEqual(['Get fit']);
+  });
+});
+
+describe('habits figure', () => {
+  it('counts check-ins up to what each habit expects', () => {
+    const figure = habitsFigure([
+      { habitId: 'h1', title: 'Stretch', done: 6, expected: 7 },
+      { habitId: 'h2', title: 'Run', done: 4, expected: 3 },
+    ]);
+    expect(figure).toEqual({ kept: 9, expected: 10, share: 90 });
+  });
+
+  it('has no share without anything expected', () => {
+    expect(habitsFigure([]).share).toBeNull();
   });
 });

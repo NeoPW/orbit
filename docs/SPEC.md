@@ -288,17 +288,14 @@ Designed for desktop widths: one page with sections (Goals, Projects without a g
 The review is the main place where projects and goals are updated.
 - **Calendar weeks:** weeks are named by their ISO number, "CW 45", with the date range beside it where there is room.
 - **Review week:** on Sunday the Monday–Sunday week ending today, on any other day the previous Monday–Sunday week. One review per week.
-- **Week summary**, used in all places below, top to bottom:
-  - **Goals:** each active goal with its progress and its change in the week (§5, "Weeks"), its measures below it with their value at the start and end of the week ("7 → 9 / 10 km", "+2"), the progress gained in the week as a lighter segment at the end of each progress bar, and the work logged on it that week.
-  - **Time:** time worked (against the weekly hour target when set), the daily average and the share of time on goals; the time by area, goal or project as bars (a switch; unassigned time as "Other"); and the last 8 weeks as bars with the 4-week average line and headline.
-  - **Days:** the work of each day, Monday to Sunday, as seven timelines (as on Home) side by side on one shared hour axis.
-  - **Finished:** projects completed and tasks completed that week.
-  - **Habits:** adherence per habit (done of expected).
-- **Default view**, top to bottom:
-  - the plan for the shown week: the plan written in the completed review of the week before it (each review keeps its plan)
-  - the summary of the **shown week**: the current week so far, unless another week is chosen with the **week switcher** (‹ week ›, and "This week" while another week is shown, in the header; the week is kept in the address)
-  - a "Start / Continue / Edit weekly review" button (for the review week, §5)
-  - the history
+- **Week summary as a dashboard**, used on the Review tab, a past review's page and step 1 of the guided review:
+  - **Figures** across the top: time worked (against the weekly hour target when set), daily average, time on goals, habits kept (check-ins counted up to what each habit expects, of all expected) and done (tasks completed, projects finished).
+  - **Panels** in a 12-column grid when the summary is at least 1100 px wide, stacked in this order below that: goals (7 columns) beside the plan (5), time by area / goal / project (5) beside the recent weeks (7), the days across the full width, then habits, done this week and the history in three equal columns (two without the history). Panels side by side end at the same height, whatever their content. Without the plan panel, goals take the whole row. At 1440 × 900 the header, figures and first two rows fit without scrolling.
+  - **Goals:** each active goal with its progress (the week's gain as a lighter segment), its change in the week (§5, "Weeks") and its work that week on one line; below it only the measures that changed ("7 → 9 / 10 km", "+2"); all measures stay on the goal page.
+  - **Time by** as bars (a switch; unassigned time as "Other"); **recent weeks** as 8 bars with the 4-week average line and headline.
+  - **Days:** the seven day timelines side by side on one hour axis (as on Home), each headed with its weekday, date and hours worked; the hours scroll inside the panel.
+  - **Habits:** kept of due per habit; **done this week:** the completed tasks and finished projects, newest first.
+- **Review tab:** a header with the week switcher (‹ week ›, and "This week" while another week is shown; the week is kept in the address) and the "Start / Continue / Edit weekly review" button for the review week (§5; its tooltip names the week), then the dashboard of the **shown week** (the current week so far, unless another is chosen) with two panels of its own: the plan for the shown week (written in the completed review of the week before; each review keeps its plan) and the history (the latest 5 reviews with week and score, "Show all" for every one).
 - **Guided flow**, as full pages with a progress indicator and Back / Next:
   1. **Look back:** the review week's summary: the work done.
   2. **Projects:** go through each active project and update it: status, next steps (mark, unmark, add), importance and deadline, and write its weekly note. Changes apply immediately.
@@ -386,3 +383,4 @@ The app is rebuilt from scratch in this order, one OpenSpec change each (feature
 - Solar system: the solar system of goals (planets), projects (moons) and loose projects (asteroids) is kept as an idea, but where it appears in the new app is decided later.
 - Habit schedules: are `daily`, `weekdays` and `times_per_week` enough?
 - Area list: fixed defaults (Job, Personal, Sport, Uni) or fully user-defined from the start?
+- **Branding: name and icon.** The current icon (a planet) is to be replaced, and the name "Orbit" is not settled either: the app may still be renamed, so a new icon should not depend on the orbit idea. A first set of six minimal icon proposals (arc, tilted ring, ring check, progress ring, nested arcs, monogram O) was rejected on 2026-11-08. Next: an exploratory round on name and icon together, before the icon is changed.

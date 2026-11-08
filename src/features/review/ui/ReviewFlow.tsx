@@ -79,7 +79,7 @@ function FlowBody({ weekStart, initial, step }: BodyProps) {
   }
 
   return (
-    <div className={styles.flow}>
+    <div className={`${styles.flow} ${step === 1 ? styles.wide : ''}`}>
       <header className={styles.top}>
         <div className={styles.topRow}>
           <h1 className={styles.stepName}>{STEP_NAMES[step - 1]}</h1>

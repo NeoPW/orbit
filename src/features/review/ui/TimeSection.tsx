@@ -15,16 +15,6 @@ const GROUPINGS: { value: TimeGrouping; label: string }[] = [
 
 const duration = (minutes: number) => (minutes > 0 ? formatDuration(minutes) : '0 min');
 
-function Stat({ label, value, note }: { label: string; value: string; note?: string }) {
-  return (
-    <div className={styles.stat}>
-      <span className={styles.statLabel}>{label}</span>
-      <span className={styles.statValue}>{value}</span>
-      {note && <span className={styles.statNote}>{note}</span>}
-    </div>
-  );
-}
-
 function Bars({ items, grouping }: { items: TimeItem[]; grouping: TimeGrouping }) {
   if (items.length === 0) return <p className={styles.empty}>No time logged</p>;
   const max = Math.max(...items.map((i) => i.minutes));
@@ -50,9 +40,9 @@ function Bars({ items, grouping }: { items: TimeItem[]; grouping: TimeGrouping }
 }
 
 const W = 640;
-const H = 190;
-const BASE = 130;
-const TOP = 16;
+const H = 168;
+const BASE = 116;
+const TOP = 10;
 
 function TrendChart({ trend }: { trend: RecentWeeks }) {
   const max = Math.max(1, ...trend.weeks.map((w) => Math.max(w.minutes, w.average ?? 0)));
@@ -98,49 +88,34 @@ function TrendChart({ trend }: { trend: RecentWeeks }) {
   );
 }
 
-export interface TimeSectionProps {
-  time: WeekTime;
-  trend: RecentWeeks;
-}
-
-/** The week's time: the three figures, the time by area, goal or project, and the recent weeks. */
-export function TimeSection({ time, trend }: TimeSectionProps) {
+/** "Time by": the week's time grouped by area, goal or project. */
+export function TimeByPanel({ time }: { time: WeekTime }) {
   const [grouping, setGrouping] = useState<TimeGrouping>('area');
   const items = grouping === 'area' ? time.byArea : grouping === 'goal' ? time.byGoal : time.byProject;
   return (
-    <Section tile title="Time">
-      <div className={styles.section}>
-        <div className={styles.stats}>
-          <Stat
-            label="Time worked"
-            value={
-              time.targetMinutes === null ? duration(time.totalMinutes) : `${duration(time.totalMinutes)} / ${duration(time.targetMinutes)}`
-            }
-            note={time.targetShare === null ? undefined : `${time.targetShare} % of target`}
-          />
-          <Stat label="Daily average" value={duration(time.dailyAverageMinutes)} />
-          {time.goalShare !== null && (
-            <Stat
-              label="Time on goals"
-              value={`${time.goalShare} %`}
-              note={`${duration(time.goalMinutes)} of ${duration(time.totalMinutes)}`}
-            />
-          )}
-        </div>
-        <div className={styles.group}>
-          <SegmentedControl label="Group time by" options={GROUPINGS} value={grouping} onChange={setGrouping} />
-          <Bars items={items} grouping={grouping} />
-        </div>
-        <div className={styles.group}>
-          <div className={styles.trendHead}>
-            <span className={styles.statLabel}>Recent weeks</span>
-            <span className={styles.statNote}>
-              <strong className={styles.headline}>{duration(trend.headline)}</strong> 4-week average per week
-            </span>
-          </div>
-          <TrendChart trend={trend} />
-        </div>
-      </div>
+    <Section
+      tile
+      title="Time by"
+      actions={<SegmentedControl label="Group time by" options={GROUPINGS} value={grouping} onChange={setGrouping} />}
+    >
+      <Bars items={items} grouping={grouping} />
+    </Section>
+  );
+}
+
+/** "Recent weeks": the 8 weeks up to the shown one with the 4-week average. */
+export function TrendPanel({ trend }: { trend: RecentWeeks }) {
+  return (
+    <Section
+      tile
+      title="Recent weeks"
+      actions={
+        <span className={styles.statNote}>
+          4-week average <strong className={styles.headline}>{duration(trend.headline)}</strong>
+        </span>
+      }
+    >
+      <TrendChart trend={trend} />
     </Section>
   );
 }
