@@ -32,12 +32,12 @@
 :root {
   color-scheme: dark;
 
-  /* Theme: Slate (default) */
+  /* Theme: Slate (default): outline cards on the ground, vivid project colours */
   --color-bg: #0f1218;
   --color-sidebar: #0b0e13;
-  --color-surface: #171b24;
-  --color-surface-raised: #1f2430;
-  --color-border: #2b3242;
+  --color-surface: #0f1218;
+  --color-surface-raised: #171b24;
+  --color-border: #272d3a;
   --color-text: #e6e9f2;
   --color-text-muted: #a2aabd;
   --color-primary: #8b93ff;
@@ -46,14 +46,14 @@
   --color-overdue-bg: #3b1d20;
   --color-amber: #f3c969;
   --color-soon-bg: #372f17;
-  --pc0: #f4a26a;
-  --pc1: #6fa8f0;
-  --pc2: #6fcf97;
-  --pc3: #a994f4;
-  --pc4: #f08fb5;
-  --pc5: #54c4c8;
-  --pc6: #c2d86a;
-  --pc7: #d2c2a6;
+  --pc0: #ff8f3d;
+  --pc1: #4c9dff;
+  --pc2: #3fd58a;
+  --pc3: #9f7bff;
+  --pc4: #ff6fa8;
+  --pc5: #22c7cc;
+  --pc6: #b6e04a;
+  --pc7: #e0b878;
 
   /* Derived from the theme's base tokens above, so every theme gets them. */
   --color-surface-hover: color-mix(in srgb, var(--color-surface-raised) 88%, var(--color-text));
