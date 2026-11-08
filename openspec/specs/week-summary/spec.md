@@ -73,11 +73,11 @@ The summary SHALL list the projects completed in the week (by the local date of 
 - **THEN** it is not listed
 
 ### Requirement: Work by day
-The summary SHALL show the work of each day of the week, Monday to Sunday, as seven timelines side by side on one shared hour axis (see day-timeline), each headed with its weekday and date. Days after today in the current week SHALL be shown empty.
+The summary SHALL show the work of each day of the week, Monday to Sunday, as seven timelines side by side on one shared hour axis (see day-timeline), each headed with its weekday, date and the hours worked that day. Days after today in the current week SHALL be shown empty.
 
 #### Scenario: A week of work
 - **WHEN** work was logged on Monday and Wednesday of the week
-- **THEN** the seven day columns are shown, with blocks in the Monday and Wednesday columns only
+- **THEN** the seven day columns are shown, with blocks in the Monday and Wednesday columns only, and the hours in their headings
 
 #### Scenario: Past review
 - **WHEN** the review of a past week is opened
@@ -87,33 +87,56 @@ The summary SHALL show the work of each day of the week, Monday to Sunday, as se
 - **WHEN** a block belongs to the project "Portfolio site"
 - **THEN** it has the same colour as that project everywhere else
 
-### Requirement: Time worked in the week
-The summary SHALL show, after the goals, three figures for the week:
-- **Total time worked:** the sum of the durations of the week's log entries. When a weekly hour target is set (see settings), it SHALL be shown with the target and the share of the target reached, as a whole percentage.
-- **Daily average:** the total divided by the days of the week up to and including today for the current week, or by 7 for a past week.
-- **Time on goals:** the share of the total that counts as work on any goal (see goals, "Work on a goal"), as a whole percentage, with both durations.
+### Requirement: Dashboard layout
+The summary SHALL be laid out as a dashboard: the summary figures across the full width, then panels in a 12-column grid when the content area is at least 1100 pixels wide:
+- goals (7 columns) next to the plan for the week (5), where the summary has a plan
+- time by area, goal or project (5) next to the recent weeks (7)
+- days across the full width
+- habits, done this week (the completed tasks and the finished projects) and the history in three equal columns, where the summary has a history; without it, habits and done this week in two equal columns
 
-Entries without a duration SHALL add no time. Without any time in the week, the figures SHALL show zero and the share on goals SHALL be left out.
+Panels side by side in a row SHALL have the same height, whatever their content. Each panel SHALL be headed with its name. Below 1100 pixels the panels SHALL stack in one column in the same order. The same layout SHALL be used on the Review tab, on a past review's page and in step 1 of the guided review.
+
+#### Scenario: Wide window
+- **WHEN** the Review tab is shown in a window whose content area is 1300 pixels wide
+- **THEN** the goals panel and the plan panel are side by side, the days span the full width, and habits, done this week and the history share the next row
+
+#### Scenario: Same height in a row
+- **WHEN** the goals panel holds three goals and the plan panel only a hint
+- **THEN** both panels end at the same height
+
+#### Scenario: Narrow window
+- **WHEN** the content area is 900 pixels wide
+- **THEN** the panels are stacked in one column: figures, goals, plan, time by area, recent weeks, days, habits, done this week, history
+
+#### Scenario: Fits a maximised window
+- **WHEN** the Review tab is shown in a 1440 × 900 window with the example data
+- **THEN** the header, the figures and the first two rows of panels are visible without scrolling
+
+### Requirement: Summary figures
+The summary SHALL start with five figures:
+- **Time worked:** the sum of the durations of the week's log entries. With a weekly hour target (see settings), the target and the share reached as a whole percentage are shown below it.
+- **Daily average:** the total divided by the days of the week up to and including today for the current week, or by 7 for a past week.
+- **On goals:** the share of the total that counts as work on any goal (see goals, "Work on a goal"), as a whole percentage, with its duration.
+- **Habits:** the check-ins of all active habits counted up to what each expects (see "Habit adherence"), out of all expected, with the share as a whole percentage.
+- **Done:** the number of tasks completed and of projects finished in the week.
+
+Entries without a duration SHALL add no time. Without any time in the week, the time figures SHALL show zero and "On goals" SHALL show no share. Without any expected check-in, "Habits" SHALL show no share.
 
 #### Scenario: Total with target
 - **WHEN** 15 h 44 min were logged in the week and the weekly hour target is 20 h
-- **THEN** the total reads "15 h 44 min / 20 h" with "79 % of target"
-
-#### Scenario: No target
-- **WHEN** no weekly hour target is set
-- **THEN** the total is shown without a target or share
+- **THEN** "Time worked" reads 15 h 44 min with "of 20 h · 79 %"
 
 #### Scenario: Daily average of the current week
 - **WHEN** today is Tuesday and 15 h 44 min were logged since Monday
 - **THEN** the daily average is 7 h 52 min
 
-#### Scenario: Daily average of a past week
-- **WHEN** a past week has 14 h in total
-- **THEN** its daily average is 2 h
+#### Scenario: Habits kept
+- **WHEN** a daily habit was checked 6 of 7 days and a 3-times-per-week habit 4 times
+- **THEN** "Habits" reads 9 / 10 with 90 %
 
-#### Scenario: Share on goals
-- **WHEN** 10 h of the week's 12 h 30 min were logged on projects, tasks or habits that serve a goal
-- **THEN** time on goals shows 80 %, with 10 h of 12 h 30 min
+#### Scenario: Done
+- **WHEN** 6 tasks were completed and 1 project was finished in the week
+- **THEN** "Done" reads 6 tasks with 1 project finished
 
 ### Requirement: Time by area, goal and project
 The summary SHALL show the week's time grouped by area, by goal or by project, chosen with a switch (Area first and selected by default). Each item SHALL be shown with its colour, its total duration and a bar proportional to the largest item, ordered by duration (highest first). Time that belongs to no item of the chosen grouping SHALL be shown last as "Other".
@@ -159,9 +182,9 @@ As a headline, the summary SHALL show the 4-week average of the summarized week,
 - **THEN** that week is shown with 0 and counts as 0 in the averages
 
 ### Requirement: Goals and their change in the week
-The summary SHALL start with the goals. Each goal SHALL show:
+After the figures, the summary SHALL show the goals. Each goal SHALL show:
 - its progress
-- its measures, with their progress and value
+- the measures whose value changed during the week, with their progress and value
 - the number of entries and the total duration of work on the goal in that week (see goals, "Work on a goal")
 - the change of its progress during the week, in percentage points
 
@@ -172,7 +195,7 @@ A measure whose value changed during the week SHALL show its value at the start 
 - **Yes/no:** "Achieved" when it was achieved during the week.
 - **Habit:** "12 → 15 / 30 check-ins".
 
-An unchanged measure SHALL show only its value.
+A measure whose value did not change SHALL NOT be listed in the summary (the goal page shows all measures).
 
 The progress bars of a goal and of a measure SHALL show the progress gained during the week as a distinct, lighter segment at the end of the filled part. A bar without a gain SHALL look as before.
 
@@ -186,7 +209,7 @@ The progress bars of a goal and of a measure SHALL show the progress gained duri
 
 #### Scenario: Unchanged measure
 - **WHEN** a measure's value did not change during the week
-- **THEN** it shows only its value and no change
+- **THEN** it is not listed under its goal in the summary
 
 #### Scenario: Yes/no achieved
 - **WHEN** a yes/no measure was switched to achieved on Wednesday of the week

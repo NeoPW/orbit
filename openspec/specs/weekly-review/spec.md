@@ -21,12 +21,12 @@ The week a review is about (the review week) SHALL be the Monday–Sunday week e
 - **WHEN** today is Saturday 2026-10-10
 - **THEN** the review week is 28-09-2026 – 04-10-2026
 
-### Requirement: Review tab
-The Review tab SHALL show one week, the shown week: the current week unless another week is chosen with the week switcher. From top to bottom it SHALL show:
-- the plan for the shown week: the plan written in the completed review of the week before it, or a hint that there is none (see "Plan of a week")
-- the summary of the shown week, so far for the current week (see week-summary)
-- a button to review the review week
-- an entry to the review history
+### Requirement: Review tab layout
+The Review tab SHALL show one week, the shown week: the current week unless another week is chosen with the week switcher. It SHALL show:
+- a header with the title, the week switcher and a button to review the review week, which names the review week in its tooltip
+- the summary of the shown week, so far for the current week, as a dashboard (see week-summary, "Dashboard layout"), with these panels in the dashboard:
+  - the plan for the shown week: the plan written in the completed review of the week before it, or a hint that there is none (see "Plan of a week")
+  - the review history (see "Review history")
 
 The button SHALL read:
 - "Start weekly review" when the review week has no review
@@ -45,9 +45,9 @@ The button SHALL read:
 - **WHEN** the review week's review is completed
 - **THEN** the button reads "Edit weekly review"
 
-#### Scenario: Button above the history
+#### Scenario: Button in the header
 - **WHEN** the Review tab is shown
-- **THEN** the review button comes after the shown week's summary and directly before the history
+- **THEN** the review button is in the header, right of the week switcher, and the history is a panel of the dashboard
 
 #### Scenario: Current week on a Monday
 - **WHEN** today is Monday 2026-10-12 and work was logged today
@@ -109,7 +109,7 @@ Saving SHALL mark the review as completed (setting its completion time) and SHAL
 - **THEN** the same review now has score 6 and new snapshots
 
 ### Requirement: Review history
-The app SHALL list all completed reviews, newest week first, each with its week range, score and the beginning of its plan. Tapping a review SHALL show its week, score, reflection and plan in full, followed by the summary of that week (see week-summary).
+The app SHALL list the completed reviews, newest week first, each with its week and score, in a panel of the Review tab: the latest 5, and all of them after "Show all". Tapping a review SHALL show its week, score, reflection and plan in full, followed by the summary of that week (see week-summary).
 
 #### Scenario: History order
 - **WHEN** reviews of the weeks starting 2026-09-28 and 2026-10-05 are completed
@@ -122,6 +122,10 @@ The app SHALL list all completed reviews, newest week first, each with its week 
 #### Scenario: Work of a past week
 - **WHEN** the user opens the review of the week starting 2026-09-28, in which 3 entries were logged on "Thesis"
 - **THEN** the page lists "Thesis" with 3 entries in that week's summary
+
+#### Scenario: Show all
+- **WHEN** 8 reviews are completed
+- **THEN** the history panel lists the latest 5, and "Show all" lists all 8
 
 ### Requirement: Goals step
 The goals step SHALL list every active goal with its progress and, below it, its measures. The user SHALL be able to change the goal's status, a numeric measure's current value and a boolean measure's achieved state, and write the goal's weekly note for the review week; changes SHALL be applied immediately. Habit measures SHALL be shown with their progress but not be editable.
