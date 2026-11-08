@@ -10,7 +10,9 @@ import {
   listOpenNextSteps,
   listOpenTasks,
   listOpenTasksOfProject,
+  moveTask,
   reopenTask,
+  resetTaskOrder,
   setNextStep,
   undoCompleteTask,
   updateTask,
@@ -170,5 +172,105 @@ describe('tasks repository', () => {
     const list = await listOpenTasks(db);
     expect(list.map((v) => v.task.id).sort()).toEqual([a, b].sort());
     expect(list.find((v) => v.task.id === b)?.projectTitle).toBe('Wedding');
+  });
+});
+
+describe('manual task order', () => {
+  const at = (minute: number) => () => new Date(Date.UTC(2026, 9, 13, 9, minute));
+  async function setup(db: Db, names = ['A', 'B', 'C']) {
+    const projectId = await addProject(db);
+    const ids: Record<string, string> = {};
+    for (const [i, name] of names.entries()) ids[name] = await createTask(db, at(i), { ...base, title: name, projectId });
+    return { projectId, ids };
+  }
+  const titles = async (db: Db, projectId: string) => (await listOpenTasksOfProject(db, projectId)).map((t) => t.title);
+
+  it('keeps the due-date order until the list is reordered', async () => {
+    const { db } = await openTestDatabase();
+    const projectId = await addProject(db);
+    await createTask(db, at(0), { ...base, title: 'A', projectId });
+    await createTask(db, at(1), { ...base, title: 'B', projectId, dueDate: '2026-10-20' });
+    await createTask(db, at(2), { ...base, title: 'C', projectId, dueDate: '2026-10-10' });
+    expect(await titles(db, projectId)).toEqual(['C', 'B', 'A']);
+  });
+
+  it('moves a task up and keeps the order', async () => {
+    const { db } = await openTestDatabase();
+    const { projectId, ids } = await setup(db);
+    await moveTask(db, clock, ids.C!, 0);
+    expect(await titles(db, projectId)).toEqual(['C', 'A', 'B']);
+    await moveTask(db, clock, ids.A!, 2);
+    expect(await titles(db, projectId)).toEqual(['C', 'B', 'A']);
+  });
+
+  it('writes only the moved task after the first move', async () => {
+    const { db } = await openTestDatabase();
+    const { projectId, ids } = await setup(db, ['A', 'B', 'C', 'D']);
+    await moveTask(db, clock, ids.D!, 0);
+    const before = new Map((await listOpenTasksOfProject(db, projectId)).map((t) => [t.id, t.sortOrder]));
+    await moveTask(db, at(30), ids.C!, 1);
+    const changed = (await listOpenTasksOfProject(db, projectId)).filter((t) => t.sortOrder !== before.get(t.id));
+    expect(changed.map((t) => t.title)).toEqual(['C']);
+  });
+
+  it('keeps next steps on top of the others', async () => {
+    const { db } = await openTestDatabase();
+    const { projectId, ids } = await setup(db);
+    await setNextStep(db, clock, ids.A!, true);
+    await moveTask(db, clock, ids.C!, 0);
+    expect(await titles(db, projectId)).toEqual(['A', 'C', 'B']);
+  });
+
+  it('puts a task marked as next step at the end of the next steps', async () => {
+    const { db } = await openTestDatabase();
+    const { projectId, ids } = await setup(db);
+    await setNextStep(db, clock, ids.A!, true);
+    await moveTask(db, clock, ids.C!, 0);
+    await setNextStep(db, clock, ids.C!, true);
+    expect(await titles(db, projectId)).toEqual(['A', 'C', 'B']);
+    await setNextStep(db, clock, ids.A!, false);
+    expect(await titles(db, projectId)).toEqual(['C', 'B', 'A']);
+  });
+
+  it('lists a new task after the ordered ones', async () => {
+    const { db } = await openTestDatabase();
+    const { projectId, ids } = await setup(db);
+    await moveTask(db, clock, ids.C!, 0);
+    await createTask(db, at(40), { ...base, title: 'D', projectId, dueDate: '2026-10-01' });
+    expect(await titles(db, projectId)).toEqual(['C', 'A', 'B', 'D']);
+  });
+
+  it('resets to due-date order', async () => {
+    const { db } = await openTestDatabase();
+    const { projectId, ids } = await setup(db);
+    await moveTask(db, clock, ids.C!, 0);
+    await resetTaskOrder(db, clock, projectId);
+    expect(await titles(db, projectId)).toEqual(['A', 'B', 'C']);
+    expect((await listOpenTasksOfProject(db, projectId)).every((t) => t.sortOrder === null)).toBe(true);
+  });
+
+  it('drops the position when the task moves to another project', async () => {
+    const { db } = await openTestDatabase();
+    const { ids, projectId } = await setup(db);
+    const other = await addProject(db, 'Trip');
+    await createTask(db, at(50), { ...base, title: 'X', projectId: other });
+    await moveTask(db, clock, ids.C!, 0);
+    await updateTask(db, clock, ids.C!, { ...base, title: 'C', projectId: other });
+    const [moved] = (await listOpenTasksOfProject(db, other)).filter((t) => t.title === 'C');
+    expect(moved?.sortOrder).toBeNull();
+    expect(await titles(db, projectId)).toEqual(['A', 'B']);
+  });
+
+  it('renumbers when positions get too close', async () => {
+    const { db } = await openTestDatabase();
+    const { projectId, ids } = await setup(db);
+    await moveTask(db, clock, ids.C!, 0);
+    for (let i = 0; i < 60; i += 1) {
+      await moveTask(db, clock, ids.B!, 1);
+      await moveTask(db, clock, ids.A!, 1);
+    }
+    const order = await titles(db, projectId);
+    expect(order).toHaveLength(3);
+    expect(order[0]).toBe('C');
   });
 });

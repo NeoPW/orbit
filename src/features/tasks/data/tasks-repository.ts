@@ -3,7 +3,7 @@ import type { Db } from '../../../core/db/drizzle.ts';
 import { createFields, deleteFields, newId, notDeleted, updateFields, type Clock } from '../../../core/db/records.ts';
 import { goals, logEntries, projects, tasks } from '../../../core/db/schema.ts';
 import { projectColor } from '../../../core/ui/colors.ts';
-import { sortOpenTasks } from '../domain/tasks.ts';
+import { hasManualOrder, positionBetween, positionTooClose, sortOpenTasks } from '../domain/tasks.ts';
 
 export type Task = typeof tasks.$inferSelect;
 
@@ -162,18 +162,87 @@ export async function updateTask(db: Db, clock: Clock, id: string, input: TaskIn
       importance: input.importance,
       ...assigned,
       isNextStep: assigned.projectId !== null && assigned.projectId === previous.projectId ? previous.isNextStep : false,
+      // A manual position belongs to the list the task is in.
+      sortOrder: assigned.projectId === previous.projectId && assigned.goalId === previous.goalId ? previous.sortOrder : null,
     })
     .where(eq(tasks.id, id));
 }
 
-/** Marks or unmarks an open task of a project as next step; other tasks are left unchanged. */
+type BatchWrites = Parameters<Db['batch']>[0];
+
+async function runBatch(db: Db, writes: unknown[]): Promise<void> {
+  if (writes.length === 0) return;
+  await db.batch(writes as unknown as BatchWrites);
+}
+
+/** The updates that give `ordered` the positions 0, 1, 2 …; `extra` adds fields for single tasks. Unchanged positions are skipped. */
+function positionWrites(db: Db, clock: Clock, ordered: Task[], extra: Record<string, Partial<Task>> = {}) {
+  return ordered.flatMap((t, i) =>
+    t.sortOrder === i && !extra[t.id]
+      ? []
+      : [db.update(tasks).set({ ...updateFields(clock), ...extra[t.id], sortOrder: i }).where(eq(tasks.id, t.id))],
+  );
+}
+
+/**
+ * Marks or unmarks an open task of a project as next step; other tasks are left unchanged.
+ * On a list with a manual order, the task goes to the end of its new group.
+ */
 export async function setNextStep(db: Db, clock: Clock, id: string, isNextStep: boolean): Promise<void> {
   const task = await loadTask(db, id);
   if (!task || !task.projectId || (isNextStep && task.status !== 'open')) return;
+  if (task.status === 'open' && task.isNextStep !== isNextStep) {
+    const list = await listOpenTasksOfProject(db, task.projectId);
+    if (hasManualOrder(list)) {
+      const rest = list.filter((t) => t.id !== id);
+      const steps = rest.filter((t) => t.isNextStep);
+      const others = rest.filter((t) => !t.isNextStep);
+      const ordered = isNextStep ? [...steps, task, ...others] : [...steps, ...others, task];
+      await runBatch(db, positionWrites(db, clock, ordered, { [id]: { isNextStep } }));
+      return;
+    }
+  }
   await db
     .update(tasks)
     .set({ ...updateFields(clock), isNextStep })
     .where(eq(tasks.id, id));
+}
+
+/**
+ * Moves an open task of a project to index `toIndex` of its group (the next steps, or the other tasks).
+ * The first move gives every open task of the project a position; later moves write only the moved task.
+ */
+export async function moveTask(db: Db, clock: Clock, id: string, toIndex: number): Promise<void> {
+  const task = await loadTask(db, id);
+  if (!task || !task.projectId || task.status !== 'open') return;
+  const list = await listOpenTasksOfProject(db, task.projectId);
+  const group = list.filter((t) => t.isNextStep === task.isNextStep);
+  const from = group.findIndex((t) => t.id === id);
+  if (from < 0) return;
+  const to = Math.max(0, Math.min(Math.trunc(toIndex), group.length - 1));
+  if (to === from && hasManualOrder(list)) return;
+  const reordered = group.filter((t) => t.id !== id);
+  reordered.splice(to, 0, task);
+  if (list.every((t) => t.sortOrder != null)) {
+    const before = to > 0 ? (reordered[to - 1]?.sortOrder ?? null) : null;
+    const after = to < reordered.length - 1 ? (reordered[to + 1]?.sortOrder ?? null) : null;
+    const position = positionBetween(before, after);
+    if (!positionTooClose(position, before, after)) {
+      await db.update(tasks).set({ ...updateFields(clock), sortOrder: position }).where(eq(tasks.id, id));
+      return;
+    }
+  }
+  const other = list.filter((t) => t.isNextStep !== task.isNextStep);
+  await runBatch(db, positionWrites(db, clock, task.isNextStep ? [...reordered, ...other] : [...other, ...reordered]));
+}
+
+/** Removes the manual positions of a project's open tasks, so the list is back in due-date order. */
+export async function resetTaskOrder(db: Db, clock: Clock, projectId: string): Promise<void> {
+  const list = await listOpenTasksOfProject(db, projectId);
+  await runBatch(
+    db,
+    list.filter((t) => t.sortOrder != null).map((t) => db.update(tasks).set({ ...updateFields(clock), sortOrder: null }).where(eq(tasks.id, t.id))),
+  );
 }
 
 /**

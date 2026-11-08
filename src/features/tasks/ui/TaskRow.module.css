@@ -99,3 +99,66 @@ div:hover > div > .startOnHover,
 .highlighted .startOnHover {
   opacity: 1;
 }
+
+/* Reorderable rows (a project's open tasks): a handle at the left of each row. */
+.sortable {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  border-radius: var(--radius-md);
+}
+
+.sortableRow {
+  flex: 1;
+  min-width: 0;
+}
+
+.handle {
+  flex: none;
+  width: 22px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-faint);
+  cursor: grab;
+  touch-action: none;
+  opacity: 0.55;
+}
+
+.handle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.sortable:hover .handle,
+.handle:focus-visible {
+  opacity: 1;
+}
+
+.handle:hover {
+  color: var(--color-text);
+}
+
+.dragging {
+  position: relative;
+  z-index: 5;
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-raised);
+  user-select: none;
+}
+
+.dragging .handle {
+  cursor: grabbing;
+  opacity: 1;
+}
+
+.dropBefore {
+  box-shadow: 0 -2px 0 var(--color-primary);
+}
+
+.dropAfter {
+  box-shadow: 0 2px 0 var(--color-primary);
+}

@@ -10,7 +10,7 @@ import { listChecksSince } from '../../habits/data/habits-repository.ts';
 import { isDue, weekStartOf } from '../../habits/domain/habits.ts';
 import { listProjectsByStatus, type ProjectView } from '../../projects/data/projects-repository.ts';
 import { sortByScore } from '../../projects/domain/projects.ts';
-import { compareByRank, effectiveImportance, type RankInput } from '../../tasks/domain/tasks.ts';
+import { applyProjectOrder, compareByRank, effectiveImportance, type RankInput } from '../../tasks/domain/tasks.ts';
 import { toViews, type Task, type TaskView } from '../../tasks/data/tasks-repository.ts';
 
 /** What the rank of a task view needs. */
@@ -57,8 +57,9 @@ export async function listTodo(db: Db, today: string): Promise<TodoItem[]> {
   const listed = open.filter((t) => (t.projectId ? t.isNextStep && activeIds.has(t.projectId) : true));
   const views = await toViews(db, listed);
   const compare = compareByRank(today);
-  return views
-    .sort((a, b) => compare(rankInput(a), rankInput(b)))
+  const ranked = views.sort((a, b) => compare(rankInput(a), rankInput(b)));
+  // The project's manual order breaks ties among its own tasks.
+  return applyProjectOrder(ranked, today, (v) => ({ ...rankInput(v), projectId: v.task.projectId, sortOrder: v.task.sortOrder }))
     .map((view) => ({
       task: view.task,
       context: view.projectTitle ?? view.goalTitle,
