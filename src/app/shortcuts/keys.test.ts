@@ -12,7 +12,7 @@ const press = (key: string, more: Partial<KeyInput> = {}): KeyInput => ({
   onControl: false,
   ...more,
 });
-const action = (input: KeyInput, scope: 'global' | 'home' | 'focus' = 'global') => matchShortcut(input, scope)?.action ?? null;
+const action = (input: KeyInput, scope: 'global' | 'home' | 'focus' | 'detail' = 'global') => matchShortcut(input, scope)?.action ?? null;
 
 describe('global shortcuts', () => {
   it('maps the letters and Shift letters', () => {
@@ -49,6 +49,22 @@ describe('global shortcuts', () => {
   it('gives the tooltip text', () => {
     expect(withShortcut('New task', 'new-task')).toBe('New task (T)');
     expect(withShortcut('Plan', 'go-plan')).toBe('Plan (Shift+P)');
+  });
+});
+
+describe('Esc on detail pages', () => {
+  it('goes back on a project, goal or task page', () => {
+    expect(action(press('Escape'), 'detail')).toBe('go-back');
+  });
+
+  it('does nothing in a field, over a dialog, or elsewhere', () => {
+    expect(action(press('Escape', { editable: true }), 'detail')).toBeNull();
+    expect(action(press('Escape', { dialogOpen: true }), 'detail')).toBeNull();
+    expect(action(press('Escape'), 'global')).toBeNull();
+  });
+
+  it('keeps the other global keys on a detail page', () => {
+    expect(action(press('t'), 'detail')).toBe('new-task');
   });
 });
 

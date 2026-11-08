@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { ArrowRight, Play } from 'lucide-react';
-import { navigate } from '../../../core/routing/useRoute.ts';
 import { AnimatedList } from '../../../core/ui/components/AnimatedList.tsx';
 import { IconButton } from '../../../core/ui/components/Button.tsx';
 import { Checkbox } from '../../../core/ui/components/Checkbox.tsx';
@@ -15,6 +14,7 @@ import { ListRow } from '../../../core/ui/components/ListRow.tsx';
 import type { CSSProperties } from 'react';
 import type { Task } from '../data/tasks-repository.ts';
 import styles from './TaskRow.module.css';
+import { useOpenTask } from './TaskPopup.tsx';
 import { useCompleteTask } from './useCompleteTask.ts';
 
 export interface TaskRowProps {
@@ -52,6 +52,7 @@ export function TaskRow({
   highlighted = false,
 }: TaskRowProps) {
   const complete = useCompleteTask();
+  const openTask = useOpenTask();
   const wrapper = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (highlighted) wrapper.current?.scrollIntoView({ block: 'nearest' });
@@ -83,7 +84,7 @@ export function TaskRow({
         />
       }
       title={task.title}
-      onOpen={() => navigate({ name: 'task', id: task.id })}
+      onOpen={() => openTask(task.id)}
       // On the phone the compact tags go under the title, and the start button is always shown (no hover).
       meta={
         compact && isPhone ? (

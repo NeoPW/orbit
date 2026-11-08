@@ -1,7 +1,7 @@
 /** The shortcuts of the app (see openspec keyboard-shortcuts): one table for matching, the overlay, tooltips and the palette. */
 
 export type GlobalAction =
-  'new-task' | 'log-work' | 'focus-field' | 'go-home' | 'go-plan' | 'go-review' | 'go-settings' | 'overlay' | 'palette';
+  'new-task' | 'log-work' | 'focus-field' | 'go-home' | 'go-plan' | 'go-review' | 'go-settings' | 'go-back' | 'overlay' | 'palette';
 export type TodoAction =
   | 'todo-next'
   | 'todo-prev'
@@ -17,7 +17,7 @@ export type FocusAction =
 export type ShortcutAction = GlobalAction | TodoAction | FocusAction;
 
 /** Where the keys are pressed: screen keys win over global ones there. */
-export type ShortcutScope = 'global' | 'home' | 'focus';
+export type ShortcutScope = 'global' | 'home' | 'focus' | 'detail';
 
 export interface Shortcut {
   action: ShortcutAction;
@@ -35,6 +35,7 @@ export const SHORTCUTS: Shortcut[] = [
   { action: 'go-plan', keys: 'Shift+P', label: 'Plan', group: 'Global' },
   { action: 'go-review', keys: 'Shift+R', label: 'Review', group: 'Global' },
   { action: 'go-settings', keys: 'Shift+S', label: 'Settings', group: 'Global' },
+  { action: 'go-back', keys: 'Esc', label: 'Back from a project, goal or task page', group: 'Global' },
   { action: 'palette', keys: 'Ctrl+K', label: 'Command palette', group: 'Global' },
   { action: 'overlay', keys: '?', label: 'All shortcuts', group: 'Global' },
   { action: 'todo-next', keys: 'J / ↓', label: 'Next task', group: 'Home' },
@@ -139,6 +140,7 @@ export function matchShortcut(input: KeyInput, scope: ShortcutScope): ShortcutMa
     const action = FOCUS_KEYS[key] ?? (input.shiftKey ? undefined : FOCUS_KEYS[named]);
     if (action) return { action };
   }
+  if (scope === 'detail' && key === 'escape') return { action: 'go-back' };
   if (scope === 'home') {
     if (!input.shiftKey && /^[1-9]$/.test(key)) return { action: 'todo-select-n', index: Number(key) - 1 };
     const digit = /^Digit([1-9])$/.exec(input.code ?? '');

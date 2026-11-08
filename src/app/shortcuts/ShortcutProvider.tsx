@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useLiveQuery } from '../../core/db/live.ts';
-import { navigate, useRoute } from '../../core/routing/useRoute.ts';
+import { goBack, navigate, useRoute } from '../../core/routing/useRoute.ts';
 import { getTimer } from '../../features/timer/data/timer-repository.ts';
 import { CommandPalette } from '../../features/palette/CommandPalette.tsx';
 import { useOpenAppSheet } from './AppSheets.tsx';
@@ -67,7 +67,14 @@ export function ShortcutProvider({ children }: { children: ReactNode }) {
   const session = useLiveQuery(getTimer, []);
   const [overlay, setOverlay] = useState(false);
   const [palette, setPalette] = useState(false);
-  const scope: ShortcutScope = route.name === 'focus' ? 'focus' : route.name === 'home' ? 'home' : 'global';
+  const scope: ShortcutScope =
+    route.name === 'focus'
+      ? 'focus'
+      : route.name === 'home'
+        ? 'home'
+        : route.name === 'goal' || route.name === 'project' || route.name === 'task'
+          ? 'detail'
+          : 'global';
   const hasSession = session !== undefined;
 
   useEffect(() => {
@@ -101,6 +108,8 @@ export function ShortcutProvider({ children }: { children: ReactNode }) {
           return navigate({ name: 'review' });
         case 'go-settings':
           return navigate({ name: 'settings' });
+        case 'go-back':
+          return goBack({ name: 'plan' });
         case 'overlay':
           return setOverlay(true);
         case 'palette':

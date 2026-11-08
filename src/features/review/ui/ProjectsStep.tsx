@@ -1,3 +1,4 @@
+import { useOpenTask } from '../../tasks/ui/TaskPopup.tsx';
 import { FolderKanban } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useServices } from '../../../app/services.ts';
@@ -46,6 +47,7 @@ function NewNextStep({ projectId }: { projectId: string }) {
 
 function ProjectCard({ view, weekStart }: { view: ProjectView; weekStart: string }) {
   const { db } = useServices();
+  const openTask = useOpenTask();
   const { project } = view;
   const tasks = useLiveQuery((database) => listOpenTasksOfProject(database, project.id), [project.id]);
   const save = (patch: Partial<Pick<typeof project, 'importance' | 'deadline'>>) =>
@@ -83,7 +85,12 @@ function ProjectCard({ view, weekStart }: { view: ProjectView; weekStart: string
       <div className={styles.fields}>
         <div className={styles.fieldGroup}>
           <span className={styles.fieldLabel}>Importance</span>
-          <SegmentedControl label={`Importance of ${project.title}`} options={IMPORTANCE} value={project.importance} onChange={(value) => save({ importance: value })} />
+          <SegmentedControl
+            label={`Importance of ${project.title}`}
+            options={IMPORTANCE}
+            value={project.importance}
+            onChange={(value) => save({ importance: value })}
+          />
         </div>
         <DateField label="Deadline" value={project.deadline} onChange={(value) => save({ deadline: value })} />
       </div>
@@ -93,8 +100,10 @@ function ProjectCard({ view, weekStart }: { view: ProjectView; weekStart: string
             <ListRow
               key={task.id}
               title={task.title}
-              onOpen={() => navigate({ name: 'task', id: task.id })}
-              trailing={<Switch label="Next step" checked={task.isNextStep} onChange={(checked) => void setNextStep(db, clock, task.id, checked)} />}
+              onOpen={() => openTask(task.id)}
+              trailing={
+                <Switch label="Next step" checked={task.isNextStep} onChange={(checked) => void setNextStep(db, clock, task.id, checked)} />
+              }
             />
           ))}
         </div>
@@ -124,4 +133,3 @@ export function ProjectsStep({ weekStart }: { weekStart: string }) {
     </div>
   );
 }
-

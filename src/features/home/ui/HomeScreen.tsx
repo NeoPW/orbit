@@ -23,6 +23,7 @@ import { LogWorkSheet } from '../../work-log/ui/LogWorkSheet.tsx';
 import { TodayTile } from '../../timeline/ui/TodayTile.tsx';
 import { TaskList } from '../../tasks/ui/TaskRow.tsx';
 import { TaskSheet } from '../../tasks/ui/TaskSheet.tsx';
+import { useOpenTask } from '../../tasks/ui/TaskPopup.tsx';
 import { useCompleteTask } from '../../tasks/ui/useCompleteTask.ts';
 import { FocusPanel } from '../../timer/ui/FocusPanel.tsx';
 import { useStartFocus } from '../../timer/ui/useStartFocus.ts';
@@ -44,6 +45,7 @@ export function HomeScreen() {
   const today = useToday();
   const isPhone = useIsPhone();
   const complete = useCompleteTask();
+  const openTask = useOpenTask();
   const { start } = useStartFocus();
   const data = useLiveQuery(
     async (database) => {
@@ -111,7 +113,7 @@ export function HomeScreen() {
       case 'todo-complete':
       case 'todo-open':
         if (highlightedTask)
-          return match.action === 'todo-complete' ? void complete(highlightedTask) : navigate({ name: 'task', id: highlightedTask.id });
+          return match.action === 'todo-complete' ? void complete(highlightedTask) : openTask(highlightedTask.id);
         if (highlightedHabit) {
           void (highlightedHabit.checked
             ? uncheckHabit(db, clock, highlightedHabit.id, today)
@@ -258,7 +260,7 @@ export function HomeScreen() {
                       />
                     }
                     title={item.task.title}
-                    onOpen={() => navigate({ name: 'task', id: item.task.id })}
+                    onOpen={() => openTask(item.task.id)}
                     meta={
                       <>
                         {item.projectTitle && item.projectColor ? (
@@ -329,7 +331,7 @@ export function HomeScreen() {
                                 label={<span className="visually-hidden">Complete {task.title}</span>}
                                 onChange={() => void complete(task)}
                               />
-                              <button type="button" className={styles.stepOpen} onClick={() => navigate({ name: 'task', id: task.id })}>
+                              <button type="button" className={styles.stepOpen} onClick={() => openTask(task.id)}>
                                 {task.title}
                               </button>
                             </div>

@@ -13,6 +13,7 @@ import { ReviewHistoryPage } from '../features/review/ui/ReviewHistoryPage.tsx';
 import { ReviewScreen } from '../features/review/ui/ReviewScreen.tsx';
 import { SettingsScreen } from '../features/settings/ui/SettingsScreen.tsx';
 import { CompleteTaskProvider } from '../features/tasks/ui/CompleteTaskProvider.tsx';
+import { TaskPopupProvider } from '../features/tasks/ui/TaskPopup.tsx';
 import { TaskPage } from '../features/tasks/ui/TaskPage.tsx';
 import { FocusMode } from '../features/timer/ui/FocusMode.tsx';
 import { TodayScreen } from '../features/timeline/ui/TodayScreen.tsx';
@@ -59,13 +60,15 @@ export function Shell() {
   if (route.name === 'focus') {
     return (
       <CompleteTaskProvider>
-        <AppSheets>
-          <ShortcutProvider>
-            <div className={styles.fullWindow}>
-              <FocusMode />
-            </div>
-          </ShortcutProvider>
-        </AppSheets>
+        <TaskPopupProvider>
+          <AppSheets>
+            <ShortcutProvider>
+              <div className={styles.fullWindow}>
+                <FocusMode />
+              </div>
+            </ShortcutProvider>
+          </AppSheets>
+        </TaskPopupProvider>
         <MessageHost />
       </CompleteTaskProvider>
     );
@@ -73,28 +76,30 @@ export function Shell() {
 
   return (
     <CompleteTaskProvider>
-      <AppSheets>
-        <ShortcutProvider>
-          <div className={`${styles.shell} ${isPhone ? styles.phone : ''}`}>
-            {!isPhone && <Sidebar current={sectionOf(route)} />}
-            <div className={styles.main}>
-              {storage === 'memory' && (
-                <p className={styles.banner} role="alert">
-                  <TriangleAlert aria-hidden="true" />
-                  This browser offers no storage for Orbit: data is not saved and is lost when the page is closed.
-                </p>
-              )}
-              <main className={styles.content}>
-                <Suspense fallback={null}>
-                  <Screen />
-                </Suspense>
-              </main>
+      <TaskPopupProvider>
+        <AppSheets>
+          <ShortcutProvider>
+            <div className={`${styles.shell} ${isPhone ? styles.phone : ''}`}>
+              {!isPhone && <Sidebar current={sectionOf(route)} />}
+              <div className={styles.main}>
+                {storage === 'memory' && (
+                  <p className={styles.banner} role="alert">
+                    <TriangleAlert aria-hidden="true" />
+                    This browser offers no storage for Orbit: data is not saved and is lost when the page is closed.
+                  </p>
+                )}
+                <main className={styles.content}>
+                  <Suspense fallback={null}>
+                    <Screen />
+                  </Suspense>
+                </main>
+              </div>
+              {isPhone && <BottomNav current={sectionOf(route)} />}
+              <MessageHost />
             </div>
-            {isPhone && <BottomNav current={sectionOf(route)} />}
-            <MessageHost />
-          </div>
-        </ShortcutProvider>
-      </AppSheets>
+          </ShortcutProvider>
+        </AppSheets>
+      </TaskPopupProvider>
     </CompleteTaskProvider>
   );
 }

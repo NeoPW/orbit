@@ -7,6 +7,7 @@ import { ListRow } from '../../../core/ui/components/ListRow.tsx';
 import { ProgressBar } from '../../../core/ui/components/ProgressBar.tsx';
 import { Section } from '../../../core/ui/components/Section.tsx';
 import { goalColor } from '../../../core/ui/colors.ts';
+import { useOpenTask } from '../../tasks/ui/TaskPopup.tsx';
 import { WeekTimeline } from '../../timeline/ui/WeekTimeline.tsx';
 import { formatDuration } from '../../work-log/domain/work-log.ts';
 import { measureWeekText } from '../domain/measure-text.ts';
@@ -71,6 +72,7 @@ export interface WeekSummaryViewProps {
 
 /** A week at a glance: goals, time, finished projects, completed tasks and habit adherence. */
 export function WeekSummaryView({ summary }: WeekSummaryViewProps) {
+  const openTask = useOpenTask();
   const { goals, time, trend, finishedProjects, completedTasks, habits } = summary;
   const empty = time.totalMinutes === 0 && [goals, finishedProjects, completedTasks, habits].every((list) => list.length === 0);
   if (empty) return <EmptyState icon={CalendarCheck} text="Nothing recorded this week" />;
@@ -108,7 +110,7 @@ export function WeekSummaryView({ summary }: WeekSummaryViewProps) {
             <ListRow
               key={t.taskId}
               title={t.title}
-              onOpen={() => navigate({ name: 'task', id: t.taskId })}
+              onOpen={() => openTask(t.taskId)}
               meta={t.assignedTo ? <span>{t.assignedTo.title}</span> : undefined}
             />
           ))}
