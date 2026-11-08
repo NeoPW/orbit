@@ -13,7 +13,8 @@ context: |
   - Tauri 2 desktop app (Linux), main target, works fully offline; the same
     React + TypeScript frontend (Vite) also runs as a browser build.
     Android companion via Tauri mobile (same frontend, phone layout below
-    640 px) is work in progress; notifications come next.
+    640 px) has Android notifications through the app's own plugin
+    (src-tauri/src/reminders.rs + Kotlin in gen/android .../reminders).
   - Desktop-only features (tray, hotkey, notifications, native SQLite) sit
     behind src/platform/; feature code never checks the platform itself,
     and the browser build must start without Tauri APIs.

@@ -14,6 +14,7 @@ import { ReviewScreen } from '../features/review/ui/ReviewScreen.tsx';
 import { SettingsScreen } from '../features/settings/ui/SettingsScreen.tsx';
 import { CompleteTaskProvider } from '../features/tasks/ui/CompleteTaskProvider.tsx';
 import { TaskPopupProvider } from '../features/tasks/ui/TaskPopup.tsx';
+import { NotificationClicks } from './useNotificationClicks.ts';
 import { TaskPage } from '../features/tasks/ui/TaskPage.tsx';
 import { FocusMode } from '../features/timer/ui/FocusMode.tsx';
 import { TodayScreen } from '../features/timeline/ui/TodayScreen.tsx';
@@ -61,6 +62,7 @@ export function Shell() {
     return (
       <CompleteTaskProvider>
         <TaskPopupProvider>
+          <NotificationClicks />
           <AppSheets>
             <ShortcutProvider>
               <div className={styles.fullWindow}>
@@ -77,6 +79,7 @@ export function Shell() {
   return (
     <CompleteTaskProvider>
       <TaskPopupProvider>
+        <NotificationClicks />
         <AppSheets>
           <ShortcutProvider>
             <div className={`${styles.shell} ${isPhone ? styles.phone : ''}`}>

@@ -1,0 +1,8 @@
+{
+  "$schema": "../gen/schemas/mobile-schema.json",
+  "identifier": "mobile",
+  "description": "Reminders and notifications on Android",
+  "windows": ["main"],
+  "platforms": ["android"],
+  "permissions": ["reminders:default"]
+}

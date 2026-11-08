@@ -1,4 +1,6 @@
 mod db;
+#[cfg(target_os = "android")]
+mod reminders;
 #[cfg(desktop)]
 mod notify;
 
@@ -33,6 +35,9 @@ pub fn run() {
     ]);
     #[cfg(mobile)]
     let builder = builder.invoke_handler(tauri::generate_handler![db::db_query, db::db_batch]);
+    // Reminders, the ongoing focus notification and notification taps on Android.
+    #[cfg(target_os = "android")]
+    let builder = builder.plugin(reminders::init());
 
     builder.run(tauri::generate_context!()).expect("error while running Orbit");
 }

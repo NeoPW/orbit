@@ -4,6 +4,7 @@ import { isAuthorized } from './auth.ts';
 import { HttpError } from './errors.ts';
 import { parseCursor, pull } from './pull.ts';
 import { push } from './push.ts';
+import { parseReminderTarget, reminderNeeded } from './reminder-check.ts';
 import { status } from './status.ts';
 
 export const MAX_BODY_BYTES = 1_000_000;
@@ -59,6 +60,10 @@ async function route(request: Request, url: URL, { driver }: ApiDeps): Promise<R
       if (method !== 'GET') break;
       requireVersion(request);
       return json(await pull(driver, parseCursor(url.searchParams.get('cursor'))));
+    case '/api/reminder-check':
+      if (method !== 'POST') break;
+      requireVersion(request);
+      return json({ needed: await reminderNeeded(driver, parseReminderTarget(await readJson(request))) });
     default:
       throw new HttpError(404, 'Not found');
   }

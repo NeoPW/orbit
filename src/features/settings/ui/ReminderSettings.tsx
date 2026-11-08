@@ -4,15 +4,29 @@ import { Select } from '../../../core/ui/components/Select.tsx';
 import { Switch } from '../../../core/ui/components/Switch.tsx';
 import { TimeField } from '../../../core/ui/components/TimeField.tsx';
 import { platform } from '../../../platform/platform.ts';
+import { useNotificationPermission } from '../../notifications/ui/notification-permission.ts';
 import { isValidSetting, useSettings, type Settings } from '../data/settings.ts';
 import styles from './SettingsScreen.module.css';
 
-const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((label, i) => ({ value: String(i + 1), label }));
+const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((label, i) => ({
+  value: String(i + 1),
+  label,
+}));
 
 type TimeKey = 'reminderTime' | 'reviewTime';
 
 /** A time setting: saved as soon as the text is a valid time; emptying it shows an error and keeps the last saved time. */
-function TimeSetting({ label, settingKey, initial, save }: { label: string; settingKey: TimeKey; initial: string; save: (key: TimeKey, value: string) => Promise<boolean> }) {
+function TimeSetting({
+  label,
+  settingKey,
+  initial,
+  save,
+}: {
+  label: string;
+  settingKey: TimeKey;
+  initial: string;
+  save: (key: TimeKey, value: string) => Promise<boolean>;
+}) {
   const [time, setTime] = useState<string | null>(initial);
   return (
     <TimeField
@@ -48,24 +62,34 @@ function LeadDaysField({ initial, save }: { initial: number; save: (value: numbe
 /** The Reminders section of Settings. */
 export function ReminderSettings() {
   const { settings, loaded, save } = useSettings();
+  const allowed = useNotificationPermission();
   if (!loaded) return null;
   const saveOne = <K extends keyof Settings>(key: K, value: Settings[K]) => save(key, value);
+  // The desktop and the phone remind on their own; the browser shows none. The review is not on the phone.
+  const reminds = platform === 'desktop' || platform === 'android';
   return (
     <>
-      {platform === 'desktop' ? (
+      {reminds ? (
         <Switch label="Reminders" checked={settings.remindersOn} onChange={(on) => void saveOne('remindersOn', on)} />
       ) : (
         <p className={styles.note}>Reminders are shown by the desktop app.</p>
       )}
+      {platform === 'android' && settings.remindersOn && allowed === false && (
+        <p className={styles.note}>Notifications are blocked for Orbit. Allow them in the Android settings to get reminders.</p>
+      )}
       <div className={styles.fields}>
         <TimeSetting label="Default reminder time" settingKey="reminderTime" initial={settings.reminderTime} save={saveOne} />
-        <Select
-          label="Weekly review day"
-          value={String(settings.reviewDay)}
-          options={WEEKDAYS}
-          onChange={(value) => void saveOne('reviewDay', Number(value))}
-        />
-        <TimeSetting label="Weekly review time" settingKey="reviewTime" initial={settings.reviewTime} save={saveOne} />
+        {platform !== 'android' && (
+          <>
+            <Select
+              label="Weekly review day"
+              value={String(settings.reviewDay)}
+              options={WEEKDAYS}
+              onChange={(value) => void saveOne('reviewDay', Number(value))}
+            />
+            <TimeSetting label="Weekly review time" settingKey="reviewTime" initial={settings.reviewTime} save={saveOne} />
+          </>
+        )}
         <LeadDaysField initial={settings.leadDays} save={(value) => saveOne('leadDays', value)} />
       </div>
     </>

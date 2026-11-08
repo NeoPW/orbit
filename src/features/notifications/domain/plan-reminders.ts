@@ -30,6 +30,9 @@ export interface ReminderInput {
 
 export type ReminderSettings = Pick<Settings, 'remindersOn' | 'reminderTime' | 'leadDays' | 'reviewDay' | 'reviewTime'>;
 
+/** What a reminder is about, for the phone's check with the server before showing it (none for the end of a session or the review). */
+export type ReminderTarget = { kind: 'habit'; id: string; date: string } | { kind: 'task'; id: string } | { kind: 'project'; id: string };
+
 export interface PlannedReminder {
   /** Stable for the same reminder, so a runner can show it once. */
   key: string;
@@ -38,6 +41,7 @@ export interface PlannedReminder {
   body: string;
   /** App path opened when the notification is clicked. */
   route: string;
+  target?: ReminderTarget;
 }
 
 /** Local date `yyyy-mm-dd` and time `HH:mm` as an instant. */
@@ -83,16 +87,24 @@ export function planReminders(input: ReminderInput, settings: ReminderSettings, 
           title: habit.title,
           body: habit.linkTitle ?? '',
           route: '/home',
+          target: { kind: 'habit', id: habit.id, date },
         });
       }
 
       const deadlines = [
-        ...input.tasks.map((t) => ({ kind: 'task', id: t.id, title: t.title, due: t.dueDate, route: `/tasks/${t.id}` })),
-        ...input.projects.map((p) => ({ kind: 'project', id: p.id, title: p.title, due: p.deadline, route: `/projects/${p.id}` })),
+        ...input.tasks.map((t) => ({ kind: 'task' as const, id: t.id, title: t.title, due: t.dueDate, route: `/tasks/${t.id}` })),
+        ...input.projects.map((p) => ({ kind: 'project' as const, id: p.id, title: p.title, due: p.deadline, route: `/projects/${p.id}` })),
       ];
       for (const item of deadlines) {
         if (item.due === date) {
-          add({ key: `deadline:${item.kind}:${item.id}:${date}:due`, at: localInstant(date, settings.reminderTime), title: item.title, body: 'Due today', route: item.route });
+          add({
+            key: `deadline:${item.kind}:${item.id}:${date}:due`,
+            at: localInstant(date, settings.reminderTime),
+            title: item.title,
+            body: 'Due today',
+            route: item.route,
+            target: { kind: item.kind, id: item.id },
+          });
         }
         if (addDays(item.due, -settings.leadDays) === date) {
           add({
@@ -101,6 +113,7 @@ export function planReminders(input: ReminderInput, settings: ReminderSettings, 
             title: item.title,
             body: `Due in ${plural(settings.leadDays, 'day')}`,
             route: item.route,
+            target: { kind: item.kind, id: item.id },
           });
         }
       }
@@ -108,7 +121,13 @@ export function planReminders(input: ReminderInput, settings: ReminderSettings, 
       if (isoWeekday(date) === settings.reviewDay) {
         const week = reviewWeekStart(date);
         if (!input.completedReviewWeeks.includes(week)) {
-          add({ key: `review:${date}`, at: localInstant(date, settings.reviewTime), title: 'Weekly review', body: formatWeekFull(week), route: '/review/flow' });
+          add({
+            key: `review:${date}`,
+            at: localInstant(date, settings.reviewTime),
+            title: 'Weekly review',
+            body: formatWeekFull(week),
+            route: '/review/flow',
+          });
         }
       }
     }

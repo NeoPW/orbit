@@ -4,9 +4,10 @@ import { normalizeLocation } from '../core/routing/useRoute.ts';
 import { MessageProvider } from '../core/ui/messages/MessageProvider.tsx';
 import { useSettings } from '../features/settings/data/settings.ts';
 import { applyTheme, mirroredTheme } from '../core/ui/themes.ts';
+import { AndroidReminderRunner } from '../features/notifications/ui/AndroidReminderRunner.tsx';
 import { ReminderRunner } from '../features/notifications/ui/ReminderRunner.tsx';
+import { platform } from '../platform/platform.ts';
 import { SyncRunner } from '../features/sync/ui/SyncRunner.tsx';
-import { useNotificationClicks } from './useNotificationClicks.ts';
 import { ServicesContext, type Services } from './services.ts';
 import { Shell } from './Shell.tsx';
 import { StartScreen, type StartState } from './StartScreen.tsx';
@@ -51,13 +52,12 @@ function ThemeApplier() {
 }
 
 function ReadyApp({ services }: { services: Services }) {
-  useNotificationClicks();
   return (
     <ServicesContext.Provider value={services}>
       <MessageProvider>
         <ThemeApplier />
         <SyncRunner driver={services.driver} onWrite={services.onWrite}>
-          <ReminderRunner />
+          {platform === 'android' ? <AndroidReminderRunner /> : <ReminderRunner />}
           <Shell />
         </SyncRunner>
       </MessageProvider>
