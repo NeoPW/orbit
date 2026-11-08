@@ -186,3 +186,13 @@ describe('recent weeks', () => {
     expect(trend.weeks[7]?.average).toBe(hours(2));
   });
 });
+
+describe('hours per day', () => {
+  it('sums the minutes of each day of the week, Monday to Sunday', () => {
+    const rows = {
+      ...empty(),
+      logEntries: [entry('2026-10-05', 30), entry('2026-10-05', 15), entry('2026-10-07', 60), entry('2026-10-12', 99)],
+    };
+    expect(weekTime(rows, week, TODAY, null).dayMinutes).toEqual([45, 0, 60, 0, 0, 0, 0]);
+  });
+});

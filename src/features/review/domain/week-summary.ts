@@ -143,6 +143,13 @@ export interface WeekSummary {
   finishedProjects: FinishedProject[];
 }
 
+/** The "Habits" figure: check-ins counted up to what each habit expects, out of all expected; share null without any. */
+export function habitsFigure(habits: HabitAdherence[]): { kept: number; expected: number; share: number | null } {
+  const kept = habits.reduce((sum, h) => sum + Math.min(h.done, h.expected), 0);
+  const expected = habits.reduce((sum, h) => sum + h.expected, 0);
+  return { kept, expected, share: expected > 0 ? Math.round((kept / expected) * 100) : null };
+}
+
 const localDate = (iso: string) => localToday(new Date(iso));
 const byRecent = <T extends { completedAt: string }>(a: T, b: T) =>
   a.completedAt < b.completedAt ? 1 : a.completedAt > b.completedAt ? -1 : 0;

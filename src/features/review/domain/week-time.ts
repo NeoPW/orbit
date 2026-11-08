@@ -1,3 +1,4 @@
+import { localToday } from '../../../core/dates/deadline.ts';
 import { addDays } from '../../../core/dates/today.ts';
 import { goalColor, projectColor } from '../../../core/ui/colors.ts';
 import { isWorkOnGoal, type WorkLinks } from '../../work-log/domain/work-log.ts';
@@ -29,6 +30,8 @@ export interface WeekTime {
   byArea: TimeItem[];
   byGoal: TimeItem[];
   byProject: TimeItem[];
+  /** Minutes worked on each day, Monday to Sunday (by the local date of the entry). */
+  dayMinutes: number[];
 }
 
 const OTHER = 'Other';
@@ -95,7 +98,12 @@ export function weekTime(rows: WeekRows, week: WeekRange, today: string, targetH
 
   const targetMinutes = targetHours === null ? null : targetHours * 60;
   const goals = new Map(rows.goals.map((g) => [g.id, g]));
+  const dayMinutes = Array.from({ length: 7 }, (_, i) => {
+    const date = addDays(week.start, i);
+    return entries.filter((e) => localToday(new Date(e.occurredAt)) === date).reduce((sum, e) => sum + minutesOf(e), 0);
+  });
   return {
+    dayMinutes,
     totalMinutes: total,
     targetMinutes,
     targetShare: targetMinutes === null ? null : percent(total, targetMinutes),
