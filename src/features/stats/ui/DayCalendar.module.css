@@ -1,0 +1,68 @@
+.wrap {
+  --cell: 13px;
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+}
+
+.grid {
+  display: grid;
+  gap: 3px;
+  width: max-content;
+}
+
+.column {
+  display: grid;
+  grid-template-rows: 14px repeat(7, var(--cell));
+  gap: 3px;
+}
+
+.month {
+  font-size: 10px;
+  line-height: 14px;
+  color: var(--color-text-faint);
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.cell {
+  width: var(--cell);
+  height: var(--cell);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+}
+
+.blank {
+  background: transparent;
+}
+
+.none {
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+}
+
+.s1 {
+  background: color-mix(in srgb, var(--color-primary) 28%, var(--color-surface-raised));
+}
+
+.s2 {
+  background: color-mix(in srgb, var(--color-primary) 50%, var(--color-surface-raised));
+}
+
+.s3 {
+  background: color-mix(in srgb, var(--color-primary) 75%, var(--color-surface-raised));
+}
+
+.s4 {
+  background: var(--color-primary);
+}
+
+.checked {
+  background: var(--color-primary);
+}
+
+.missed {
+  background: color-mix(in srgb, var(--color-red) 55%, var(--color-surface-raised));
+}
+
+.dim {
+  opacity: 0.35;
+}

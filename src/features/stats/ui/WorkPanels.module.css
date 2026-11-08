@@ -1,0 +1,46 @@
+.heatmap {
+  display: grid;
+  grid-template-columns: auto repeat(24, minmax(0, 1fr));
+  gap: 3px;
+  align-items: center;
+}
+
+.hour,
+.day {
+  font-size: 10px;
+  color: var(--color-text-faint);
+  line-height: 1;
+}
+
+.hour {
+  text-align: left;
+}
+
+.day {
+  padding-right: var(--space-2);
+}
+
+.cell {
+  height: 20px;
+  border-radius: 3px;
+}
+
+.s0 {
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+}
+
+.s1 {
+  background: color-mix(in srgb, var(--color-primary) 28%, var(--color-surface-raised));
+}
+
+.s2 {
+  background: color-mix(in srgb, var(--color-primary) 50%, var(--color-surface-raised));
+}
+
+.s3 {
+  background: color-mix(in srgb, var(--color-primary) 75%, var(--color-surface-raised));
+}
+
+.s4 {
+  background: var(--color-primary);
+}
