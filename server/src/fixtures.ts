@@ -43,5 +43,36 @@ export function task(id: string, updatedAt: string, projectId: string | null = n
   };
 }
 
+export function habit(id: string, updatedAt: string, extra: Partial<WireRow> = {}): WireRow {
+  return {
+    id,
+    created_at: '2026-11-05T09:00:00.000Z',
+    updated_at: updatedAt,
+    deleted_at: null,
+    title: 'Habit',
+    project_id: null,
+    goal_id: null,
+    schedule_type: 'daily',
+    weekdays: null,
+    times_per_week: null,
+    reminder_time: null,
+    active: 1,
+    ...extra,
+  };
+}
+
+export function habitCheck(id: string, updatedAt: string, habitId: string, date: string, extra: Partial<WireRow> = {}): WireRow {
+  return {
+    id,
+    created_at: '2026-11-05T09:00:00.000Z',
+    updated_at: updatedAt,
+    deleted_at: null,
+    habit_id: habitId,
+    date,
+    log_entry_id: null,
+    ...extra,
+  };
+}
+
 export const T10_00 = '2026-11-05T10:00:00.000Z';
 export const T10_05 = '2026-11-05T10:05:00.000Z';

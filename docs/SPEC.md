@@ -347,6 +347,7 @@ The app should feel calm, clear and quick. These guidelines hold for every scree
 - Trigger sync on app start, when the app comes back to the foreground, a few seconds after local changes, every 5 minutes while the app is open, and with "Sync now" in Settings (and pull-to-refresh on the phone). Failures are silent, retried later and shown in Settings.
 - **Server:** a Cloudflare Worker with a D1 database, one table per entity. Every request carries the device's token (`Authorization: Bearer …`); the Worker compares it with a secret and refuses anything else. There are no accounts and no sign-up.
 - **First connection of a device:** if the server has no data, the device uploads its data; otherwise the device's local data is replaced by the server's after a confirmation.
+- **Reminder check:** `POST /api/reminder-check` answers whether a habit reminder (habit + date), a task or a project reminder is still needed, from the rows the server holds (an unknown id is needed). The phone asks it when a reminder is due (§8).
 - The Worker also serves the browser build; the browser build works on its own local data until its token is entered; connecting to a server that has data replaces that local data after the confirmation.
 
 ## 8. Notifications
@@ -357,7 +358,15 @@ Desktop notifications, shown by the Tauri app while it runs (it can keep running
 - **Focus session:** when the worked time reaches the session's time limit, a notification and a sound (§5).
 - **Weekly review:** at the configured review day and time (default Sunday 18:00), opening the review flow; skipped when that week's review is already completed.
 
-Clicking a reminder opens its screen: Home for habits, the task page for tasks, the project detail for projects. The Android companion will get its own notifications, including an ongoing one for the running timer.
+Clicking a reminder opens its screen: Home for habits, the task page for tasks, the project detail for projects.
+
+**On Android** the phone reminds on its own (each device has its own Reminders switch):
+- Habit and deadline reminders and the end of a focus session are handed to Android's alarm service for the next 7 days whenever the app runs (start, resume, any change or sync, midnight), replacing the earlier ones, so they come while the app is closed; they are set again after a restart. No weekly review reminder (the review is not on the phone).
+- **Check before showing:** when a habit or deadline reminder is due, the phone asks the server (§7) whether it is still needed (habit unchecked that day, task open, project active) and shows it only then; without a server, a connection or an answer within 5 seconds it shows it anyway.
+- **Ongoing notification** while a session exists: "Thesis · Running since 10:15" or "Paused · 25 min"; removed when the session ends; tapping opens focus mode.
+- Tapping a reminder opens Home for a habit or project, the task popup over Home for a task, focus mode for the end of a session.
+- The app asks for the notification permission (Android 13+) while reminders are on; when it is denied, Settings says so. Settings on the phone show the reminders switch, the default reminder time and the lead time.
+- Implemented by the app's own Android plugin (`src-tauri/src/reminders.rs` and the Kotlin `reminders` package), since a reminder has to run code when it is due.
 
 ## 9. Milestones
 
@@ -368,7 +377,7 @@ The app is rebuilt from scratch in this order, one OpenSpec change each (feature
 3. **Sync server:** Cloudflare Worker + D1, token login, push/pull sync, deploy of the Worker and the browser build.
 4. **App shell:** navigation, theme, shared components, messages.
 5. **Features** (one change, `features`): areas, goals and measures; projects and tasks (with next steps and task importance); habits; work log, timer and focus mode; Home; Plan; Review with weekly notes; Settings; desktop notifications.
-6. **Android companion** (Tauri mobile): phone layout below 640 px (bottom navigation Home, Today, Settings), Home with focus, habits, To do and Done today, quick add, the Today timeline with day navigation and swipe, sync with the deployed server; then Android notifications (habit and deadline reminders, the ongoing timer notification).
+6. **Android companion** (Tauri mobile): phone layout below 640 px (bottom navigation Home, Today, Settings), Home with focus, habits, To do and Done today, quick add, the Today timeline with day navigation and swipe, sync with the deployed server; then Android notifications (habit and deadline reminders checked with the server before showing, the ongoing timer notification) — done.
 7. **Later:** stats, Windows/macOS builds.
 
 ## 10. Open questions
