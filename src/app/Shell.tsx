@@ -11,6 +11,7 @@ import { PlanScreen } from '../features/plan/ui/PlanScreen.tsx';
 import { ReviewFlow } from '../features/review/ui/ReviewFlow.tsx';
 import { ReviewHistoryPage } from '../features/review/ui/ReviewHistoryPage.tsx';
 import { ReviewScreen } from '../features/review/ui/ReviewScreen.tsx';
+import { StatsScreen } from '../features/stats/ui/StatsScreen.tsx';
 import { SettingsScreen } from '../features/settings/ui/SettingsScreen.tsx';
 import { CompleteTaskProvider } from '../features/tasks/ui/CompleteTaskProvider.tsx';
 import { TaskPopupProvider } from '../features/tasks/ui/TaskPopup.tsx';
@@ -39,6 +40,7 @@ const SCREENS: Partial<Record<RouteName, ComponentType>> = {
   project: ProjectPage,
   task: TaskPage,
   review: ReviewScreen,
+  stats: StatsScreen,
   'review-flow': ReviewFlow,
   'review-history': ReviewHistoryPage,
   settings: SettingsScreen,

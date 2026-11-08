@@ -1,7 +1,7 @@
 /** The shortcuts of the app (see openspec keyboard-shortcuts): one table for matching, the overlay, tooltips and the palette. */
 
 export type GlobalAction =
-  'new-task' | 'log-work' | 'focus-field' | 'go-home' | 'go-plan' | 'go-review' | 'go-settings' | 'go-back' | 'overlay' | 'palette';
+  'new-task' | 'log-work' | 'focus-field' | 'go-home' | 'go-plan' | 'go-review' | 'go-stats' | 'go-settings' | 'go-back' | 'overlay' | 'palette';
 export type TodoAction =
   | 'todo-next'
   | 'todo-prev'
@@ -37,7 +37,8 @@ export const SHORTCUTS: Shortcut[] = [
   { action: 'go-home', keys: 'Shift+H', label: 'Home', group: 'Global' },
   { action: 'go-plan', keys: 'Shift+P', label: 'Plan', group: 'Global' },
   { action: 'go-review', keys: 'Shift+R', label: 'Review', group: 'Global' },
-  { action: 'go-settings', keys: 'Shift+S', label: 'Settings', group: 'Global' },
+  { action: 'go-stats', keys: 'Shift+S', label: 'Stats', group: 'Global' },
+  { action: 'go-settings', keys: 'Ctrl+,', label: 'Settings', group: 'Global' },
   { action: 'go-back', keys: 'Esc', label: 'Back from a project, goal or task page', group: 'Global' },
   { action: 'palette', keys: 'Ctrl+K', label: 'Command palette', group: 'Global' },
   { action: 'overlay', keys: '?', label: 'All shortcuts', group: 'Global' },
@@ -98,7 +99,7 @@ const GLOBAL_KEYS: Record<string, GlobalAction> = {
   'shift+h': 'go-home',
   'shift+p': 'go-plan',
   'shift+r': 'go-review',
-  'shift+s': 'go-settings',
+  'shift+s': 'go-stats',
 };
 
 const TODO_KEYS: Record<string, TodoAction> = {
@@ -129,13 +130,16 @@ const FOCUS_KEYS: Record<string, FocusAction> = {
 
 /**
  * The action a key press triggers in `scope`, or null. Nothing fires while typing, while a dialog is open or with
- * Ctrl/Alt/Meta held, except Ctrl+K (also from a field, not over a dialog). Space and Enter on a button or link keep
+ * Ctrl/Alt/Meta held, except Ctrl+K and Ctrl+, (also from a field, not over a dialog). Space and Enter on a button or link keep
  * their own meaning.
  */
 export function matchShortcut(input: KeyInput, scope: ShortcutScope): ShortcutMatch | null {
   const key = input.key.toLowerCase();
   if ((input.ctrlKey || input.metaKey) && !input.altKey && !input.shiftKey && key === 'k') {
     return input.dialogOpen ? null : { action: 'palette' };
+  }
+  if ((input.ctrlKey || input.metaKey) && !input.altKey && !input.shiftKey && key === ',') {
+    return input.dialogOpen ? null : { action: 'go-settings' };
   }
   if (input.ctrlKey || input.altKey || input.metaKey) return null;
   if (input.editable || input.dialogOpen) return null;

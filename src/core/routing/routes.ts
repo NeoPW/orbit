@@ -6,6 +6,8 @@ export type Route =
   | { name: 'plan' }
   /** The Review tab; `week` (a Monday, `yyyy-mm-dd`) is kept in the address (`?week=`), the current week when missing. */
   | { name: 'review'; week?: string }
+  /** The Stats tab; `period` (`2026-11`, `2026-Q4`, `2026` or `all`) is kept in the address (`?period=`), the current month when missing. */
+  | { name: 'stats'; period?: string }
   | { name: 'settings' }
   | { name: 'goal'; id: string }
   | { name: 'project'; id: string }
@@ -19,7 +21,7 @@ export type Route =
 export type RouteName = Route['name'];
 
 /** The sidebar destination a route belongs to. */
-export type Section = 'home' | 'today' | 'plan' | 'review' | 'settings';
+export type Section = 'home' | 'today' | 'plan' | 'review' | 'stats' | 'settings';
 
 /** Routes without parameters, by path. */
 const STATIC_PATHS = {
@@ -27,6 +29,7 @@ const STATIC_PATHS = {
   today: '/today',
   plan: '/plan',
   review: '/review',
+  stats: '/stats',
   settings: '/settings',
   'review-flow': '/review/flow',
   focus: '/focus',
@@ -54,6 +57,7 @@ export function pathOf(route: Route): string {
   const path = STATIC_PATHS[route.name as StaticName];
   if (route.name === 'review-flow' && route.step) return `${path}?step=${encodeURIComponent(route.step)}`;
   if (route.name === 'review' && route.week) return `${path}?week=${encodeURIComponent(route.week)}`;
+  if (route.name === 'stats' && route.period) return `${path}?period=${encodeURIComponent(route.period)}`;
   return path;
 }
 
@@ -72,6 +76,8 @@ export function sectionOf(route: Route): Section | null {
     case 'review-flow':
     case 'review-history':
       return 'review';
+    case 'stats':
+      return 'stats';
     case 'today':
       return 'today';
     case 'settings':
@@ -112,6 +118,10 @@ function routeOfPath(path: string, query: URLSearchParams, dev: boolean): Route 
     if (name === 'review') {
       const week = query.get('week');
       return week && /^\d{4}-\d{2}-\d{2}$/.test(week) ? { name, week } : { name };
+    }
+    if (name === 'stats') {
+      const period = query.get('period');
+      return period ? { name, period } : { name };
     }
     return { name } as Route;
   }

@@ -17,8 +17,8 @@ The app SHALL start and be fully usable in the Tauri desktop app on Linux and in
 - **WHEN** the app is opened in Chrome or Firefox
 - **THEN** the app shell is shown with the Home destination selected
 
-### Requirement: Three top-level destinations
-The app SHALL provide exactly three top-level destinations, in this order: Home, Plan, Review, and Settings apart from them. Selecting a destination SHALL show its screen and mark it as selected. Until a destination's feature change fills it, its screen SHALL show its title and an empty state.
+### Requirement: Top-level destinations
+The app SHALL provide exactly four top-level destinations, in this order: Home, Plan, Review, Stats, and Settings apart from them. Selecting a destination SHALL show its screen and mark it as selected. Until a destination's feature change fills it, its screen SHALL show its title and an empty state.
 
 #### Scenario: Switch destination
 - **WHEN** the user selects Plan
@@ -27,6 +27,10 @@ The app SHALL provide exactly three top-level destinations, in this order: Home,
 #### Scenario: Home content
 - **WHEN** the user selects Home
 - **THEN** the Home screen is shown and Home is marked as selected
+
+#### Scenario: Stats
+- **WHEN** the user selects Stats
+- **THEN** the Stats screen is shown and Stats is marked as selected
 
 #### Scenario: Settings
 - **WHEN** the user selects Settings
@@ -41,7 +45,7 @@ The app SHALL show the destinations in a sidebar on the left, with Settings at i
 
 #### Scenario: Wide window
 - **WHEN** the window is 1280 pixels wide
-- **THEN** the sidebar shows Home, Plan and Review with icons and labels, and Settings at its foot
+- **THEN** the sidebar shows Home, Plan, Review and Stats with icons and labels, and Settings at its foot
 
 #### Scenario: Narrow window
 - **WHEN** the window is 800 pixels wide
@@ -56,7 +60,7 @@ The app SHALL show the destinations in a sidebar on the left, with Settings at i
 - **THEN** the Review screen is shown
 
 ### Requirement: Addressable destinations
-Each destination SHALL have its own URL path (`/home`, `/plan`, `/review`, `/settings`), on the desktop and in the browser. Reloading SHALL stay on the current destination, and the browser's back and forward SHALL move between visited destinations. The root path and unknown paths SHALL show Home under the path `/home`.
+Each destination SHALL have its own URL path (`/home`, `/plan`, `/review`, `/stats`, `/settings`), on the desktop and in the browser. Reloading SHALL stay on the current destination, and the browser's back and forward SHALL move between visited destinations. The root path and unknown paths SHALL show Home under the path `/home`.
 
 #### Scenario: Reload keeps destination
 - **WHEN** the user is on Plan and reloads the page
@@ -73,6 +77,10 @@ Each destination SHALL have its own URL path (`/home`, `/plan`, `/review`, `/set
 #### Scenario: Root path
 - **WHEN** the app is opened at `/`
 - **THEN** the Home destination is shown and the path is `/home`
+
+#### Scenario: Stats address
+- **WHEN** the app is opened at `/stats`
+- **THEN** the Stats destination is shown and selected
 
 ### Requirement: Date display format
 Every calendar date shown in the app SHALL be displayed as `dd-mm-yyyy` with leading zeros, independent of the device or browser locale. Date ranges SHALL be shown as `dd-mm-yyyy – dd-mm-yyyy`. Date fields SHALL show the selected date in the same format. This affects display only, not how dates are stored.

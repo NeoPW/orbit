@@ -6,7 +6,7 @@ Makes the desktop and browser app usable from the keyboard: single-key shortcuts
 ## Requirements
 
 ### Requirement: Global shortcuts
-On the desktop and in the browser the app SHALL react to these keys on every screen: `T` opens New task, `L` opens Log work (both as sheets over the current screen), `F` goes to Home and puts the cursor in the focus field (also while a session is paused), or opens focus mode while a session runs, `Shift+H` Home, `Shift+P` Plan, `Shift+R` Review, `Shift+S` Settings, `?` the shortcut overlay and `Ctrl+K` the command palette.
+On the desktop and in the browser the app SHALL react to these keys on every screen: `T` opens New task, `L` opens Log work (both as sheets over the current screen), `F` goes to Home and puts the cursor in the focus field (also while a session is paused), or opens focus mode while a session runs, `Shift+H` Home, `Shift+P` Plan, `Shift+R` Review, `Shift+S` Stats, `Ctrl+,` Settings, `?` the shortcut overlay and `Ctrl+K` the command palette.
 
 #### Scenario: New task from Plan
 - **WHEN** the user presses `T` on the Plan screen
@@ -32,8 +32,16 @@ On the desktop and in the browser the app SHALL react to these keys on every scr
 - **WHEN** the user presses `Shift+P`, then `Shift+R`, then `Shift+H`
 - **THEN** Plan, then Review, then Home is shown
 
+#### Scenario: Stats
+- **WHEN** the user presses `Shift+S` on Home
+- **THEN** Stats is shown
+
+#### Scenario: Settings
+- **WHEN** the user presses `Ctrl+,` on Home
+- **THEN** Settings is shown
+
 ### Requirement: Shortcuts only when not typing
-Single-key and `Shift` shortcuts SHALL NOT act while the cursor is in a text field, text area or dropdown, while a dialog, sheet, menu or the palette is open, or when `Ctrl`, `Alt` or `Meta` is held (except `Ctrl+K`). The key SHALL then do what it does there normally. `Ctrl+K` SHALL also work from a text field, but not while a dialog or sheet is open.
+Single-key and `Shift` shortcuts SHALL NOT act while the cursor is in a text field, text area or dropdown, while a dialog, sheet, menu or the palette is open, or when `Ctrl`, `Alt` or `Meta` is held (except `Ctrl+K` and `Ctrl+,`). The key SHALL then do what it does there normally. `Ctrl+K` and `Ctrl+,` SHALL also work from a text field, but not while a dialog or sheet is open.
 
 #### Scenario: Typing a T
 - **WHEN** the cursor is in the focus field and the user types "t"
@@ -50,6 +58,10 @@ Single-key and `Shift` shortcuts SHALL NOT act while the cursor is in a text fie
 #### Scenario: Palette from a field
 - **WHEN** the cursor is in the focus field and the user presses `Ctrl+K`
 - **THEN** the command palette opens
+
+#### Scenario: Settings over a sheet
+- **WHEN** the New task sheet is open and the user presses `Ctrl+,`
+- **THEN** the screen does not change
 
 ### Requirement: Leave a field with Esc
 `Esc` in a text field, text area or dropdown that is not inside a dialog or sheet SHALL take the cursor out of the field, so that the shortcuts work again. A field that uses `Esc` itself (closing its suggestions) SHALL do that first; in a dialog or sheet `Esc` SHALL close it as before.

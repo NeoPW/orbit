@@ -1,0 +1,113 @@
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+.picker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--space-3);
+}
+
+.figure {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.figureLabel {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-faint);
+}
+
+.figureValue {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.figureNote {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.trends {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+@media (min-width: 1100px) {
+  .trends {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.chart {
+  width: 100%;
+  height: auto;
+}
+
+.axis {
+  stroke: var(--color-border);
+}
+
+.grid {
+  stroke: var(--color-border);
+  stroke-dasharray: 3 4;
+  opacity: 0.6;
+}
+
+.line {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.dot {
+  fill: var(--color-primary);
+}
+
+.dotSoFar {
+  fill: var(--color-surface);
+  stroke: var(--color-primary);
+  stroke-width: 2;
+}
+
+.label {
+  font-size: 11px;
+  fill: var(--color-text-muted);
+}
+
+.labelFaint {
+  font-size: 10px;
+  fill: var(--color-text-faint);
+}
+
+.chartEmpty {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-faint);
+}

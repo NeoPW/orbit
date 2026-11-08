@@ -1,8 +1,7 @@
 import { localToday } from '../../../core/dates/deadline.ts';
-import { addDays } from '../../../core/dates/today.ts';
 import type { GoalStatus, MeasureType, ScheduleType } from '../../../core/db/schema.ts';
 import { goalProgress, measureProgress, valueAt, type ValueChange } from '../../goals/domain/goals.ts';
-import { isoWeekday, weekStartOf } from '../../habits/domain/habits.ts';
+import { weekAdherence, weekStartOf } from '../../habits/domain/habits.ts';
 import { workOnGoal, type WorkLinks } from '../../work-log/domain/work-log.ts';
 import type { WeekRange } from './review-week.ts';
 import { recentWeeks, weekTime, type RecentWeeks, type WeekTime } from './week-time.ts';
@@ -156,22 +155,11 @@ const byRecent = <T extends { completedAt: string }>(a: T, b: T) =>
 const round = (n: number) => Math.round(n * 100);
 
 function summarizeHabits(rows: WeekRows, week: WeekRange, today: string): HabitAdherence[] {
-  const lastDay = today < week.end ? today : week.end;
   return rows.habits
     .filter((h) => h.active)
     .map((h) => {
-      const done = new Set(
-        rows.habitChecks.filter((c) => c.habitId === h.id && c.date >= week.start && c.date <= week.end).map((c) => c.date),
-      ).size;
-      let expected = 0;
-      if (h.scheduleType === 'times_per_week') expected = h.timesPerWeek ?? 0;
-      else {
-        const from = localDate(h.createdAt) > week.start ? localDate(h.createdAt) : week.start;
-        for (let d = from; d <= lastDay; d = addDays(d, 1)) {
-          if (h.scheduleType === 'daily' || (h.weekdays ?? []).includes(isoWeekday(d))) expected += 1;
-        }
-      }
-      return { habitId: h.id, title: h.title, done, expected };
+      const checks = rows.habitChecks.filter((c) => c.habitId === h.id).map((c) => c.date);
+      return { habitId: h.id, title: h.title, ...weekAdherence(h, checks, week, today) };
     })
     .sort((a, b) => a.title.localeCompare(b.title));
 }

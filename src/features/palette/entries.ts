@@ -5,7 +5,7 @@ export type PaletteKind = 'Create' | 'Go to' | 'Focus' | 'Session' | 'Theme' | '
 
 export type PaletteCommand =
   | { type: 'sheet'; sheet: 'task' | 'log' | 'project' | 'goal' | 'habit' | 'area' }
-  | { type: 'screen'; screen: 'home' | 'plan' | 'review' | 'settings' }
+  | { type: 'screen'; screen: 'home' | 'plan' | 'review' | 'stats' | 'settings' }
   | { type: 'page'; page: 'project' | 'goal' | 'task'; id: string }
   | { type: 'focus'; target: { taskId: string } | { habitId: string } | { projectId: string } }
   | { type: 'focus-text'; text: string }
@@ -49,6 +49,7 @@ export function buildEntries(data: PaletteData): PaletteEntry[] {
     { id: 'go-home', kind: 'Go to', label: 'Home', shortcut: 'go-home', command: { type: 'screen', screen: 'home' } },
     { id: 'go-plan', kind: 'Go to', label: 'Plan', shortcut: 'go-plan', command: { type: 'screen', screen: 'plan' } },
     { id: 'go-review', kind: 'Go to', label: 'Review', shortcut: 'go-review', command: { type: 'screen', screen: 'review' } },
+    { id: 'go-stats', kind: 'Go to', label: 'Stats', shortcut: 'go-stats', command: { type: 'screen', screen: 'stats' } },
     { id: 'go-settings', kind: 'Go to', label: 'Settings', shortcut: 'go-settings', command: { type: 'screen', screen: 'settings' } },
   ];
   if (data.session) {

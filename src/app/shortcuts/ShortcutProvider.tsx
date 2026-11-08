@@ -107,6 +107,8 @@ export function ShortcutProvider({ children }: { children: ReactNode }) {
           return navigate({ name: 'plan' });
         case 'go-review':
           return navigate({ name: 'review' });
+        case 'go-stats':
+          return navigate({ name: 'stats' });
         case 'go-settings':
           return navigate({ name: 'settings' });
         case 'session-pause':

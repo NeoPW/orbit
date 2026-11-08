@@ -22,7 +22,8 @@ describe('global shortcuts', () => {
     expect(action(press('P', { shiftKey: true }))).toBe('go-plan');
     expect(action(press('R', { shiftKey: true }))).toBe('go-review');
     expect(action(press('H', { shiftKey: true }))).toBe('go-home');
-    expect(action(press('S', { shiftKey: true }))).toBe('go-settings');
+    expect(action(press('S', { shiftKey: true }))).toBe('go-stats');
+    expect(action(press(',', { ctrlKey: true }))).toBe('go-settings');
     expect(action(press('?', { shiftKey: true }))).toBe('overlay');
     expect(action(press('k', { ctrlKey: true }))).toBe('palette');
   });
@@ -39,6 +40,7 @@ describe('global shortcuts', () => {
   it('does nothing while a dialog or sheet is open, also not Ctrl+K', () => {
     expect(action(press('P', { shiftKey: true, dialogOpen: true }))).toBeNull();
     expect(action(press('k', { ctrlKey: true, dialogOpen: true }))).toBeNull();
+    expect(action(press(',', { ctrlKey: true, dialogOpen: true }))).toBeNull();
   });
 
   it('leaves browser shortcuts alone', () => {
