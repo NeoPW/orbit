@@ -60,4 +60,14 @@ describe('quick start', () => {
     const list = [...tasks, { id: 'h1', title: 'Run 5 km', projectId: null, kind: 'habit' as const }];
     expect(matchTasks('run 5', list).map((t) => t.id)).toEqual(['h1']);
   });
+
+  it('starts on a project typed by its exact name, without #', () => {
+    expect(quickStartPlan('portfolio site', tasks, projects)).toEqual({ kind: 'project', projectId: 'p2' });
+    expect(quickStartPlan('portfolio', tasks, projects)).toEqual({ kind: 'new', title: 'portfolio', projectId: null });
+  });
+
+  it('prefers an open task over a project of the same name', () => {
+    const same = [...tasks, { id: 't9', title: 'Portfolio site', projectId: null }];
+    expect(quickStartPlan('Portfolio site', same, projects)).toEqual({ kind: 'task', taskId: 't9' });
+  });
 });

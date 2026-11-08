@@ -68,6 +68,21 @@ describe('Esc on detail pages', () => {
   });
 });
 
+describe('session keys on Home', () => {
+  it('resumes with R and completes with C', () => {
+    expect(action(press('p'), 'home')).toBe('session-pause');
+    expect(action(press('r'), 'home')).toBe('session-resume');
+    expect(action(press('c'), 'home')).toBe('session-complete');
+  });
+
+  it('leaves R and C alone elsewhere, while typing and with Shift', () => {
+    expect(action(press('r'), 'global')).toBeNull();
+    expect(action(press('c', { editable: true }), 'home')).toBeNull();
+    expect(action(press('R', { shiftKey: true }), 'home')).toBe('go-review');
+    expect(action(press('P', { shiftKey: true }), 'home')).toBe('go-plan');
+  });
+});
+
 describe('To do keys on Home', () => {
   it('moves, starts, completes and opens', () => {
     expect(action(press('j'), 'home')).toBe('todo-next');
