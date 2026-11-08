@@ -112,3 +112,22 @@ export function valueAt(currentValue: number | null, changes: readonly ValueChan
   }
   return first ? first.from : currentValue;
 }
+
+/** A measure with what its progress at a past moment needs: its recorded changes and, for a habit measure, the linked habit's check dates. */
+export interface TimedMeasure extends ProgressMeasure {
+  checkDates: readonly string[];
+  changes: readonly ValueChange[];
+}
+
+/**
+ * A measure's value and progress at `instant`. A habit measure counts the check dates for which `lastDate` holds
+ * (those up to that moment); other measures use their value history.
+ */
+export function measureStateAt(m: TimedMeasure, instant: string, lastDate: (date: string) => boolean): { value: number; progress: number } {
+  if (m.measureType === 'habit') {
+    const checks = m.checkDates.filter(lastDate).length;
+    return { value: checks, progress: measureProgress(m, checks) };
+  }
+  const value = valueAt(m.currentValue, m.changes, instant);
+  return { value: value ?? 0, progress: measureProgress({ ...m, currentValue: value }) };
+}

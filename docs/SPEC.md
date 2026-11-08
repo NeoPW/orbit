@@ -321,7 +321,7 @@ A desktop screen (`/stats`, `Shift+S`) for how work, review scores, habits and f
 - **Time by:** the period's time grouped by area, goal or project, as in the week summary (same switch, colours and attribution).
 - **Projects:** the projects with time in the period, most first, each with its time in the period and in total (all time) and, for a completed project, the days from creation to completion.
 - **Tasks:** tasks completed and created in the period, the median time from creation to completion (days, or hours under a day) and a chart of tasks completed per week or month. Output is counted in tasks, not projects, so a long project does not look like a failure.
-- Planned next: goal progress over time and projected finish.
+- **Goals:** the active goals that had started by the end of the period, each with its progress at the period's end, its change in the period (points), a small chart of its progress per week or month (rebuilt from the measures' value history and the habit check-ins) and a **projected finish**: the date it reaches 100 % if the pace of the last 28 days (or since its start, when shorter; under 7 days is "too early to tell") continued, compared with its end date ("N days before / after the deadline"). A goal at 100 % reads "Complete"; one without progress "No progress lately".
 
 ### 6.6 Settings
 - Reminders, default reminder time, weekly review day and time, deadline lead time.
@@ -391,7 +391,7 @@ The app is rebuilt from scratch in this order, one OpenSpec change each (feature
 4. **App shell:** navigation, theme, shared components, messages.
 5. **Features** (one change, `features`): areas, goals and measures; projects and tasks (with next steps and task importance); habits; work log, timer and focus mode; Home; Plan; Review with weekly notes; Settings; desktop notifications.
 6. **Android companion** (Tauri mobile): phone layout below 640 px (bottom navigation Home, Today, Settings), Home with focus, habits, To do and Done today, quick add, the Today timeline with day navigation and swipe, sync with the deployed server; then Android notifications (habit and deadline reminders checked with the server before showing, the ongoing timer notification) — done.
-7. **Later:** stats (started: the Stats tab with periods, figures and trends; then habit streaks and the work calendar, time and task breakdowns, goal progress), Windows/macOS builds.
+7. **Later:** Windows/macOS builds. Stats are done: the Stats tab with periods, figures and trends, habit streaks, the work calendar and heatmap, time and task breakdowns, goal progress and projected finish.
 
 ## 10. Open questions
 
