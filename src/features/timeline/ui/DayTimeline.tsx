@@ -34,10 +34,8 @@ export interface DayTimelineProps {
 
 /** Width of the strip at a column's left edge that holds the dots. */
 const DOT_STRIP = 12;
-/** Height of one line of block text; a block lower than this shows no title. */
+/** Height of one line of block text; a block is never lower. */
 const LINE_PX = 20;
-/** The lowest a block is drawn, so the shortest ones stay visible and clickable. */
-const MIN_BLOCK_PX = 4;
 /** A block this high also has room for its project and times. */
 const TWO_LINES_PX = 34;
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -72,7 +70,7 @@ export function DayTimeline({ days, now, today, hourHeight, label, emptyText, em
   const scroller = useRef<HTMLDivElement>(null);
 
   const pxPerMin = hourHeight / 60;
-  const minBlockMinutes = Math.ceil(MIN_BLOCK_PX / pxPerMin);
+  const minBlockMinutes = Math.ceil(LINE_PX / pxPerMin);
   const placedDays = useMemo(
     () =>
       days.map((day) => {
@@ -125,7 +123,7 @@ export function DayTimeline({ days, now, today, hourHeight, label, emptyText, em
     const { item } = p;
     const color = item.color ?? 'var(--color-text-muted)';
     const isDot = item.kind === 'marker';
-    const height = Math.max(MIN_BLOCK_PX, (p.endMin - p.startMin) * pxPerMin - 1);
+    const height = Math.max(LINE_PX, (p.endMin - p.startMin) * pxPerMin - 1);
     const usable = `(100% - ${DOT_STRIP}px)`;
     const style = {
       '--c': color,
@@ -139,7 +137,7 @@ export function DayTimeline({ days, now, today, hourHeight, label, emptyText, em
       .join(' · ');
     const content = isDot ? null : (
       <>
-        {height >= LINE_PX && <span className={styles.blockLabel}>{item.label}</span>}
+        <span className={styles.blockLabel}>{item.label}</span>
         {height >= TWO_LINES_PX && <span className={styles.blockDetail}>{detail}</span>}
         {item.running && <span className="visually-hidden">(running)</span>}
       </>
