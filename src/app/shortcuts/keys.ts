@@ -12,6 +12,7 @@ export type TodoAction =
   | 'todo-open'
   | 'todo-select-n'
   | 'todo-clear'
+  | 'todo-more'
   | 'habit-select-n'
   | 'session-pause'
   | 'session-resume'
@@ -54,6 +55,7 @@ export const SHORTCUTS: Shortcut[] = [
   { action: 'todo-start', keys: 'Space', label: 'Start focus on the highlighted task or habit', group: 'Home' },
   { action: 'todo-complete', keys: 'X', label: 'Complete the task / check the habit', group: 'Home' },
   { action: 'todo-open', keys: 'Enter', label: 'Open the task / check the habit', group: 'Home' },
+  { action: 'todo-more', keys: 'A', label: 'Show more / fewer tasks', group: 'Home' },
   { action: 'session-pause', keys: 'P', label: 'Pause the running session', group: 'Home' },
   { action: 'session-resume', keys: 'R', label: 'Resume the paused session', group: 'Home' },
   { action: 'session-complete', keys: 'C', label: 'Complete the session', group: 'Home' },
@@ -117,6 +119,7 @@ const TODO_KEYS: Record<string, TodoAction> = {
   ' ': 'todo-start',
   x: 'todo-complete',
   enter: 'todo-open',
+  a: 'todo-more',
   p: 'session-pause',
   r: 'session-resume',
   c: 'session-complete',

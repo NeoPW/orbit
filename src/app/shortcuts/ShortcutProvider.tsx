@@ -64,6 +64,7 @@ const SCREEN_ACTIONS = new Set<string>([
   'todo-select-n',
   'habit-select-n',
   'todo-clear',
+  'todo-more',
   'focus-toggle',
   'focus-complete',
   'focus-leave',

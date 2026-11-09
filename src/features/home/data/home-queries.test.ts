@@ -4,7 +4,7 @@ import { goals, projects } from '../../../core/db/schema.ts';
 import { openTestDatabase } from '../../../core/db/testing.ts';
 import { checkHabit, createHabit } from '../../habits/data/habits-repository.ts';
 import { completeTask, createTask, setNextStep, type TaskInput } from '../../tasks/data/tasks-repository.ts';
-import { listActiveHabitOptions, listActiveProjects, listDoneToday, listHabitsForToday, listTodo } from './home-queries.ts';
+import { listActiveHabitOptions, listActiveProjects, listDoneToday, listHabitsForToday, listMoreTodo, listTodo } from './home-queries.ts';
 
 const clock = () => new Date('2026-10-05T09:00:00Z');
 const TODAY = '2026-10-05';
@@ -59,17 +59,40 @@ describe('home queries', () => {
     ]);
   });
 
-  it('lists active projects by score with their open next steps', async () => {
+  it('lists active projects by score with their open tasks, next steps first', async () => {
     const { db } = await openTestDatabase();
     const a = await addProject(db, 'A', { importance: 5 });
     const b = await addProject(db, 'B', { importance: 2, deadline: '2026-10-01' });
     await addProject(db, 'Paused', { status: 'paused' });
-    await step(db, b, 'Next B');
+    await createTask(db, clock, { ...base, title: 'Book venue', projectId: b });
+    await createTask(db, clock, { ...base, title: 'Send invites', projectId: b });
+    await step(db, b, 'Draft outline');
     const list = await listActiveProjects(db, TODAY);
-    expect(list.map((p) => [p.view.project.id, p.nextSteps.map((t) => t.title)])).toEqual([
-      [b, ['Next B']],
-      [a, []],
+    expect(list.map((p) => [p.view.project.id, p.tasks.map((t) => t.title), p.openCount])).toEqual([
+      [b, ['Draft outline', 'Book venue', 'Send invites'], 3],
+      [a, [], 0],
     ]);
+  });
+
+  it('shows at most three tasks on a project card and counts the rest', async () => {
+    const { db } = await openTestDatabase();
+    const p = await addProject(db, 'P');
+    for (const title of ['T1', 'T2', 'T3', 'T4', 'T5']) await createTask(db, clock, { ...base, title, projectId: p });
+    const [card] = await listActiveProjects(db, TODAY);
+    expect(card?.tasks.map((t) => t.title)).toEqual(['T1', 'T2', 'T3']);
+    expect(card?.openCount).toBe(5);
+  });
+
+  it('lists the other open tasks of active projects for "Show more", not next steps or paused projects', async () => {
+    const { db } = await openTestDatabase();
+    const wedding = await addProject(db, 'Wedding');
+    const garden = await addProject(db, 'Garden', { status: 'paused' });
+    await step(db, wedding, 'Draft outline');
+    await createTask(db, clock, { ...base, title: 'Send invites', projectId: wedding });
+    await createTask(db, clock, { ...base, title: 'Weed beds', projectId: garden });
+    await createTask(db, clock, { ...base, title: 'Tax return' });
+    const more = await listMoreTodo(db, TODAY);
+    expect(more.map((t) => [t.task.title, t.context])).toEqual([['Send invites', 'Wedding']]);
   });
 
   it('keeps a habit listed after it is checked and leaves out one that is not due', async () => {
