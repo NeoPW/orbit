@@ -148,6 +148,12 @@ export const columns = {
     weekStart: text('week_start').notNull(),
     note: text('note').notNull().default(''),
   }),
+  dailyNotes: () => ({
+    ...shared(),
+    /** Local calendar date `yyyy-mm-dd`. */
+    date: text('date').notNull(),
+    note: text('note').notNull().default(''),
+  }),
   weeklyReviews: () => ({
     ...shared(),
     weekStart: text('week_start').notNull(),
@@ -180,6 +186,8 @@ export const timers = sqliteTable('timers', columns.timers());
 
 export const notes = sqliteTable('notes', columns.notes(), (t) => [uniqueIndex('notes_target_week').on(t.targetType, t.targetId, t.weekStart)]);
 
+export const dailyNotes = sqliteTable('daily_notes', columns.dailyNotes(), (t) => [uniqueIndex('daily_notes_date').on(t.date)]);
+
 export const weeklyReviews = sqliteTable('weekly_reviews', columns.weeklyReviews(), (t) => [uniqueIndex('weekly_reviews_week_start').on(t.weekStart)]);
 
 export const reviewMeasureSnapshots = sqliteTable('review_measure_snapshots', columns.reviewMeasureSnapshots());
@@ -209,6 +217,7 @@ export const SYNCED_TABLES = {
   review_measure_snapshots: reviewMeasureSnapshots,
   habit_checks: habitChecks,
   notes: notes,
+  daily_notes: dailyNotes,
   weekly_reviews: weeklyReviews,
 } as const;
 

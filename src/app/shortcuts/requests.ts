@@ -36,3 +36,5 @@ export const focusFieldRequest = createRequest<void>();
 export const sessionRequest = createRequest<'pause' | 'resume' | 'complete'>();
 /** Open the complete dialog or the time limit menu in focus mode. */
 export const focusModeRequest = createRequest<'complete' | 'limit'>();
+/** Put the cursor at the end of Home's daily note (`N`). */
+export const dailyNoteRequest = createRequest<void>();

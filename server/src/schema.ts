@@ -19,6 +19,7 @@ export const habitChecks = sqliteTable('habit_checks', { ...columns.habitChecks(
 export const logEntries = sqliteTable('log_entries', { ...columns.logEntries(), ...serverSeq() }, (t) => [index('log_entries_server_seq').on(t.serverSeq)]);
 export const timers = sqliteTable('timers', { ...columns.timers(), ...serverSeq() }, (t) => [index('timers_server_seq').on(t.serverSeq)]);
 export const notes = sqliteTable('notes', { ...columns.notes(), ...serverSeq() }, (t) => [index('notes_server_seq').on(t.serverSeq)]);
+export const dailyNotes = sqliteTable('daily_notes', { ...columns.dailyNotes(), ...serverSeq() }, (t) => [index('daily_notes_server_seq').on(t.serverSeq)]);
 export const weeklyReviews = sqliteTable('weekly_reviews', { ...columns.weeklyReviews(), ...serverSeq() }, (t) => [index('weekly_reviews_server_seq').on(t.serverSeq)]);
 export const reviewMeasureSnapshots = sqliteTable('review_measure_snapshots', { ...columns.reviewMeasureSnapshots(), ...serverSeq() }, (t) => [index('review_measure_snapshots_server_seq').on(t.serverSeq)]);
 

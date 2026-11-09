@@ -26,7 +26,7 @@ Every request to the sync API SHALL carry a device token as `Authorization: Bear
 - **THEN** the browser's requests are answered with 401 and the desktop's requests are still accepted
 
 ### Requirement: Server tables
-The server SHALL hold one table for each table the device syncs (areas, goals, measures, projects, tasks, habits, habit checks, log entries, timers, notes, weekly reviews, review measure snapshots), with the same columns as on the device. Local settings SHALL NOT exist on the server. Rows SHALL come back exactly as they were pushed, including empty values.
+The server SHALL hold one table for each table the device syncs (areas, goals, measures, projects, tasks, habits, habit checks, log entries, timers, notes, daily notes, weekly reviews, review measure snapshots), with the same columns as on the device. Local settings SHALL NOT exist on the server. Rows SHALL come back exactly as they were pushed, including empty values.
 
 #### Scenario: Round trip
 - **WHEN** a goal with the color rose and no end date and a measure with step 5 are pushed and then pulled
@@ -35,6 +35,10 @@ The server SHALL hold one table for each table the device syncs (areas, goals, m
 #### Scenario: Settings are not a server table
 - **WHEN** a push contains rows for the table `settings`
 - **THEN** the push is refused as containing an unknown table
+
+#### Scenario: Daily notes round trip
+- **WHEN** the daily note of 2026-11-09 with the text "Call the bank" is pushed and then pulled
+- **THEN** the pulled note has the date 2026-11-09 and the text "Call the bank"
 
 ### Requirement: Rows stored without business rules
 The server SHALL store rows as they arrive, in any order, and SHALL NOT check references between rows or apply any rule other than last-write-wins.

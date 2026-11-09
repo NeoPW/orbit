@@ -74,4 +74,12 @@ describe('pull', () => {
     expect(rows.goals).toEqual([goal]);
     expect(rows.measures).toEqual([measure]);
   });
+
+  it('returns a daily note exactly as pushed', async () => {
+    const driver = await openServerTestDatabase();
+    const note: WireRow = { id: 'd1', created_at: T10_00, updated_at: T10_00, deleted_at: null, date: '2026-11-09', note: 'Call the bank' };
+    await push(driver, { rows: { daily_notes: [note] } });
+    const { rows } = await pull(driver, 0);
+    expect(rows.daily_notes).toEqual([note]);
+  });
 });

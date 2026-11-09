@@ -43,6 +43,13 @@
       "when": 1794159542228,
       "tag": "0005_even_wrecker",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1794215483244,
+      "tag": "0006_crazy_living_tribunal",
+      "breakpoints": true
     }
   ]
 }

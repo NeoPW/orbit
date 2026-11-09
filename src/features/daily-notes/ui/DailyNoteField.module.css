@@ -1,0 +1,51 @@
+.title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.field {
+  display: block;
+  width: 100%;
+  min-height: 80px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color var(--motion-fast) var(--ease-out);
+}
+
+.field:hover {
+  border-color: var(--color-text-faint);
+}
+
+.field:focus {
+  outline: none;
+  border-color: var(--color-focus);
+  box-shadow: 0 0 0 1px var(--color-focus);
+}
+
+.viewBox {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: text;
+}
+
+.viewBox:hover {
+  border-color: var(--color-border);
+}
+
+.viewBox:focus-visible {
+  outline: none;
+  border-color: var(--color-focus);
+  box-shadow: 0 0 0 1px var(--color-focus);
+}
+
+@media (max-width: 639px) {
+  .field {
+    min-height: 88px;
+  }
+}

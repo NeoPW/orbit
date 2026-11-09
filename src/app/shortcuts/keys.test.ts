@@ -28,6 +28,12 @@ describe('global shortcuts', () => {
     expect(action(press('k', { ctrlKey: true }))).toBe('palette');
   });
 
+  it('opens the daily note with N on every screen, not while typing', () => {
+    for (const scope of ['global', 'home', 'detail'] as const) expect(action(press('n'), scope)).toBe('daily-note');
+    expect(action(press('n', { editable: true }), 'home')).toBeNull();
+    expect(action(press('N', { shiftKey: true }))).toBeNull();
+  });
+
   it('does not take Shift+T for T', () => {
     expect(action(press('T', { shiftKey: true }))).toBeNull();
   });

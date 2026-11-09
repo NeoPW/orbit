@@ -25,6 +25,7 @@ import { TaskList } from '../../tasks/ui/TaskRow.tsx';
 import { TaskSheet } from '../../tasks/ui/TaskSheet.tsx';
 import { useOpenTask } from '../../tasks/ui/TaskPopup.tsx';
 import { useCompleteTask } from '../../tasks/ui/useCompleteTask.ts';
+import { DailyNoteField } from '../../daily-notes/ui/DailyNoteField.tsx';
 import { FocusPanel } from '../../timer/ui/FocusPanel.tsx';
 import { useStartFocus } from '../../timer/ui/useStartFocus.ts';
 import { listActiveProjects, listDoneToday, listHabitsForToday, listMoreTodo, listTodo, type HabitItem } from '../data/home-queries.ts';
@@ -172,6 +173,8 @@ export function HomeScreen() {
       <div className={styles.layout}>
         <div className={styles.main}>
           <FocusPanel projects={projects} />
+
+          <DailyNoteField date={today} />
 
           <Tile
             title={<h2 className={styles.tileTitle}>Habits due today</h2>}

@@ -6,7 +6,7 @@ import { CommandPalette } from '../../features/palette/CommandPalette.tsx';
 import { useOpenAppSheet } from './AppSheets.tsx';
 import { matchShortcut, type KeyInput, type ShortcutScope } from './keys.ts';
 import { screenHandler, type ScreenMatch } from './screen-keys.ts';
-import { focusFieldRequest, sessionRequest } from './requests.ts';
+import { dailyNoteRequest, focusFieldRequest, sessionRequest } from './requests.ts';
 import { ShortcutOverlay } from './ShortcutOverlay.tsx';
 
 /**
@@ -117,6 +117,9 @@ export function ShortcutProvider({ children }: { children: ReactNode }) {
           if (running) return navigate({ name: 'focus' });
           navigate({ name: 'home' });
           return focusFieldRequest.request();
+        case 'daily-note':
+          navigate({ name: 'home' });
+          return dailyNoteRequest.request();
         case 'go-home':
           return navigate({ name: 'home' });
         case 'go-plan':

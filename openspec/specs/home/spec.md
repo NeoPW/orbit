@@ -7,7 +7,7 @@ Defines the Home tab, the daily view of the app: the habits due today, upcoming 
 ## Requirements
 
 ### Requirement: Home layout
-Home SHALL show a main column with, from top to bottom, today's weekday and date with "New task" and "Log work" next to it, the focus panel (see work-timer), "Habits due today", "To do" and "Done today", and a side column with the "Today" timeline (see day-timeline) above the active projects. Below 960 pixels window width the side column SHALL move below the main column. A section without items SHALL show an empty state, except "Done today", which SHALL be hidden while no task was completed today.
+Home SHALL show a main column with, from top to bottom, today's weekday and date with "New task" and "Log work" next to it, the focus panel (see work-timer), "Today's note", "Habits due today", "To do" and "Done today", and a side column with the "Today" timeline (see day-timeline) above the active projects. Below 960 pixels window width the side column SHALL move below the main column. A section without items SHALL show an empty state, except "Done today", which SHALL be hidden while no task was completed today.
 
 #### Scenario: Wide window
 - **WHEN** Home is shown in a 1280 pixel wide window
@@ -24,6 +24,10 @@ Home SHALL show a main column with, from top to bottom, today's weekday and date
 #### Scenario: Nothing done yet
 - **WHEN** no task was completed today
 - **THEN** "Done today" is not shown
+
+#### Scenario: Note under the focus panel
+- **WHEN** Home is shown
+- **THEN** "Today's note" is directly below the focus panel and above "Habits due today"
 
 ### Requirement: Habits due today on Home
 The "Habits due today" section SHALL show every active habit that is due today (see habits) or already checked today as a chip with its title, labeled with the title of its linked project, or of its goal when it has no project, and visibly marked when checked today. Tapping a chip SHALL check or uncheck the habit for today.
@@ -254,3 +258,14 @@ Directly below the ranked To do list, Home SHALL show a toggle with a down chevr
 #### Scenario: Keys reach the expanded tasks
 - **WHEN** To do lists two ranked tasks, the section is expanded with one more task and the user presses `3`
 - **THEN** the expanded task is highlighted
+
+### Requirement: Today's note on Home
+"Today's note" SHALL hold the daily note of the current day (see daily-notes), shown formatted or as a multi-line text field as daily-notes describes, and empty when the day has none. When the date changes while Home is open, or Home is shown again on a later date, the field SHALL show the new day's note after saving what was typed.
+
+#### Scenario: Note shown again
+- **WHEN** today has the note "Call the bank" and the user opens Home
+- **THEN** "Today's note" shows "Call the bank"
+
+#### Scenario: New day
+- **WHEN** the user typed "Call the bank" on 2026-11-09 and Home is shown again on 2026-11-10
+- **THEN** "Today's note" is empty and the note of 2026-11-09 is "Call the bank"
