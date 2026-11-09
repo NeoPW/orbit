@@ -18,11 +18,11 @@ In the browser, the app SHALL ask the browser to keep its storage persistent. If
 - **THEN** no storage warning is shown and saved data survives a reload
 
 ### Requirement: Complete schema from the start
-The database SHALL contain tables for all entities of the product spec: Area, Goal, Measure, MeasureChange, Project, Task, Habit, HabitCheck, LogEntry, Timer, Note, WeeklyReview and ReviewMeasureSnapshot, with the fields defined in `docs/SPEC.md` §4 (including a task's importance and next-step flag, a project's colour, the timer's time limit and session state, and the note's target and week), and a local-only settings table that is not synced. A project SHALL NOT store a next step of its own.
+The database SHALL contain tables for all entities of the product spec: Area, Goal, Measure, MeasureChange, Project, Task, Habit, HabitCheck, LogEntry, Timer, Note, DailyNote, WeeklyReview and ReviewMeasureSnapshot, with the fields defined in `docs/SPEC.md` §4 (including a task's importance and next-step flag, a project's colour, the timer's time limit and session state, the note's target and week, and the daily note's date), and a local-only settings table that is not synced. A project SHALL NOT store a next step of its own.
 
 #### Scenario: Fresh install
 - **WHEN** the database is created for the first time
-- **THEN** all thirteen entity tables and the settings table exist and the schema version is that of the latest migration
+- **THEN** all fourteen entity tables and the settings table exist and the schema version is that of the latest migration
 
 #### Scenario: Unique habit check per day
 - **WHEN** a second HabitCheck row is inserted for the same habit and the same date
@@ -40,8 +40,12 @@ The database SHALL contain tables for all entities of the product spec: Area, Go
 - **WHEN** the app opens a database at schema version 1 that contains projects
 - **THEN** the migration adds the project colour, leaves every existing project row unchanged, and the colour of those projects is empty
 
+#### Scenario: Unique daily note per day
+- **WHEN** a second DailyNote row is inserted for the same date
+- **THEN** the insert is rejected
+
 ### Requirement: Record identity and timestamps
-Every record SHALL have a client-generated UUID `id`, a `created_at` and `updated_at` timestamp in UTC, and a nullable `deleted_at`. The `id` SHALL be a random UUID v4, except for habit checks, weekly reviews and notes, whose `id` SHALL be a UUID v5 derived from their natural key (habit and date; week start; target type, target and week start), and the timer, which has one fixed `id`. Creating a record SHALL set `created_at` and `updated_at` to the current time; every update SHALL set `updated_at` to the current time.
+Every record SHALL have a client-generated UUID `id`, a `created_at` and `updated_at` timestamp in UTC, and a nullable `deleted_at`. The `id` SHALL be a random UUID v4, except for habit checks, weekly reviews, notes and daily notes, whose `id` SHALL be a UUID v5 derived from their natural key (habit and date; week start; target type, target and week start; date), and the timer, which has one fixed `id`. Creating a record SHALL set `created_at` and `updated_at` to the current time; every update SHALL set `updated_at` to the current time.
 
 #### Scenario: Create sets identity and timestamps
 - **WHEN** a record is created
@@ -58,6 +62,10 @@ Every record SHALL have a client-generated UUID `id`, a `created_at` and `update
 #### Scenario: Deterministic note ID
 - **WHEN** the note of the same project for the week starting 2026-11-02 is created on two devices
 - **THEN** both notes get the same `id`, and a note of the same project for another week gets a different one
+
+#### Scenario: Deterministic daily note ID
+- **WHEN** the daily note of 2026-11-09 is created on two devices
+- **THEN** both notes get the same `id`, and the note of 2026-11-10 gets a different one
 
 #### Scenario: Fixed timer ID
 - **WHEN** a timer is started on two devices
