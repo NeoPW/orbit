@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { axisFor, blockTimes, hasTitle, layoutDay, localRange, shiftDay, type TimeSpan } from './day-timeline.ts';
+import { axisFor, blockTimes, layoutDay, localRange, shiftDay, type TimeSpan } from './day-timeline.ts';
 
 const at = (hhmm: string, day = '2026-10-14') => new Date(`${day}T${hhmm}:00`);
 const block = (from: string, to: string, day?: string): TimeSpan => ({ kind: 'block', start: at(from, day), end: at(to, day) });
@@ -21,19 +21,7 @@ describe('blockTimes', () => {
   });
 });
 
-describe('hasTitle', () => {
-  it('is true for a block longer than 15 minutes only', () => {
-    expect(hasTitle(block('09:00', '09:15'))).toBe(false);
-    expect(hasTitle(block('09:00', '09:16'))).toBe(true);
-  });
-});
-
 describe('layoutDay', () => {
-  it('takes the minimum length per block', () => {
-    const placed = layoutDay([block('09:00', '09:05'), block('10:00', '10:16')], '2026-10-14', (b) => (hasTitle(b) ? 20 : 5));
-    expect(placed.map((p) => p.endMin - p.startMin)).toEqual([5, 20]);
-  });
-
   it('places overlapping blocks side by side', () => {
     const [a, b] = layoutDay([block('10:00', '11:00'), block('10:30', '11:30')], '2026-10-14');
     expect([a?.lane, a?.lanes, b?.lane, b?.lanes]).toEqual([0, 2, 1, 2]);

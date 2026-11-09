@@ -96,13 +96,6 @@
   text-align: left;
 }
 
-.block.compact {
-  padding-top: 0;
-  padding-bottom: 0;
-  font-size: 11px;
-  line-height: 14px;
-}
-
 .blockLabel {
   display: block;
   overflow: hidden;
