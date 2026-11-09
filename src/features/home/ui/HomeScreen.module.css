@@ -229,6 +229,23 @@
   text-decoration: underline;
 }
 
+/* "+N more" under a project card's tasks. */
+.moreTasks {
+  display: block;
+  padding: 3px 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.moreTasks:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
 /* Quick add next to the date on the phone. */
 .quickAdd {
   width: 48px;
@@ -274,4 +291,31 @@
 .highlighted .habit {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 45%, transparent);
+}
+
+/* The toggle under To do: a chevron and the number of more tasks; it stays between the ranked and the expanded tasks. */
+.moreToggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  margin: var(--space-1) 0 var(--space-1) auto;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.moreToggle:hover {
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+}
+
+.moreToggle svg {
+  width: 14px;
+  height: 14px;
 }

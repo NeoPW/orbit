@@ -96,6 +96,13 @@ describe('To do keys on Home', () => {
     expect(action(press('t'), 'home')).toBe('new-task');
   });
 
+  it('shows more or fewer tasks with A, not while typing or elsewhere', () => {
+    expect(action(press('a'), 'home')).toBe('todo-more');
+    expect(action(press('a', { editable: true }), 'home')).toBeNull();
+    expect(action(press('a'), 'global')).toBeNull();
+    expect(withShortcut('Show 3 more', 'todo-more')).toBe('Show 3 more (A)');
+  });
+
   it('moves through the habits with the side arrows', () => {
     expect(action(press('ArrowLeft'), 'home')).toBe('habit-prev');
     expect(action(press('ArrowRight'), 'home')).toBe('habit-next');

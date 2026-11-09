@@ -1,4 +1,4 @@
-import { Check, FolderKanban, ListTodo, NotebookPen, Play, Plus, Repeat } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, FolderKanban, ListTodo, NotebookPen, Play, Plus, Repeat } from 'lucide-react';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { withShortcut } from '../../../app/shortcuts/keys.ts';
 import { useScreenShortcuts } from '../../../app/shortcuts/screen-keys.ts';
@@ -27,7 +27,7 @@ import { useOpenTask } from '../../tasks/ui/TaskPopup.tsx';
 import { useCompleteTask } from '../../tasks/ui/useCompleteTask.ts';
 import { FocusPanel } from '../../timer/ui/FocusPanel.tsx';
 import { useStartFocus } from '../../timer/ui/useStartFocus.ts';
-import { listActiveProjects, listDoneToday, listHabitsForToday, listTodo, type HabitItem } from '../data/home-queries.ts';
+import { listActiveProjects, listDoneToday, listHabitsForToday, listMoreTodo, listTodo, type HabitItem } from '../data/home-queries.ts';
 import styles from './HomeScreen.module.css';
 
 const clock = () => new Date();
@@ -49,21 +49,26 @@ export function HomeScreen() {
   const { start } = useStartFocus();
   const data = useLiveQuery(
     async (database) => {
-      const [todo, projects, habits, done] = await Promise.all([
+      const [todo, more, projects, habits, done] = await Promise.all([
         listTodo(database, today),
+        listMoreTodo(database, today),
         listActiveProjects(database, today),
         listHabitsForToday(database, today),
         listDoneToday(database, today),
       ]);
-      return { todo, projects, habits, done };
+      return { todo, more, projects, habits, done };
     },
     [today],
   );
   const [creating, setCreating] = useState(false);
   const [logging, setLogging] = useState(false);
-  // One keyboard highlight on Home: a To do task or a habit chip.
+  // "Show N more" under To do: collapsed whenever Home opens.
+  const [showMore, setShowMore] = useState(false);
+  const moreItems = data?.more ?? [];
+  const expanded = showMore && moreItems.length > 0;
+  // One keyboard highlight on Home: a To do task (the ranked ones, then the expanded ones) or a habit chip.
   const [highlight, setHighlight] = useState<{ list: 'task' | 'habit'; index: number } | null>(null);
-  const todoTasks = data?.todo.map((item) => item.task) ?? [];
+  const todoTasks = [...(data?.todo ?? []), ...(expanded ? moreItems : [])].map((item) => item.task);
   const habitItems = data?.habits ?? [];
   const listLength = (list: 'task' | 'habit') => (list === 'task' ? todoTasks.length : habitItems.length);
   const highlighted =
@@ -108,6 +113,9 @@ export function HomeScreen() {
         return (match.index ?? -1) < habitCount ? setHighlight({ list: 'habit', index: match.index ?? 0 }) : undefined;
       case 'todo-clear':
         return setHighlight(null);
+      case 'todo-more':
+        if (moreItems.length > 0) setShowMore(!showMore);
+        return;
       case 'todo-start':
         if (highlightedTask) return void start({ taskId: highlightedTask.id });
         if (highlightedHabit) return void start({ habitId: highlightedHabit.id });
@@ -126,8 +134,17 @@ export function HomeScreen() {
   });
 
   if (!data) return null;
-  const { todo, projects, habits, done } = data;
-  const itemByTask = new Map(todo.map((item) => [item.task.id, item]));
+  const { todo, more, projects, habits, done } = data;
+  const itemByTask = new Map([...todo, ...more].map((item) => [item.task.id, item]));
+  const todoRowProps = (task: Task) => ({
+    compact: true,
+    highlighted: highlightedTask?.id === task.id,
+    importance: itemByTask.get(task.id)?.importance,
+    context: itemByTask.get(task.id)?.context ?? undefined,
+    projectColor: itemByTask.get(task.id)?.projectColor,
+    projectName: itemByTask.get(task.id)?.projectTitle ?? undefined,
+    onStartFocus: () => void start({ taskId: task.id }),
+  });
 
   function toggleHabit(habit: HabitItem) {
     void (habit.checked ? uncheckHabit(db, clock, habit.id, today) : checkHabit(db, clock, habit.id, today));
@@ -230,19 +247,25 @@ export function HomeScreen() {
               />
             ) : (
               <div className={styles.todoList}>
-                <TaskList
-                  tasks={todo.map((item) => item.task)}
-                  label="To do"
-                  rowProps={(task) => ({
-                    compact: true,
-                    highlighted: highlightedTask?.id === task.id,
-                    importance: itemByTask.get(task.id)?.importance,
-                    context: itemByTask.get(task.id)?.context ?? undefined,
-                    projectColor: itemByTask.get(task.id)?.projectColor,
-                    projectName: itemByTask.get(task.id)?.projectTitle ?? undefined,
-                    onStartFocus: () => void start({ taskId: task.id }),
-                  })}
-                />
+                <TaskList tasks={todo.map((item) => item.task)} label="To do" rowProps={todoRowProps} />
+              </div>
+            )}
+            {more.length > 0 && (
+              <button
+                type="button"
+                className={styles.moreToggle}
+                aria-expanded={expanded}
+                aria-label={expanded ? 'Show less' : `Show ${more.length} more`}
+                title={withShortcut(expanded ? 'Show less' : `Show ${more.length} more`, 'todo-more')}
+                onClick={() => setShowMore(!expanded)}
+              >
+                {expanded ? <ChevronUp aria-hidden="true" /> : <ChevronDown aria-hidden="true" />}
+                {more.length}
+              </button>
+            )}
+            {expanded && (
+              <div className={styles.todoList}>
+                <TaskList tasks={more.map((item) => item.task)} label="More tasks" rowProps={todoRowProps} />
               </div>
             )}
           </Tile>
@@ -296,7 +319,7 @@ export function HomeScreen() {
                 />
               ) : (
                 <div className={styles.projects}>
-                  {projects.map(({ view, area, nextSteps }) => (
+                  {projects.map(({ view, area, tasks: cardTasks, openCount }) => (
                     <Tile
                       key={view.project.id}
                       as="article"
@@ -321,11 +344,11 @@ export function HomeScreen() {
                       }
                       actions={view.deadline && <DeadlineBadge deadline={view.deadline.date} inherited={view.deadline.inherited} />}
                     >
-                      {nextSteps.length > 0 && (
+                      {cardTasks.length > 0 && (
                         <AnimatedList
-                          items={nextSteps}
+                          items={cardTasks}
                           getKey={(task: Task) => task.id}
-                          label={`Next steps of ${view.project.title}`}
+                          label={`Open tasks of ${view.project.title}`}
                           renderItem={(task: Task) => (
                             <div className={styles.step}>
                               <Checkbox
@@ -339,6 +362,15 @@ export function HomeScreen() {
                             </div>
                           )}
                         />
+                      )}
+                      {openCount > cardTasks.length && (
+                        <button
+                          type="button"
+                          className={styles.moreTasks}
+                          onClick={() => navigate({ name: 'project', id: view.project.id })}
+                        >
+                          +{openCount - cardTasks.length} more
+                        </button>
                       )}
                     </Tile>
                   ))}

@@ -10,7 +10,7 @@ import { listChecksSince } from '../../habits/data/habits-repository.ts';
 import { isDue, weekStartOf } from '../../habits/domain/habits.ts';
 import { listProjectsByStatus, type ProjectView } from '../../projects/data/projects-repository.ts';
 import { sortByScore } from '../../projects/domain/projects.ts';
-import { applyProjectOrder, compareByRank, effectiveImportance, type RankInput } from '../../tasks/domain/tasks.ts';
+import { applyProjectOrder, compareByRank, effectiveImportance, sortOpenTasks, type RankInput } from '../../tasks/domain/tasks.ts';
 import { toViews, type Task, type TaskView } from '../../tasks/data/tasks-repository.ts';
 
 /** What the rank of a task view needs. */
@@ -43,6 +43,17 @@ export interface TodoItem {
  * (standalone or assigned to a goal), ranked by importance × urgency.
  */
 export async function listTodo(db: Db, today: string): Promise<TodoItem[]> {
+  const { open, activeIds } = await loadOpen(db);
+  return rankTodo(db, open.filter((t) => (t.projectId ? t.isNextStep && activeIds.has(t.projectId) : true)), today);
+}
+
+/** "Show N more": open tasks of active projects that are not next steps, ranked like To do. */
+export async function listMoreTodo(db: Db, today: string): Promise<TodoItem[]> {
+  const { open, activeIds } = await loadOpen(db);
+  return rankTodo(db, open.filter((t) => !!t.projectId && !t.isNextStep && activeIds.has(t.projectId)), today);
+}
+
+async function loadOpen(db: Db): Promise<{ open: Task[]; activeIds: Set<string> }> {
   const [open, active] = await Promise.all([
     db
       .select()
@@ -53,8 +64,10 @@ export async function listTodo(db: Db, today: string): Promise<TodoItem[]> {
       .from(projects)
       .where(and(eq(projects.status, 'active'), notDeleted(projects))),
   ]);
-  const activeIds = new Set(active.map((p) => p.id));
-  const listed = open.filter((t) => (t.projectId ? t.isNextStep && activeIds.has(t.projectId) : true));
+  return { open, activeIds: new Set(active.map((p) => p.id)) };
+}
+
+async function rankTodo(db: Db, listed: Task[], today: string): Promise<TodoItem[]> {
   const views = await toViews(db, listed);
   const compare = compareByRank(today);
   const ranked = views.sort((a, b) => compare(rankInput(a), rankInput(b)));
@@ -97,19 +110,24 @@ export async function listDoneToday(db: Db, today: string): Promise<DoneItem[]> 
 export interface ActiveProjectItem {
   view: ProjectView;
   area: Area | null;
-  /** Open next steps, oldest due date first. */
-  nextSteps: Task[];
+  /** The first open tasks in the project's open-task order (next steps first), at most CARD_TASKS. */
+  tasks: Task[];
+  /** All open tasks of the project, for "+N more". */
+  openCount: number;
 }
 
-/** Active projects by score, each with its open next steps. */
+/** How many open tasks a project card on Home shows. */
+export const CARD_TASKS = 3;
+
+/** Active projects by score, each with its first open tasks. */
 export async function listActiveProjects(db: Db, today: string): Promise<ActiveProjectItem[]> {
-  const [views, areas, steps] = await Promise.all([
+  const [views, areas, open] = await Promise.all([
     listProjectsByStatus(db, 'active'),
     listAreas(db),
     db
       .select()
       .from(tasks)
-      .where(and(eq(tasks.status, 'open'), eq(tasks.isNextStep, true), notDeleted(tasks))),
+      .where(and(eq(tasks.status, 'open'), notDeleted(tasks))),
   ]);
   const sorted = sortByScore(
     views.map((view) => ({
@@ -122,13 +140,18 @@ export async function listActiveProjects(db: Db, today: string): Promise<ActiveP
     today,
   );
   const areaById = new Map(areas.map((a) => [a.id, a]));
-  return sorted.map(({ view }) => ({
-    view,
-    area: view.project.areaId ? (areaById.get(view.project.areaId) ?? null) : null,
-    nextSteps: steps
-      .filter((t) => t.projectId === view.project.id)
-      .sort((a, b) => (a.dueDate ?? '9999').localeCompare(b.dueDate ?? '9999') || a.createdAt.localeCompare(b.createdAt)),
-  }));
+  return sorted.map(({ view }) => {
+    const own = sortOpenTasks(
+      open.filter((t) => t.projectId === view.project.id),
+      { nextStepsFirst: true },
+    );
+    return {
+      view,
+      area: view.project.areaId ? (areaById.get(view.project.areaId) ?? null) : null,
+      tasks: own.slice(0, CARD_TASKS),
+      openCount: own.length,
+    };
+  });
 }
 
 export interface HabitOption {
