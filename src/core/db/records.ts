@@ -7,7 +7,7 @@ const ORBIT_NAMESPACE = '6f0c2f1e-52c4-4c0e-9d0a-0b7f3a3e9a11';
 
 export type Clock = () => Date;
 
-export type NaturalKind = 'habit_check' | 'weekly_review' | 'note' | 'timer';
+export type NaturalKind = 'habit_check' | 'weekly_review' | 'note' | 'daily_note' | 'timer';
 
 /** Random UUID v4 for a new record. */
 export function newId(): string {

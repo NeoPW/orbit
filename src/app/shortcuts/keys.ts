@@ -1,7 +1,7 @@
 /** The shortcuts of the app (see openspec keyboard-shortcuts): one table for matching, the overlay, tooltips and the palette. */
 
 export type GlobalAction =
-  'new-task' | 'log-work' | 'focus-field' | 'go-home' | 'go-plan' | 'go-review' | 'go-stats' | 'go-settings' | 'go-back' | 'release-focus' | 'overlay' | 'palette';
+  'new-task' | 'log-work' | 'focus-field' | 'daily-note' | 'go-home' | 'go-plan' | 'go-review' | 'go-stats' | 'go-settings' | 'go-back' | 'release-focus' | 'overlay' | 'palette';
 export type TodoAction =
   | 'todo-next'
   | 'todo-prev'
@@ -36,6 +36,7 @@ export const SHORTCUTS: Shortcut[] = [
   { action: 'new-task', keys: 'T', label: 'New task', group: 'Global' },
   { action: 'log-work', keys: 'L', label: 'Log work', group: 'Global' },
   { action: 'focus-field', keys: 'F', label: 'Focus field (focus mode while a session runs)', group: 'Global' },
+  { action: 'daily-note', keys: 'N', label: "Today's note", group: 'Global' },
   { action: 'go-home', keys: 'Shift+H', label: 'Home', group: 'Global' },
   { action: 'go-plan', keys: 'Shift+P', label: 'Plan', group: 'Global' },
   { action: 'go-review', keys: 'Shift+R', label: 'Review', group: 'Global' },
@@ -103,6 +104,7 @@ const GLOBAL_KEYS: Record<string, GlobalAction> = {
   t: 'new-task',
   l: 'log-work',
   f: 'focus-field',
+  n: 'daily-note',
   'shift+h': 'go-home',
   'shift+p': 'go-plan',
   'shift+r': 'go-review',
