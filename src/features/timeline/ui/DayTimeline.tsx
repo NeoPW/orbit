@@ -3,7 +3,7 @@ import { NotebookPen } from 'lucide-react';
 import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { navigate } from '../../../core/routing/useRoute.ts';
 import { EmptyState } from '../../../core/ui/components/EmptyState.tsx';
-import { axisFor, layoutDay, type Placed } from '../domain/day-timeline.ts';
+import { axisFor, hasTitle, layoutDay, type Placed, type TimeSpan } from '../domain/day-timeline.ts';
 import type { TimelineItem, TimelineTarget } from '../data/timeline-loader.ts';
 import styles from './DayTimeline.module.css';
 
@@ -34,10 +34,12 @@ export interface DayTimelineProps {
 
 /** Width of the strip at a column's left edge that holds the dots. */
 const DOT_STRIP = 12;
-/** Height of one line of block text; a block lower than this shows no title. */
+/** Height of one line of block text; a block this high gets regular padding and text size. */
 const LINE_PX = 20;
 /** The lowest a block is drawn, so the shortest ones stay visible and clickable. */
 const MIN_BLOCK_PX = 4;
+/** The lowest a block with a title (longer than 15 minutes) is drawn, so a line of small text fits. */
+const MIN_TITLE_BLOCK_PX = 14;
 /** A block this high also has room for its project and times. */
 const TWO_LINES_PX = 34;
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -72,7 +74,10 @@ export function DayTimeline({ days, now, today, hourHeight, label, emptyText, em
   const scroller = useRef<HTMLDivElement>(null);
 
   const pxPerMin = hourHeight / 60;
-  const minBlockMinutes = Math.ceil(MIN_BLOCK_PX / pxPerMin);
+  const minBlockMinutes = useMemo(
+    () => (item: TimeSpan) => Math.ceil((hasTitle(item) ? MIN_TITLE_BLOCK_PX : MIN_BLOCK_PX) / pxPerMin),
+    [pxPerMin],
+  );
   const placedDays = useMemo(
     () =>
       days.map((day) => {
@@ -125,7 +130,7 @@ export function DayTimeline({ days, now, today, hourHeight, label, emptyText, em
     const { item } = p;
     const color = item.color ?? 'var(--color-text-muted)';
     const isDot = item.kind === 'marker';
-    const height = Math.max(MIN_BLOCK_PX, (p.endMin - p.startMin) * pxPerMin - 1);
+    const height = Math.max(hasTitle(item) ? MIN_TITLE_BLOCK_PX : MIN_BLOCK_PX, (p.endMin - p.startMin) * pxPerMin - 1);
     const usable = `(100% - ${DOT_STRIP}px)`;
     const style = {
       '--c': color,
@@ -139,12 +144,12 @@ export function DayTimeline({ days, now, today, hourHeight, label, emptyText, em
       .join(' · ');
     const content = isDot ? null : (
       <>
-        {height >= LINE_PX && <span className={styles.blockLabel}>{item.label}</span>}
+        {(hasTitle(item) || height >= LINE_PX) && <span className={styles.blockLabel}>{item.label}</span>}
         {height >= TWO_LINES_PX && <span className={styles.blockDetail}>{detail}</span>}
         {item.running && <span className="visually-hidden">(running)</span>}
       </>
     );
-    const className = [isDot ? styles.dot : styles.block, item.running ? styles.running : '', item.target ? styles.clickable : ''].join(
+    const className = [isDot ? styles.dot : styles.block, !isDot && height < LINE_PX ? styles.compact : '', item.running ? styles.running : '', item.target ? styles.clickable : ''].join(
       ' ',
     );
     const events = {

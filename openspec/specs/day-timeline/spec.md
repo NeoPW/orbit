@@ -6,7 +6,7 @@ Shows the work of a day as blocks on an hour axis, coloured by project, so the d
 ## Requirements
 
 ### Requirement: Work blocks
-The timeline SHALL plot each log entry of the day that has a duration (a focus session or tracked time) as a block whose length is its duration. A timer entry SHALL start at its time; an entry of any other source SHALL end at its time (the work was done before it was logged). A block SHALL show what the work was for (the task, else the habit, else the project, else the goal, else the note) and, as far as its height allows, the project's name and the time range. A block's height SHALL follow its duration, with only a floor of 4 pixels so that the shortest block stays visible; a block too short for one line of text SHALL show no title. Its duration and note SHALL show when it is hovered or focused.
+The timeline SHALL plot each log entry of the day that has a duration (a focus session or tracked time) as a block whose length is its duration. A timer entry SHALL start at its time; an entry of any other source SHALL end at its time (the work was done before it was logged). A block SHALL show what the work was for (the task, else the habit, else the project, else the goal, else the note) and, as far as its height allows, the project's name and the time range. A block's height SHALL follow its duration, with only a floor so that short blocks stay visible: 4 pixels, and 14 pixels for a block longer than 15 minutes, which SHALL always show its title (in small text when it is lower than a full line). A block of 15 minutes or less SHALL show a title only when it is high enough for one line. Its duration and note SHALL show when it is hovered or focused.
 
 #### Scenario: Timer entry
 - **WHEN** a timer entry at 09:00 has a duration of 45 minutes
@@ -27,6 +27,10 @@ The timeline SHALL plot each log entry of the day that has a duration (a focus s
 #### Scenario: Short block
 - **WHEN** a manual entry of 5 minutes is plotted at 48 pixels per hour
 - **THEN** its block is 4 pixels high, shows no title, and hovering it shows its label, time range and duration
+
+#### Scenario: Title over 15 minutes
+- **WHEN** entries of 15 and 16 minutes are plotted at 48 pixels per hour
+- **THEN** the 16-minute block shows its title in a block at least 14 pixels high and the 15-minute block shows none
 
 #### Scenario: Length shows
 - **WHEN** entries of 30 and 90 minutes are plotted

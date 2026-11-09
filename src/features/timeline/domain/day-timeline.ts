@@ -3,8 +3,15 @@
 /** Blocks shorter than this are drawn at this length (their true times stay in the tooltip). */
 /** Default shortest drawn block; the view passes the minutes that make one line of text fit. */
 export const MIN_BLOCK_MINUTES = 15;
+/** A block longer than this many minutes always shows its title. */
+export const TEXT_BLOCK_MINUTES = 15;
 export const DEFAULT_START_HOUR = 6;
 export const DEFAULT_END_HOUR = 22;
+
+/** Whether a block is long enough to always show its title. */
+export function hasTitle(item: { start: Date; end: Date }): boolean {
+  return (item.end.getTime() - item.start.getTime()) / 60000 > TEXT_BLOCK_MINUTES;
+}
 
 export interface TimeSpan {
   /** A marker has no duration and takes no lane. */
@@ -96,7 +103,7 @@ export interface Placed<T extends TimeSpan> {
  * Places the items that touch the local day `day` (`yyyy-mm-dd`): minutes within the day
  * (cut at midnight) and lanes so that overlapping blocks sit side by side.
  */
-export function layoutDay<T extends TimeSpan>(items: T[], day: string, minBlockMinutes: number = MIN_BLOCK_MINUTES): Placed<T>[] {
+export function layoutDay<T extends TimeSpan>(items: T[], day: string, minBlock: number | ((item: T) => number) = MIN_BLOCK_MINUTES): Placed<T>[] {
   const placed: Placed<T>[] = [];
   for (const item of items) {
     const startDay = localDate(item.start);
@@ -106,7 +113,7 @@ export function layoutDay<T extends TimeSpan>(items: T[], day: string, minBlockM
     const trueEnd = endDay > day ? 1440 : localMinutes(item.end);
     // A block that ends exactly at midnight belongs to the day before.
     if (item.kind === 'block' && startDay < day && trueEnd === 0) continue;
-    const endMin = item.kind === 'marker' ? startMin : Math.min(1440, Math.max(trueEnd, startMin + minBlockMinutes));
+    const endMin = item.kind === 'marker' ? startMin : Math.min(1440, Math.max(trueEnd, startMin + (typeof minBlock === 'number' ? minBlock : minBlock(item))));
     placed.push({ item, startMin, endMin, lane: 0, lanes: 1 });
   }
   placed.sort((a, b) => a.startMin - b.startMin || a.endMin - b.endMin);
