@@ -3,6 +3,8 @@ export type Route =
   | { name: 'home' }
   /** The day timeline on its own screen (phone layout only). */
   | { name: 'today' }
+  /** Exercises and workouts (phone layout only). */
+  | { name: 'workouts' }
   | { name: 'plan' }
   /** The Review tab; `week` (a Monday, `yyyy-mm-dd`) is kept in the address (`?week=`), the current week when missing. */
   | { name: 'review'; week?: string }
@@ -21,12 +23,13 @@ export type Route =
 export type RouteName = Route['name'];
 
 /** The sidebar destination a route belongs to. */
-export type Section = 'home' | 'today' | 'plan' | 'review' | 'stats' | 'settings';
+export type Section = 'home' | 'today' | 'workouts' | 'plan' | 'review' | 'stats' | 'settings';
 
 /** Routes without parameters, by path. */
 const STATIC_PATHS = {
   home: '/home',
   today: '/today',
+  workouts: '/workouts',
   plan: '/plan',
   review: '/review',
   stats: '/stats',
@@ -80,6 +83,8 @@ export function sectionOf(route: Route): Section | null {
       return 'stats';
     case 'today':
       return 'today';
+    case 'workouts':
+      return 'workouts';
     case 'settings':
       return 'settings';
     case 'dev-components':

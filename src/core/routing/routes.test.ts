@@ -23,7 +23,7 @@ describe('parsePath', () => {
 
 describe('pathOf', () => {
   it('round-trips with parsePath', () => {
-    for (const name of ['home', 'plan', 'review', 'stats', 'settings'] as const) {
+    for (const name of ['home', 'today', 'workouts', 'plan', 'review', 'stats', 'settings'] as const) {
       expect(parsePath(pathOf({ name })).route).toEqual({ name });
     }
   });

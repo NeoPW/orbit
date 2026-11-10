@@ -82,4 +82,15 @@ describe('pull', () => {
     const { rows } = await pull(driver, 0);
     expect(rows.daily_notes).toEqual([note]);
   });
+
+  it('returns exercises and workouts exactly as pushed', async () => {
+    const driver = await openServerTestDatabase();
+    const base = { created_at: T10_00, updated_at: T10_00, deleted_at: null };
+    const swim: WireRow = { id: 'e1', ...base, name: 'Swim', kind: 'endurance', distance_unit: 'm' };
+    const workout: WireRow = { id: 'w1', ...base, name: 'Pool', exercise_ids: '["a","b"]', project_id: null, goal_id: null, habit_id: null };
+    await push(driver, { rows: { exercises: [swim], workouts: [workout] } });
+    const { rows } = await pull(driver, 0);
+    expect(rows.exercises).toEqual([swim]);
+    expect(rows.workouts).toEqual([workout]);
+  });
 });

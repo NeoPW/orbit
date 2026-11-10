@@ -15,6 +15,8 @@ export const TASK_STATUSES = ['open', 'done'] as const;
 export const SCHEDULE_TYPES = ['daily', 'weekdays', 'times_per_week'] as const;
 export const LOG_SOURCES = ['manual', 'habit', 'task', 'timer'] as const;
 export const NOTE_TARGET_TYPES = ['project', 'goal'] as const;
+export const EXERCISE_KINDS = ['strength', 'bodyweight', 'endurance'] as const;
+export const DISTANCE_UNITS = ['km', 'm'] as const;
 
 export type GoalStatus = (typeof GOAL_STATUSES)[number];
 export type MeasureType = (typeof MEASURE_TYPES)[number];
@@ -23,6 +25,8 @@ export type TaskStatus = (typeof TASK_STATUSES)[number];
 export type ScheduleType = (typeof SCHEDULE_TYPES)[number];
 export type LogSource = (typeof LOG_SOURCES)[number];
 export type NoteTargetType = (typeof NOTE_TARGET_TYPES)[number];
+export type ExerciseKind = (typeof EXERCISE_KINDS)[number];
+export type DistanceUnit = (typeof DISTANCE_UNITS)[number];
 
 /** Each synced table's own columns (besides the shared ones), one factory per table so builders are never reused. */
 export const columns = {
@@ -154,6 +158,22 @@ export const columns = {
     date: text('date').notNull(),
     note: text('note').notNull().default(''),
   }),
+  exercises: () => ({
+    ...shared(),
+    name: text('name').notNull(),
+    kind: text('kind', { enum: EXERCISE_KINDS }).notNull(),
+    /** Only for `endurance`; null otherwise. */
+    distanceUnit: text('distance_unit', { enum: DISTANCE_UNITS }),
+  }),
+  workouts: () => ({
+    ...shared(),
+    name: text('name').notNull(),
+    /** JSON array of exercise ids, in the workout's order. */
+    exerciseIds: text('exercise_ids', { mode: 'json' }).$type<string[]>().notNull().default([]),
+    projectId: text('project_id'),
+    goalId: text('goal_id'),
+    habitId: text('habit_id'),
+  }),
   weeklyReviews: () => ({
     ...shared(),
     weekStart: text('week_start').notNull(),
@@ -190,6 +210,10 @@ export const dailyNotes = sqliteTable('daily_notes', columns.dailyNotes(), (t) =
 
 export const weeklyReviews = sqliteTable('weekly_reviews', columns.weeklyReviews(), (t) => [uniqueIndex('weekly_reviews_week_start').on(t.weekStart)]);
 
+export const exercises = sqliteTable('exercises', columns.exercises());
+
+export const workouts = sqliteTable('workouts', columns.workouts());
+
 export const reviewMeasureSnapshots = sqliteTable('review_measure_snapshots', columns.reviewMeasureSnapshots());
 
 /** Local only, never synced: no shared columns. */
@@ -219,6 +243,8 @@ export const SYNCED_TABLES = {
   notes: notes,
   daily_notes: dailyNotes,
   weekly_reviews: weeklyReviews,
+  exercises: exercises,
+  workouts: workouts,
 } as const;
 
 export type SyncedTableName = keyof typeof SYNCED_TABLES;
