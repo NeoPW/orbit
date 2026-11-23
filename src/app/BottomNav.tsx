@@ -1,4 +1,4 @@
-import { CalendarClock, House, Settings, type LucideIcon } from 'lucide-react';
+import { CalendarClock, Dumbbell, House, Settings, type LucideIcon } from 'lucide-react';
 import type { MouseEvent } from 'react';
 import { navigate } from '../core/routing/useRoute.ts';
 import { pathOf, type Route, type Section } from '../core/routing/routes.ts';
@@ -15,6 +15,7 @@ interface Entry {
 const ENTRIES: Entry[] = [
   { route: { name: 'home' }, section: 'home', label: 'Home', icon: House },
   { route: { name: 'today' }, section: 'today', label: 'Today', icon: CalendarClock },
+  { route: { name: 'workouts' }, section: 'workouts', label: 'Workouts', icon: Dumbbell },
   { route: { name: 'settings' }, section: 'settings', label: 'Settings', icon: Settings },
 ];
 

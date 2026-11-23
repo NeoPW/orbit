@@ -18,6 +18,9 @@ import { TaskPopupProvider } from '../features/tasks/ui/TaskPopup.tsx';
 import { NotificationClicks } from './useNotificationClicks.ts';
 import { TaskPage } from '../features/tasks/ui/TaskPage.tsx';
 import { FocusMode } from '../features/timer/ui/FocusMode.tsx';
+import { SessionScreen } from '../features/workouts/ui/SessionScreen.tsx';
+import { WorkoutsScreen } from '../features/workouts/ui/WorkoutsScreen.tsx';
+import { WorkoutSummaryProvider } from '../features/workouts/ui/WorkoutSummary.tsx';
 import { TodayScreen } from '../features/timeline/ui/TodayScreen.tsx';
 import { NotFound } from './NotFound.tsx';
 import { useServices } from './services.ts';
@@ -35,6 +38,8 @@ const ComponentGallery: ComponentType | null = import.meta.env.DEV ? lazy(() => 
 const SCREENS: Partial<Record<RouteName, ComponentType>> = {
   home: HomeScreen,
   today: TodayScreen,
+  workouts: WorkoutsScreen,
+  'workout-session': SessionScreen,
   plan: PlanScreen,
   goal: GoalPage,
   project: ProjectPage,
@@ -53,25 +58,27 @@ export function Shell() {
   const isPhone = useIsPhone();
   const Screen = SCREENS[route.name] ?? NotFound;
 
-  // The Today screen exists only in the phone layout; wide windows show the timeline on Home.
-  const todayOnWide = route.name === 'today' && !isPhone;
+  // The Today, Workouts and session screens exist only in the phone layout; wide windows show Home.
+  const phoneOnlyOnWide = (route.name === 'today' || route.name === 'workouts' || route.name === 'workout-session') && !isPhone;
   useEffect(() => {
-    if (todayOnWide) navigate({ name: 'home' });
-  }, [todayOnWide]);
+    if (phoneOnlyOnWide) navigate({ name: 'home' });
+  }, [phoneOnlyOnWide]);
 
   // Focus mode fills the window without the sidebar or the bottom navigation.
   if (route.name === 'focus') {
     return (
       <CompleteTaskProvider>
         <TaskPopupProvider>
-          <NotificationClicks />
-          <AppSheets>
-            <ShortcutProvider>
-              <div className={styles.fullWindow}>
-                <FocusMode />
-              </div>
-            </ShortcutProvider>
-          </AppSheets>
+          <WorkoutSummaryProvider>
+            <NotificationClicks />
+            <AppSheets>
+              <ShortcutProvider>
+                <div className={styles.fullWindow}>
+                  <FocusMode />
+                </div>
+              </ShortcutProvider>
+            </AppSheets>
+          </WorkoutSummaryProvider>
         </TaskPopupProvider>
         <MessageHost />
       </CompleteTaskProvider>
@@ -81,29 +88,31 @@ export function Shell() {
   return (
     <CompleteTaskProvider>
       <TaskPopupProvider>
-        <NotificationClicks />
-        <AppSheets>
-          <ShortcutProvider>
-            <div className={`${styles.shell} ${isPhone ? styles.phone : ''}`}>
-              {!isPhone && <Sidebar current={sectionOf(route)} />}
-              <div className={styles.main}>
-                {storage === 'memory' && (
-                  <p className={styles.banner} role="alert">
-                    <TriangleAlert aria-hidden="true" />
-                    This browser offers no storage for Orbit: data is not saved and is lost when the page is closed.
-                  </p>
-                )}
-                <main className={styles.content}>
-                  <Suspense fallback={null}>
-                    <Screen />
-                  </Suspense>
-                </main>
+        <WorkoutSummaryProvider>
+          <NotificationClicks />
+          <AppSheets>
+            <ShortcutProvider>
+              <div className={`${styles.shell} ${isPhone ? styles.phone : ''}`}>
+                {!isPhone && <Sidebar current={sectionOf(route)} />}
+                <div className={styles.main}>
+                  {storage === 'memory' && (
+                    <p className={styles.banner} role="alert">
+                      <TriangleAlert aria-hidden="true" />
+                      This browser offers no storage for Orbit: data is not saved and is lost when the page is closed.
+                    </p>
+                  )}
+                  <main className={styles.content}>
+                    <Suspense fallback={null}>
+                      <Screen />
+                    </Suspense>
+                  </main>
+                </div>
+                {isPhone && <BottomNav current={sectionOf(route)} />}
+                <MessageHost />
               </div>
-              {isPhone && <BottomNav current={sectionOf(route)} />}
-              <MessageHost />
-            </div>
-          </ShortcutProvider>
-        </AppSheets>
+            </ShortcutProvider>
+          </AppSheets>
+        </WorkoutSummaryProvider>
       </TaskPopupProvider>
     </CompleteTaskProvider>
   );

@@ -5,6 +5,12 @@ const at = (hhmm: string, day = '2026-10-14') => new Date(`${day}T${hhmm}:00`);
 const block = (from: string, to: string, day?: string): TimeSpan => ({ kind: 'block', start: at(from, day), end: at(to, day) });
 
 describe('blockTimes', () => {
+  it('starts a workout entry at its time', () => {
+    const t = blockTimes({ source: 'workout', occurredAt: at('18:05').toISOString(), durationMinutes: 65 });
+    expect(t.start).toEqual(at('18:05'));
+    expect(t.end).toEqual(at('19:10'));
+  });
+
   it('starts a timer entry at its time', () => {
     const t = blockTimes({ source: 'timer', occurredAt: at('09:00').toISOString(), durationMinutes: 45 });
     expect([t.start, t.end]).toEqual([at('09:00'), at('09:45')]);

@@ -23,7 +23,7 @@ describe('parsePath', () => {
 
 describe('pathOf', () => {
   it('round-trips with parsePath', () => {
-    for (const name of ['home', 'plan', 'review', 'stats', 'settings'] as const) {
+    for (const name of ['home', 'today', 'workouts', 'plan', 'review', 'stats', 'settings'] as const) {
       expect(parsePath(pathOf({ name })).route).toEqual({ name });
     }
   });
@@ -33,6 +33,7 @@ const DETAIL_ROUTES: Route[] = [
   { name: 'goal', id: 'g-1' },
   { name: 'project', id: 'p-1' },
   { name: 'task', id: 't-1' },
+  { name: 'workout-session', id: 's-1' },
   { name: 'review-history', id: 'r-1' },
   { name: 'review-flow' },
   { name: 'review-flow', step: 'goals' },
@@ -51,6 +52,8 @@ describe('detail paths', () => {
     expect(pathOf({ name: 'review', week: '2026-10-26' })).toBe('/review?week=2026-10-26');
     expect(pathOf({ name: 'stats', period: '2026-Q3' })).toBe('/stats?period=2026-Q3');
     expect(pathOf({ name: 'focus' })).toBe('/focus');
+    expect(pathOf({ name: 'workout-session', id: 'abc' })).toBe('/workouts/sessions/abc');
+    expect(sectionOf({ name: 'workout-session', id: 'abc' })).toBe('workouts');
   });
 
   it('shows the same page again after a reload (parse round trip)', () => {

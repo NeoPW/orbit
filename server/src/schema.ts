@@ -21,6 +21,11 @@ export const timers = sqliteTable('timers', { ...columns.timers(), ...serverSeq(
 export const notes = sqliteTable('notes', { ...columns.notes(), ...serverSeq() }, (t) => [index('notes_server_seq').on(t.serverSeq)]);
 export const dailyNotes = sqliteTable('daily_notes', { ...columns.dailyNotes(), ...serverSeq() }, (t) => [index('daily_notes_server_seq').on(t.serverSeq)]);
 export const weeklyReviews = sqliteTable('weekly_reviews', { ...columns.weeklyReviews(), ...serverSeq() }, (t) => [index('weekly_reviews_server_seq').on(t.serverSeq)]);
+export const exercises = sqliteTable('exercises', { ...columns.exercises(), ...serverSeq() }, (t) => [index('exercises_server_seq').on(t.serverSeq)]);
+export const workouts = sqliteTable('workouts', { ...columns.workouts(), ...serverSeq() }, (t) => [index('workouts_server_seq').on(t.serverSeq)]);
+export const workoutSessions = sqliteTable('workout_sessions', { ...columns.workoutSessions(), ...serverSeq() }, (t) => [index('workout_sessions_server_seq').on(t.serverSeq)]);
+export const sessionExercises = sqliteTable('session_exercises', { ...columns.sessionExercises(), ...serverSeq() }, (t) => [index('session_exercises_server_seq').on(t.serverSeq)]);
+export const sessionSets = sqliteTable('session_sets', { ...columns.sessionSets(), ...serverSeq() }, (t) => [index('session_sets_server_seq').on(t.serverSeq)]);
 export const reviewMeasureSnapshots = sqliteTable('review_measure_snapshots', { ...columns.reviewMeasureSnapshots(), ...serverSeq() }, (t) => [index('review_measure_snapshots_server_seq').on(t.serverSeq)]);
 
 /** The change counter: one row (`id` 1) holding the last assigned `server_seq`. */

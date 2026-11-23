@@ -50,6 +50,20 @@
       "when": 1794215482774,
       "tag": "0006_wooden_morg",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1794316125084,
+      "tag": "0007_new_colonel_america",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1794317005972,
+      "tag": "0008_mute_prowler",
+      "breakpoints": true
     }
   ]
 }

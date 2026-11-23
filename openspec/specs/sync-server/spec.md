@@ -26,7 +26,7 @@ Every request to the sync API SHALL carry a device token as `Authorization: Bear
 - **THEN** the browser's requests are answered with 401 and the desktop's requests are still accepted
 
 ### Requirement: Server tables
-The server SHALL hold one table for each table the device syncs (areas, goals, measures, projects, tasks, habits, habit checks, log entries, timers, notes, daily notes, weekly reviews, review measure snapshots), with the same columns as on the device. Local settings SHALL NOT exist on the server. Rows SHALL come back exactly as they were pushed, including empty values.
+The server SHALL hold one table for each table the device syncs (areas, goals, measures, projects, tasks, habits, habit checks, log entries, timers, notes, daily notes, weekly reviews, review measure snapshots, exercises, workouts, workout sessions, session exercises, session sets), with the same columns as on the device. Local settings SHALL NOT exist on the server. Rows SHALL come back exactly as they were pushed, including empty values.
 
 #### Scenario: Round trip
 - **WHEN** a goal with the color rose and no end date and a measure with step 5 are pushed and then pulled
@@ -39,6 +39,14 @@ The server SHALL hold one table for each table the device syncs (areas, goals, m
 #### Scenario: Daily notes round trip
 - **WHEN** the daily note of 2026-11-09 with the text "Call the bank" is pushed and then pulled
 - **THEN** the pulled note has the date 2026-11-09 and the text "Call the bank"
+
+#### Scenario: Workouts round trip
+- **WHEN** the endurance exercise "Swim" with the unit m and a workout with the exercise ids [a, b] and no project are pushed and then pulled
+- **THEN** the pulled exercise has the type endurance and the unit m, and the pulled workout has the exercise ids [a, b] and an empty project
+
+#### Scenario: Sessions round trip
+- **WHEN** a finished workout session with a log entry, one session exercise and a set of 8 reps at 62.5 kg without distance are pushed and then pulled
+- **THEN** the pulled rows equal the pushed ones, including the weight 62.5 and the empty distance
 
 ### Requirement: Rows stored without business rules
 The server SHALL store rows as they arrive, in any order, and SHALL NOT check references between rows or apply any rule other than last-write-wins.

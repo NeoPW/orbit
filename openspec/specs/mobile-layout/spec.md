@@ -7,11 +7,11 @@ Defines how Orbit looks and behaves on a phone: one column with a bottom navigat
 ## Requirements
 
 ### Requirement: Phone layout
-Below 640 pixels window width the app SHALL show a single column with a bottom navigation of three entries, Home, Today and Settings, the current one marked, instead of the sidebar. Content SHALL stay clear of the system bars and display cutouts (safe areas), and the page SHALL NOT scroll horizontally. At 640 pixels and wider the desktop layout SHALL be used unchanged.
+Below 640 pixels window width the app SHALL show a single column with a bottom navigation of four entries, Home, Today, Workouts and Settings, the current one marked, instead of the sidebar. Content SHALL stay clear of the system bars and display cutouts (safe areas), and the page SHALL NOT scroll horizontally. At 640 pixels and wider the desktop layout SHALL be used unchanged.
 
 #### Scenario: Narrow window
 - **WHEN** the app is shown in a 390 pixel wide window
-- **THEN** the bottom navigation with Home, Today and Settings is shown and the sidebar is not
+- **THEN** the bottom navigation with Home, Today, Workouts and Settings is shown and the sidebar is not
 
 #### Scenario: Wide window
 - **WHEN** the app is shown in a 1280 pixel wide window
@@ -51,11 +51,15 @@ The phone SHALL offer a quick-add button on Home that opens the new task form (t
 - **THEN** the standalone task "Call the bank" is created and appears in To do
 
 ### Requirement: Screens on the phone
-The phone SHALL offer Home, Today (see day-timeline), Settings with the sync panel, the task page (opened from a task) and focus mode. Plan, the weekly review, Stats and their pages SHALL NOT be reachable from the phone's navigation.
+The phone SHALL offer Home, Today (see day-timeline), Workouts (see workouts), Settings with the sync panel, the task page (opened from a task) and focus mode. Plan, the weekly review, Stats and their pages SHALL NOT be reachable from the phone's navigation.
 
 #### Scenario: No Plan on the phone
 - **WHEN** the bottom navigation is shown
 - **THEN** it has no entry for Plan, Review or Stats
+
+#### Scenario: Open Workouts
+- **WHEN** the user taps "Workouts" in the bottom navigation
+- **THEN** the Workouts screen opens and "Workouts" is marked as current
 
 #### Scenario: Connect to the server
 - **WHEN** the user opens Settings on the phone, enters the server address and the device token and connects
