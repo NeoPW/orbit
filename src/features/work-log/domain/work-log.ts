@@ -1,3 +1,5 @@
+import { blockTimes } from '../../timeline/domain/day-timeline.ts';
+
 export const MAX_DURATION_MINUTES = 1440;
 
 /** "45 min", "2 h" or "1 h 30 min". */
@@ -26,7 +28,10 @@ export function parseDuration(input: string): DurationResult {
   if (text === '') return { ok: true, minutes: null };
   const n = Number(text);
   if (!/^\d+$/.test(text) || n < 1 || n > MAX_DURATION_MINUTES) {
-    return { ok: false, error: `Enter whole minutes from 1 to ${MAX_DURATION_MINUTES}` };
+    return {
+      ok: false,
+      error: `Enter whole minutes from 1 to ${MAX_DURATION_MINUTES}`,
+    };
   }
   return { ok: true, minutes: n };
 }
@@ -43,7 +48,33 @@ export function occurrenceTime(start: string | null, durationMinutes: number | n
   if (!match) return { ok: false, error: 'Enter a time as HH:mm' };
   const begin = new Date(now.getFullYear(), now.getMonth(), now.getDate(), Number(match[1]), Number(match[2]));
   if (begin.getTime() > now.getTime()) return { ok: false, error: 'The start time is in the future' };
-  return { ok: true, at: new Date(begin.getTime() + (durationMinutes ?? 0) * 60000) };
+  return {
+    ok: true,
+    at: new Date(begin.getTime() + (durationMinutes ?? 0) * 60000),
+  };
+}
+
+/**
+ * The `occurred_at` of an edited entry. `start` (`HH:mm`) is on the entry's local day, the day its block starts on.
+ * A timer or workout entry stores its start; any other entry its end (the start plus the duration, or the start
+ * itself without a duration), as the timeline reads it. A start later than `now` is an error.
+ */
+export function editedOccurrence(
+  entry: { source: string; occurredAt: string; durationMinutes: number | null },
+  start: string,
+  durationMinutes: number | null,
+  now: Date,
+): OccurrenceResult {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(start.trim());
+  if (!match || Number(match[1]) > 23 || Number(match[2]) > 59) return { ok: false, error: 'Enter a time as HH:mm' };
+  const day = blockTimes(entry).start;
+  const begin = new Date(day.getFullYear(), day.getMonth(), day.getDate(), Number(match[1]), Number(match[2]));
+  if (begin.getTime() > now.getTime()) return { ok: false, error: 'The start time is in the future' };
+  const storesStart = entry.source === 'timer' || entry.source === 'workout';
+  return {
+    ok: true,
+    at: storesStart ? begin : new Date(begin.getTime() + (durationMinutes ?? 0) * 60000),
+  };
 }
 
 /** Items with log entries first, newest entry first, then the rest by title. `lastLogged` maps item id to its latest `occurred_at`. */
@@ -120,7 +151,10 @@ export function workOnGoal<E extends GoalWorkEntry>(
   const mine = entries
     .filter((e) => isWorkOnGoal(e, goalId, links))
     .sort((a, b) => (a.occurredAt < b.occurredAt ? 1 : a.occurredAt > b.occurredAt ? -1 : 0));
-  const sum = (list: E[]): WorkTotals => ({ count: list.length, minutes: list.reduce((s, e) => s + (e.durationMinutes ?? 0), 0) });
+  const sum = (list: E[]): WorkTotals => ({
+    count: list.length,
+    minutes: list.reduce((s, e) => s + (e.durationMinutes ?? 0), 0),
+  });
   return {
     entries: mine,
     week: sum(mine.filter((e) => e.occurredAt >= week.from && e.occurredAt < week.to)),

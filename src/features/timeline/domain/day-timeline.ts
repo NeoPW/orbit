@@ -37,6 +37,8 @@ export interface Stretch extends TimeSpan {
   minutes: number;
   note: string;
   running: boolean;
+  /** The log entries the item is made of (the running stretch has none); a merged item lists all its stretches. */
+  entryIds?: string[];
 }
 
 /** The merge key of a timer stretch: its task, else its habit, else its project; null without any. */
@@ -64,6 +66,7 @@ export function mergeStretches<T extends Stretch & { id: string }>(items: T[], m
         minutes: previous.minutes + item.minutes,
         note: [previous.note, item.note].filter((n) => n.trim() !== '').join(' \u00b7 '),
         running: item.running,
+        entryIds: [...(previous.entryIds ?? []), ...(item.entryIds ?? [])],
       };
       continue;
     }
