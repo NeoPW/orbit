@@ -2,12 +2,12 @@
 
 ## 1. Single instance
 
-- [ ] 1.1 Add `tauri-plugin-single-instance` (2.x) to the desktop-only dependency section of `src-tauri/Cargo.toml` (next to `notify-rust`). Verify `cargo check --manifest-path src-tauri/Cargo.toml` passes and `Cargo.lock` gains the plugin.
-- [ ] 1.2 In `src-tauri/src/lib.rs`, register the plugin as the first plugin on the builder under `#[cfg(desktop)]`, with a callback that calls `notify::show_main_window` and ignores the arguments; add a comment that it must stay first. Verify `cargo check` passes and the Android build still compiles (`npm run android:build -- --target x86_64`, or at least `cargo check --target x86_64-linux-android` if the toolchain is set up).
+- [x] 1.1 Add `tauri-plugin-single-instance` (2.x) to the desktop-only dependency section of `src-tauri/Cargo.toml` (next to `notify-rust`). Verify `cargo check --manifest-path src-tauri/Cargo.toml` passes and `Cargo.lock` gains the plugin.
+- [x] 1.2 In `src-tauri/src/lib.rs`, register the plugin as the first plugin on the builder under `#[cfg(desktop)]`, with a callback that calls `notify::show_main_window` and ignores the arguments; add a comment that it must stay first. Verify `cargo check` passes and the Android build still compiles (`npm run android:build -- --target x86_64`, or at least `cargo check --target x86_64-linux-android` if the toolchain is set up).
 
 ## 2. Docs
 
-- [ ] 2.1 In `docs/SPEC.md` §2 (Tech stack, the desktop-only features line), add one sentence that only one desktop Orbit runs at a time and starting it again shows the running window. Verify by reading the section.
+- [x] 2.1 In `docs/SPEC.md` §2 (Tech stack, the desktop-only features line), add one sentence that only one desktop Orbit runs at a time and starting it again shows the running window. Verify by reading the section.
 
 ## 3. Verification
 
