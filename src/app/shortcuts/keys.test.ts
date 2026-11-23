@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { matchShortcut, withShortcut, type KeyInput } from './keys.ts';
+import { isFormSubmitKey, matchShortcut, SHORTCUTS, withShortcut, type KeyInput } from './keys.ts';
 
 const press = (key: string, more: Partial<KeyInput> = {}): KeyInput => ({
   key,
@@ -163,5 +163,21 @@ describe('Esc releases keyboard focus', () => {
 
   it('leaves Esc to a dialog', () => {
     expect(action(press('Escape', { keyboardFocus: true, dialogOpen: true }), 'home')).toBeNull();
+  });
+});
+
+describe('save a form', () => {
+  const enter = { key: 'Enter', shiftKey: true, ctrlKey: false, altKey: false, metaKey: false };
+  it('is Shift+Enter without other modifiers', () => {
+    expect(isFormSubmitKey(enter)).toBe(true);
+    expect(isFormSubmitKey({ ...enter, shiftKey: false })).toBe(false);
+    expect(isFormSubmitKey({ ...enter, ctrlKey: true })).toBe(false);
+    expect(isFormSubmitKey({ ...enter, altKey: true })).toBe(false);
+    expect(isFormSubmitKey({ ...enter, metaKey: true })).toBe(false);
+    expect(isFormSubmitKey({ ...enter, isComposing: true })).toBe(false);
+    expect(isFormSubmitKey({ ...enter, key: 'a' })).toBe(false);
+  });
+  it('is listed under Global', () => {
+    expect(SHORTCUTS.find((s) => s.action === 'save-form')).toMatchObject({ keys: 'Shift+Enter', label: 'Save a form', group: 'Global' });
   });
 });

@@ -4,8 +4,8 @@ Apply after `manual-task-order` (TaskSheet no longer has importance then).
 
 ## 1. Shift+Enter saves a form
 
-- [ ] 1.1 Add `isFormSubmitKey(event)` (Enter with Shift, no Ctrl, Alt or Meta, not composing) and a `SHORTCUTS` entry `Shift+Enter` "Save a form" (Global) in `src/app/shortcuts/keys.ts`; test both in `src/app/shortcuts/keys.test.ts` (`npx vitest run src/app/shortcuts`).
-- [ ] 1.2 Add `src/app/shortcuts/useShiftEnterSubmit.ts`: a document `keydown` listener that, for `isFormSubmitKey`, takes `target.closest('form')` and calls `requestSubmit` with its first enabled `button[type=submit]` (nothing otherwise). Mount it in `src/app/shortcuts/ShortcutProvider.tsx`. Verify by hand: Shift+Enter in the New task notes saves, Enter there adds a line, and Shift+Enter with an invalid due date saves nothing.
+- [x] 1.1 Add `isFormSubmitKey(event)` (Enter with Shift, no Ctrl, Alt or Meta, not composing) and a `SHORTCUTS` entry `Shift+Enter` "Save a form" (Global) in `src/app/shortcuts/keys.ts`; test both in `src/app/shortcuts/keys.test.ts` (`npx vitest run src/app/shortcuts`).
+- [x] 1.2 Add `src/app/shortcuts/useShiftEnterSubmit.ts`: a document `keydown` listener that, for `isFormSubmitKey`, takes `target.closest('form')` and calls `requestSubmit` with its first enabled `button[type=submit]` (nothing otherwise). Mount it in `src/app/shortcuts/ShortcutProvider.tsx`. Verify by hand: Shift+Enter in the New task notes saves, Enter there adds a line, and Shift+Enter with an invalid due date saves nothing.
 - [ ] 1.3 Check the other forms by hand: the complete dialog (`CompleteDialog.tsx`), the custom time limit (`TimeLimit.tsx`), a workout set (`SessionScreen.tsx`), the sync connection (`SyncPanel.tsx`) and the next-step prompt each submit with Shift+Enter; the overlay (`?`) lists "Save a form".
 
 ## 2. `#` in the new task title

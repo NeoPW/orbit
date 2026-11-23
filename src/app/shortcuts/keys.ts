@@ -1,7 +1,7 @@
 /** The shortcuts of the app (see openspec keyboard-shortcuts): one table for matching, the overlay, tooltips and the palette. */
 
 export type GlobalAction =
-  'new-task' | 'log-work' | 'focus-field' | 'daily-note' | 'go-home' | 'go-plan' | 'go-review' | 'go-stats' | 'go-settings' | 'go-back' | 'release-focus' | 'overlay' | 'palette';
+  'new-task' | 'log-work' | 'focus-field' | 'daily-note' | 'go-home' | 'go-plan' | 'go-review' | 'go-stats' | 'go-settings' | 'go-back' | 'release-focus' | 'overlay' | 'palette' | 'save-form';
 export type TodoAction =
   | 'todo-next'
   | 'todo-prev'
@@ -44,6 +44,7 @@ export const SHORTCUTS: Shortcut[] = [
   { action: 'go-settings', keys: 'Ctrl+,', label: 'Settings', group: 'Global' },
   { action: 'go-back', keys: 'Esc', label: 'Back from a project, goal or task page', group: 'Global' },
   { action: 'release-focus', keys: 'Esc', label: 'Take the focus off a button or link', group: 'Global' },
+  { action: 'save-form', keys: 'Shift+Enter', label: 'Save a form', group: 'Global' },
   { action: 'palette', keys: 'Ctrl+K', label: 'Command palette', group: 'Global' },
   { action: 'overlay', keys: '?', label: 'All shortcuts', group: 'Global' },
   { action: 'todo-next', keys: 'J / ↓', label: 'Next task', group: 'Home' },
@@ -176,4 +177,9 @@ export function matchShortcut(input: KeyInput, scope: ShortcutScope): ShortcutMa
   }
   const action = GLOBAL_KEYS[named];
   return action ? { action } : null;
+}
+
+/** Shift+Enter (no Ctrl, Alt or Meta, not while an IME composes) saves the form it is pressed in. */
+export function isFormSubmitKey(event: { key: string; shiftKey: boolean; ctrlKey: boolean; altKey: boolean; metaKey: boolean; isComposing?: boolean }): boolean {
+  return event.key === 'Enter' && event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey && !event.isComposing;
 }
