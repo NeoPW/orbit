@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useServices } from '../../../app/services.ts';
 import { useLiveQuery } from '../../../core/db/live.ts';
 import { Sheet } from '../../../core/ui/components/Sheet.tsx';
@@ -30,9 +30,13 @@ export function LogWorkSheet({ target, onClose }: { target?: LogTarget; onClose:
     async (database) => {
       if (target) return { projects: [], tasks: [] };
       const [targets, entries] = await Promise.all([listLogTargets(database), listAllEntries(database)]);
+      const byTask = lastLoggedBy(entries, 'taskId');
       return {
-        projects: recentFirst(targets.projects, lastLoggedBy(entries, 'projectId')),
-        tasks: recentFirst(targets.tasks, lastLoggedBy(entries, 'taskId')),
+        projects: recentFirst(targets.projects, lastLoggedBy(entries, 'projectId')).map((p) => ({
+          ...p,
+          tasks: recentFirst(p.tasks, byTask),
+        })),
+        tasks: recentFirst(targets.tasks, byTask),
       };
     },
     [target === undefined],
@@ -51,7 +55,12 @@ export function LogWorkSheet({ target, onClose }: { target?: LogTarget; onClose:
       setStartError(when.error);
       return;
     }
-    await addManualEntry(db, clock, { target: chosen, durationMinutes: parsed.minutes, note, occurredAt: when.at });
+    await addManualEntry(db, clock, {
+      target: chosen,
+      durationMinutes: parsed.minutes,
+      note,
+      occurredAt: when.at,
+    });
     messages.show({ text: 'Work logged' });
     onClose();
   }
@@ -82,7 +91,12 @@ export function LogWorkSheet({ target, onClose }: { target?: LogTarget; onClose:
       {!target && choices && (
         <>
           {choices.projects.length > 0 && (
-            <ChoiceGroup title="Projects" items={choices.projects} onChoose={(id) => void save({ projectId: id })} />
+            <ChoiceGroup
+              title="Projects"
+              items={choices.projects}
+              onChoose={(id) => void save({ projectId: id })}
+              onChooseChild={(id) => void save({ taskId: id })}
+            />
           )}
           {choices.tasks.length > 0 && <ChoiceGroup title="Tasks" items={choices.tasks} onChoose={(id) => void save({ taskId: id })} />}
           {choices.projects.length === 0 && choices.tasks.length === 0 && <p className={styles.none}>No active projects or open tasks</p>}
@@ -96,18 +110,32 @@ function ChoiceGroup({
   title,
   items,
   onChoose,
+  onChooseChild,
 }: {
   title: string;
-  items: { id: string; title: string }[];
+  items: {
+    id: string;
+    title: string;
+    tasks?: { id: string; title: string }[];
+  }[];
   onChoose: (id: string) => void;
+  /** Chooses one of an item's tasks, listed indented below it. */
+  onChooseChild?: (id: string) => void;
 }) {
   return (
     <div className={styles.group} role="group" aria-label={title}>
       <h3>{title}</h3>
       {items.map((item) => (
-        <button key={item.id} type="button" className={styles.choice} onClick={() => onChoose(item.id)}>
-          {item.title}
-        </button>
+        <Fragment key={item.id}>
+          <button type="button" className={styles.choice} onClick={() => onChoose(item.id)}>
+            {item.title}
+          </button>
+          {item.tasks?.map((task) => (
+            <button key={task.id} type="button" className={`${styles.choice} ${styles.child}`} onClick={() => onChooseChild?.(task.id)}>
+              {task.title}
+            </button>
+          ))}
+        </Fragment>
       ))}
     </div>
   );
