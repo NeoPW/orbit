@@ -6,7 +6,7 @@ import { EmptyState } from '../../../core/ui/components/EmptyState.tsx';
 import { Section } from '../../../core/ui/components/Section.tsx';
 import { useServices } from '../../../app/services.ts';
 import { listOpenTasksOfProject, moveTask, resetTaskOrder } from '../../tasks/data/tasks-repository.ts';
-import { effectiveImportance, hasManualOrder } from '../../tasks/domain/tasks.ts';
+import { hasManualOrder } from '../../tasks/domain/tasks.ts';
 import { TaskList } from '../../tasks/ui/TaskRow.tsx';
 import { TaskSheet } from '../../tasks/ui/TaskSheet.tsx';
 import type { ProjectSectionProps } from './ProjectPage.tsx';
@@ -55,13 +55,9 @@ export function ProjectTasksSection({ view }: ProjectSectionProps) {
           tasks={tasks}
           label="Open tasks"
           onMove={(taskId, toIndex) => void moveTask(db, clock, taskId, toIndex)}
-          rowProps={(task) => ({
+          rowProps={() => ({
             projectColor: view.color,
             projectName: project.title,
-            importance: effectiveImportance({
-              importance: task.importance,
-              projectImportance: project.importance,
-            }),
           })}
         />
       )}

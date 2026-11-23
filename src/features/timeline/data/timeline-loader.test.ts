@@ -14,8 +14,8 @@ import { loadTimeline } from './timeline-loader.ts';
 const FROM = '2026-10-14T00:00:00.000Z';
 const TO = '2026-10-15T00:00:00.000Z';
 const clockAt = (time: string) => () => new Date(`2026-10-14T${time}:00.000Z`);
-const project = { description: '', areaId: null, goalId: null, importance: 3, deadline: null, status: 'active' as const, color: 'pc5' };
-const task = { notes: '', dueDate: null, importance: null, projectId: null, goalId: null };
+const project = { description: '', areaId: null, goalId: null, deadline: null, status: 'active' as const, color: 'pc5' };
+const task = { notes: '', dueDate: null, projectId: null, goalId: null };
 
 describe('timeline loader', () => {
   it('labels an entry with its project and colours it like the project', async () => {

@@ -10,7 +10,6 @@ import { DateField } from '../../../core/ui/components/DateField.tsx';
 import { EmptyState } from '../../../core/ui/components/EmptyState.tsx';
 import { ListRow } from '../../../core/ui/components/ListRow.tsx';
 import { Menu } from '../../../core/ui/components/Menu.tsx';
-import { SegmentedControl } from '../../../core/ui/components/SegmentedControl.tsx';
 import { Switch } from '../../../core/ui/components/Switch.tsx';
 import { TextField } from '../../../core/ui/components/TextField.tsx';
 import { NoteField } from '../../notes/ui/NoteField.tsx';
@@ -24,7 +23,6 @@ import styles from './ReviewFlow.module.css';
 const clock = () => new Date();
 const STATUSES: ProjectStatus[] = ['active', 'paused', 'backlog', 'completed'];
 const STATUS_TONE = { active: 'primary', backlog: 'neutral', paused: 'amber', completed: 'secondary' } as const;
-const IMPORTANCE = [1, 2, 3, 4, 5].map((n) => ({ value: n, label: String(n) }));
 
 function NewNextStep({ projectId }: { projectId: string }) {
   const { db } = useServices();
@@ -50,13 +48,12 @@ function ProjectCard({ view, weekStart }: { view: ProjectView; weekStart: string
   const openTask = useOpenTask();
   const { project } = view;
   const tasks = useLiveQuery((database) => listOpenTasksOfProject(database, project.id), [project.id]);
-  const save = (patch: Partial<Pick<typeof project, 'importance' | 'deadline'>>) =>
+  const save = (patch: Partial<Pick<typeof project, 'deadline'>>) =>
     void updateProject(db, clock, project.id, {
       title: project.title,
       description: project.description,
       areaId: project.areaId,
       goalId: project.goalId,
-      importance: project.importance,
       deadline: project.deadline,
       status: project.status,
       ...patch,
@@ -83,15 +80,6 @@ function ProjectCard({ view, weekStart }: { view: ProjectView; weekStart: string
         />
       </header>
       <div className={styles.fields}>
-        <div className={styles.fieldGroup}>
-          <span className={styles.fieldLabel}>Importance</span>
-          <SegmentedControl
-            label={`Importance of ${project.title}`}
-            options={IMPORTANCE}
-            value={project.importance}
-            onChange={(value) => save({ importance: value })}
-          />
-        </div>
         <DateField label="Deadline" value={project.deadline} onChange={(value) => save({ deadline: value })} />
       </div>
       {tasks && tasks.length > 0 && (

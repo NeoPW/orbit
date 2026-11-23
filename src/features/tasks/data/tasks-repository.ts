@@ -12,8 +12,6 @@ export interface TaskInput {
   notes: string;
   /** `yyyy-mm-dd`, or null. */
   dueDate: string | null;
-  /** 1 to 5, or null to inherit. */
-  importance: number | null;
   /** At most one assignment is kept; a project wins over a goal. */
   projectId: string | null;
   goalId: string | null;
@@ -38,7 +36,6 @@ export interface TaskView {
   projectTitle: string | null;
   /** CSS colour of its project (`var(--pcN)`); null for a task outside a project. */
   projectColor: string | null;
-  projectImportance: number | null;
   projectDeadline: string | null;
   /** End date of the project's goal (for the project's effective deadline). */
   projectGoalEnd: string | null;
@@ -74,7 +71,6 @@ export async function toViews(db: Db, rows: Task[]): Promise<TaskView[]> {
       task,
       projectTitle: project?.title ?? null,
       projectColor: project ? projectColor(project) : null,
-      projectImportance: project?.importance ?? null,
       projectDeadline: project?.deadline ?? null,
       projectGoalEnd: projectGoal?.endDate ?? null,
       goalTitle: goal?.title ?? null,
@@ -130,7 +126,6 @@ export async function createTask(db: Db, clock: Clock, input: TaskInput): Promis
     title: input.title.trim(),
     notes: input.notes.trim(),
     dueDate: input.dueDate,
-    importance: input.importance,
     ...assignment(input),
     status: 'open',
     isNextStep: false,
@@ -150,8 +145,7 @@ export async function updateTask(db: Db, clock: Clock, id: string, input: TaskIn
       title: input.title.trim(),
       notes: input.notes.trim(),
       dueDate: input.dueDate,
-      importance: input.importance,
-      ...assigned,
+        ...assigned,
       isNextStep: assigned.projectId !== null && assigned.projectId === previous.projectId ? previous.isNextStep : false,
       // A manual position belongs to the list the task is in.
       sortOrder: assigned.projectId === previous.projectId && assigned.goalId === previous.goalId ? previous.sortOrder : null,
@@ -227,7 +221,7 @@ export async function moveTask(db: Db, clock: Clock, id: string, toIndex: number
   await runBatch(db, positionWrites(db, clock, task.isNextStep ? [...reordered, ...other] : [...other, ...reordered]));
 }
 
-/** Removes the manual positions of a project's open tasks, so the list is back in due-date order. */
+/** Removes the manual positions of a project's open tasks, so the list is back in time-added order. */
 export async function resetTaskOrder(db: Db, clock: Clock, projectId: string): Promise<void> {
   const list = await listOpenTasksOfProject(db, projectId);
   await runBatch(

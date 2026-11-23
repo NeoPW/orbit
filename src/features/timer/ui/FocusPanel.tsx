@@ -98,7 +98,6 @@ function Idle({ projects, paused }: FocusPanelProps & { paused: TimerView | null
         title: plan.title,
         notes: '',
         dueDate: null,
-        importance: null,
         projectId: plan.projectId,
         goalId: null,
       });

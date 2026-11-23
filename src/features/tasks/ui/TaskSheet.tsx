@@ -6,7 +6,6 @@ import { ConfirmDialog } from '../../../core/ui/components/ConfirmDialog.tsx';
 import { goalColor } from '../../../core/ui/colors.ts';
 import { DateField } from '../../../core/ui/components/DateField.tsx';
 import { Select, type SelectGroup, type SelectOption } from '../../../core/ui/components/Select.tsx';
-import { SegmentedControl } from '../../../core/ui/components/SegmentedControl.tsx';
 import { Sheet } from '../../../core/ui/components/Sheet.tsx';
 import { TextArea, TextField } from '../../../core/ui/components/TextField.tsx';
 import { getGoal, listActiveGoals } from '../../goals/data/goals-repository.ts';
@@ -27,17 +26,6 @@ export interface TaskSheetProps {
 }
 
 const clock = () => new Date();
-
-/** No own importance: the task inherits its project's, or 3. */
-const INHERIT = 0;
-const IMPORTANCE_OPTIONS = [
-  { value: INHERIT, label: 'Inherit' },
-  { value: 1, label: '1' },
-  { value: 2, label: '2' },
-  { value: 3, label: '3' },
-  { value: 4, label: '4' },
-  { value: 5, label: '5' },
-];
 
 /** Active projects and goals plus the task's current ones, which may no longer be active. */
 async function loadOptions(db: Db, projectId: string | null, goalId: string | null) {
@@ -82,7 +70,6 @@ export function TaskSheet({ task, projectId, goalId, onCreated, onDeleted, onClo
   const [notes, setNotes] = useState(task?.notes ?? '');
   const [dueDate, setDueDate] = useState<string | null>(task?.dueDate ?? null);
   const [dateValid, setDateValid] = useState(true);
-  const [importance, setImportance] = useState(task?.importance ?? INHERIT);
   const [assignment, setAssignment] = useState(initialProject ? `project:${initialProject}` : initialGoal ? `goal:${initialGoal}` : '');
   const [error, setError] = useState<string | undefined>();
   const [confirming, setConfirming] = useState(false);
@@ -103,7 +90,6 @@ export function TaskSheet({ task, projectId, goalId, onCreated, onDeleted, onClo
       title,
       notes,
       dueDate,
-      importance: importance === INHERIT ? null : importance,
       projectId: kind === 'project' ? id! : null,
       goalId: kind === 'goal' ? id! : null,
     };
@@ -135,7 +121,6 @@ export function TaskSheet({ task, projectId, goalId, onCreated, onDeleted, onClo
         />
         <TextArea label="Notes" value={notes} onChange={(event) => setNotes(event.target.value)} />
         <DateField label="Due date" value={dueDate} onChange={setDueDate} onValidity={setDateValid} />
-        <SegmentedControl label="Importance" options={IMPORTANCE_OPTIONS} value={importance} onChange={setImportance} />
         <Select label="Assigned to" value={assignment} onChange={setAssignment} options={assignmentOptions} />
       </Sheet>
       {confirming && task && (

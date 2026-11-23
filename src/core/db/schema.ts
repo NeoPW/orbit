@@ -67,6 +67,7 @@ export const columns = {
     areaId: text('area_id'),
     goalId: text('goal_id'),
     status: text('status', { enum: PROJECT_STATUSES }).notNull().default('active'),
+    /** Deprecated and unused (kept so older builds can still sync it). */
     importance: integer('importance').notNull().default(3),
     deadline: text('deadline'),
     /** Colour slot key (`pc0`..`pc7`); null for projects from before colours existed. */
@@ -80,6 +81,7 @@ export const columns = {
     title: text('title').notNull(),
     notes: text('notes').notNull().default(''),
     dueDate: text('due_date'),
+    /** Deprecated and unused (kept so older builds can still sync it). */
     importance: integer('importance'),
     isNextStep: integer('is_next_step', { mode: 'boolean' }).notNull().default(false),
     status: text('status', { enum: TASK_STATUSES }).notNull().default('open'),

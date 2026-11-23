@@ -13,7 +13,6 @@ export interface ProjectInput {
   areaId: string | null;
   goalId: string | null;
   /** 1 to 5. */
-  importance: number;
   /** `yyyy-mm-dd`, or null. */
   deadline: string | null;
   status: ProjectStatus;
@@ -68,7 +67,7 @@ export async function getProject(db: Db, id: string): Promise<ProjectView | unde
   return (await loadViews(db, rows))[0];
 }
 
-/** Projects with one of the statuses, oldest first (sort with the domain order). */
+/** Projects with one of the statuses, oldest first (sort with the domain order, see `sortViewsForPlan`). */
 export async function listProjectsByStatus(db: Db, ...statuses: ProjectStatus[]): Promise<ProjectView[]> {
   const rows = await db
     .select()
@@ -99,7 +98,6 @@ function clean(input: ProjectInput) {
     description: input.description.trim(),
     areaId: input.areaId,
     goalId: input.goalId,
-    importance: input.importance,
     deadline: input.deadline,
     status: input.status,
   };

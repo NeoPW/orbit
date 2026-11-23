@@ -51,9 +51,9 @@ export function HomeScreen() {
   const data = useLiveQuery(
     async (database) => {
       const [todo, more, projects, habits, done] = await Promise.all([
-        listTodo(database, today),
-        listMoreTodo(database, today),
-        listActiveProjects(database, today),
+        listTodo(database),
+        listMoreTodo(database),
+        listActiveProjects(database),
         listHabitsForToday(database, today),
         listDoneToday(database, today),
       ]);
@@ -140,7 +140,6 @@ export function HomeScreen() {
   const todoRowProps = (task: Task) => ({
     compact: true,
     highlighted: highlightedTask?.id === task.id,
-    importance: itemByTask.get(task.id)?.importance,
     context: itemByTask.get(task.id)?.context ?? undefined,
     projectColor: itemByTask.get(task.id)?.projectColor,
     projectName: itemByTask.get(task.id)?.projectTitle ?? undefined,

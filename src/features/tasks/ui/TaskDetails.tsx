@@ -8,13 +8,11 @@ import { Button } from '../../../core/ui/components/Button.tsx';
 import { Chip } from '../../../core/ui/components/Chip.tsx';
 import { ConfirmDialog } from '../../../core/ui/components/ConfirmDialog.tsx';
 import { DeadlineBadge } from '../../../core/ui/components/DeadlineBadge.tsx';
-import { ImportanceDots } from '../../../core/ui/components/ImportanceDots.tsx';
 import { Tile } from '../../../core/ui/components/Tile.tsx';
 import { useMessages } from '../../../core/ui/messages/MessageProvider.tsx';
 import { StartFocusButton } from '../../timer/ui/StartFocusButton.tsx';
 import { LogSection } from '../../work-log/ui/LogSection.tsx';
 import { deleteTask, getTask, reopenTask, setNextStep } from '../data/tasks-repository.ts';
-import { effectiveImportance } from '../domain/tasks.ts';
 import styles from './TaskDetails.module.css';
 import { TaskSheet } from './TaskSheet.tsx';
 import { useCompleteTask } from './useCompleteTask.ts';
@@ -41,11 +39,7 @@ export function TaskDetails({ id, onDeleted, missing }: TaskDetailsProps) {
   if (loaded === undefined) return null;
   if (loaded === null) return <>{missing}</>;
 
-  const { task, projectTitle, projectColor, goalTitle, projectImportance } = loaded;
-  const importance = effectiveImportance({
-    importance: task.importance,
-    projectImportance,
-  });
+  const { task, projectTitle, projectColor, goalTitle } = loaded;
   const open = task.status === 'open';
 
   function afterDelete() {
@@ -105,10 +99,6 @@ export function TaskDetails({ id, onDeleted, missing }: TaskDetailsProps) {
               <dd>{formatDate(task.dueDate)}</dd>
             </>
           )}
-          <dt>Importance</dt>
-          <dd>
-            <ImportanceDots value={importance.value} inherited={importance.inherited} />
-          </dd>
           <dt>Assigned to</dt>
           <dd>
             {task.projectId ? (

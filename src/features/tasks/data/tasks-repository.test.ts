@@ -21,7 +21,7 @@ import {
 import { deleteGoal } from '../../goals/data/goals-repository.ts';
 
 const clock = () => new Date('2026-10-13T09:00:00Z');
-const base: TaskInput = { title: 'Book venue', notes: '', dueDate: null, importance: null, projectId: null, goalId: null };
+const base: TaskInput = { title: 'Book venue', notes: '', dueDate: null, projectId: null, goalId: null };
 
 type Db = Awaited<ReturnType<typeof openTestDatabase>>['db'];
 
@@ -185,13 +185,13 @@ describe('manual task order', () => {
   }
   const titles = async (db: Db, projectId: string) => (await listOpenTasksOfProject(db, projectId)).map((t) => t.title);
 
-  it('keeps the due-date order until the list is reordered', async () => {
+  it('keeps the time-added order until the list is reordered', async () => {
     const { db } = await openTestDatabase();
     const projectId = await addProject(db);
     await createTask(db, at(0), { ...base, title: 'A', projectId });
     await createTask(db, at(1), { ...base, title: 'B', projectId, dueDate: '2026-10-20' });
     await createTask(db, at(2), { ...base, title: 'C', projectId, dueDate: '2026-10-10' });
-    expect(await titles(db, projectId)).toEqual(['C', 'B', 'A']);
+    expect(await titles(db, projectId)).toEqual(['A', 'B', 'C']);
   });
 
   it('moves a task up and keeps the order', async () => {
@@ -240,7 +240,7 @@ describe('manual task order', () => {
     expect(await titles(db, projectId)).toEqual(['C', 'A', 'B', 'D']);
   });
 
-  it('resets to due-date order', async () => {
+  it('resets to time-added order', async () => {
     const { db } = await openTestDatabase();
     const { projectId, ids } = await setup(db);
     await moveTask(db, clock, ids.C!, 0);

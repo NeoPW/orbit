@@ -7,7 +7,6 @@ import { EmptyState } from '../../../core/ui/components/EmptyState.tsx';
 import { Section } from '../../../core/ui/components/Section.tsx';
 import { Chip } from '../../../core/ui/components/Chip.tsx';
 import { DeadlineBadge } from '../../../core/ui/components/DeadlineBadge.tsx';
-import { ImportanceDots } from '../../../core/ui/components/ImportanceDots.tsx';
 import { ListRow } from '../../../core/ui/components/ListRow.tsx';
 import { Tile } from '../../../core/ui/components/Tile.tsx';
 import { navigate } from '../../../core/routing/useRoute.ts';
@@ -82,7 +81,6 @@ export function BacklogSection({ onCreate }: PlanSectionProps) {
                     <>
                       {view.project.status !== 'active' && <Chip tone="amber">{PROJECT_STATUS_LABELS[view.project.status]}</Chip>}
                       {area && <Chip color={area.color}>{area.name}</Chip>}
-                      <ImportanceDots value={view.project.importance} />
                       {view.deadline && <DeadlineBadge deadline={view.deadline.date} inherited={view.deadline.inherited} />}
                     </>
                   }

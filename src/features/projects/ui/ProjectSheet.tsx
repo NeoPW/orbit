@@ -32,11 +32,6 @@ const STATUS_OPTIONS: { value: ProjectStatus; label: string }[] = [
   { value: 'completed', label: 'Completed' },
 ];
 
-const IMPORTANCE_OPTIONS = [1, 2, 3, 4, 5].map((n) => ({
-  value: n,
-  label: String(n),
-}));
-
 const SLOT_COLORS = SLOTS.map(slotColor);
 const clock = () => new Date();
 
@@ -63,7 +58,6 @@ export function ProjectSheet({ project, goalId, onCreated, onClose }: ProjectShe
   const [description, setDescription] = useState(project?.description ?? '');
   const [areaId, setAreaId] = useState(project?.areaId ?? '');
   const [goal, setGoal] = useState(initialGoal ?? '');
-  const [importance, setImportance] = useState(project?.importance ?? 3);
   const [deadline, setDeadline] = useState<string | null>(project?.deadline ?? null);
   const [deadlineValid, setDeadlineValid] = useState(true);
   const [status, setStatus] = useState<ProjectStatus>(project?.status ?? 'active');
@@ -84,7 +78,6 @@ export function ProjectSheet({ project, goalId, onCreated, onClose }: ProjectShe
       description,
       areaId: areaId || null,
       goalId: goal || null,
-      importance,
       deadline,
       status,
       color: cssToStored(color),
@@ -118,7 +111,6 @@ export function ProjectSheet({ project, goalId, onCreated, onClose }: ProjectShe
         <TextArea label="Description" value={description} onChange={(event) => setDescription(event.target.value)} />
         <Select label="Area" value={areaId} onChange={setAreaId} options={[{ value: '', label: 'None' }, ...(options?.areas ?? [])]} />
         <Select label="Goal" value={goal} onChange={setGoal} options={[{ value: '', label: 'None' }, ...(options?.goals ?? [])]} />
-        <SegmentedControl label="Importance" options={IMPORTANCE_OPTIONS} value={importance} onChange={setImportance} />
         <DateField label="Deadline" value={deadline} onChange={setDeadline} onValidity={setDeadlineValid} />
         <ColorPicker label="Color" colors={SLOT_COLORS} colorLabel={colorLabel} value={color} onChange={setColor} />
         <SegmentedControl label="Status" options={STATUS_OPTIONS} value={status} onChange={setStatus} />

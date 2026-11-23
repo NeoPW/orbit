@@ -8,7 +8,6 @@ import { deadlineBadge } from '../../../core/dates/deadline.ts';
 import { useToday } from '../../../core/dates/today.ts';
 import { useSettings } from '../../settings/data/settings.ts';
 import { DeadlineBadge } from '../../../core/ui/components/DeadlineBadge.tsx';
-import { ImportanceDots } from '../../../core/ui/components/ImportanceDots.tsx';
 import { useIsPhone } from '../../../core/ui/useIsPhone.ts';
 import { ListRow } from '../../../core/ui/components/ListRow.tsx';
 import type { CSSProperties } from 'react';
@@ -19,8 +18,6 @@ import { useCompleteTask } from './useCompleteTask.ts';
 
 export interface TaskRowProps {
   task: Task;
-  /** Shows importance dots (use `effectiveImportance`); left out by default. */
-  importance?: { value: number; inherited: boolean };
   /** The project or goal the task belongs to, shown in the meta line (Home's To do). */
   context?: string;
   /** Shows a "Start focus" button at the end of the row. */
@@ -38,12 +35,11 @@ export interface TaskRowProps {
 /**
  * An open task as a row: a checkbox that completes it (through
  * `useCompleteTask`, with the next-step prompt and Undo), the title, the
- * next-step marker, optional importance and context, and the due date.
+ * next-step marker, optional context, and the due date.
  * Clicking the row opens the task page. A row has no menu of its own.
  */
 export function TaskRow({
   task,
-  importance,
   context,
   onStartFocus,
   projectColor,
@@ -60,7 +56,7 @@ export function TaskRow({
   const mark = highlighted ? ` ${styles.highlighted}` : '';
   const isPhone = useIsPhone();
   const colored = Boolean(projectColor && projectName);
-  const hasTags = task.isNextStep || importance || context || task.dueDate || colored;
+  const hasTags = task.isNextStep || context || task.dueDate || colored;
   const tags = hasTags ? (
     <>
       {task.isNextStep && (
@@ -68,7 +64,6 @@ export function TaskRow({
           Next step
         </Chip>
       )}
-      {importance && <ImportanceDots value={importance.value} inherited={importance.inherited} />}
       {colored && <Chip projectColor={projectColor ?? undefined}>{projectName}</Chip>}
       {context && !colored && <span>{context}</span>}
       {task.dueDate && <DeadlineBadge deadline={task.dueDate} />}
@@ -163,7 +158,7 @@ function CompactTags({
 
 export interface TaskListProps {
   tasks: Task[];
-  /** Extras for a row, for example `importance` or `context`. */
+  /** Extras for a row, for example `context`. */
   rowProps?: (task: Task) => Omit<TaskRowProps, 'task'>;
   label?: string;
   /**
