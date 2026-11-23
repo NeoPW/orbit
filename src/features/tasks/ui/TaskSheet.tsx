@@ -8,9 +8,12 @@ import { DateField } from '../../../core/ui/components/DateField.tsx';
 import { Select, type SelectGroup, type SelectOption } from '../../../core/ui/components/Select.tsx';
 import { Sheet } from '../../../core/ui/components/Sheet.tsx';
 import { TextArea, TextField } from '../../../core/ui/components/TextField.tsx';
+import { SuggestionField, type Suggestion } from '../../../core/ui/components/SuggestionField.tsx';
+import { matchProjects, parseQuickStart } from '../../timer/domain/quick-start.ts';
 import { getGoal, listActiveGoals } from '../../goals/data/goals-repository.ts';
 import { getProject, listProjectsByStatus } from '../../projects/data/projects-repository.ts';
 import { createTask, deleteTask, updateTask, type Task } from '../data/tasks-repository.ts';
+import { parseNewTaskTitle } from '../domain/tasks.ts';
 
 export interface TaskSheetProps {
   /** The task to edit; a new task without it. */
@@ -59,7 +62,8 @@ async function loadOptions(db: Db, projectId: string | null, goalId: string | nu
       color: goalColor(currentGoal.goal, goals.length),
     });
   }
-  return { projects, goals };
+  const active = activeProjects.map((v) => ({ id: v.project.id, title: v.project.title, color: v.color }));
+  return { projects, goals, active };
 }
 
 export function TaskSheet({ task, projectId, goalId, onCreated, onDeleted, onClose }: TaskSheetProps) {
@@ -79,15 +83,44 @@ export function TaskSheet({ task, projectId, goalId, onCreated, onDeleted, onClo
   if (options?.projects.length) assignmentOptions.push({ group: 'Projects', options: options.projects });
   if (options?.goals.length) assignmentOptions.push({ group: 'Goals', options: options.goals });
 
+  // A new task's title can name a project after `#`: suggest the active ones, as the focus panel does.
+  const parsedTitle = parseQuickStart(title);
+  const projectSuggestions: Suggestion[] =
+    task || !parsedTitle.hasHash
+      ? []
+      : (parsedTitle.projectQuery === null ? (options?.active ?? []).slice(0, 8) : matchProjects(parsedTitle.projectQuery, options?.active ?? [])).map(
+          (p) => ({
+            key: p.id,
+            label: p.title,
+            color: p.color,
+            choose: () => {
+              setTitle(parsedTitle.title);
+              setAssignment(`project:${p.id}`);
+              setError(undefined);
+            },
+          }),
+        );
+
   async function save() {
-    if (title.trim() === '') {
+    let saveTitle = title;
+    let saveAssignment = assignment;
+    if (!task) {
+      const parsed = parseNewTaskTitle(title, options?.active ?? []);
+      if ('error' in parsed) {
+        setError(parsed.error);
+        return;
+      }
+      saveTitle = parsed.title;
+      if (parsed.projectId) saveAssignment = `project:${parsed.projectId}`;
+    }
+    if (saveTitle.trim() === '') {
       setError('Enter a title');
       return;
     }
     if (!dateValid) return;
-    const [kind, id] = assignment.split(':');
+    const [kind, id] = saveAssignment.split(':');
     const input = {
-      title,
+      title: saveTitle,
       notes,
       dueDate,
       projectId: kind === 'project' ? id! : null,
@@ -110,15 +143,28 @@ export function TaskSheet({ task, projectId, goalId, onCreated, onDeleted, onClo
         saveDisabled={!dateValid}
         onDelete={task ? () => setConfirming(true) : undefined}
       >
-        <TextField
-          label="Title"
-          value={title}
-          error={error}
-          onChange={(event) => {
-            setTitle(event.target.value);
-            setError(undefined);
-          }}
-        />
+        {task ? (
+          <TextField
+            label="Title"
+            value={title}
+            error={error}
+            onChange={(event) => {
+              setTitle(event.target.value);
+              setError(undefined);
+            }}
+          />
+        ) : (
+          <SuggestionField
+            label="Title"
+            value={title}
+            error={error}
+            suggestions={projectSuggestions}
+            onChange={(value) => {
+              setTitle(value);
+              setError(undefined);
+            }}
+          />
+        )}
         <TextArea label="Notes" value={notes} onChange={(event) => setNotes(event.target.value)} />
         <DateField label="Due date" value={dueDate} onChange={setDueDate} onValidity={setDateValid} />
         <Select label="Assigned to" value={assignment} onChange={setAssignment} options={assignmentOptions} />

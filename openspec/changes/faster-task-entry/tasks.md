@@ -10,11 +10,11 @@ Apply after `manual-task-order` (TaskSheet no longer has importance then).
 
 ## 2. `#` in the new task title
 
-- [ ] 2.1 Add `parseNewTaskTitle(text, projects)` to `src/features/tasks/domain/tasks.ts`, built on `parseQuickStart` and `resolveProject`. Cover the "Project typed in the new task title" scenarios in `src/features/tasks/domain/tasks.test.ts`: unique prefix, unknown project, and no `#` (`npx vitest run src/features/tasks/domain`).
-- [ ] 2.2 Extract `src/core/ui/components/SuggestionField.tsx` (input, suggestion popup, arrows, Enter or Tab to pick, Escape closes; a plain Enter only, leaving Shift+Enter alone) from `src/features/timer/ui/QuickStartField.tsx`, and rebuild `QuickStartField` on it.
+- [x] 2.1 Add `parseNewTaskTitle(text, projects)` to `src/features/tasks/domain/tasks.ts`, built on `parseQuickStart` and `resolveProject`. Cover the "Project typed in the new task title" scenarios in `src/features/tasks/domain/tasks.test.ts`: unique prefix, unknown project, and no `#` (`npx vitest run src/features/tasks/domain`).
+- [x] 2.2 Extract `src/core/ui/components/SuggestionField.tsx` (input, suggestion popup, arrows, Enter or Tab to pick, Escape closes; a plain Enter only, leaving Shift+Enter alone) from `src/features/timer/ui/QuickStartField.tsx`, and rebuild `QuickStartField` on it.
 - [ ] 2.3 Check the focus panel by hand after the refactor: the suggestions, Tab completion, arrows with Enter, Esc twice, `# port` project suggestions and the "No project named …" error still behave as before (`npx vitest run src/features/timer`).
-- [ ] 2.4 In `src/features/tasks/ui/TaskSheet.tsx`, when creating, use `SuggestionField` for the title with the active projects after `#`. Picking sets "Assigned to" and strips `# …` from the title; saving runs `parseNewTaskTitle`, shows its error under the title or uses the project it found. Editing keeps the plain text field. Verify the scenarios "Suggest projects", "Pick a project", "Editing keeps the #" and "Overrides the preselected project" by hand, and on the phone layout (a narrow browser window or `npm run android`) that the suggestions are visible above the keyboard and can be tapped.
-- [ ] 2.5 Add the `#` hint to the New task part of `docs/SPEC.md` §6.1 ("Also on Home: **New task** …"); verify the text matches the home delta.
+- [x] 2.4 In `src/features/tasks/ui/TaskSheet.tsx`, when creating, use `SuggestionField` for the title with the active projects after `#`. Picking sets "Assigned to" and strips `# …` from the title; saving runs `parseNewTaskTitle`, shows its error under the title or uses the project it found. Editing keeps the plain text field. Verify the scenarios "Suggest projects", "Pick a project", "Editing keeps the #" and "Overrides the preselected project" by hand, and on the phone layout (a narrow browser window or `npm run android`) that the suggestions are visible above the keyboard and can be tapped.
+- [x] 2.5 Add the `#` hint to the New task part of `docs/SPEC.md` §6.1 ("Also on Home: **New task** …"); verify the text matches the home delta.
 
 ## 3. Next-step prompt
 
