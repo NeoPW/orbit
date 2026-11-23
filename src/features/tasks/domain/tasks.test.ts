@@ -3,6 +3,7 @@ import {
   hasHomeOrder,
   hasManualOrder,
   nextStepOutcome,
+  parseNewTaskTitle,
   positionBetween,
   positionTooClose,
   sortOpenTasks,
@@ -99,5 +100,27 @@ describe('nextStepOutcome', () => {
   it('completes directly for tasks that are not next steps or have no project', () => {
     expect(nextStepOutcome({ ...task, isNextStep: false }, [])).toBe('direct');
     expect(nextStepOutcome({ ...task, projectId: null }, [{ id: 'a' }])).toBe('direct');
+  });
+});
+
+describe('parseNewTaskTitle', () => {
+  const projects = [
+    { id: 'a', title: 'Chapter 4: Evaluation' },
+    { id: 'b', title: 'Portfolio site' },
+    { id: 'c', title: 'Portfolio redesign' },
+  ];
+  it('assigns the only project starting with the text', () => {
+    expect(parseNewTaskTitle('Draft intro # chap', projects)).toEqual({ title: 'Draft intro', projectId: 'a' });
+  });
+  it('prefers an exact name over a prefix', () => {
+    expect(parseNewTaskTitle('Update CV # portfolio site', projects)).toEqual({ title: 'Update CV', projectId: 'b' });
+  });
+  it('reports an unknown or ambiguous project', () => {
+    expect(parseNewTaskTitle('Draft intro # garden', projects)).toEqual({ error: 'No project named garden' });
+    expect(parseNewTaskTitle('Fix issue #12', projects)).toEqual({ error: 'No project named 12' });
+    expect(parseNewTaskTitle('Draft # portf', projects)).toEqual({ error: 'No project named portf' });
+  });
+  it('keeps a title without #', () => {
+    expect(parseNewTaskTitle('  Tax return ', projects)).toEqual({ title: 'Tax return', projectId: null });
   });
 });

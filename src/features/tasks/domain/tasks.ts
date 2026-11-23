@@ -1,3 +1,5 @@
+import { parseQuickStart, resolveProject } from '../../timer/domain/quick-start.ts';
+
 export interface OrderableTask {
   createdAt: string;
   isNextStep?: boolean;
@@ -77,4 +79,17 @@ export function nextStepOutcome(
 ): NextStepOutcome {
   if (!task.projectId || !task.isNextStep) return 'direct';
   return openNextSteps.some((t) => t.id !== task.id) ? 'direct' : 'ask';
+}
+
+export type NewTaskTitle = { title: string; projectId: string | null } | { error: string };
+
+/**
+ * The title typed for a new task, which may name a project: `title # project` (see openspec tasks, "Project typed in
+ * the new task title"). The project is the active one named exactly, else the only one starting with the text; none is an error.
+ */
+export function parseNewTaskTitle(text: string, projects: { id: string; title: string }[]): NewTaskTitle {
+  const { title, projectQuery } = parseQuickStart(text);
+  if (projectQuery === null) return { title, projectId: null };
+  const project = resolveProject(projectQuery, projects);
+  return project ? { title, projectId: project.id } : { error: `No project named ${projectQuery}` };
 }
