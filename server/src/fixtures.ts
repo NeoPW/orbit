@@ -57,6 +57,7 @@ export function habit(id: string, updatedAt: string, extra: Partial<WireRow> = {
     weekdays: null,
     times_per_week: null,
     reminder_time: null,
+    duration_minutes: null,
     active: 1,
     ...extra,
   };

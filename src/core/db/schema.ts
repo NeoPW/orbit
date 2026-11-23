@@ -97,6 +97,8 @@ export const columns = {
     weekdays: text('weekdays', { mode: 'json' }).$type<number[]>(),
     timesPerWeek: integer('times_per_week'),
     reminderTime: text('reminder_time'),
+    /** Optional duration in whole minutes (1-1440); a focus session for the habit starts with it as its time limit. */
+    durationMinutes: integer('duration_minutes'),
     active: integer('active', { mode: 'boolean' }).notNull().default(true),
   }),
   logEntries: () => ({
