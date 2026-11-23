@@ -18,7 +18,7 @@ import { EmptyState } from '../../../core/ui/components/EmptyState.tsx';
 import { PageHeader } from '../../../core/ui/components/PageHeader.tsx';
 import { Tile } from '../../../core/ui/components/Tile.tsx';
 import { checkHabit, uncheckHabit } from '../../habits/data/habits-repository.ts';
-import { reopenTask, type Task } from '../../tasks/data/tasks-repository.ts';
+import { moveTodoTask, reopenTask, type Task } from '../../tasks/data/tasks-repository.ts';
 import { LogWorkSheet } from '../../work-log/ui/LogWorkSheet.tsx';
 import { TodayTile } from '../../timeline/ui/TodayTile.tsx';
 import { TaskList } from '../../tasks/ui/TaskRow.tsx';
@@ -51,9 +51,9 @@ export function HomeScreen() {
   const data = useLiveQuery(
     async (database) => {
       const [todo, more, projects, habits, done] = await Promise.all([
-        listTodo(database, today),
-        listMoreTodo(database, today),
-        listActiveProjects(database, today),
+        listTodo(database),
+        listMoreTodo(database),
+        listActiveProjects(database),
         listHabitsForToday(database, today),
         listDoneToday(database, today),
       ]);
@@ -140,7 +140,6 @@ export function HomeScreen() {
   const todoRowProps = (task: Task) => ({
     compact: true,
     highlighted: highlightedTask?.id === task.id,
-    importance: itemByTask.get(task.id)?.importance,
     context: itemByTask.get(task.id)?.context ?? undefined,
     projectColor: itemByTask.get(task.id)?.projectColor,
     projectName: itemByTask.get(task.id)?.projectTitle ?? undefined,
@@ -250,7 +249,13 @@ export function HomeScreen() {
               />
             ) : (
               <div className={styles.todoList}>
-                <TaskList tasks={todo.map((item) => item.task)} label="To do" rowProps={todoRowProps} />
+                <TaskList
+                  tasks={todo.map((item) => item.task)}
+                  label="To do"
+                  rowProps={todoRowProps}
+                  grouped={false}
+                  onMove={(taskId, toIndex) => void moveTodoTask(db, clock, taskId, toIndex)}
+                />
               </div>
             )}
             {more.length > 0 && (

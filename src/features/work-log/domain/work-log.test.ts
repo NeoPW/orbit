@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { formatDuration, occurrenceTime, parseDuration, recentFirst, workOnGoal, type GoalWorkEntry, type WorkLinks } from './work-log.ts';
+import {
+  editedOccurrence,
+  formatDuration,
+  lastLoggedBy,
+  occurrenceTime,
+  parseDuration,
+  recentFirst,
+  workOnGoal,
+  type GoalWorkEntry,
+  type WorkLinks,
+} from './work-log.ts';
 
 describe('duration', () => {
   it('formats', () => {
@@ -30,6 +40,69 @@ describe('recent first', () => {
   });
 });
 
+describe('edited entry time', () => {
+  const local = (h: number, m: number) => new Date(2026, 10, 5, h, m);
+  const now = local(15, 0);
+  const entry = (source: string, at: Date, durationMinutes: number | null) => ({
+    source,
+    occurredAt: at.toISOString(),
+    durationMinutes,
+  });
+  const edited = (e: ReturnType<typeof entry>, start: string, minutes: number | null, at: Date = now) => {
+    const r = editedOccurrence(e, start, minutes, at);
+    return r.ok ? r.at.getTime() : r.error;
+  };
+
+  it('shortens a manual entry (stored at its end)', () => {
+    expect(edited(entry('manual', local(14, 30), 60), '13:30', 45)).toBe(local(14, 15).getTime());
+  });
+
+  it('moves a timer stretch (stored at its start)', () => {
+    expect(edited(entry('timer', local(9, 0), 45), '08:30', 45)).toBe(local(8, 30).getTime());
+  });
+
+  it('adds time to a dot', () => {
+    expect(edited(entry('habit', local(7, 10), null), '07:10', 40)).toBe(local(7, 50).getTime());
+  });
+
+  it('rejects a start in the future', () => {
+    expect(edited(entry('manual', local(14, 30), 60), '16:00', 60)).toBe('The start time is in the future');
+  });
+});
+
+describe('recently used within a project', () => {
+  const at = (occurredAt: string, over: { taskId?: string; projectId?: string }) => ({
+    taskId: null,
+    projectId: null,
+    occurredAt,
+    ...over,
+  });
+
+  it("orders a project's tasks by their latest entry, then by title", () => {
+    const tasks = [
+      { id: 'a', title: 'Add figures' },
+      { id: 'b', title: 'Check references' },
+      { id: 'c', title: 'Draft intro' },
+    ];
+    const entries = [at('2026-11-04T10:00:00Z', { taskId: 'c' }), at('2026-11-01T10:00:00Z', { taskId: 'b' })];
+    expect(recentFirst(tasks, lastLoggedBy(entries, 'taskId')).map((t) => t.title)).toEqual([
+      'Draft intro',
+      'Check references',
+      'Add figures',
+    ]);
+  });
+
+  it('counts the work on a task for its project', () => {
+    const projects = [
+      { id: 'A', title: 'A' },
+      { id: 'B', title: 'B' },
+    ];
+    // Entries of a task carry their project id.
+    const entries = [at('2026-10-28T10:00:00Z', { projectId: 'A' }), at('2026-11-04T10:00:00Z', { projectId: 'B', taskId: 't' })];
+    expect(recentFirst(projects, lastLoggedBy(entries, 'projectId')).map((p) => p.id)).toEqual(['B', 'A']);
+  });
+});
+
 describe('work on a goal', () => {
   const entry = (over: Partial<GoalWorkEntry>): GoalWorkEntry => ({
     projectId: null,
@@ -40,7 +113,11 @@ describe('work on a goal', () => {
     ...over,
   });
   const week = { from: '2026-11-02T00:00:00Z', to: '2026-11-09T00:00:00Z' };
-  const links = (over: Partial<WorkLinks> = {}): WorkLinks => ({ projectGoals: new Map(), tasks: new Map(), ...over });
+  const links = (over: Partial<WorkLinks> = {}): WorkLinks => ({
+    projectGoals: new Map(),
+    tasks: new Map(),
+    ...over,
+  });
 
   it('counts work through a project', () => {
     const l = links({ projectGoals: new Map([['p1', 'g1']]) });
@@ -49,13 +126,18 @@ describe('work on a goal', () => {
   });
 
   it('counts work on an assigned task', () => {
-    const l = links({ tasks: new Map([['t1', { projectId: null, goalId: 'g1' }]]) });
+    const l = links({
+      tasks: new Map([['t1', { projectId: null, goalId: 'g1' }]]),
+    });
     const result = workOnGoal([entry({ taskId: 't1', durationMinutes: 45 })], 'g1', l, week);
     expect(result.total).toEqual({ count: 1, minutes: 45 });
   });
 
   it('counts a task of a project of the goal', () => {
-    const l = links({ projectGoals: new Map([['p1', 'g1']]), tasks: new Map([['t1', { projectId: 'p1', goalId: null }]]) });
+    const l = links({
+      projectGoals: new Map([['p1', 'g1']]),
+      tasks: new Map([['t1', { projectId: 'p1', goalId: null }]]),
+    });
     expect(workOnGoal([entry({ taskId: 't1' })], 'g1', l, week).total.count).toBe(1);
   });
 
@@ -78,11 +160,17 @@ describe('occurrenceTime', () => {
   });
 
   it('ends at the start plus the duration', () => {
-    expect(occurrenceTime('13:00', 90, now)).toEqual({ ok: true, at: at(14, 30) });
+    expect(occurrenceTime('13:00', 90, now)).toEqual({
+      ok: true,
+      at: at(14, 30),
+    });
   });
 
   it('is the start itself without a duration', () => {
-    expect(occurrenceTime('13:00', null, now)).toEqual({ ok: true, at: at(13, 0) });
+    expect(occurrenceTime('13:00', null, now)).toEqual({
+      ok: true,
+      at: at(13, 0),
+    });
   });
 
   it('rejects a start in the future', () => {

@@ -65,7 +65,7 @@ The weekly review SHALL lead through six steps in order: 1 look back (the week s
 - **THEN** the progress bar shows step 3 of 6
 
 ### Requirement: Projects step
-The projects step SHALL go through every active project with its open tasks. For each, the user SHALL be able to change its status (active, paused, backlog, completed), mark and unmark next steps, add a task as next step, change its importance and deadline, and write its weekly note for the review week (see weekly-notes). Changes SHALL be applied immediately, as anywhere else in the app.
+The projects step SHALL go through every active project with its open tasks. For each, the user SHALL be able to change its status (active, paused, backlog, completed), mark and unmark next steps, add a task as next step, change its deadline, and write its weekly note for the review week (see weekly-notes). Changes SHALL be applied immediately, as anywhere else in the app.
 
 #### Scenario: Pause a project
 - **WHEN** the user pauses the project "Garden" in the projects step
@@ -76,8 +76,8 @@ The projects step SHALL go through every active project with its open tasks. For
 - **THEN** "Order seeds" is an open task of "Garden" and one of its next steps
 
 #### Scenario: Importance and deadline
-- **WHEN** the user sets the importance of "Garden" to 4 and its deadline to 2026-11-01
-- **THEN** "Garden" has importance 4 and deadline 01-11-2026
+- **WHEN** the user sets the deadline of "Garden" to 2026-11-01
+- **THEN** "Garden" has deadline 01-11-2026, and the step offers no importance control
 
 #### Scenario: Weekly note
 - **WHEN** the user writes "Beds prepared" for "Garden"

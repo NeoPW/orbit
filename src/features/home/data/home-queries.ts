@@ -9,23 +9,9 @@ import { listAreas } from '../../areas/data/areas-repository.ts';
 import { listChecksSince } from '../../habits/data/habits-repository.ts';
 import { isDue, weekStartOf } from '../../habits/domain/habits.ts';
 import { listProjectsByStatus, type ProjectView } from '../../projects/data/projects-repository.ts';
-import { sortByScore } from '../../projects/domain/projects.ts';
-import { applyProjectOrder, compareByRank, effectiveImportance, sortOpenTasks, type RankInput } from '../../tasks/domain/tasks.ts';
-import { toViews, type Task, type TaskView } from '../../tasks/data/tasks-repository.ts';
-
-/** What the rank of a task view needs. */
-export function rankInput(view: TaskView): RankInput {
-  const { task } = view;
-  return {
-    importance: task.importance,
-    dueDate: task.dueDate,
-    createdAt: task.createdAt,
-    projectImportance: view.projectImportance,
-    projectDeadline: view.projectDeadline,
-    projectGoalEnd: view.projectGoalEnd,
-    goalEnd: view.goalEnd,
-  };
-}
+import { sortViewsForPlan } from '../../projects/domain/projects.ts';
+import { sortOpenTasks } from '../../tasks/domain/tasks.ts';
+import { listTodoTasks, toViews, type Task, type TaskView } from '../../tasks/data/tasks-repository.ts';
 
 export interface TodoItem {
   task: Task;
@@ -35,22 +21,26 @@ export interface TodoItem {
   projectTitle: string | null;
   /** CSS colour of its project; null for a standalone task or a goal task. */
   projectColor: string | null;
-  importance: { value: number; inherited: boolean };
 }
 
 /**
  * To do: open next steps of active projects and open tasks outside projects
- * (standalone or assigned to a goal), ranked by importance × urgency.
+ * (standalone or assigned to a goal), in To do order (manual positions first, then time added).
  */
-export async function listTodo(db: Db, today: string): Promise<TodoItem[]> {
-  const { open, activeIds } = await loadOpen(db);
-  return rankTodo(db, open.filter((t) => (t.projectId ? t.isNextStep && activeIds.has(t.projectId) : true)), today);
+export async function listTodo(db: Db): Promise<TodoItem[]> {
+  return toItems(db, await listTodoTasks(db));
 }
 
-/** "Show N more": open tasks of active projects that are not next steps, ranked like To do. */
-export async function listMoreTodo(db: Db, today: string): Promise<TodoItem[]> {
-  const { open, activeIds } = await loadOpen(db);
-  return rankTodo(db, open.filter((t) => !!t.projectId && !t.isNextStep && activeIds.has(t.projectId)), today);
+/**
+ * "Show N more": open tasks of active projects that are not next steps, grouped by project in the order of the
+ * active projects, each project's tasks in its own task order.
+ */
+export async function listMoreTodo(db: Db): Promise<TodoItem[]> {
+  const [{ open }, views] = await Promise.all([loadOpen(db), listProjectsByStatus(db, 'active')]);
+  const listed = sortViewsForPlan(views).flatMap((view) =>
+    sortOpenTasks(open.filter((t) => t.projectId === view.project.id && !t.isNextStep)),
+  );
+  return toItems(db, listed);
 }
 
 async function loadOpen(db: Db): Promise<{ open: Task[]; activeIds: Set<string> }> {
@@ -67,19 +57,17 @@ async function loadOpen(db: Db): Promise<{ open: Task[]; activeIds: Set<string> 
   return { open, activeIds: new Set(active.map((p) => p.id)) };
 }
 
-async function rankTodo(db: Db, listed: Task[], today: string): Promise<TodoItem[]> {
-  const views = await toViews(db, listed);
-  const compare = compareByRank(today);
-  const ranked = views.sort((a, b) => compare(rankInput(a), rankInput(b)));
-  // The project's manual order breaks ties among its own tasks.
-  return applyProjectOrder(ranked, today, (v) => ({ ...rankInput(v), projectId: v.task.projectId, sortOrder: v.task.sortOrder }))
-    .map((view) => ({
-      task: view.task,
+async function toItems(db: Db, listed: Task[]): Promise<TodoItem[]> {
+  const byId = new Map((await toViews(db, listed)).map((view) => [view.task.id, view]));
+  return listed.map((task) => {
+    const view = byId.get(task.id) as TaskView;
+    return {
+      task,
       context: view.projectTitle ?? view.goalTitle,
       projectTitle: view.projectTitle,
       projectColor: view.projectColor,
-      importance: effectiveImportance({ importance: view.task.importance, projectImportance: view.projectImportance }),
-    }));
+    };
+  });
 }
 
 export interface DoneItem {
@@ -119,8 +107,8 @@ export interface ActiveProjectItem {
 /** How many open tasks a project card on Home shows. */
 export const CARD_TASKS = 3;
 
-/** Active projects by score, each with its first open tasks. */
-export async function listActiveProjects(db: Db, today: string): Promise<ActiveProjectItem[]> {
+/** Active projects by deadline, then time added, each with its first open tasks. */
+export async function listActiveProjects(db: Db): Promise<ActiveProjectItem[]> {
   const [views, areas, open] = await Promise.all([
     listProjectsByStatus(db, 'active'),
     listAreas(db),
@@ -129,18 +117,9 @@ export async function listActiveProjects(db: Db, today: string): Promise<ActiveP
       .from(tasks)
       .where(and(eq(tasks.status, 'open'), notDeleted(tasks))),
   ]);
-  const sorted = sortByScore(
-    views.map((view) => ({
-      view,
-      title: view.project.title,
-      importance: view.project.importance,
-      deadline: view.project.deadline,
-      goalEnd: view.goalEnd,
-    })),
-    today,
-  );
+  const sorted = sortViewsForPlan(views);
   const areaById = new Map(areas.map((a) => [a.id, a]));
-  return sorted.map(({ view }) => {
+  return sorted.map((view) => {
     const own = sortOpenTasks(
       open.filter((t) => t.projectId === view.project.id),
       { nextStepsFirst: true },

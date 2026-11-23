@@ -15,7 +15,14 @@ const DEFAULT_HEIGHT: f64 = 800.0;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let builder = tauri::Builder::default().setup(|app| {
+    let builder = tauri::Builder::default();
+    // Only one desktop Orbit runs at a time; a second start shows the running window.
+    // Must stay the first plugin so the second process exits before `setup` opens the database or the tray.
+    #[cfg(desktop)]
+    let builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+        notify::show_main_window(app);
+    }));
+    let builder = builder.setup(|app| {
         let database = db::open(app)?;
         app.manage(database);
         #[cfg(desktop)]

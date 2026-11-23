@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useServices } from '../../../app/services.ts';
 import type { Db } from '../../../core/db/drizzle.ts';
 import { useLiveQuery } from '../../../core/db/live.ts';
 import type { ScheduleType } from '../../../core/db/schema.ts';
 import fieldStyles from '../../../core/ui/components/TextField.module.css';
+import { Checkbox } from '../../../core/ui/components/Checkbox.tsx';
 import { ConfirmDialog } from '../../../core/ui/components/ConfirmDialog.tsx';
 import { NumberField } from '../../../core/ui/components/NumberField.tsx';
 import { SegmentedControl } from '../../../core/ui/components/SegmentedControl.tsx';
@@ -15,7 +16,10 @@ import { TimeField } from '../../../core/ui/components/TimeField.tsx';
 import { WeekdayPicker } from '../../../core/ui/components/WeekdayPicker.tsx';
 import { getGoal, listActiveGoals } from '../../goals/data/goals-repository.ts';
 import { getProject, listProjectsByStatus } from '../../projects/data/projects-repository.ts';
-import { createHabit, deleteHabit, updateHabit, type Habit, type HabitErrors } from '../data/habits-repository.ts';
+import { addDays } from '../../../core/dates/today.ts';
+import { localToday } from '../../../core/dates/deadline.ts';
+import { checkHabit, createHabit, deleteHabit, isChecked, uncheckHabit, updateHabit, type Habit, type HabitErrors } from '../data/habits-repository.ts';
+import { offeredYesterday } from '../domain/habits.ts';
 
 export interface HabitSheetProps {
   /** The habit to edit; a new habit without it. */
@@ -65,10 +69,31 @@ export function HabitSheet({ habit, projectId, goalId, onClose }: HabitSheetProp
   const [timesPerWeek, setTimesPerWeek] = useState<number | null>(habit?.timesPerWeek ?? 3);
   const [reminder, setReminder] = useState<string | null>(habit?.reminderTime ?? null);
   const [reminderValid, setReminderValid] = useState(true);
+  const [duration, setDuration] = useState<number | null>(habit?.durationMinutes ?? null);
   const [active, setActive] = useState(habit?.active ?? true);
   const [errors, setErrors] = useState<HabitErrors>({});
   const [confirming, setConfirming] = useState(false);
   const options = useLiveQuery((database) => loadOptions(database, initialProject, initialGoal), [initialProject, initialGoal]);
+
+  const yesterday = addDays(localToday(clock()), -1);
+  // Yesterday's check state of an existing habit; null until known. Toggling saves at once, apart from the form.
+  const [doneYesterday, setDoneYesterday] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!habit) return;
+    let cancelled = false;
+    void isChecked(db, habit.id, yesterday).then((checked) => {
+      if (!cancelled) setDoneYesterday(checked);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [db, habit, yesterday]);
+
+  function toggleYesterday(checked: boolean) {
+    if (!habit) return;
+    setDoneYesterday(checked);
+    void (checked ? checkHabit(db, clock, habit.id, yesterday) : uncheckHabit(db, clock, habit.id, yesterday));
+  }
 
   async function save() {
     if (!reminderValid) return;
@@ -80,6 +105,7 @@ export function HabitSheet({ habit, projectId, goalId, onClose }: HabitSheetProp
       weekdays,
       timesPerWeek,
       reminderTime: reminder,
+      durationMinutes: duration,
       active,
     };
     const result = habit ? await updateHabit(db, clock, habit.id, input) : await createHabit(db, clock, input);
@@ -99,6 +125,9 @@ export function HabitSheet({ habit, projectId, goalId, onClose }: HabitSheetProp
         saveDisabled={!reminderValid}
         onDelete={habit ? () => setConfirming(true) : undefined}
       >
+        {habit && doneYesterday !== null && offeredYesterday(habit, yesterday, doneYesterday) && (
+          <Checkbox label="Done yesterday" checked={doneYesterday} onChange={toggleYesterday} />
+        )}
         <TextField
           label="Title"
           value={title}
@@ -135,6 +164,16 @@ export function HabitSheet({ habit, projectId, goalId, onClose }: HabitSheetProp
           />
         )}
         <TimeField label="Reminder time" value={reminder} onChange={setReminder} onValidity={setReminderValid} />
+        <NumberField
+          label="Duration (minutes)"
+          value={duration}
+          error={errors.durationMinutes}
+          placeholder="Optional"
+          onChange={(n) => {
+            setDuration(n);
+            setErrors((e) => ({ ...e, durationMinutes: undefined }));
+          }}
+        />
         <Switch label="Active" checked={active} onChange={setActive} />
       </Sheet>
       {confirming && habit && (

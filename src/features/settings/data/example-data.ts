@@ -29,12 +29,12 @@ const numeric = (title: string, start: number, target: number, current: number, 
   title, description: '', measureType: 'numeric', startValue: start, targetValue: target, currentValue: current, unit, step, habitId: null,
 });
 
-const project = (title: string, o: Partial<ProjectInput> & Pick<ProjectInput, 'importance' | 'color'>): ProjectInput => ({
+const project = (title: string, o: Partial<ProjectInput> & Pick<ProjectInput, 'color'>): ProjectInput => ({
   description: '', areaId: null, goalId: null, deadline: null, status: 'active', ...o, title,
 });
 
 const task = (title: string, o: Partial<TaskInput> = {}): TaskInput => ({
-  notes: '', dueDate: null, importance: null, projectId: null, goalId: null, ...o, title,
+  notes: '', dueDate: null, projectId: null, goalId: null, ...o, title,
 });
 
 const habit = (title: string, o: Partial<HabitInput>): HabitInput => ({
@@ -52,13 +52,13 @@ export async function loadExampleData(db: Db, clock: Clock, today: string): Prom
   const thesis = await createGoal(db, clock, { title: 'Finish thesis draft', description: '', startDate: addDays(today, -52), endDate: addDays(today, 85), color: 'pc0' });
 
   // Projects
-  const chapter4 = await createProject(db, clock, project(MARKER, { areaId: area('Uni'), goalId: thesis, importance: 4, deadline: addDays(today, -1), color: 'pc0' }));
-  const portfolio = await createProject(db, clock, project('Portfolio site', { areaId: area('Job'), goalId: frontend, importance: 4, deadline: addDays(today, 3), color: 'pc1' }));
-  const training = await createProject(db, clock, project('Training block 3', { areaId: area('Sport'), goalId: marathon, importance: 3, color: 'pc2' }));
-  const orbit = await createProject(db, clock, project('Orbit app rebuild', { areaId: area('Personal'), goalId: frontend, importance: 5, color: 'pc3' }));
-  const tax = await createProject(db, clock, project('Tax return 2025', { areaId: area('Personal'), importance: 2, deadline: addDays(today, 24), color: 'pc4' }));
-  await createProject(db, clock, project('Learn Rust basics', { areaId: area('Personal'), importance: 2, status: 'backlog', color: 'pc5' }));
-  await createProject(db, clock, project('Garden redesign', { areaId: area('Personal'), importance: 3, status: 'paused', color: 'pc6' }));
+  const chapter4 = await createProject(db, clock, project(MARKER, { areaId: area('Uni'), goalId: thesis, deadline: addDays(today, -1), color: 'pc0' }));
+  const portfolio = await createProject(db, clock, project('Portfolio site', { areaId: area('Job'), goalId: frontend, deadline: addDays(today, 3), color: 'pc1' }));
+  const training = await createProject(db, clock, project('Training block 3', { areaId: area('Sport'), goalId: marathon, color: 'pc2' }));
+  const orbit = await createProject(db, clock, project('Orbit app rebuild', { areaId: area('Personal'), goalId: frontend, color: 'pc3' }));
+  const tax = await createProject(db, clock, project('Tax return 2025', { areaId: area('Personal'), deadline: addDays(today, 24), color: 'pc4' }));
+  await createProject(db, clock, project('Learn Rust basics', { areaId: area('Personal'), status: 'backlog', color: 'pc5' }));
+  await createProject(db, clock, project('Garden redesign', { areaId: area('Personal'), status: 'paused', color: 'pc6' }));
 
   // Tasks: [project, title, due offset (days) or null, next step]
   const rows: [string, string, number | null, boolean][] = [
@@ -78,7 +78,7 @@ export async function loadExampleData(db: Db, clock: Clock, today: string): Prom
     if (next) await setNextStep(db, clock, id, true);
   }
   await createTask(db, clock, task('Update LinkedIn headline', { goalId: frontend, dueDate: addDays(today, 6) }));
-  await createTask(db, clock, task('Renew passport', { importance: 3, dueDate: addDays(today, 14) }));
+  await createTask(db, clock, task('Renew passport', { dueDate: addDays(today, 14) }));
 
   // Habits
   const idOf = async (input: HabitInput) => {
@@ -163,6 +163,6 @@ export async function loadExampleData(db: Db, clock: Clock, today: string): Prom
   // Archive
   const spanish = await createGoal(db, clock, { title: 'Learn Spanish A2', description: '', startDate: addDays(today, -200), endDate: addDays(today, -120), color: 'pc7' });
   await setGoalStatus(db, clock, spanish, 'completed');
-  const moving = await createProject(db, clock, project('Move flat', { areaId: area('Personal'), importance: 3, color: 'pc4' }));
+  const moving = await createProject(db, clock, project('Move flat', { areaId: area('Personal'), color: 'pc4' }));
   await setProjectStatus(db, clock, moving, 'completed');
 }

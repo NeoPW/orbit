@@ -1,6 +1,6 @@
-import { and, desc, eq, isNotNull, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, isNotNull, sql } from 'drizzle-orm';
 import type { Db } from '../../../core/db/drizzle.ts';
-import { createFields, deleteFields, newId, notDeleted, type Clock } from '../../../core/db/records.ts';
+import { createFields, deleteFields, newId, notDeleted, updateFields, type Clock } from '../../../core/db/records.ts';
 import { habitChecks, habits, logEntries, projects, tasks, type LogSource } from '../../../core/db/schema.ts';
 import { workOnGoal, type GoalWork, type WorkLinks } from '../domain/work-log.ts';
 
@@ -103,7 +103,10 @@ export function listEntriesForTask(db: Db, taskId: string): Promise<LogEntry[]> 
 /** Total minutes worked per habit (its focus sessions and Log work entries), for the habits that have any. */
 export async function habitTotals(db: Db): Promise<Map<string, number>> {
   const rows = await db
-    .select({ habitId: logEntries.habitId, minutes: sql<number>`sum(${logEntries.durationMinutes})` })
+    .select({
+      habitId: logEntries.habitId,
+      minutes: sql<number>`sum(${logEntries.durationMinutes})`,
+    })
     .from(logEntries)
     .where(and(isNotNull(logEntries.habitId), notDeleted(logEntries)))
     .groupBy(logEntries.habitId);
@@ -120,13 +123,38 @@ export async function listWorkOnGoal(db: Db, goalId: string, week: { from: strin
   const [entries, projectRows, taskRows] = await Promise.all([
     listAllEntries(db),
     db.select({ id: projects.id, goalId: projects.goalId }).from(projects).where(notDeleted(projects)),
-    db.select({ id: tasks.id, projectId: tasks.projectId, goalId: tasks.goalId }).from(tasks),
+    db
+      .select({
+        id: tasks.id,
+        projectId: tasks.projectId,
+        goalId: tasks.goalId,
+      })
+      .from(tasks),
   ]);
   const links: WorkLinks = {
     projectGoals: new Map(projectRows.map((p) => [p.id, p.goalId])),
     tasks: new Map(taskRows.map((t) => [t.id, { projectId: t.projectId, goalId: t.goalId }])),
   };
   return workOnGoal(entries, goalId, links, week);
+}
+
+/** Changes an entry's time, duration and note; its source, links and (for a habit check) date stay. */
+export async function updateLogEntry(
+  db: Db,
+  clock: Clock,
+  id: string,
+  values: { occurredAt: string; durationMinutes: number | null; note: string },
+): Promise<void> {
+  await db
+    .update(logEntries)
+    .set({ ...values, note: values.note.trim(), ...updateFields(clock) })
+    .where(eq(logEntries.id, id));
+}
+
+/** The entry with this id, also when it is deleted; undefined when unknown. */
+export async function getLogEntry(db: Db, id: string): Promise<LogEntry | undefined> {
+  const [entry] = await db.select().from(logEntries).where(eq(logEntries.id, id));
+  return entry;
 }
 
 /** Soft-deletes the entry and, when a habit check created it, that check, in one batch. */
@@ -141,12 +169,17 @@ export async function deleteLogEntry(db: Db, clock: Clock, id: string): Promise<
 }
 
 export interface LogTargets {
-  projects: { id: string; title: string }[];
+  /** Active projects, each with its open tasks. */
+  projects: {
+    id: string;
+    title: string;
+    tasks: { id: string; title: string }[];
+  }[];
   /** Open tasks that belong to no project. */
   tasks: { id: string; title: string }[];
 }
 
-/** What Log work offers: active projects and open tasks outside projects. */
+/** What Log work offers: active projects with their open tasks, and open tasks outside projects. */
 export async function listLogTargets(db: Db): Promise<LogTargets> {
   const [projectRows, taskRows] = await Promise.all([
     db
@@ -154,9 +187,15 @@ export async function listLogTargets(db: Db): Promise<LogTargets> {
       .from(projects)
       .where(and(eq(projects.status, 'active'), notDeleted(projects))),
     db
-      .select({ id: tasks.id, title: tasks.title })
+      .select({ id: tasks.id, title: tasks.title, projectId: tasks.projectId })
       .from(tasks)
-      .where(and(isNull(tasks.projectId), eq(tasks.status, 'open'), notDeleted(tasks))),
+      .where(and(eq(tasks.status, 'open'), notDeleted(tasks))),
   ]);
-  return { projects: projectRows, tasks: taskRows };
+  return {
+    projects: projectRows.map((p) => ({
+      ...p,
+      tasks: taskRows.filter((t) => t.projectId === p.id).map((t) => ({ id: t.id, title: t.title })),
+    })),
+    tasks: taskRows.filter((t) => t.projectId === null).map((t) => ({ id: t.id, title: t.title })),
+  };
 }

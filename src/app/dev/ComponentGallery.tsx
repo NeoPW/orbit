@@ -14,7 +14,6 @@ import { ConfirmDialog } from '../../core/ui/components/ConfirmDialog.tsx';
 import { DateField } from '../../core/ui/components/DateField.tsx';
 import { DeadlineBadge } from '../../core/ui/components/DeadlineBadge.tsx';
 import { EmptyState } from '../../core/ui/components/EmptyState.tsx';
-import { ImportanceDots } from '../../core/ui/components/ImportanceDots.tsx';
 import { ListRow } from '../../core/ui/components/ListRow.tsx';
 import { Menu } from '../../core/ui/components/Menu.tsx';
 import { NumberField } from '../../core/ui/components/NumberField.tsx';
@@ -62,7 +61,7 @@ function EditTitleSheet({ initial, onSave, onClose }: { initial: string; onSave:
 /** Sample work of today for the timeline variants. */
 function sampleItems(day: string): TimelineItem[] {
   const at = (hhmm: string) => new Date(`${day}T${hhmm}:00`);
-  const base = { note: '', target: null, running: false, mergeKey: null as string | null, projectName: null as string | null };
+  const base = { note: '', target: null, entryIds: [] as string[], running: false, mergeKey: null as string | null, projectName: null as string | null };
   return [
     { ...base, id: 'a', kind: 'block', start: at('09:00'), end: at('10:15'), minutes: 75, label: 'Thesis', color: 'var(--pc0)' },
     { ...base, id: 'b', kind: 'block', start: at('09:30'), end: at('10:30'), minutes: 60, label: 'Portfolio site', color: 'var(--pc1)' },
@@ -102,7 +101,6 @@ export default function ComponentGallery() {
           <>
             <Chip tone="primary">Active</Chip>
             <Chip color="#1E88E5">Job</Chip>
-            <ImportanceDots value={4} />
             <DeadlineBadge deadline={addDays(today, 3)} />
           </>
         }
@@ -173,13 +171,6 @@ export default function ComponentGallery() {
       <Block title="Theme switcher">
         <ThemeSwitcher value={theme} onChange={setTheme} />
         <ThemeSwitcher showNames value={theme} onChange={setTheme} />
-      </Block>
-
-      <Block title="Importance">
-        {[1, 2, 3, 4, 5].map((n) => (
-          <ImportanceDots key={n} value={n} />
-        ))}
-        <ImportanceDots value={3} inherited />
       </Block>
 
       <Block title="Deadline badges">

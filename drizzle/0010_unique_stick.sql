@@ -1,0 +1,1 @@
+ALTER TABLE `habits` ADD `duration_minutes` integer;

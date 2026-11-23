@@ -109,7 +109,6 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
             title: plan.title,
             notes: '',
             dueDate: null,
-            importance: null,
             projectId: plan.projectId,
             goalId: null,
           });

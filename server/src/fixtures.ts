@@ -40,6 +40,7 @@ export function task(id: string, updatedAt: string, projectId: string | null = n
     status: 'open',
     completed_at: null,
     sort_order: null,
+    home_position: null,
     ...extra,
   };
 }
@@ -57,6 +58,7 @@ export function habit(id: string, updatedAt: string, extra: Partial<WireRow> = {
     weekdays: null,
     times_per_week: null,
     reminder_time: null,
+    duration_minutes: null,
     active: 1,
     ...extra,
   };

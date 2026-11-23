@@ -67,6 +67,7 @@ export const columns = {
     areaId: text('area_id'),
     goalId: text('goal_id'),
     status: text('status', { enum: PROJECT_STATUSES }).notNull().default('active'),
+    /** Deprecated and unused (kept so older builds can still sync it). */
     importance: integer('importance').notNull().default(3),
     deadline: text('deadline'),
     /** Colour slot key (`pc0`..`pc7`); null for projects from before colours existed. */
@@ -80,12 +81,15 @@ export const columns = {
     title: text('title').notNull(),
     notes: text('notes').notNull().default(''),
     dueDate: text('due_date'),
+    /** Deprecated and unused (kept so older builds can still sync it). */
     importance: integer('importance'),
     isNextStep: integer('is_next_step', { mode: 'boolean' }).notNull().default(false),
     status: text('status', { enum: TASK_STATUSES }).notNull().default('open'),
     completedAt: text('completed_at'),
     /** Manual position in the project's open task list; null until the list is reordered. */
     sortOrder: real('sort_order'),
+    /** Manual position in Home's To do list; null until To do is reordered. */
+    homePosition: real('home_position'),
   }),
   habits: () => ({
     ...shared(),
@@ -97,6 +101,8 @@ export const columns = {
     weekdays: text('weekdays', { mode: 'json' }).$type<number[]>(),
     timesPerWeek: integer('times_per_week'),
     reminderTime: text('reminder_time'),
+    /** Optional duration in whole minutes (1-1440); a focus session for the habit starts with it as its time limit. */
+    durationMinutes: integer('duration_minutes'),
     active: integer('active', { mode: 'boolean' }).notNull().default(true),
   }),
   logEntries: () => ({

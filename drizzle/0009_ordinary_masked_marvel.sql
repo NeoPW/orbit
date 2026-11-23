@@ -1,0 +1,1 @@
+ALTER TABLE `tasks` ADD `home_position` real;

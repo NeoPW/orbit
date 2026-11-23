@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createFields, TIMER_ID } from '../../../core/db/records.ts';
 import { logEntries, tasks, timers } from '../../../core/db/schema.ts';
 import { openTestDatabase } from '../../../core/db/testing.ts';
-import { createHabit, listChecksSince } from '../../habits/data/habits-repository.ts';
+import { createHabit, listChecksSince, listHabits } from '../../habits/data/habits-repository.ts';
 import { applyPage } from '../../sync/data/pull.ts';
 import { completeTimer, discardTimer, getTimer, pauseTimer, resumeTimer, setTimerLimit, startTimer } from './timer-repository.ts';
 
@@ -235,5 +235,31 @@ describe('timer repository', () => {
     expect((await getTimer(phone.db))?.projectId).toBe('garden');
     expect((await getTimer(browser.db))?.projectId).toBe('garden');
     expect(await entries(phone.db)).toHaveLength(0);
+  });
+
+  it('starts a habit with a duration with that limit, and a habit without one with none', async () => {
+    const { db } = await openTestDatabase();
+    const base = { projectId: null, goalId: null, scheduleType: 'daily' as const, weekdays: [], timesPerWeek: null, reminderTime: null, active: true };
+    const stretch = await createHabit(db, at('08:00'), { ...base, title: 'Stretch', durationMinutes: 20 });
+    const run = await createHabit(db, at('08:00'), { ...base, title: 'Run 5 km' });
+    if (!stretch.ok || !run.ok) throw new Error('habit invalid');
+    await startTimer(db, at('09:00'), { habitId: stretch.id });
+    expect(await getTimer(db)).toMatchObject({ habitId: stretch.id, plannedMinutes: 20 });
+    await startTimer(db, at('09:10'), { habitId: run.id });
+    expect(await getTimer(db)).toMatchObject({ habitId: run.id, plannedMinutes: null });
+    await startTimer(db, at('09:20'), { projectId: 'p' });
+    expect(await getTimer(db)).toMatchObject({ plannedMinutes: null });
+  });
+
+  it("changing a habit session's limit leaves the habit's duration", async () => {
+    const { db } = await openTestDatabase();
+    const made = await createHabit(db, at('08:00'), {
+      title: 'Stretch', projectId: null, goalId: null, scheduleType: 'daily', weekdays: [], timesPerWeek: null, reminderTime: null, durationMinutes: 20, active: true,
+    });
+    if (!made.ok) throw new Error('habit invalid');
+    await startTimer(db, at('09:00'), { habitId: made.id });
+    await setTimerLimit(db, at('09:05'), 30);
+    expect(await getTimer(db)).toMatchObject({ plannedMinutes: 30 });
+    expect((await listHabits(db))[0]).toMatchObject({ durationMinutes: 20 });
   });
 });

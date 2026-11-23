@@ -1,4 +1,5 @@
 import { useOpenTask } from '../../tasks/ui/TaskPopup.tsx';
+import { useOpenEntryEditor } from '../../work-log/ui/EntryEditor.tsx';
 import { useOpenWorkoutSummary } from '../../workouts/ui/WorkoutSummary.tsx';
 import { NotebookPen } from 'lucide-react';
 import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
@@ -42,9 +43,23 @@ const TWO_LINES_PX = 34;
 const pad = (n: number) => String(n).padStart(2, '0');
 const clockText = (date: Date) => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 
-function openTarget(target: TimelineTarget, openTask: (id: string) => void, openWorkout: (sessionId: string) => void) {
-  if ('workoutSessionId' in target) openWorkout(target.workoutSessionId);
-  else if ('taskId' in target) openTask(target.taskId);
+interface Openers {
+  task: (id: string) => void;
+  workout: (sessionId: string) => void;
+  entries: (ids: string[]) => void;
+}
+
+/** A workout opens its summary, other logged work its entry editor (or the list of its stretches), a running block its target. */
+function openItem(item: TimelineItem, open: Openers) {
+  const target = item.target;
+  if (target && 'workoutSessionId' in target) open.workout(target.workoutSessionId);
+  else if (item.entryIds.length > 0) open.entries(item.entryIds);
+  else if (target) openTarget(target, open.task);
+}
+
+function openTarget(target: TimelineTarget, openTask: (id: string) => void) {
+  if ('workoutSessionId' in target) return;
+  if ('taskId' in target) openTask(target.taskId);
   else if ('projectId' in target) navigate({ name: 'project', id: target.projectId });
   else navigate({ name: 'goal', id: target.goalId });
 }
@@ -64,11 +79,12 @@ interface Tip {
 
 /**
  * The work of one day (Home) or of several days on a shared hour axis (the review), as blocks
- * tinted in their project's colour. A view only: clicking a block opens what it belongs to.
+ * tinted in their project's colour. Clicking a block opens its log entry for editing (a workout its summary).
  */
 export function DayTimeline({ days, now, today, hourHeight, label, emptyText, emptyAction, maxHeight }: DayTimelineProps) {
   const openTask = useOpenTask();
   const openWorkout = useOpenWorkoutSummary();
+  const openEntries = useOpenEntryEditor();
   const [tip, setTip] = useState<Tip | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
 
@@ -145,14 +161,15 @@ export function DayTimeline({ days, now, today, hourHeight, label, emptyText, em
         {item.running && <span className="visually-hidden">(running)</span>}
       </>
     );
-    const className = [isDot ? styles.dot : styles.block, item.running ? styles.running : '', item.target ? styles.clickable : ''].join(
+    const clickable = item.target !== null || item.entryIds.length > 0;
+    const className = [isDot ? styles.dot : styles.block, item.running ? styles.running : '', clickable ? styles.clickable : ''].join(
       ' ',
     );
     const events = {
       onMouseEnter: (e: React.MouseEvent<HTMLElement>) => showTip(item, e.currentTarget),
       onMouseLeave: () => setTip(null),
     };
-    if (!item.target) {
+    if (!clickable) {
       return (
         <div
           key={item.id}
@@ -168,7 +185,6 @@ export function DayTimeline({ days, now, today, hourHeight, label, emptyText, em
         </div>
       );
     }
-    const target = item.target;
     return (
       <button
         key={item.id}
@@ -179,7 +195,7 @@ export function DayTimeline({ days, now, today, hourHeight, label, emptyText, em
         {...events}
         onFocus={(e) => showTip(item, e.currentTarget)}
         onBlur={() => setTip(null)}
-        onClick={() => openTarget(target, openTask, openWorkout)}
+        onClick={() => openItem(item, { task: openTask, workout: openWorkout, entries: openEntries })}
       >
         {content}
       </button>
