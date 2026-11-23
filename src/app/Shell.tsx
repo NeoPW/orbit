@@ -14,6 +14,7 @@ import { ReviewScreen } from '../features/review/ui/ReviewScreen.tsx';
 import { StatsScreen } from '../features/stats/ui/StatsScreen.tsx';
 import { SettingsScreen } from '../features/settings/ui/SettingsScreen.tsx';
 import { CompleteTaskProvider } from '../features/tasks/ui/CompleteTaskProvider.tsx';
+import { EntryEditorProvider } from '../features/work-log/ui/EntryEditor.tsx';
 import { TaskPopupProvider } from '../features/tasks/ui/TaskPopup.tsx';
 import { NotificationClicks } from './useNotificationClicks.ts';
 import { TaskPage } from '../features/tasks/ui/TaskPage.tsx';
@@ -69,16 +70,18 @@ export function Shell() {
     return (
       <CompleteTaskProvider>
         <TaskPopupProvider>
-          <WorkoutSummaryProvider>
-            <NotificationClicks />
-            <AppSheets>
-              <ShortcutProvider>
-                <div className={styles.fullWindow}>
-                  <FocusMode />
-                </div>
-              </ShortcutProvider>
-            </AppSheets>
-          </WorkoutSummaryProvider>
+          <EntryEditorProvider>
+            <WorkoutSummaryProvider>
+              <NotificationClicks />
+              <AppSheets>
+                <ShortcutProvider>
+                  <div className={styles.fullWindow}>
+                    <FocusMode />
+                  </div>
+                </ShortcutProvider>
+              </AppSheets>
+            </WorkoutSummaryProvider>
+          </EntryEditorProvider>
         </TaskPopupProvider>
         <MessageHost />
       </CompleteTaskProvider>
@@ -88,31 +91,33 @@ export function Shell() {
   return (
     <CompleteTaskProvider>
       <TaskPopupProvider>
-        <WorkoutSummaryProvider>
-          <NotificationClicks />
-          <AppSheets>
-            <ShortcutProvider>
-              <div className={`${styles.shell} ${isPhone ? styles.phone : ''}`}>
-                {!isPhone && <Sidebar current={sectionOf(route)} />}
-                <div className={styles.main}>
-                  {storage === 'memory' && (
-                    <p className={styles.banner} role="alert">
-                      <TriangleAlert aria-hidden="true" />
-                      This browser offers no storage for Orbit: data is not saved and is lost when the page is closed.
-                    </p>
-                  )}
-                  <main className={styles.content}>
-                    <Suspense fallback={null}>
-                      <Screen />
-                    </Suspense>
-                  </main>
+        <EntryEditorProvider>
+          <WorkoutSummaryProvider>
+            <NotificationClicks />
+            <AppSheets>
+              <ShortcutProvider>
+                <div className={`${styles.shell} ${isPhone ? styles.phone : ''}`}>
+                  {!isPhone && <Sidebar current={sectionOf(route)} />}
+                  <div className={styles.main}>
+                    {storage === 'memory' && (
+                      <p className={styles.banner} role="alert">
+                        <TriangleAlert aria-hidden="true" />
+                        This browser offers no storage for Orbit: data is not saved and is lost when the page is closed.
+                      </p>
+                    )}
+                    <main className={styles.content}>
+                      <Suspense fallback={null}>
+                        <Screen />
+                      </Suspense>
+                    </main>
+                  </div>
+                  {isPhone && <BottomNav current={sectionOf(route)} />}
+                  <MessageHost />
                 </div>
-                {isPhone && <BottomNav current={sectionOf(route)} />}
-                <MessageHost />
-              </div>
-            </ShortcutProvider>
-          </AppSheets>
-        </WorkoutSummaryProvider>
+              </ShortcutProvider>
+            </AppSheets>
+          </WorkoutSummaryProvider>
+        </EntryEditorProvider>
       </TaskPopupProvider>
     </CompleteTaskProvider>
   );

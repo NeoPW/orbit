@@ -5,7 +5,7 @@ import { createGoal } from '../../goals/data/goals-repository.ts';
 import { createProject } from '../../projects/data/projects-repository.ts';
 import { completeTimer, pauseTimer, resumeTimer, startTimer } from '../../timer/data/timer-repository.ts';
 import { completeTask, createTask } from '../../tasks/data/tasks-repository.ts';
-import { addManualEntry } from '../../work-log/data/log-repository.ts';
+import { addManualEntry, listEntriesForTask } from '../../work-log/data/log-repository.ts';
 import { createExercise } from '../../workouts/data/exercises-repository.ts';
 import { finishSession, startSession } from '../../workouts/data/sessions-repository.ts';
 import { createWorkout } from '../../workouts/data/workouts-repository.ts';
@@ -123,6 +123,22 @@ describe('timeline loader', () => {
     expect(items[0]).toMatchObject({ kind: 'block', minutes: 55, label: 'Thesis' });
     expect(items[0]?.start).toEqual(new Date('2026-10-14T10:00:00.000Z'));
     expect(items[0]?.end).toEqual(new Date('2026-10-14T11:00:00.000Z'));
+  });
+
+  it('keeps the entries of every merged stretch, but none for the running one', async () => {
+    const { db } = await openTestDatabase();
+    const taskId = await createTask(db, clockAt('08:00'), { ...task, title: 'Thesis' });
+    await startTimer(db, clockAt('10:00'), { taskId });
+    await pauseTimer(db, clockAt('10:30'));
+    await resumeTimer(db, clockAt('10:35'));
+    await pauseTimer(db, clockAt('11:00'));
+    await resumeTimer(db, clockAt('11:05'));
+    const [item] = await loadTimeline(db, FROM, TO, new Date('2026-10-14T11:20:00.000Z'));
+    expect(item).toMatchObject({ running: true, minutes: 70 });
+    expect(item?.entryIds).toHaveLength(2);
+    const entries = await listEntriesForTask(db, taskId);
+    expect([...(item?.entryIds ?? [])].sort()).toEqual(entries.map((e) => e.id).sort());
+    expect(entries.map((e) => e.durationMinutes).sort()).toEqual([25, 30]);
   });
 
   it('keeps stretches more than 10 minutes apart separate', async () => {

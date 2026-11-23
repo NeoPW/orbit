@@ -26,6 +26,8 @@ export interface TimelineItem {
   target: TimelineTarget | null;
   /** The task, habit or project of a timer stretch, for merging; null for other work. */
   mergeKey: string | null;
+  /** The log entries behind the item, in time order: one, several for merged stretches, none for a running stretch without logged ones. */
+  entryIds: string[];
   /** The running focus session; its `end` is the time of loading and the view moves it. */
   running: boolean;
 }
@@ -96,6 +98,8 @@ export async function loadTimeline(db: Db, from: string, to: string, now: Date =
       note: entry.note,
       minutes: isBlock ? (entry.durationMinutes ?? 0) : 0,
       running: false,
+      // Workout entries are edited on the phone's session, not here.
+      entryIds: entry.source === 'workout' ? [] : [entry.id],
       mergeKey: entry.source === 'timer' ? stretchKey(entry) : null,
       ...describe(entry, entry.note),
       ...(entry.source === 'workout' ? workout(entry) : {}),
@@ -112,6 +116,7 @@ export async function loadTimeline(db: Db, from: string, to: string, now: Date =
       note: '',
       minutes: Math.max(0, Math.floor((now.getTime() - start.getTime()) / 60000)),
       running: true,
+      entryIds: [],
       mergeKey: stretchKey(timer),
       ...describe({ taskId: timer.taskId, habitId: timer.habitId, projectId: timer.projectId, goalId: null }, ''),
     });

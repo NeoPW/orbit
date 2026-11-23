@@ -28,3 +28,7 @@
 .none {
   color: var(--color-text-muted);
 }
+
+.child {
+  margin-left: var(--space-4);
+}
