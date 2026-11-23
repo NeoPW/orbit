@@ -48,7 +48,8 @@ Desktop-only features (native SQLite, tray, global hotkey, notifications) are re
 - **Task:** a concrete to-do with its own page, a small project of its own. It can stand alone or be assigned to exactly one project or goal, has an optional deadline, an optional importance and notes, and work can be logged on it. Tasks of a project can be marked as its next steps; tasks are not only next steps.
 - **Habit:** a recurring task belonging to a project, a goal, both or neither, with a schedule. Checking it off logs work automatically. A measure can count a habit's check-ins.
 - **Exercise:** something you train, of a type: strength (sets of reps and weight), bodyweight (sets of reps) or endurance (distance and duration, with a distance unit of km or m). Workouts are a phone feature.
-- **Workout:** a named, ordered list of exercises with an optional project, goal and habit; the starting point of a workout session (a later change adds sessions, which log their time as work).
+- **Workout:** a named, ordered list of exercises with an optional project, goal and habit; the starting point of a workout session.
+- **Workout session:** doing a workout on the phone: started from a workout or empty, with the sets logged per exercise. At most one runs at a time; finishing it logs its whole length as work and checks its habit.
 - **Log entry:** a record of work done (when, optionally how long, what, for which project, goal or task).
 - **Timer / focus session:** a stopwatch for work on a project, task or habit that can be paused and resumed, optionally with a time limit. At most one exists at a time, also across devices. Each stretch of work is logged as a log entry when it is paused or completed.
 - **Weekly note:** a short "where does this stand" note on a project or goal for one week, written in the weekly review. Together they form the project's or goal's history.
@@ -126,7 +127,7 @@ A project's next steps are its tasks with `is_next_step` set (see Task); the pro
 - `occurred_at`
 - `duration_minutes` nullable
 - `note`
-- `source`: `manual | habit | task | timer`
+- `source`: `manual | habit | task | timer | workout`
 
 ### Timer
 - `project_id` nullable, `task_id` nullable, `habit_id` nullable: exactly one of them is set
@@ -173,6 +174,19 @@ A project's next steps are its tasks with `is_next_step` set (see Task); the pro
 - `name` (required)
 - `exercise_ids`: JSON array of exercise ids in the workout's order (at least one when saving)
 - `project_id` nullable, `goal_id` nullable, `habit_id` nullable. A link to an item that no longer exists counts as no link.
+
+### WorkoutSession
+- `workout_id` nullable (the workout it started from), `name`
+- `started_at`, `ended_at` nullable (UTC; null while it runs)
+- `project_id`, `goal_id`, `habit_id` nullable: copied from the workout's links (that still exist) at start
+- `log_entry_id` nullable: the entry written when it was finished
+
+### SessionExercise
+- `session_id`, `exercise_id`, `position` (order in the session; gaps allowed)
+
+### SessionSet
+- `session_exercise_id`, `position`
+- `reps` nullable (strength, bodyweight), `weight_kg` nullable (strength), `distance` nullable (endurance, in the exercise's unit), `duration_seconds` nullable (endurance)
 
 ### Settings (local only, not synced)
 - Reminders on/off (default on), default reminder time (default 08:00; used by habits without own time and by deadline reminders), deadline lead time (default 7 days, 1–30), weekly review day and time (default Sunday 18:00), weekly hour target (whole hours 1–168, default none).
@@ -241,6 +255,14 @@ Measured in local calendar days from today to a deadline:
 - Work on a goal is every log entry linked to the goal itself, to one of its projects, or to a task of the goal or of one of its projects. Work is counted per entry and by total duration.
 - A project's work counts for the goal it serves now, also for weeks before it was linked.
 
+### Workout sessions
+- **Start:** from a workout (its name, exercises in order and links) or empty ("Workout", no links); not while another session runs.
+- **Last time** for an exercise: its sets in the most recently started finished session (other than this one) that has sets for it, in any workout. The next set's inputs are last time's set at the same position, else this session's last set of the exercise, else last time's last set.
+- **Sets:** strength = reps (whole, ≥ 1) and weight in kg (≥ 0); bodyweight = reps; endurance = distance (> 0, the exercise's unit) and a time as `m:ss` or `h:mm:ss`, with the pace per km (km) or per 100 m (m).
+- **Finish:** sets the end and writes one log entry (`source = workout`): it starts at the session's start, lasts its length in whole minutes (rounded, at least 1), has the session's name as note and its project and goal; then the session's habit is checked for today. **Discard** removes a running session without an entry.
+- **A finished session** can be edited (name, exercises, sets, start and end; the end after the start), which updates its entry, or deleted with its entry (a habit check stays). Workout entries are not deleted from log entry lists.
+- An exercise's type and unit are fixed once it has sets.
+
 ### Weeks
 - The **current week** is the Monday–Sunday week containing today; **last week** is the one before.
 - The **review week** (for the weekly review) is on Sunday the current week, on any other day last week.
@@ -270,7 +292,7 @@ Desktop layout with a main column and a side column.
 6. **Done today:** the tasks completed today, newest first, each with a checked checkbox (unchecking reopens it), its title, project chip and completion time; hidden while nothing was completed today.
 
 **Side column:**
-1. **Today:** the work already logged today, plotted as blocks on an hour axis (06:00–22:00, extended for earlier or later work), colored like their project and labeled with the task, project or goal. A timer entry starts at its time, any other entry ends at its time (the work was done before it was logged); entries without a duration (a completed task, a habit check) are small dots at the left edge of the column, without text (details on hover), so only focus sessions and tracked time are blocks; a block shows its title, its time range and project when it is high enough; a running focus session is a striped block growing to the current time (a paused one has none); timer blocks of the same task, habit or project with at most 10 minutes between them are drawn as one block from the first start to the last end, counting only the worked minutes; overlapping blocks sit side by side; a line marks now. Clicking a block opens its task, project or goal. A view only, no planning.
+1. **Today:** the work already logged today, plotted as blocks on an hour axis (06:00–22:00, extended for earlier or later work), colored like their project and labeled with the task, project or goal. A timer or workout entry starts at its time, any other entry ends at its time (the work was done before it was logged); entries without a duration (a completed task, a habit check) are small dots at the left edge of the column, without text (details on hover), so only focus sessions and tracked time are blocks; a block shows its title, its time range and project when it is high enough; a running focus session is a striped block growing to the current time (a paused one has none); timer blocks of the same task, habit or project with at most 10 minutes between them are drawn as one block from the first start to the last end, counting only the worked minutes; overlapping blocks sit side by side; a line marks now. A workout block is labelled with the session's name and opens a read-only summary of the session (exercises and sets); clicking any other block opens its task, project or goal. A running workout session is not shown. A view only, no planning.
 2. A compact overview of the active projects, ordered by project score (§5), each with its title, area color, deadline badge and up to 3 of its open tasks in the project's order (next steps first), with "+N more" opening the project when it has more. Clicking a project opens its detail.
 
 Also on Home: **New task** (title, optional deadline, importance and assignment; saving a plain task takes a title and Enter) and **Log work** (record work done without a timer: optional start time, duration and note, then the project or task; without a start time the work ended now, with one it ended at the start plus the duration).
@@ -348,7 +370,9 @@ A desktop screen (`/stats`, `Shift+S`) for how work, review scores, habits and f
 - **Sync:** the server address and this device's token, the time of the last successful sync and whether the last attempt failed (and why: no connection, token refused, different schema version, server error), "Sync now" and "Disconnect".
 
 ### 6.6a Workouts (phone only)
-The Workouts screen exists only in the phone layout (a wide window sends its address to Home; the sidebar has no entry). Two sections, **Workouts** and **Exercises**, each sorted by name with a "New" button and an empty state that creates the first one. A workout row shows its name and its exercises' names, an exercise row its name and type (with the unit for endurance); tapping a row opens its form in a sheet, which also deletes it after confirmation. The workout form has a name, the exercises as a list (an added exercise goes to the end; each can be moved up or down or removed; an exercise is in the list at most once), and optional Project, Goal and Habit. Deleting an exercise removes it from every workout that has it. Workout sessions (sets, "last time", time logged as work, the habit check) and the desktop timeline are a later change.
+The Workouts screen exists only in the phone layout (a wide window sends its address to Home; the sidebar has no entry). Two sections, **Workouts** and **Exercises**, each sorted by name with a "New" button and an empty state that creates the first one. A workout row shows its name and its exercises' names, an exercise row its name and type (with the unit for endurance); tapping a row opens its form in a sheet, which also deletes it after confirmation. The workout form has a name, the exercises as a list (an added exercise goes to the end; each can be moved up or down or removed; an exercise is in the list at most once), and optional Project, Goal and Habit. Deleting an exercise removes it from every workout that has it. A running session is shown at the top with its running time and **Continue**; while none runs, each workout row has a start button and **Empty session** starts one without exercises. **Recent sessions** lists the 10 most recent finished sessions (name, date, time range, length).
+
+The **session screen** (`/workouts/sessions/<id>`, phone only) has the name, the running time (or, for a finished session, date, start and end), and a card per exercise: last time's sets with their date, the logged sets (tap to edit or delete one) and the inputs of the next set, filled in from last time, with **Log set**. A card's menu moves it up or down, replaces it (only while it has no sets) or removes it (with its sets, after confirming). **Add exercise** adds one at the end. A running session is finished (**Finish**) or discarded (**Discard**), a finished one deleted (**Delete**), each after confirming.
 
 ### 6.7 Design and interaction
 The app should feel calm, clear and quick. These guidelines hold for every screen; the shared components and design tokens that implement them are in `src/core/ui/` (in development, `/dev/components` shows them all):

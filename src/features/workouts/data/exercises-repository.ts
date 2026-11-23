@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import type { Db } from '../../../core/db/drizzle.ts';
 import { createFields, deleteFields, notDeleted, updateFields, type Clock } from '../../../core/db/records.ts';
-import { exercises, workouts, type DistanceUnit, type ExerciseKind } from '../../../core/db/schema.ts';
+import { exercises, sessionExercises, sessionSets, workoutSessions, workouts, type DistanceUnit, type ExerciseKind } from '../../../core/db/schema.ts';
 import { validateExercise, type ExerciseErrors } from '../domain/workouts.ts';
 
 export type Exercise = typeof exercises.$inferSelect;
@@ -42,12 +42,27 @@ export async function createExercise(db: Db, clock: Clock, input: ExerciseInput)
   return { ok: true, id: fields.id };
 }
 
+/** Whether the exercise has a set in a session that is not deleted; its type and unit are then fixed. */
+export async function exerciseHasSets(db: Db, exerciseId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ id: sessionSets.id })
+    .from(sessionSets)
+    .innerJoin(sessionExercises, eq(sessionExercises.id, sessionSets.sessionExerciseId))
+    .innerJoin(workoutSessions, eq(workoutSessions.id, sessionExercises.sessionId))
+    .where(and(eq(sessionExercises.exerciseId, exerciseId), notDeleted(sessionSets), notDeleted(sessionExercises), notDeleted(workoutSessions)))
+    .limit(1);
+  return row !== undefined;
+}
+
+/** Updates the exercise; once it has sets, its stored type and unit are kept whatever the input says. */
 export async function updateExercise(db: Db, clock: Clock, id: string, input: ExerciseInput): Promise<ExerciseResult> {
   const errors = await errorsOf(db, input, id);
   if (Object.keys(errors).length > 0) return { ok: false, errors };
+  const values = valuesOf(input);
+  const locked = await exerciseHasSets(db, id);
   await db
     .update(exercises)
-    .set({ ...updateFields(clock), ...valuesOf(input) })
+    .set({ ...updateFields(clock), ...(locked ? { name: values.name } : values) })
     .where(and(eq(exercises.id, id), notDeleted(exercises)));
   return { ok: true, id };
 }

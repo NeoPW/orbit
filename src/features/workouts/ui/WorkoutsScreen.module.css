@@ -1,0 +1,38 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* Rows of a tile, separated by lines (as in the habit list). */
+.list {
+  margin: calc(var(--space-2) * -1);
+}
+
+.list > * + * {
+  border-top: 1px solid var(--color-border);
+  border-radius: 0;
+}
+
+.running {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.runningText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.runningName {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.runningTime {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}

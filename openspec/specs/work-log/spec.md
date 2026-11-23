@@ -63,14 +63,18 @@ The project detail's "Log work" action SHALL open a form with the project alread
 - **THEN** a manual 30-minute entry for that project is listed first in its log
 
 ### Requirement: Log entry display
-Each listed log entry SHALL show its date as `dd-mm-yyyy` and local time as `HH:mm`, its duration if set (for example "45 min" or "1 h 30 min"), its note, and its source (manual, habit, task or timer) as an icon with its name as tooltip.
+Each listed log entry SHALL show its date as `dd-mm-yyyy` and local time as `HH:mm`, its duration if set (for example "45 min" or "1 h 30 min"), its note, and its source (manual, habit, task, timer or workout) as an icon with its name as tooltip.
 
 #### Scenario: Duration format
 - **WHEN** a log entry has a duration of 90 minutes
 - **THEN** it shows "1 h 30 min"
 
+#### Scenario: Workout source
+- **WHEN** a workout log entry is listed
+- **THEN** it shows the workout icon with the tooltip "Workout"
+
 ### Requirement: Delete log entry
-The user SHALL be able to delete a log entry after confirming. Deleting an entry created by a habit check SHALL also remove that habit check.
+The user SHALL be able to delete a log entry after confirming. Deleting an entry created by a habit check SHALL also remove that habit check. A workout entry SHALL NOT offer delete in the list; it is removed by deleting its session on the phone.
 
 #### Scenario: Delete manual entry
 - **WHEN** the user deletes a manual log entry and confirms
@@ -79,6 +83,10 @@ The user SHALL be able to delete a log entry after confirming. Deleting an entry
 #### Scenario: Delete habit entry
 - **WHEN** the user deletes the log entry of today's check of habit "Run" and confirms
 - **THEN** "Run" is shown unchecked on Home
+
+#### Scenario: Workout entry
+- **WHEN** a workout log entry is listed on a project page
+- **THEN** it has no delete button
 
 ### Requirement: Total time worked
 The total time worked SHALL be shown as the sum of the durations of an item's log entries, in the duration format (see "Log entry display"), or "No time logged" without any: on a task's page for the entries of that task, on a project's page for all entries of the project including those of its tasks and habits, and at the right end of each habit's row in Plan's Habits section for the entries of that habit. It SHALL update live when entries are added or deleted.

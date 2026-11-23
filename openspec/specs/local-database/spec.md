@@ -18,11 +18,11 @@ In the browser, the app SHALL ask the browser to keep its storage persistent. If
 - **THEN** no storage warning is shown and saved data survives a reload
 
 ### Requirement: Complete schema from the start
-The database SHALL contain tables for all entities of the product spec: Area, Goal, Measure, MeasureChange, Project, Task, Habit, HabitCheck, LogEntry, Timer, Note, DailyNote, WeeklyReview, ReviewMeasureSnapshot, Exercise and Workout, with the fields defined in `docs/SPEC.md` §4 (including a task's importance and next-step flag, a project's colour, the timer's time limit and session state, the note's target and week, the daily note's date, an exercise's type and distance unit, and a workout's ordered exercises and links), and a local-only settings table that is not synced. A project SHALL NOT store a next step of its own.
+The database SHALL contain tables for all entities of the product spec: Area, Goal, Measure, MeasureChange, Project, Task, Habit, HabitCheck, LogEntry, Timer, Note, DailyNote, WeeklyReview, ReviewMeasureSnapshot, Exercise, Workout, WorkoutSession, SessionExercise and SessionSet, with the fields defined in `docs/SPEC.md` §4 (including a task's importance and next-step flag, a project's colour, the timer's time limit and session state, the note's target and week, the daily note's date, an exercise's type and distance unit, a workout's ordered exercises and links, a workout session's times, links and log entry, and a set's position and values), and a local-only settings table that is not synced. A project SHALL NOT store a next step of its own.
 
 #### Scenario: Fresh install
 - **WHEN** the database is created for the first time
-- **THEN** all sixteen entity tables and the settings table exist and the schema version is that of the latest migration
+- **THEN** all nineteen entity tables and the settings table exist and the schema version is that of the latest migration
 
 #### Scenario: Unique habit check per day
 - **WHEN** a second HabitCheck row is inserted for the same habit and the same date
@@ -47,6 +47,14 @@ The database SHALL contain tables for all entities of the product spec: Area, Go
 #### Scenario: Workout tables added
 - **WHEN** the app opens a database at the schema version before this change that contains tasks and habits
 - **THEN** the migration adds the exercise and workout tables, both empty, and leaves every existing row unchanged
+
+#### Scenario: Session tables added
+- **WHEN** the app opens a database at the schema version before this change that contains exercises and workouts
+- **THEN** the migration adds the workout session, session exercise and session set tables, all empty, and leaves every existing row unchanged
+
+#### Scenario: Workout log source
+- **WHEN** a log entry with the source `workout` is inserted
+- **THEN** it is stored and read back with the source `workout`
 
 ### Requirement: Record identity and timestamps
 Every record SHALL have a client-generated UUID `id`, a `created_at` and `updated_at` timestamp in UTC, and a nullable `deleted_at`. The `id` SHALL be a random UUID v4, except for habit checks, weekly reviews, notes and daily notes, whose `id` SHALL be a UUID v5 derived from their natural key (habit and date; week start; target type, target and week start; date), and the timer, which has one fixed `id`. Creating a record SHALL set `created_at` and `updated_at` to the current time; every update SHALL set `updated_at` to the current time.

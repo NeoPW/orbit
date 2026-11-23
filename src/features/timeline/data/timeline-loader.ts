@@ -1,20 +1,20 @@
 import { and, gte, lt } from 'drizzle-orm';
 import type { Db } from '../../../core/db/drizzle.ts';
 import { notDeleted } from '../../../core/db/records.ts';
-import { goals, habits, logEntries, projects, tasks } from '../../../core/db/schema.ts';
+import { goals, habits, logEntries, projects, tasks, workoutSessions } from '../../../core/db/schema.ts';
 import { goalColor, projectColor } from '../../../core/ui/colors.ts';
 import { getTimer } from '../../timer/data/timer-repository.ts';
 import { blockTimes, mergeStretches, stretchKey } from '../domain/day-timeline.ts';
 
 /** What clicking an item opens. */
-export type TimelineTarget = { taskId: string } | { projectId: string } | { goalId: string };
+export type TimelineTarget = { taskId: string } | { projectId: string } | { goalId: string } | { workoutSessionId: string };
 
 export interface TimelineItem {
   id: string;
   kind: 'block' | 'marker';
   start: Date;
   end: Date;
-  /** The task, else the project, else the goal, else the note. */
+  /** For a workout the session's name; otherwise the task, else the project, else the goal, else the note. */
   label: string;
   /** The project's title, for the second line of a block; null without a project. */
   projectName: string | null;
@@ -37,7 +37,7 @@ export interface TimelineItem {
  * one item at most 10 minutes apart are joined into one block.
  */
 export async function loadTimeline(db: Db, from: string, to: string, now: Date = new Date()): Promise<TimelineItem[]> {
-  const [entries, timer, projectRows, taskRows, goalRows, habitRows] = await Promise.all([
+  const [entries, timer, projectRows, taskRows, goalRows, habitRows, sessionRows] = await Promise.all([
     db
       .select()
       .from(logEntries)
@@ -47,7 +47,9 @@ export async function loadTimeline(db: Db, from: string, to: string, now: Date =
     db.select().from(tasks),
     db.select().from(goals).where(notDeleted(goals)).orderBy(goals.sortOrder, goals.createdAt),
     db.select().from(habits),
+    db.select({ id: workoutSessions.id, logEntryId: workoutSessions.logEntryId }).from(workoutSessions).where(notDeleted(workoutSessions)),
   ]);
+  const sessionByEntry = new Map(sessionRows.flatMap((s) => (s.logEntryId ? [[s.logEntryId, s.id] as const] : [])));
   const habitById = new Map(habitRows.map((h) => [h.id, h]));
   const projectById = new Map(projectRows.map((p) => [p.id, p]));
   const taskById = new Map(taskRows.map((t) => [t.id, t]));
@@ -77,6 +79,12 @@ export async function loadTimeline(db: Db, from: string, to: string, now: Date =
     return { label, color, target, projectName: liveProject?.title ?? null };
   };
 
+  /** A workout entry is labelled with its session's name (the note) and opens the session's summary. */
+  const workout = (entry: { id: string; note: string }) => {
+    const sessionId = sessionByEntry.get(entry.id);
+    return { label: entry.note.trim() || 'Workout', target: sessionId ? { workoutSessionId: sessionId } : null };
+  };
+
   const items: TimelineItem[] = entries.map((entry) => {
     const { start, end } = blockTimes(entry);
     const isBlock = entry.durationMinutes !== null && entry.durationMinutes > 0;
@@ -90,6 +98,7 @@ export async function loadTimeline(db: Db, from: string, to: string, now: Date =
       running: false,
       mergeKey: entry.source === 'timer' ? stretchKey(entry) : null,
       ...describe(entry, entry.note),
+      ...(entry.source === 'workout' ? workout(entry) : {}),
     };
   });
 

@@ -6,6 +6,9 @@ import { createProject } from '../../projects/data/projects-repository.ts';
 import { completeTimer, pauseTimer, resumeTimer, startTimer } from '../../timer/data/timer-repository.ts';
 import { completeTask, createTask } from '../../tasks/data/tasks-repository.ts';
 import { addManualEntry } from '../../work-log/data/log-repository.ts';
+import { createExercise } from '../../workouts/data/exercises-repository.ts';
+import { finishSession, startSession } from '../../workouts/data/sessions-repository.ts';
+import { createWorkout } from '../../workouts/data/workouts-repository.ts';
 import { loadTimeline } from './timeline-loader.ts';
 
 const FROM = '2026-10-14T00:00:00.000Z';
@@ -155,5 +158,32 @@ describe('timeline loader', () => {
     await startTimer(db, clockAt('10:30'), { taskId: b });
     await completeTimer(db, clockAt('10:40'), '');
     expect(await loadTimeline(db, FROM, TO)).toHaveLength(4);
+  });
+
+  it("labels a workout with its session's name, colours it like its project and opens its session", async () => {
+    const { db } = await openTestDatabase();
+    const projectId = await createProject(db, clockAt('08:00'), { ...project, title: 'Strength block' });
+    const bench = await createExercise(db, clockAt('08:00'), { name: 'Bench press', kind: 'strength', distanceUnit: null });
+    if (!bench.ok) throw new Error('invalid');
+    const workout = await createWorkout(db, clockAt('08:00'), { name: 'Push day', exerciseIds: [bench.id], projectId, goalId: null, habitId: null });
+    if (!workout.ok) throw new Error('invalid');
+    const sessionId = await startSession(db, clockAt('18:05'), workout.id);
+    await finishSession(db, clockAt('19:10'), sessionId);
+    const [item] = await loadTimeline(db, FROM, TO);
+    expect(item).toMatchObject({ kind: 'block', label: 'Push day', minutes: 65, color: 'var(--pc5)', target: { workoutSessionId: sessionId } });
+    expect(item?.start).toEqual(new Date('2026-10-14T18:05:00.000Z'));
+    expect(item?.end).toEqual(new Date('2026-10-14T19:10:00.000Z'));
+  });
+
+  it('shows no running workout and makes a block without its session not clickable', async () => {
+    const { db } = await openTestDatabase();
+    const sessionId = await startSession(db, clockAt('07:00'), null);
+    expect(await loadTimeline(db, FROM, TO, new Date('2026-10-14T07:30:00.000Z'))).toEqual([]);
+    await finishSession(db, clockAt('07:40'), sessionId);
+    const [entry] = await loadTimeline(db, FROM, TO);
+    expect(entry).toMatchObject({ label: 'Workout', target: { workoutSessionId: sessionId } });
+    // A session missing while its entry is there (e.g. not yet synced) leaves the block unclickable.
+    await db.run(`UPDATE workout_sessions SET deleted_at = '2026-10-14T08:00:00.000Z'`);
+    expect((await loadTimeline(db, FROM, TO))[0]?.target).toBeNull();
   });
 });

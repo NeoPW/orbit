@@ -93,4 +93,20 @@ describe('pull', () => {
     expect(rows.exercises).toEqual([swim]);
     expect(rows.workouts).toEqual([workout]);
   });
+
+  it('returns workout sessions, session exercises and sets exactly as pushed', async () => {
+    const driver = await openServerTestDatabase();
+    const base = { created_at: T10_00, updated_at: T10_00, deleted_at: null };
+    const session: WireRow = {
+      id: 's1', ...base, workout_id: 'w1', name: 'Push day', started_at: '2026-11-10T17:05:00.000Z', ended_at: '2026-11-10T18:10:00.000Z',
+      project_id: null, goal_id: null, habit_id: 'h1', log_entry_id: 'l1',
+    };
+    const sessionExercise: WireRow = { id: 'se1', ...base, session_id: 's1', exercise_id: 'e1', position: 0 };
+    const set: WireRow = { id: 'x1', ...base, session_exercise_id: 'se1', position: 0, reps: 8, weight_kg: 62.5, distance: null, duration_seconds: null };
+    await push(driver, { rows: { workout_sessions: [session], session_exercises: [sessionExercise], session_sets: [set] } });
+    const { rows } = await pull(driver, 0);
+    expect(rows.workout_sessions).toEqual([session]);
+    expect(rows.session_exercises).toEqual([sessionExercise]);
+    expect(rows.session_sets).toEqual([set]);
+  });
 });

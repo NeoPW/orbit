@@ -14,7 +14,7 @@ export interface TimeSpan {
 }
 
 /**
- * When the work of a log entry happened. A timer entry logs its start, so it runs from
+ * When the work of a log entry happened. A timer or workout entry logs its start, so it runs from
  * `occurredAt`; any other entry is logged after the work, so it ends at `occurredAt`.
  * Without a duration both times are `occurredAt` (a marker).
  */
@@ -22,7 +22,7 @@ export function blockTimes(entry: { source: string; occurredAt: string; duration
   const at = new Date(entry.occurredAt);
   if (entry.durationMinutes === null || entry.durationMinutes <= 0) return { start: at, end: at };
   const length = entry.durationMinutes * 60000;
-  return entry.source === 'timer'
+  return entry.source === 'timer' || entry.source === 'workout'
     ? { start: at, end: new Date(at.getTime() + length) }
     : { start: new Date(at.getTime() - length), end: at };
 }

@@ -1,4 +1,5 @@
 import { useOpenTask } from '../../tasks/ui/TaskPopup.tsx';
+import { useOpenWorkoutSummary } from '../../workouts/ui/WorkoutSummary.tsx';
 import { NotebookPen } from 'lucide-react';
 import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { navigate } from '../../../core/routing/useRoute.ts';
@@ -41,8 +42,9 @@ const TWO_LINES_PX = 34;
 const pad = (n: number) => String(n).padStart(2, '0');
 const clockText = (date: Date) => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 
-function openTarget(target: TimelineTarget, openTask: (id: string) => void) {
-  if ('taskId' in target) openTask(target.taskId);
+function openTarget(target: TimelineTarget, openTask: (id: string) => void, openWorkout: (sessionId: string) => void) {
+  if ('workoutSessionId' in target) openWorkout(target.workoutSessionId);
+  else if ('taskId' in target) openTask(target.taskId);
   else if ('projectId' in target) navigate({ name: 'project', id: target.projectId });
   else navigate({ name: 'goal', id: target.goalId });
 }
@@ -66,6 +68,7 @@ interface Tip {
  */
 export function DayTimeline({ days, now, today, hourHeight, label, emptyText, emptyAction, maxHeight }: DayTimelineProps) {
   const openTask = useOpenTask();
+  const openWorkout = useOpenWorkoutSummary();
   const [tip, setTip] = useState<Tip | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
 
@@ -176,7 +179,7 @@ export function DayTimeline({ days, now, today, hourHeight, label, emptyText, em
         {...events}
         onFocus={(e) => showTip(item, e.currentTarget)}
         onBlur={() => setTip(null)}
-        onClick={() => openTarget(target, openTask)}
+        onClick={() => openTarget(target, openTask, openWorkout)}
       >
         {content}
       </button>

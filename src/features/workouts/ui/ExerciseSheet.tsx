@@ -1,11 +1,13 @@
 import { useState } from 'react';
+import { useLiveQuery } from '../../../core/db/live.ts';
 import { useServices } from '../../../app/services.ts';
 import type { DistanceUnit, ExerciseKind } from '../../../core/db/schema.ts';
 import { ConfirmDialog } from '../../../core/ui/components/ConfirmDialog.tsx';
 import { SegmentedControl } from '../../../core/ui/components/SegmentedControl.tsx';
 import { Sheet } from '../../../core/ui/components/Sheet.tsx';
 import { TextField } from '../../../core/ui/components/TextField.tsx';
-import { createExercise, deleteExercise, updateExercise, type Exercise } from '../data/exercises-repository.ts';
+import { createExercise, deleteExercise, exerciseHasSets, updateExercise, type Exercise } from '../data/exercises-repository.ts';
+import styles from './ExerciseSheet.module.css';
 import type { ExerciseErrors } from '../domain/workouts.ts';
 
 export const KIND_OPTIONS: { value: ExerciseKind; label: string }[] = [
@@ -34,6 +36,7 @@ export function ExerciseSheet({ exercise, onClose }: ExerciseSheetProps) {
   const [unit, setUnit] = useState<DistanceUnit>(exercise?.distanceUnit ?? 'km');
   const [errors, setErrors] = useState<ExerciseErrors>({});
   const [confirming, setConfirming] = useState(false);
+  const locked = useLiveQuery(async (database) => (exercise ? exerciseHasSets(database, exercise.id) : false), [exercise?.id]) ?? false;
 
   async function save() {
     const input = { name, kind, distanceUnit: kind === 'endurance' ? unit : null };
@@ -57,8 +60,11 @@ export function ExerciseSheet({ exercise, onClose }: ExerciseSheetProps) {
             setErrors({});
           }}
         />
-        <SegmentedControl label="Type" options={KIND_OPTIONS} value={kind} onChange={setKind} />
-        {kind === 'endurance' && <SegmentedControl label="Distance unit" options={UNIT_OPTIONS} value={unit} onChange={setUnit} />}
+        <fieldset className={styles.type} disabled={locked}>
+          <SegmentedControl label="Type" options={KIND_OPTIONS} value={kind} onChange={setKind} />
+          {kind === 'endurance' && <SegmentedControl label="Distance unit" options={UNIT_OPTIONS} value={unit} onChange={setUnit} />}
+          {locked && <p className={styles.note}>The type is fixed once the exercise has sets</p>}
+        </fieldset>
       </Sheet>
       {confirming && exercise && (
         <ConfirmDialog

@@ -5,6 +5,8 @@ export type Route =
   | { name: 'today' }
   /** Exercises and workouts (phone layout only). */
   | { name: 'workouts' }
+  /** A workout session, running or finished (phone layout only). */
+  | { name: 'workout-session'; id: string }
   | { name: 'plan' }
   /** The Review tab; `week` (a Monday, `yyyy-mm-dd`) is kept in the address (`?week=`), the current week when missing. */
   | { name: 'review'; week?: string }
@@ -44,6 +46,7 @@ const ID_PREFIXES = {
   goal: '/goals/',
   project: '/projects/',
   task: '/tasks/',
+  'workout-session': '/workouts/sessions/',
   'review-history': '/review/history/',
 } as const;
 
@@ -84,6 +87,7 @@ export function sectionOf(route: Route): Section | null {
     case 'today':
       return 'today';
     case 'workouts':
+    case 'workout-session':
       return 'workouts';
     case 'settings':
       return 'settings';

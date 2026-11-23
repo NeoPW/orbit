@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { createFields } from '../../../core/db/records.ts';
 import { workouts } from '../../../core/db/schema.ts';
 import { openTestDatabase } from '../../../core/db/testing.ts';
-import { createExercise, deleteExercise, listExercises, updateExercise } from './exercises-repository.ts';
+import { createExercise, deleteExercise, exerciseHasSets, listExercises, updateExercise } from './exercises-repository.ts';
+import { addSessionExercise, getSession, logSet, startSession } from './sessions-repository.ts';
 
 const clock = () => new Date('2026-11-10T10:00:00Z');
 
@@ -53,5 +54,24 @@ describe('exercises repository', () => {
     const rows = await db.select().from(workouts);
     expect(rows.find((w) => w.id === 'w1')?.exerciseIds).toEqual(['x', 'y']);
     expect(rows.find((w) => w.id === 'w2')?.exerciseIds).toEqual(['x']);
+  });
+
+  it('keeps the type and unit once the exercise has sets', async () => {
+    const { db } = await openTestDatabase();
+    const run = await ok(createExercise(db, clock, { name: 'Run', kind: 'endurance', distanceUnit: 'km' }));
+    const swim = await ok(createExercise(db, clock, { name: 'Swim', kind: 'endurance', distanceUnit: 'm' }));
+    const session = await startSession(db, clock, null);
+    await addSessionExercise(db, clock, session, run);
+    await addSessionExercise(db, clock, session, swim);
+    const runRow = (await getSession(db, session))!.exercises[0]!;
+    await logSet(db, clock, runRow.id, { reps: '', weight: '', distance: '5', duration: '27:30' });
+    expect(await exerciseHasSets(db, run)).toBe(true);
+    expect(await exerciseHasSets(db, swim)).toBe(false);
+    await updateExercise(db, clock, run, { name: 'Easy run', kind: 'bodyweight', distanceUnit: 'm' });
+    await updateExercise(db, clock, swim, { name: 'Swim', kind: 'bodyweight', distanceUnit: null });
+    expect(await listExercises(db)).toMatchObject([
+      { name: 'Easy run', kind: 'endurance', distanceUnit: 'km' },
+      { name: 'Swim', kind: 'bodyweight', distanceUnit: null },
+    ]);
   });
 });

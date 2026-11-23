@@ -13,7 +13,7 @@ export const MEASURE_TYPES = ['numeric', 'boolean', 'habit'] as const;
 export const PROJECT_STATUSES = ['active', 'backlog', 'paused', 'completed'] as const;
 export const TASK_STATUSES = ['open', 'done'] as const;
 export const SCHEDULE_TYPES = ['daily', 'weekdays', 'times_per_week'] as const;
-export const LOG_SOURCES = ['manual', 'habit', 'task', 'timer'] as const;
+export const LOG_SOURCES = ['manual', 'habit', 'task', 'timer', 'workout'] as const;
 export const NOTE_TARGET_TYPES = ['project', 'goal'] as const;
 export const EXERCISE_KINDS = ['strength', 'bodyweight', 'endurance'] as const;
 export const DISTANCE_UNITS = ['km', 'm'] as const;
@@ -174,6 +174,41 @@ export const columns = {
     goalId: text('goal_id'),
     habitId: text('habit_id'),
   }),
+  workoutSessions: () => ({
+    ...shared(),
+    /** The workout it started from; null for an empty session. */
+    workoutId: text('workout_id'),
+    name: text('name').notNull(),
+    startedAt: text('started_at').notNull(),
+    /** Null while the session runs. */
+    endedAt: text('ended_at'),
+    /** Copied from the workout's resolved links at start. */
+    projectId: text('project_id'),
+    goalId: text('goal_id'),
+    habitId: text('habit_id'),
+    /** The log entry written when the session was finished. */
+    logEntryId: text('log_entry_id'),
+  }),
+  sessionExercises: () => ({
+    ...shared(),
+    sessionId: text('session_id').notNull(),
+    exerciseId: text('exercise_id').notNull(),
+    /** Order within the session; gaps are allowed. */
+    position: integer('position').notNull(),
+  }),
+  sessionSets: () => ({
+    ...shared(),
+    sessionExerciseId: text('session_exercise_id').notNull(),
+    position: integer('position').notNull(),
+    /** Strength and bodyweight. */
+    reps: integer('reps'),
+    /** Strength, in kg. */
+    weightKg: real('weight_kg'),
+    /** Endurance, in the exercise's distance unit. */
+    distance: real('distance'),
+    /** Endurance. */
+    durationSeconds: integer('duration_seconds'),
+  }),
   weeklyReviews: () => ({
     ...shared(),
     weekStart: text('week_start').notNull(),
@@ -214,6 +249,12 @@ export const exercises = sqliteTable('exercises', columns.exercises());
 
 export const workouts = sqliteTable('workouts', columns.workouts());
 
+export const workoutSessions = sqliteTable('workout_sessions', columns.workoutSessions());
+
+export const sessionExercises = sqliteTable('session_exercises', columns.sessionExercises());
+
+export const sessionSets = sqliteTable('session_sets', columns.sessionSets());
+
 export const reviewMeasureSnapshots = sqliteTable('review_measure_snapshots', columns.reviewMeasureSnapshots());
 
 /** Local only, never synced: no shared columns. */
@@ -245,6 +286,9 @@ export const SYNCED_TABLES = {
   weekly_reviews: weeklyReviews,
   exercises: exercises,
   workouts: workouts,
+  workout_sessions: workoutSessions,
+  session_exercises: sessionExercises,
+  session_sets: sessionSets,
 } as const;
 
 export type SyncedTableName = keyof typeof SYNCED_TABLES;

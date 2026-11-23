@@ -1,4 +1,4 @@
-import { CalendarCheck, ListChecks, Pencil, Repeat, Timer, Trash2, type LucideIcon } from 'lucide-react';
+import { CalendarCheck, Dumbbell, ListChecks, Pencil, Repeat, Timer, Trash2, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useServices } from '../../../app/services.ts';
 import { formatDate } from '../../../core/dates/format.ts';
@@ -15,6 +15,7 @@ const SOURCES: Record<LogSource, { icon: LucideIcon; label: string }> = {
   habit: { icon: Repeat, label: 'Habit check' },
   task: { icon: ListChecks, label: 'Task completed' },
   timer: { icon: Timer, label: 'Timer' },
+  workout: { icon: Dumbbell, label: 'Workout' },
 };
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -36,7 +37,7 @@ export interface LogEntryListProps {
   label?: string;
 }
 
-/** Log entries as rows: date, time, duration and note, the source as an icon, and delete after confirming. */
+/** Log entries as rows: date, time, duration and note, the source as an icon, and delete after confirming (not for workout entries). */
 export function LogEntryList({ entries, label = 'Log entries' }: LogEntryListProps) {
   const { db } = useServices();
   const [deleting, setDeleting] = useState<LogEntry | null>(null);
@@ -64,7 +65,8 @@ export function LogEntryList({ entries, label = 'Log entries' }: LogEntryListPro
                   {entry.durationMinutes !== null && entry.note && <span>{formatDuration(entry.durationMinutes)}</span>}
                 </>
               }
-              trailing={<IconButton label="Delete entry" icon={<Trash2 />} onClick={() => setDeleting(entry)} />}
+              // A workout entry is removed by deleting its session on the phone.
+              trailing={entry.source === 'workout' ? undefined : <IconButton label="Delete entry" icon={<Trash2 />} onClick={() => setDeleting(entry)} />}
             />
           </div>
         );
