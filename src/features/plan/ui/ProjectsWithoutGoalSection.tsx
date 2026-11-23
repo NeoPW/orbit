@@ -5,7 +5,6 @@ import { Button } from '../../../core/ui/components/Button.tsx';
 import { Chip } from '../../../core/ui/components/Chip.tsx';
 import { DeadlineBadge } from '../../../core/ui/components/DeadlineBadge.tsx';
 import { EmptyState } from '../../../core/ui/components/EmptyState.tsx';
-import { ImportanceDots } from '../../../core/ui/components/ImportanceDots.tsx';
 import { Section } from '../../../core/ui/components/Section.tsx';
 import { Tile } from '../../../core/ui/components/Tile.tsx';
 import { listAreas } from '../../areas/data/areas-repository.ts';
@@ -62,7 +61,6 @@ export function ProjectsWithoutGoalSection({ onCreate }: PlanSectionProps) {
               <div className={styles.tileMeta}>
                 {area && <Chip color={area.color}>{area.name}</Chip>}
                 {view.deadline && <DeadlineBadge deadline={view.deadline.date} inherited={view.deadline.inherited} />}
-                <ImportanceDots value={view.project.importance} />
                 {view.goalTitle && <span className={styles.goalName}>{view.goalTitle}</span>}
               </div>
             </Tile>

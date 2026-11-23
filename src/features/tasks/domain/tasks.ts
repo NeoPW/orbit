@@ -1,54 +1,6 @@
-import { compareDeadlines, effectiveDeadline, urgency } from '../../projects/domain/projects.ts';
-
-export const DEFAULT_IMPORTANCE = 3;
-
-export interface ImportanceInput {
-  importance: number | null;
-  /** Importance of the task's project, when it has one. */
-  projectImportance?: number | null;
-}
-
-/** The task's own importance, else its project's, else 3; `inherited` tells which. */
-export function effectiveImportance(task: ImportanceInput): { value: number; inherited: boolean } {
-  if (task.importance != null) return { value: task.importance, inherited: false };
-  return { value: task.projectImportance ?? DEFAULT_IMPORTANCE, inherited: true };
-}
-
-export interface RankInput extends ImportanceInput {
-  dueDate: string | null;
-  createdAt: string;
-  /** The project's own deadline and the end of the goal it serves (its effective deadline). */
-  projectDeadline?: string | null;
-  projectGoalEnd?: string | null;
-  /** End date of the goal the task is assigned to directly. */
-  goalEnd?: string | null;
-}
-
-/** The date that drives urgency: due date, else the project's effective deadline, else the task's goal end. */
-export function rankDate(task: RankInput): string | null {
-  return (
-    task.dueDate ??
-    effectiveDeadline({ deadline: task.projectDeadline ?? null, goalEnd: task.projectGoalEnd ?? null })?.date ??
-    task.goalEnd ??
-    null
-  );
-}
-
-/** Importance × urgency. */
-export function taskRank(task: RankInput, today: string): number {
-  return effectiveImportance(task).value * urgency(rankDate(task), today);
-}
-
-/** Rank (highest first), nearest date (none last), then oldest first. */
-export function compareByRank(today: string) {
-  return (a: RankInput, b: RankInput): number =>
-    taskRank(b, today) - taskRank(a, today) ||
-    compareDeadlines(rankDate(a) ?? undefined, rankDate(b) ?? undefined) ||
-    a.createdAt.localeCompare(b.createdAt);
-}
+import { parseQuickStart, resolveProject } from '../../timer/domain/quick-start.ts';
 
 export interface OrderableTask {
-  dueDate: string | null;
   createdAt: string;
   isNextStep?: boolean;
   /** The manual position in the project's list; null until the list is reordered. */
@@ -62,7 +14,7 @@ export function hasManualOrder(tasks: readonly { sortOrder?: number | null }[]):
 
 /**
  * Open task order: with `nextStepsFirst`, next steps lead; then tasks with a manual position, by position;
- * then the rest by due date (none last) and oldest first.
+ * then the rest by time added (oldest first).
  */
 export function sortOpenTasks<T extends OrderableTask>(tasks: T[], options: { nextStepsFirst?: boolean } = {}): T[] {
   return [...tasks].sort((a, b) => {
@@ -72,7 +24,29 @@ export function sortOpenTasks<T extends OrderableTask>(tasks: T[], options: { ne
     const pb = b.sortOrder ?? null;
     if (pa !== null && pb !== null && pa !== pb) return pa - pb;
     if ((pa === null) !== (pb === null)) return pa === null ? 1 : -1;
-    return compareDeadlines(a.dueDate ?? undefined, b.dueDate ?? undefined) || a.createdAt.localeCompare(b.createdAt);
+    return a.createdAt.localeCompare(b.createdAt);
+  });
+}
+
+export interface HomeOrderable {
+  createdAt: string;
+  /** The manual position in Home's To do list; null until To do is reordered. */
+  homePosition?: number | null;
+}
+
+/** Whether any of the tasks has a Home position, that is, the user has reordered To do. */
+export function hasHomeOrder(tasks: readonly { homePosition?: number | null }[]): boolean {
+  return tasks.some((t) => t.homePosition != null);
+}
+
+/** To do order: tasks with a Home position first, by position; then the rest by time added (oldest first). */
+export function sortTodo<T extends HomeOrderable>(tasks: T[]): T[] {
+  return [...tasks].sort((a, b) => {
+    const pa = a.homePosition ?? null;
+    const pb = b.homePosition ?? null;
+    if (pa !== null && pb !== null && pa !== pb) return pa - pb;
+    if ((pa === null) !== (pb === null)) return pa === null ? 1 : -1;
+    return a.createdAt.localeCompare(b.createdAt);
   });
 }
 
@@ -92,45 +66,6 @@ export function positionTooClose(position: number, before: number | null, after:
   return (before !== null && position - before < MIN_POSITION_GAP) || (after !== null && after - position < MIN_POSITION_GAP);
 }
 
-export interface PositionInput {
-  projectId?: string | null;
-  sortOrder?: number | null;
-}
-
-/**
- * Home tie-break: among tasks of one project that tie on rank and date, the manual position decides their order.
- * The tasks take the places the project's positioned tasks already had, so tasks of other projects keep their places.
- */
-export function applyProjectOrder<T>(sorted: T[], today: string, info: (item: T) => RankInput & PositionInput): T[] {
-  const out = [...sorted];
-  let start = 0;
-  while (start < out.length) {
-    const first = info(out[start] as T);
-    const rank = taskRank(first, today);
-    const date = rankDate(first);
-    let end = start + 1;
-    while (end < out.length) {
-      const next = info(out[end] as T);
-      if (taskRank(next, today) !== rank || rankDate(next) !== date) break;
-      end += 1;
-    }
-    if (end - start > 1) {
-      const slots = new Map<string, number[]>();
-      for (let i = start; i < end; i += 1) {
-        const task = info(out[i] as T);
-        if (task.projectId && task.sortOrder != null) slots.set(task.projectId, [...(slots.get(task.projectId) ?? []), i]);
-      }
-      for (const places of slots.values()) {
-        if (places.length < 2) continue;
-        const items = places.map((i) => out[i] as T).sort((a, b) => (info(a).sortOrder as number) - (info(b).sortOrder as number));
-        places.forEach((place, k) => { out[place] = items[k] as T; });
-      }
-    }
-    start = end;
-  }
-  return out;
-}
-
 export type NextStepOutcome = 'direct' | 'ask';
 
 /**
@@ -144,4 +79,17 @@ export function nextStepOutcome(
 ): NextStepOutcome {
   if (!task.projectId || !task.isNextStep) return 'direct';
   return openNextSteps.some((t) => t.id !== task.id) ? 'direct' : 'ask';
+}
+
+export type NewTaskTitle = { title: string; projectId: string | null } | { error: string };
+
+/**
+ * The title typed for a new task, which may name a project: `title # project` (see openspec tasks, "Project typed in
+ * the new task title"). The project is the active one named exactly, else the only one starting with the text; none is an error.
+ */
+export function parseNewTaskTitle(text: string, projects: { id: string; title: string }[]): NewTaskTitle {
+  const { title, projectQuery } = parseQuickStart(text);
+  if (projectQuery === null) return { title, projectId: null };
+  const project = resolveProject(projectQuery, projects);
+  return project ? { title, projectId: project.id } : { error: `No project named ${projectQuery}` };
 }

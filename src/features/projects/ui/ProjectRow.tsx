@@ -3,7 +3,6 @@ import { navigate } from '../../../core/routing/useRoute.ts';
 import type { Area, ProjectStatus } from '../../../core/db/schema.ts';
 import { Chip } from '../../../core/ui/components/Chip.tsx';
 import { DeadlineBadge } from '../../../core/ui/components/DeadlineBadge.tsx';
-import { ImportanceDots } from '../../../core/ui/components/ImportanceDots.tsx';
 import { ListRow } from '../../../core/ui/components/ListRow.tsx';
 import styles from './ProjectRow.module.css';
 import type { ProjectView } from '../data/projects-repository.ts';
@@ -27,7 +26,7 @@ export interface ProjectRowProps {
   trailing?: ReactNode;
 }
 
-/** A project as a row: title, area, importance, effective deadline. Clicking opens its page. */
+/** A project as a row: title, area, effective deadline. Clicking opens its page. */
 export function ProjectRow({ view, area, showStatus = false, showGoal = false, trailing }: ProjectRowProps) {
   const { project, deadline } = view;
   return (
@@ -39,7 +38,6 @@ export function ProjectRow({ view, area, showStatus = false, showGoal = false, t
         <>
           {showStatus && project.status !== 'active' && <Chip tone="amber">{PROJECT_STATUS_LABELS[project.status]}</Chip>}
           {area && <Chip color={area.color}>{area.name}</Chip>}
-          <ImportanceDots value={project.importance} />
           {showGoal && view.goalTitle && <span>{view.goalTitle}</span>}
           {deadline && <DeadlineBadge deadline={deadline.date} inherited={deadline.inherited} />}
         </>

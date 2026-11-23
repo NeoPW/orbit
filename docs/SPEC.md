@@ -9,7 +9,7 @@ A personal, local-first app for tracking work: projects, tasks, habits and the w
 - The same app also runs in a browser, for using it on another computer.
 - An Android app to look at tasks, track time and track workouts (exercises and workouts, with sessions to follow).
 - Syncs between the desktop, the browser and the phone through a small server of its own.
-- See at a glance what to do today, ranked by what matters most, and start focused work on it in one step.
+- See at a glance what to do today, in the order the user chose, and start focused work on it in one step.
 - See at a glance which goals your projects and work serve.
 - Get back into any project quickly via its next steps.
 - Weekly review: see the week's work, then update projects and goals in one place, score the week and plan the next.
@@ -44,8 +44,8 @@ Desktop-only features (native SQLite, tray, global hotkey, notifications) are re
 
 - **Goal:** what you are working toward, time-boxed (e.g. a quarter). Its progress is tracked by its measures, and projects, tasks and habits can serve it.
 - **Measure:** a way to track a goal's progress, belonging to exactly one goal: a number with a target ("Run 100 km"), a yes/no ("Get the certificate") or the check-ins of a habit. A goal can have several measures; they live on the goal's page and are updated there or in the weekly review.
-- **Project:** a body of work, optionally serving one goal. Has an importance, an optional deadline, a status and any number of **next steps**.
-- **Task:** a concrete to-do with its own page, a small project of its own. It can stand alone or be assigned to exactly one project or goal, has an optional deadline, an optional importance and notes, and work can be logged on it. Tasks of a project can be marked as its next steps; tasks are not only next steps.
+- **Project:** a body of work, optionally serving one goal. Has an optional deadline, a status and any number of **next steps**.
+- **Task:** a concrete to-do with its own page, a small project of its own. It can stand alone or be assigned to exactly one project or goal, has an optional deadline and notes, and work can be logged on it. Tasks of a project can be marked as its next steps; tasks are not only next steps.
 - **Habit:** a recurring task belonging to a project, a goal, both or neither, with a schedule. Checking it off logs work automatically. A measure can count a habit's check-ins.
 - **Exercise:** something you train, of a type: strength (sets of reps and weight), bodyweight (sets of reps) or endurance (distance and duration, with a distance unit of km or m). Workouts are a phone feature.
 - **Workout:** a named, ordered list of exercises with an optional project, goal and habit; the starting point of a workout session.
@@ -91,7 +91,7 @@ The server stores the same tables with the same columns, plus a server-set chang
 - `area_id` nullable
 - `goal_id` nullable
 - `status`: `active | backlog | paused | completed`
-- `importance`: integer 1–5
+- `importance`: deprecated and unused (kept in the database so older builds can still sync it)
 - `deadline` nullable
 - `color` nullable: a palette slot (`pc0`…`pc7`) of the colour theme (§6.7); a new project gets the least used slot, and a project without one shows a slot derived from its id
 - `completed_at` nullable (set when the status becomes `completed`, cleared when it changes away from it)
@@ -102,11 +102,12 @@ A project's next steps are its tasks with `is_next_step` set (see Task); the pro
 - `project_id` nullable, `goal_id` nullable: at most one of them is set (a task without either is standalone)
 - `title`, `notes`
 - `due_date` nullable (the task's deadline)
-- `importance` nullable: integer 1–5; when null, the task's importance is inherited (§5, Task rank)
+- `importance` nullable: deprecated and unused (kept in the database so older builds can still sync it)
 - `is_next_step`: bool, default false; only meaningful for a task of a project. A project can have several next steps. The flag lives on the task so that marking next steps on two devices before they sync keeps both.
 - `status`: `open | done`
 - `completed_at` nullable
 - `sort_order` nullable real: the task's manual position in its project's open task list; null until the user reorders that list (see §6.2). A move writes only the moved task, with a position halfway between its new neighbours; the first move numbers the project's open tasks 0, 1, 2 …. It is cleared when the task is assigned elsewhere.
+- `home_position` nullable real: the task's manual position in Home's To do list (§6.1); null until To do is reordered. Same write rule as `sort_order`, independent of it.
 
 ### Habit
 - `title`
@@ -198,30 +199,12 @@ A project's next steps are its tasks with `is_next_step` set (see Task); the pro
 ### Effective deadline
 - Goal: its `end_date`. An active goal past its end date is overdue.
 - Project: `project.deadline ?? end_date of its goal ?? none`
-- Task: its own `due_date` only; a task does not inherit deadlines from its project or goal for display. (For ranking, see Task rank.)
+- Task: its own `due_date` only; a task does not inherit deadlines from its project or goal for display. 
 
-### Urgency
-Measured in local calendar days from today to a deadline:
-
-| Deadline | Urgency |
-|---|---|
-| Overdue | 5 |
-| ≤ 3 days | 4 |
-| ≤ 7 days | 3 |
-| ≤ 30 days | 2 |
-| > 30 days or none | 1 |
-
-### Project score (project overview ordering)
-- `score = importance × urgency`, urgency from the project's effective deadline. Task due dates do not affect a project's score.
-- Sort by score descending; ties broken by nearest effective deadline (none last), then title.
-- The numeric score is not shown; a deadline badge ("due in 3 days", "overdue") makes the ordering self-explanatory.
-
-### Task rank (Home to-do ordering)
-- `rank = importance × urgency`
-- **Importance:** the task's own `importance`; else, for a task of a project, the project's importance; else 3 (goals have no importance, so a task of a goal or a standalone task without its own importance counts as 3).
-- **Urgency:** from the task's `due_date`; else from its project's effective deadline; else from its goal's end date; else 1.
-- Sort by rank descending; ties broken by nearest due date or inherited deadline (none last), then creation (oldest first). Among tied tasks of one project that have a manual position (§6.2), the position decides their order instead of creation; tasks of other projects keep their places.
-- The numeric rank is not shown; importance and deadline appear as dots and a badge.
+### Order of Home's To do
+- Until the user reorders To do, its tasks are listed by time added (oldest first). Due dates do not change the order.
+- After a reorder, tasks with a `home_position` come first, by position, and the others after them, by time added; new tasks and newly marked next steps therefore go to the end.
+- Projects (Home and Plan) are ordered by effective deadline (earliest first, none last), then time added (oldest first).
 
 ### Habits
 - A habit is "due today" if:
@@ -241,7 +224,7 @@ Measured in local calendar days from today to a deadline:
 ### Next steps
 - Any open task of a project can be marked or unmarked as a next step; a project can have several.
 - Completing a next-step task while the project has other open next steps completes it without a prompt.
-- Completing the project's **last** open next step prompts: "What's the next step?": create a new task, pick one or more existing open tasks, or skip (no next step). Cancelling the prompt leaves the task open.
+- Completing the project's **last** open next step prompts: "What's the next step?": create a new task, pick one or more existing open tasks, or skip (no next step). Cancelling the prompt leaves the task open. When the project has other open tasks the prompt opens on them with the first highlighted (the arrows move, up from the first goes to the new-task field, typing goes to the field); Enter or a click on a task picks it and completes at once, Ctrl+Enter, Ctrl+click or the task's checkbox select several first.
 
 ### Timer and focus
 - Starting a session while another exists logs the other one's running stretch (a paused one just ends). A session starts without a time limit.
@@ -288,20 +271,20 @@ Desktop layout with a main column and a side column.
 2. **Focus panel:** a text field "What are you working on?" that suggests matching open tasks and active habits (with their project colour and name), then matching active projects (marked "Project"; picking one, or typing a project's exact name, focuses on the project) while typing (Tab accepts the highlighted or first suggestion), and Start (no length is chosen; sessions start without a time limit). Text that is not an existing task creates one when starting: `title # project` puts the new task in that project (after `#` the active projects are suggested; a prefix is enough when it is unique), without `#` it is a standalone task, and `# project` alone starts on the project itself. An unknown project name shows an error and disables Start. While a session runs, the panel shows what it runs for, the worked time counting live (with the time limit and overtime if set), **Pause**, **Complete**, and a button to enter focus mode again. While it is paused, the panel shows it compactly (marked Paused, with **Resume**, **Complete** and focus mode) above the field and Start, so something else can be started; that ends the paused session (its time stays logged, its task stays open). On Home, `P` pauses a running session, `R` resumes a paused one and `C` opens the Complete dialog of the session.
 3. **Today's note:** directly under the focus panel (not in the side column, so also on the phone): the daily note of today (§4), saved as it is typed. While it is not focused it shows formatted (headings `#`–`###`, bullets, `- [ ]` checkboxes that can be ticked, bold, italic, code); clicking it or `N` edits the text. In the text, Enter continues a bullet or checkbox line (on an empty one it ends the list) and Tab / Shift+Tab indent and outdent list lines. Earlier days' notes are kept but not shown yet.
 4. **Habits due today:** in their own row, as compact chips labeled with their project or goal; clicking a chip checks or unchecks it, and its small start button starts a focus session on the habit (a habit is like a recurring task: it can be focused on and its time is logged on it). Habits are not ranked with tasks.
-5. **To do:** the open next-step tasks of active projects and the open tasks outside projects (standalone or assigned to a goal), ranked by task rank (§5). Each row shows a checkbox, the title, its project or goal, importance dots and a deadline badge; a row can be started as a focus session directly. Clicking a row opens the task in the task popup (§6.3). Below the list, a small toggle on the right (a chevron and a number) shows the other open tasks of active projects (not next steps) below it, ranked the same way; it starts collapsed and `A` toggles it. On the desktop Home works from the keyboard: `J`/`K` or the up and down arrows move a highlight through the To do list (wrapping around at both ends), the left and right arrows through the habits due today, `1`–`9` highlight the 1st–9th task and `Shift+1`–`Shift+9` the 1st–9th habit; `Space` starts focus on the highlighted task or habit, `X` completes the task or checks the habit, `Enter` opens the task popup or checks the habit.
+5. **To do:** the open next-step tasks of active projects and the open tasks outside projects (standalone or assigned to a goal), in the To do order (§5). Each row shows a drag handle, a checkbox, the title, its project or goal and a deadline badge; a row can be started as a focus session directly. Rows are reordered by dragging the handle or with `Alt+↑` / `Alt+↓` on the focused handle; the order is kept and synced. Clicking a row opens the task in the task popup (§6.3). Below the list, a small toggle on the right (a chevron and a number) shows the other open tasks of active projects (not next steps) below it, grouped by project in the order of the active projects and each project's task order (not reorderable there); it starts collapsed and `A` toggles it. On the desktop Home works from the keyboard: `J`/`K` or the up and down arrows move a highlight through the To do list (wrapping around at both ends), the left and right arrows through the habits due today, `1`–`9` highlight the 1st–9th task and `Shift+1`–`Shift+9` the 1st–9th habit; `Space` starts focus on the highlighted task or habit, `X` completes the task or checks the habit, `Enter` opens the task popup or checks the habit.
 6. **Done today:** the tasks completed today, newest first, each with a checked checkbox (unchecking reopens it), its title, project chip and completion time; hidden while nothing was completed today.
 
 **Side column:**
 1. **Today:** the work already logged today, plotted as blocks on an hour axis (06:00–22:00, extended for earlier or later work), colored like their project and labeled with the task, project or goal. A timer or workout entry starts at its time, any other entry ends at its time (the work was done before it was logged); entries without a duration (a completed task, a habit check) are small dots at the left edge of the column, without text (details on hover), so only focus sessions and tracked time are blocks; a block shows its title, its time range and project when it is high enough; a running focus session is a striped block growing to the current time (a paused one has none); timer blocks of the same task, habit or project with at most 10 minutes between them are drawn as one block from the first start to the last end, counting only the worked minutes; overlapping blocks sit side by side; a line marks now. A workout block is labelled with the session's name and opens a read-only summary of the session (exercises and sets); clicking any other block opens its task, project or goal. A running workout session is not shown. A view only, no planning.
-2. A compact overview of the active projects, ordered by project score (§5), each with its title, area color, deadline badge and up to 3 of its open tasks in the project's order (next steps first), with "+N more" opening the project when it has more. Clicking a project opens its detail.
+2. A compact overview of the active projects, ordered by deadline, then time added (§5), each with its title, area color, deadline badge and up to 3 of its open tasks in the project's order (next steps first), with "+N more" opening the project when it has more. Clicking a project opens its detail.
 
-Also on Home: **New task** (title, optional deadline, importance and assignment; saving a plain task takes a title and Enter) and **Log work** (record work done without a timer: optional start time, duration and note, then the project or task; without a start time the work ended now, with one it ended at the start plus the duration).
+Also on Home: **New task** (title, optional deadline and assignment; saving a plain task takes a title and Enter; typing `#` in the title suggests the active projects, as the focus panel does, so `Draft intro # chap` creates "Draft intro" in that project) and **Log work** (record work done without a timer: optional start time, duration and note, then the project or task; without a start time the work ended now, with one it ended at the start plus the duration).
 
 **Focus mode:** starting a focus session opens a full-window view showing only the task, habit or project, its notes and a large timer (with the time limit and overtime, if set), a "Time limit" menu, **Pause** or **Resume** and **Complete**, with **Discard** in the top-right corner. Pause and Resume have no dialog; Complete follows §5 (Timer and focus). Leaving focus mode keeps the session as it is. Keys: `Space` pause/resume, `Enter` complete (Enter in the dialog confirms), `Esc` leave, `Delete` discard, `L` the time limit menu, `+`/`−` the limit 5 minutes longer or shorter.
 
 ### 6.2 Project detail
-- A header with title, status chip, area chip, importance dots and deadline badge (marked when taken from the goal), then description and the goal it serves (clicking it opens the goal page).
-- **Next steps** (marked in the task list instead of being shown twice) and the open tasks; add, complete and delete tasks, mark and unmark next steps; clicking a task opens the task popup. Open tasks are ordered by due date, then age, until the user reorders them: each row has a handle to drag (or `Alt+↑` / `Alt+↓` on the focused handle), within its group (the next steps stay on top of the other tasks). After a move the list follows the user's order, new tasks come after the ordered ones, and "Reset order" returns to due-date order.
+- A header with title, status chip, area chip and deadline badge (marked when taken from the goal), then description and the goal it serves (clicking it opens the goal page).
+- **Next steps** (marked in the task list instead of being shown twice) and the open tasks; add, complete and delete tasks, mark and unmark next steps; clicking a task opens the task popup. Open tasks are ordered by time added until the user reorders them: each row has a handle to drag (or `Alt+↑` / `Alt+↓` on the focused handle), within its group (the next steps stay on top of the other tasks). After a move the list follows the user's order, new tasks come after the ordered ones, and "Reset order" returns to time-added order.
 - **Weekly notes:** the project's notes, newest week first.
 - Habits belonging to this project.
 - Log entries for this project (most recent first), with the total time worked on it (including its tasks and habits) in the section header.
@@ -310,7 +293,7 @@ Also on Home: **New task** (title, optional deadline, importance and assignment;
 ### 6.3 Task page and popup
 A task opens in a **popup** centred over the current screen (full screen on the phone) wherever it is clicked in a list: Home (To do, Done today, the project cards' next steps), the project, goal and Plan pages, the review (projects step and completed tasks) and the task blocks of the day timelines. The popup shows the content below plus **Open page**, which opens the task page at its own address (also reached from the command palette and by address). `Esc`, the close button and a click beside the popup close it; the edit sheet or a confirmation opened from it closes first on `Esc`; any navigation (the assigned project or goal, Open page, the sidebar) closes it; deleting the task closes it.
 
-- Title, notes, deadline, importance (its own, or shown as inherited), status and what the task is assigned to (project or goal, clicking it opens that item), or "Standalone".
+- Title, notes, deadline, status and what the task is assigned to (project or goal, clicking it opens that item), or "Standalone".
 - Marked when it is one of its project's next steps.
 - Actions: complete (with Undo), reopen a done task, edit, delete, log work, start a focus session, and "Mark as next step" / "Remove from next steps" for a project's task.
 - Log entries for this task (most recent first), with the total time worked on it in the section header.
@@ -340,7 +323,7 @@ The review is the main place where projects and goals are updated.
 - **Review tab:** a header with the week switcher (‹ week ›, and "This week" while another week is shown; the week is kept in the address) and the "Start / Continue / Edit weekly review" button for the review week (§5; its tooltip names the week), then the dashboard of the **shown week** (the current week so far, unless another is chosen) with two panels of its own: the plan for the shown week (written in the completed review of the week before; each review keeps its plan) and the history (the latest 5 reviews with week and score, "Show all" for every one).
 - **Guided flow**, as full pages with a progress indicator and Back / Next:
   1. **Look back:** the review week's summary: the work done.
-  2. **Projects:** go through each active project and update it: status, next steps (mark, unmark, add), importance and deadline, and write its weekly note. Changes apply immediately.
+  2. **Projects:** go through each active project and update it: status, next steps (mark, unmark, add) and deadline, and write its weekly note. Changes apply immediately.
   3. **Goals:** for each active goal, update its status and the values of its number and yes/no measures, and write its weekly note. Changes apply immediately.
   4. Score the week (1–10) and write a reflection.
   5. Write the plan for next week.
@@ -386,7 +369,7 @@ The app should feel calm, clear and quick. These guidelines hold for every scree
 - **Colour coding:** every project has its own colour (a slot of the theme palette), shown the same everywhere it appears: a rail and tint on its tile and page, a chip with its name on its tasks and habits, a rail on its next steps. Goals use the same palette; areas stay small chips with a dot. The name always accompanies the colour. Body text meets 4.5:1 contrast. Keyboard focus shows a visible ring; pointer clicks do not.
 - **Phone layout:** below 640 px width (the Android app and narrow browser windows) the app is one column with a bottom navigation (Home, Today, Workouts, Settings) instead of the sidebar, clear of the system bars, with touch targets of at least 44 px and no hover-only controls. Home drops the timeline and the active projects (the timeline is the Today screen, one day at a time with previous/next and swipe); Plan, Review and Stats are desktop screens, and Workouts (below) is a phone screen.
 - **Dropdowns:** a field that picks one value from a list is a styled dropdown (a field-like button and a popup list on the app's own surface), not the browser's native select. It supports groups, optional colour dots (project colours), the keyboard (arrows, Enter, Escape, type-ahead) and works inside sheets.
-- **Less text, more structure:** metadata as chips, icons and badges instead of text lines: importance as dots, status as a colored chip, deadlines as a badge colored by urgency ("Overdue" in red; "Today", "Tomorrow" or "In N days" in amber within the lead time; otherwise the date). Absent values are left out instead of written out ("No area", "No deadline").
+- **Less text, more structure:** metadata as chips, icons and badges instead of text lines: status as a colored chip, deadlines as a badge colored by urgency ("Overdue" in red; "Today", "Tomorrow" or "In N days" in amber within the lead time; otherwise the date). Absent values are left out instead of written out ("No area", "No deadline").
 - **Compact lists:** dense rows and no duplicate rows for the same item on one screen.
 - **Detail pages:** a header with title, status, area and deadline; actions in the header or a menu instead of rows of large buttons.
 - **Empty states:** an icon, one line of text and the action that fills the section.
@@ -436,7 +419,7 @@ The app was rebuilt from scratch in this order, one OpenSpec change each (featur
 2. **Local database:** Drizzle schema with the sync columns, the Tauri SQLite plugin on the desktop and SQLite WASM in the browser.
 3. **Sync server:** Cloudflare Worker + D1, token login, push/pull sync, deploy of the Worker and the browser build.
 4. **App shell:** navigation, theme, shared components, messages.
-5. **Features** (one change, `features`): areas, goals and measures; projects and tasks (with next steps and task importance); habits; work log, timer and focus mode; Home; Plan; Review with weekly notes; Settings; desktop notifications.
+5. **Features** (one change, `features`): areas, goals and measures; projects and tasks (with next steps); habits; work log, timer and focus mode; Home; Plan; Review with weekly notes; Settings; desktop notifications.
 6. **Android companion** (Tauri mobile): phone layout below 640 px (bottom navigation Home, Today, Settings), Home with focus, habits, To do and Done today, quick add, the Today timeline with day navigation and swipe, sync with the deployed server; then Android notifications (habit and deadline reminders checked with the server before showing, the ongoing timer notification).
 7. **Stats:** the Stats tab with periods, figures and trends, habit streaks, the work calendar and heatmap, time and task breakdowns, goal progress and projected finish.
 8. **Android release:** a release APK signed with the developer's own key (kept outside the repository), allowing only https.

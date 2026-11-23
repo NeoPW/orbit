@@ -8,7 +8,6 @@ import { navigate, useRoute } from '../../../core/routing/useRoute.ts';
 import { Button } from '../../../core/ui/components/Button.tsx';
 import { Chip } from '../../../core/ui/components/Chip.tsx';
 import { DeadlineBadge } from '../../../core/ui/components/DeadlineBadge.tsx';
-import { ImportanceDots } from '../../../core/ui/components/ImportanceDots.tsx';
 import { Menu } from '../../../core/ui/components/Menu.tsx';
 import { Tile } from '../../../core/ui/components/Tile.tsx';
 import { goalColor } from '../../../core/ui/colors.ts';
@@ -86,7 +85,6 @@ export function ProjectPage() {
                 }))}
               />
               {area && <Chip color={area.color}>{area.name}</Chip>}
-              <ImportanceDots value={project.importance} />
               {deadline && <DeadlineBadge deadline={deadline.date} inherited={deadline.inherited} />}
             </div>
           </div>

@@ -7,6 +7,7 @@ import { useOpenAppSheet } from './AppSheets.tsx';
 import { matchShortcut, type KeyInput, type ShortcutScope } from './keys.ts';
 import { screenHandler, type ScreenMatch } from './screen-keys.ts';
 import { dailyNoteRequest, focusFieldRequest, sessionRequest } from './requests.ts';
+import { useShiftEnterSubmit } from './useShiftEnterSubmit.ts';
 import { ShortcutOverlay } from './ShortcutOverlay.tsx';
 
 /**
@@ -76,6 +77,7 @@ const SCREEN_ACTIONS = new Set<string>([
 
 /** The global keyboard shortcuts, the shortcut overlay and the command palette (see openspec keyboard-shortcuts). */
 export function ShortcutProvider({ children }: { children: ReactNode }) {
+  useShiftEnterSubmit();
   const route = useRoute();
   const openSheet = useOpenAppSheet();
   const session = useLiveQuery(getTimer, []);

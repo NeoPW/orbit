@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { compareForPlan, effectiveDeadline, projectScore, sortByScore, urgency } from './projects.ts';
+import { effectiveDeadline, sortProjects } from './projects.ts';
 
-const today = '2026-10-05';
-const p = (title: string, importance: number, deadline: string | null = null, goalEnd: string | null = null) => ({
+const p = (title: string, createdAt: string, deadline: string | null = null, goalEnd: string | null = null) => ({
   title,
-  importance,
+  createdAt,
   deadline,
   goalEnd,
 });
@@ -21,35 +20,13 @@ describe('effectiveDeadline', () => {
   });
 });
 
-describe('urgency', () => {
-  it('is 5 when overdue and 4 when due today', () => {
-    expect(urgency('2026-10-04', today)).toBe(5);
-    expect(urgency(today, today)).toBe(4);
+describe('project order', () => {
+  it('puts the earliest effective deadline first, none last', () => {
+    const list = sortProjects([p('A', '1'), p('B', '2', '2027-03-01'), p('C', '3', null, '2026-12-01')]);
+    expect(list.map((x) => x.title)).toEqual(['C', 'B', 'A']);
   });
-  it('has the boundaries 3, 4, 7, 8, 30 and 31 days', () => {
-    const dates = ['2026-10-08', '2026-10-09', '2026-10-12', '2026-10-13', '2026-11-04', '2026-11-05'];
-    expect(dates.map((d) => urgency(d, today))).toEqual([4, 3, 3, 2, 2, 1]);
-  });
-  it('is 1 without deadline', () => {
-    expect(urgency(null, today)).toBe(1);
-  });
-  it('ignores task due dates (score only uses the project deadline)', () => {
-    expect(projectScore(p('A', 3), today)).toBe(3);
-  });
-});
-
-describe('ordering', () => {
-  it('score beats importance', () => {
-    const list = sortByScore([p('A', 5), p('B', 2, '2026-10-01')], today);
-    expect(list.map((x) => x.title)).toEqual(['B', 'A']);
-  });
-  it('breaks a score tie by deadline, none last', () => {
-    // importance 4 x urgency 1 (far deadline) = 4; importance 4 x urgency 1 (none) = 4
-    const list = sortByScore([p('A', 4), p('B', 4, '2027-03-01')], today);
-    expect(list.map((x) => x.title)).toEqual(['B', 'A']);
-  });
-  it('orders Plan by importance, deadline, title', () => {
-    const list = [p('C', 3), p('A', 3, '2026-11-01'), p('B', 5)].sort(compareForPlan);
+  it('breaks a tie by time added, oldest first', () => {
+    const list = sortProjects([p('B', '2', '2026-11-01'), p('A', '3', '2026-11-01'), p('C', '1')]);
     expect(list.map((x) => x.title)).toEqual(['B', 'A', 'C']);
   });
 });

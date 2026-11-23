@@ -19,7 +19,6 @@ const input: ProjectInput = {
   description: '',
   areaId: null,
   goalId: null,
-  importance: 3,
   deadline: null,
   status: 'active',
 };

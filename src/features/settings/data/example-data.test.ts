@@ -29,10 +29,10 @@ describe('example data', () => {
     const all = await listProjectsByStatus(db, 'active', 'backlog', 'paused', 'completed');
     expect(new Set(all.map((p) => p.color)).size).toBe(all.length - 1); // "Tax return 2025" and "Move flat" share pc4
 
-    const todo = await listTodo(db, today);
+    const todo = await listTodo(db);
     expect(todo.map((t) => t.task.title)).toContain('Rerun benchmarks');
     expect(todo.map((t) => t.task.title)).toContain('Renew passport');
-    expect((await listActiveProjects(db, today)).length).toBe(5);
+    expect((await listActiveProjects(db)).length).toBe(5);
     expect((await listHabitsForToday(db, today)).some((h) => h.checked)).toBe(true);
   });
 });
