@@ -224,7 +224,7 @@ A project's next steps are its tasks with `is_next_step` set (see Task); the pro
 ### Next steps
 - Any open task of a project can be marked or unmarked as a next step; a project can have several.
 - Completing a next-step task while the project has other open next steps completes it without a prompt.
-- Completing the project's **last** open next step prompts: "What's the next step?": create a new task, pick one or more existing open tasks, or skip (no next step). Cancelling the prompt leaves the task open.
+- Completing the project's **last** open next step prompts: "What's the next step?": create a new task, pick one or more existing open tasks, or skip (no next step). Cancelling the prompt leaves the task open. When the project has other open tasks the prompt opens on them with the first highlighted (the arrows move, up from the first goes to the new-task field, typing goes to the field); Enter or a click on a task picks it and completes at once, Ctrl+Enter, Ctrl+click or the task's checkbox select several first.
 
 ### Timer and focus
 - Starting a session while another exists logs the other one's running stretch (a paused one just ends). A session starts without a time limit.

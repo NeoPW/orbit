@@ -18,10 +18,10 @@ Apply after `manual-task-order` (TaskSheet no longer has importance then).
 
 ## 3. Next-step prompt
 
-- [ ] 3.1 Rebuild the candidate list in `src/features/tasks/ui/NextStepPrompt.tsx` (+ `NextStepPrompt.module.css`) as a focusable multi-select listbox. It has a highlight (first task on open, focused when there are candidates), up and down moving it and into the new-task field and back, Enter picking the highlighted task plus the selection, Ctrl+Enter toggling, a click on a row picking it and Ctrl+click or its checkbox toggling, and a printable key moving into the field with that character. Verify every "Next-step prompt from the keyboard" and "Pick a next step with one click" scenario by hand on Home, the project detail and after a focus session.
-- [ ] 3.2 Update `docs/SPEC.md` §5 "Next steps" with the one-click and keyboard picking; verify the text matches the tasks delta.
+- [x] 3.1 Rebuild the candidate list in `src/features/tasks/ui/NextStepPrompt.tsx` (+ `NextStepPrompt.module.css`) as a focusable multi-select listbox. It has a highlight (first task on open, focused when there are candidates), up and down moving it and into the new-task field and back, Enter picking the highlighted task plus the selection, Ctrl+Enter toggling, a click on a row picking it and Ctrl+click or its checkbox toggling, and a printable key moving into the field with that character. Verify every "Next-step prompt from the keyboard" and "Pick a next step with one click" scenario by hand on Home, the project detail and after a focus session.
+- [x] 3.2 Update `docs/SPEC.md` §5 "Next steps" with the one-click and keyboard picking; verify the text matches the tasks delta.
 
 ## 4. Final verification
 
-- [ ] 4.1 Run `npm run check` (typecheck, lint, all tests) and make sure it passes.
+- [x] 4.1 Run `npm run check` (typecheck, lint, all tests) and make sure it passes.
 - [ ] 4.2 Verify the change in the desktop app (`npm run desktop`) and in the browser (`npm run dev`): a new task with `# project`, the next-step prompt from the keyboard only, and Shift+Enter in a sheet and in the complete dialog.
