@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines the Home tab, the daily view of the app: the habits due today, upcoming deadlines, the active projects in order of score with their next steps, and the entry point for logging work.
+Defines the Home tab, the daily view of the app: the habits due today, upcoming deadlines, the active projects in order of deadline with their next steps, and the entry point for logging work.
 
 ## Requirements
 
@@ -48,40 +48,6 @@ The "Habits due today" section SHALL show every active habit that is due today (
 - **WHEN** the user taps the chip of an unchecked habit
 - **THEN** the habit is shown as checked and a log entry for it exists
 
-### Requirement: Project urgency
-A project's urgency SHALL be computed from its effective deadline (see projects) in local calendar days from today: overdue 5, 0 to 3 days 4, 4 to 7 days 3, 8 to 30 days 2, more than 30 days or no effective deadline 1. Task due dates SHALL NOT affect urgency.
-
-#### Scenario: Overdue
-- **WHEN** a project's effective deadline was yesterday
-- **THEN** its urgency is 5
-
-#### Scenario: Due today
-- **WHEN** a project's effective deadline is today
-- **THEN** its urgency is 4
-
-#### Scenario: Boundaries
-- **WHEN** effective deadlines are 3, 4, 7, 8, 30 and 31 days away
-- **THEN** the urgencies are 4, 3, 3, 2, 2 and 1
-
-#### Scenario: No deadline
-- **WHEN** a project has no effective deadline
-- **THEN** its urgency is 1
-
-#### Scenario: Task due date ignored
-- **WHEN** a project has no effective deadline and an open task due tomorrow
-- **THEN** its urgency is 1
-
-### Requirement: Active projects ordered by score
-Home's side column SHALL list all projects with status `active`, ordered by score (importance × urgency, highest first), then by effective deadline (earliest first, none last), then by title. The numeric score SHALL NOT be shown.
-
-#### Scenario: Score beats importance
-- **WHEN** project A has importance 5 and no deadline (score 5) and project B has importance 2 and is overdue (score 10)
-- **THEN** B is listed before A
-
-#### Scenario: Tie broken by deadline
-- **WHEN** two projects have the same score and only one has an effective deadline
-- **THEN** the one with the deadline is listed first
-
 ### Requirement: Active project entries
 Each active project in the side column SHALL show its title, its area color, its deadline badge (see visual-design, "Deadline badge text"; marked when inherited from the goal) and at most 3 of its open tasks as checkbox rows, in the project's open task order (next steps first; see tasks, "Reorder open tasks"). When the project has more open tasks, the card SHALL show a "+N more" link with the number of tasks not shown, which opens the project detail. Values that are not set SHALL be left out.
 
@@ -125,7 +91,7 @@ Ticking the checkbox of a task in the side column SHALL complete that task, with
 - **THEN** the project detail opens
 
 ### Requirement: Today follows the calendar
-Home SHALL use the device's local date for "today". When the date changes while the app is open, or when the app returns to the foreground on a later date, Home SHALL recompute the date, due habits, ranks and deadline badges for the new date.
+Home SHALL use the device's local date for "today". When the date changes while the app is open, or when the app returns to the foreground on a later date, Home SHALL recompute the date, due habits and deadline badges for the new date.
 
 #### Scenario: New day
 - **WHEN** a daily habit was checked yesterday and the app is brought back to the foreground today
@@ -139,7 +105,7 @@ Home SHALL update immediately after any change to habits, habit checks, tasks, p
 - **THEN** the project is listed under active projects
 
 ### Requirement: To do on Home
-"To do" SHALL list the open next-step tasks of active projects and the open tasks outside projects (standalone or assigned to a goal), ordered by task rank. Each row SHALL show a checkbox that completes the task (with Undo), the title, its project or goal, importance dots, a deadline badge and an action to start a focus session. Clicking the row elsewhere SHALL open the task page.
+"To do" SHALL list the open next-step tasks of active projects and the open tasks outside projects (standalone or assigned to a goal), in To do order (see "To do order"). Each row SHALL show a drag handle, a checkbox that completes the task (with Undo), the title, its project or goal, a deadline badge and an action to start a focus session. Clicking the row elsewhere SHALL open the task page.
 
 #### Scenario: Next steps and loose tasks
 - **WHEN** an active project has the next step "Draft outline" and the open task "Send invites", and the standalone task "Tax return" is open
@@ -154,7 +120,7 @@ Home SHALL update immediately after any change to habits, habit checks, tasks, p
 - **THEN** To do lists it with "Get fit"
 
 ### Requirement: Create a task from Home
-Home's "New task" SHALL open a sheet to create a task with a title, an optional deadline, an optional importance and an optional assignment (an active project or an active goal). Typing a title and pressing Enter SHALL create a standalone task.
+Home's "New task" SHALL open a sheet to create a task with a title, an optional deadline and an optional assignment (an active project or an active goal). A project can also be named in the title with `#` (see tasks, "Project suggestions in the new task title"). Typing a title and pressing Enter SHALL create a standalone task.
 
 #### Scenario: Title and Enter
 - **WHEN** the user clicks "New task", types "Tax return" and presses Enter
@@ -164,36 +130,9 @@ Home's "New task" SHALL open a sheet to create a task with a title, an optional 
 - **WHEN** the user creates the task "Book physio" assigned to the goal "Get fit"
 - **THEN** the task belongs to "Get fit" and is listed in To do
 
-### Requirement: Task rank
-A task's rank SHALL be importance × urgency. Importance SHALL be the task's own, else its project's, else 3. Urgency (see "Project urgency") SHALL come from the task's due date, else its project's effective deadline, else its goal's end date, else 1. Higher ranks come first; ties SHALL be broken by the nearest due date or inherited deadline (none last), then by creation (oldest first). Among tasks of one project that are still tied after the date and have a manual position (see tasks, "Reorder open tasks"), the position SHALL decide their order instead of creation; tasks of other projects keep their places.
-
-#### Scenario: Rank
-- **WHEN** task A has importance 2 and is overdue (rank 10) and task B has importance 5 and no deadline (rank 5)
-- **THEN** A comes before B
-
-#### Scenario: Inherited importance and urgency
-- **WHEN** a task without own importance or due date belongs to a project with importance 4 and a deadline in 2 days
-- **THEN** its rank is 16
-
-#### Scenario: Goal's end date
-- **WHEN** a task without due date is assigned to a goal that ends in 20 days
-- **THEN** its urgency is 2
-
-#### Scenario: Tie
-- **WHEN** two tasks have the same rank and only one has a due date
-- **THEN** the one with the due date comes first
-
-#### Scenario: Project order breaks a tie
-- **WHEN** two next steps of one project have the same rank and date, "Write intro" was created first, and the user moved "Book venue" above "Write intro" in the project
-- **THEN** Home lists "Book venue" before "Write intro"
-
-#### Scenario: Rank still wins
-- **WHEN** the user moved "Book venue" above "Write intro", but "Write intro" has the higher rank
-- **THEN** Home lists "Write intro" first
-
-#### Scenario: Other projects keep their places
-- **WHEN** a task of another project sits between two tied tasks of one project that were reordered
-- **THEN** the other project's task keeps its place in the list
+#### Scenario: Project in the title
+- **WHEN** the user clicks "New task", types "Rerun benchmarks # Chapter 4" and presses Enter
+- **THEN** the task "Rerun benchmarks" exists in "Chapter 4: Evaluation"
 
 ### Requirement: Done today on Home
 "Done today" SHALL list the tasks completed today (local day), most recently completed first, each with a checked checkbox, its title, its project chip (or goal) and the time it was completed. Unchecking SHALL reopen the task (see tasks, "Reopen task"); clicking the row SHALL open the task page. The list SHALL update live and move to the new day at midnight.
@@ -237,11 +176,15 @@ Clicking a task in To do, in Done today or among the next steps of a project car
 - **THEN** the task moves from To do to Done today behind the popup
 
 ### Requirement: More tasks in To do
-Directly below the ranked To do list, Home SHALL show a toggle with a down chevron and N, the number of open tasks of active projects that are not next steps (named "Show N more" for screen readers and in its tooltip). Using it SHALL list those tasks below the toggle, ranked by task rank, with the same rows and actions as To do; the toggle SHALL stay in its place, show an up chevron and N (named "Show less") and hide them again. It SHALL start collapsed when Home opens and be hidden when there are no such tasks. While expanded, its tasks SHALL count as To do tasks for the To do list keys (see keyboard-shortcuts), after the ranked ones.
+Directly below the To do list, Home SHALL show a toggle with a down chevron and N, the number of open tasks of active projects that are not next steps (named "Show N more" for screen readers and in its tooltip). Using it SHALL list those tasks below the toggle, grouped by project in the side column's project order and, within a project, in the project's open task order (see tasks, "Open task order"), with the same rows and actions as To do except the drag handle; the toggle SHALL stay in its place, show an up chevron and N (named "Show less") and hide them again. It SHALL start collapsed when Home opens and be hidden when there are no such tasks. While expanded, its tasks SHALL count as To do tasks for the To do list keys (see keyboard-shortcuts), after the others.
 
 #### Scenario: Expand
 - **WHEN** an active project has the next step "Draft outline" and the open task "Send invites", and the user uses the toggle showing 1
 - **THEN** "Send invites" is listed below the toggle, which is below "Draft outline", with a checkbox, its project and a start action, and the toggle shows an up chevron
+
+#### Scenario: Order of the expanded tasks
+- **WHEN** project P is listed before project Q in the side column, P's other open tasks are "B", "A" in its task order and Q has the other open task "C"
+- **THEN** the expanded tasks read "B", "A", "C"
 
 #### Scenario: Collapsed at start
 - **WHEN** Home opens and active projects have open tasks that are not next steps
@@ -256,7 +199,7 @@ Directly below the ranked To do list, Home SHALL show a toggle with a down chevr
 - **THEN** it is not counted by the toggle and not listed when expanded
 
 #### Scenario: Keys reach the expanded tasks
-- **WHEN** To do lists two ranked tasks, the section is expanded with one more task and the user presses `3`
+- **WHEN** To do lists two tasks, the section is expanded with one more task and the user presses `3`
 - **THEN** the expanded task is highlighted
 
 ### Requirement: Today's note on Home
@@ -269,3 +212,48 @@ Directly below the ranked To do list, Home SHALL show a toggle with a down chevr
 #### Scenario: New day
 - **WHEN** the user typed "Call the bank" on 2026-11-09 and Home is shown again on 2026-11-10
 - **THEN** "Today's note" is empty and the note of 2026-11-09 is "Call the bank"
+
+### Requirement: Active projects ordered by deadline
+Home's side column SHALL list all projects with status `active`, ordered by effective deadline (earliest first, none last), then by time added (oldest first).
+
+#### Scenario: Deadline first
+- **WHEN** project A has no deadline and project B has an effective deadline next month
+- **THEN** B is listed before A
+
+#### Scenario: Tie broken by time added
+- **WHEN** projects A and B have no effective deadline and A was added before B
+- **THEN** A is listed before B
+
+### Requirement: To do order
+To do SHALL be listed in its own order, independent of the projects' task order. Until the user reorders To do, its tasks SHALL be listed by time added (oldest first). After a reorder, tasks with a Home position SHALL come first, by position, and the others after them, by time added. Once To do has a manual order, marking a task as a next step SHALL put it at the end. Due dates SHALL NOT change the order.
+
+#### Scenario: Time added
+- **WHEN** To do has never been reordered and "Tax return" was added before the next step "Draft outline", which is due tomorrow
+- **THEN** To do lists "Tax return" before "Draft outline"
+
+#### Scenario: New task goes to the end
+- **WHEN** To do was reordered to "Draft outline", "Tax return" and the user adds the standalone task "Call the bank"
+- **THEN** To do reads "Draft outline", "Tax return", "Call the bank"
+
+#### Scenario: New next step goes to the end
+- **WHEN** To do has a manual order and the user marks the older task "Send invites" as a next step of an active project
+- **THEN** "Send invites" is listed last in To do
+
+#### Scenario: Independent of the project order
+- **WHEN** the user moves "Book venue" above "Write intro" in their project, and both are next steps listed in To do as "Write intro", "Book venue"
+- **THEN** To do still lists "Write intro" before "Book venue"
+
+### Requirement: Reorder To do
+The user SHALL be able to move a task of To do to another place in To do by dragging its handle or, with the handle focused, with `Alt+↑` and `Alt+↓`. The new order SHALL be kept, shown at once and synced with the other devices. The tasks behind "Show N more" SHALL NOT be reorderable on Home.
+
+#### Scenario: Drag a task up
+- **WHEN** To do lists A, B and C and the user drags C above A
+- **THEN** To do reads C, A, B and stays so after a reload
+
+#### Scenario: Keyboard
+- **WHEN** the handle of B is focused and the user presses `Alt+↑`
+- **THEN** B moves one place up and keeps the focus
+
+#### Scenario: Synced
+- **WHEN** the user reorders To do on the desktop and the phone syncs
+- **THEN** the phone's To do shows the same order

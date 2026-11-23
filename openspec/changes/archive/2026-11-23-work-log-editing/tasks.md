@@ -20,4 +20,4 @@
 ## 4. Verification
 
 - [x] 4.1 Run `npm run check` and verify it passes
-- [ ] 4.2 Verify in the desktop app (`npm run desktop`) and the browser (`npm run dev`): Log work lists project tasks, an entry's time and note can be edited and deleted from Home's timeline and the review's week timeline; verify in a narrow browser window (< 640 px) that the editor opens full screen from Today
+- [x] 4.2 Verify in the desktop app (`npm run desktop`) and the browser (`npm run dev`): Log work lists project tasks, an entry's time and note can be edited and deleted from Home's timeline and the review's week timeline; verify in a narrow browser window (< 640 px) that the editor opens full screen from Today

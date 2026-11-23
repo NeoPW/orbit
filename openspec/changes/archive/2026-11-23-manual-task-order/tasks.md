@@ -40,12 +40,12 @@ Phase A removes importance and the automatic ranking (groups 1–4). Phase B add
 
 ## 7. Phase B — Home drag UI
 
-- [ ] 7.1 `HomeScreen.tsx`: To do rows get a drag handle with `Alt+↑/↓` through the same `onMove` mechanism as `TaskList` (`src/features/tasks/ui/TaskRow.tsx`), wired to `moveTodoTask`; "Show N more" rows have no handle. Check in the browser (`npm run dev`): drag C above A, reload, order kept; `Alt+↑` on a focused handle moves the task and keeps focus (home "Keyboard")
-- [ ] 7.2 Check that the To do list keys (`J`/`K`, `1`–`9`) still work alongside the handles, and on the phone layout (narrow window) that handles can be dragged by touch
+- [x] 7.1 `HomeScreen.tsx`: To do rows get a drag handle with `Alt+↑/↓` through the same `onMove` mechanism as `TaskList` (`src/features/tasks/ui/TaskRow.tsx`), wired to `moveTodoTask`; "Show N more" rows have no handle. Check in the browser (`npm run dev`): drag C above A, reload, order kept; `Alt+↑` on a focused handle moves the task and keeps focus (home "Keyboard")
+- [x] 7.2 Check that the To do list keys (`J`/`K`, `1`–`9`) still work alongside the handles, and on the phone layout (narrow window) that handles can be dragged by touch
 
 ## 8. Verification
 
 - [x] 8.1 `npm run check` passes
-- [ ] 8.2 Verify in the desktop app (`npm run desktop`) and the browser (`npm run dev`): no importance anywhere (forms, Home, project detail, Plan, review, task popup), projects ordered by deadline then time added, project task lists by time added with Reset order, Home To do drag order kept after reload
-- [ ] 8.3 Verify sync with the local server (`npm run server:dev`): reorder To do on one client, sync the other, same order (home "Synced")
+- [x] 8.2 Verify in the desktop app (`npm run desktop`) and the browser (`npm run dev`): no importance anywhere (forms, Home, project detail, Plan, review, task popup), projects ordered by deadline then time added, project task lists by time added with Reset order, Home To do drag order kept after reload
+- [x] 8.3 Verify sync with the local server (`npm run server:dev`): reorder To do on one client, sync the other, same order (home "Synced")
 - [x] 8.4 Update docs/SPEC.md (§3, §4 Project/Task fields, §5 remove "Project score" and "Task rank", add the To do order, §6.1, §6.2, §6.3, §6.5, §6.7) and note that at archive the `projects` spec Purpose must drop "an importance" and the `home` spec Purpose "in order of score"

@@ -107,15 +107,31 @@ A day without work SHALL show the axis and a short empty state instead of blocks
 - **THEN** the timeline shows the axis and a short empty state
 
 ### Requirement: Open from a block
-Clicking a workout block SHALL open the summary of its session (see "Workout summary"). Clicking any other block or dot SHALL open the task it belongs to in the task popup (see tasks, "Task popup"), else (for a habit) its project, else its goal; an entry without any of them is not clickable.
+Clicking a workout block SHALL open the summary of its session (see "Workout summary"). Clicking any other block or dot SHALL open the editor of its log entry (see work-log, "Edit log entry"). A block made of several logged timer stretches (see "Resumed stretches as one block") SHALL first list them with their time range and minutes; choosing one SHALL open its editor. A running stretch is not yet an entry: it SHALL NOT be listed, and a running block without logged stretches SHALL open the task popup of its task, else its project, else its goal.
 
-#### Scenario: Open the task
+#### Scenario: Open the entry
 - **WHEN** the user clicks a block of the task "Rerun benchmarks"
-- **THEN** the popup of "Rerun benchmarks" opens over the current screen
+- **THEN** the editor of that entry opens over the current screen
+
+#### Scenario: Open a dot
+- **WHEN** the user clicks the dot of the habit check "Run 5 km"
+- **THEN** the editor of that check's entry opens
+
+#### Scenario: Entry without a target
+- **WHEN** the user clicks a block of an entry that belongs to no task, project or goal
+- **THEN** the editor of that entry opens
 
 #### Scenario: Open a workout
 - **WHEN** the user clicks the block of the session "Push day"
 - **THEN** the summary of "Push day" opens over the current screen
+
+#### Scenario: Merged block
+- **WHEN** "Thesis" has timer stretches 10:00–10:30 and 10:35–11:00 drawn as one block and the user clicks it
+- **THEN** "10:00–10:30, 30 min" and "10:35–11:00, 25 min" are listed, and choosing the second opens its editor
+
+#### Scenario: Open the task
+- **WHEN** a session for the task "Rerun benchmarks" runs since 09:00 without earlier stretches and the user clicks its block
+- **THEN** the popup of "Rerun benchmarks" opens
 
 ### Requirement: Timeline updates live
 The timeline SHALL update immediately after work is logged, a session starts or stops, or the data changes through sync, and SHALL move to the next day when the date changes.
@@ -145,7 +161,7 @@ The phone's Today screen SHALL show the timeline of one day, starting with today
 
 #### Scenario: Open a block
 - **WHEN** the user taps a block of the task "Rerun benchmarks" on the phone
-- **THEN** the task popup opens full screen
+- **THEN** the editor of that entry opens full screen
 
 ### Requirement: Resumed stretches as one block
 Timer blocks of the same task, habit or project SHALL be drawn as one block when at most 10 minutes lie between the end of one and the start of the next, also across several pauses and including the running stretch. The block SHALL run from the first start to the last end, and its minutes SHALL be the sum of the stretches, without the pauses. Blocks with a longer gap, of different items, or not from a timer SHALL stay separate.

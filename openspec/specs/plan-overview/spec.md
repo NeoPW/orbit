@@ -7,11 +7,11 @@ Defines the Plan tab: the structured overview of active goals, their measures an
 ## Requirements
 
 ### Requirement: Project entries
-Each project entry in the Plan tab SHALL show its title, area, importance and effective deadline (or that it has none). Within a section or goal, projects SHALL be ordered by importance (highest first), then effective deadline (earliest first, none last), then title.
+Each project entry in the Plan tab SHALL show its title, area and effective deadline (or that it has none). Within a section or goal, projects SHALL be ordered by effective deadline (earliest first, none last), then by time added (oldest first).
 
 #### Scenario: Project ordering
-- **WHEN** a goal has active projects A (importance 3, deadline 2026-11-01), B (importance 5, no deadline) and C (importance 3, no deadline)
-- **THEN** they are listed in the order B, A, C
+- **WHEN** a goal has active projects A (deadline 2026-11-01, added last), B (no deadline, added first) and C (no deadline, added second)
+- **THEN** they are listed in the order A, B, C
 
 ### Requirement: Backlog
 The Plan tab SHALL provide a Backlog view listing all projects with status `backlog` or `paused`, each marked with its status. The backlog SHALL be filterable by area, including an option for projects without an area; the default shows all areas.

@@ -27,5 +27,5 @@
 
 ## 6. Verification
 
-- [ ] 6.1 Check in the browser (`npm run dev`) at desktop and phone width and in the desktop app (`npm run desktop`): create "Stretch" with 20 minutes, start it from its chip and from the focus panel (20-minute limit shown), change the limit in focus mode; open a habit in Plan, tick "Done yesterday", see its dot on yesterday's timeline and the streak, untick it; check the toggle is missing for a habit not scheduled yesterday; on the phone too.
+- [x] 6.1 Check in the browser (`npm run dev`) at desktop and phone width and in the desktop app (`npm run desktop`): create "Stretch" with 20 minutes, start it from its chip and from the focus panel (20-minute limit shown), change the limit in focus mode; open a habit in Plan, tick "Done yesterday", see its dot on yesterday's timeline and the streak, untick it; check the toggle is missing for a habit not scheduled yesterday; on the phone too.
 - [x] 6.2 Run `npm run check` and fix any failures.

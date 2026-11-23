@@ -22,15 +22,15 @@ The user SHALL be able to add a task with a title (required, trimmed), an option
 - **THEN** an open standalone task "Tax return" exists and is listed in Home's Tasks section
 
 ### Requirement: Open task order
-The project's open tasks SHALL be listed with the next steps first, each group in the project's task order. The task order SHALL be, until the user reorders the list, by due date (earliest first, tasks without due date last), then by creation time (oldest first). After the user has reordered the list, tasks with a manual position SHALL come first in that order, and the other tasks (for example new ones) after them, by due date and then creation time. The next-step tasks SHALL be marked in the list.
+The project's open tasks SHALL be listed with the next steps first, each group in the project's task order. The task order SHALL be, until the user reorders the list, by time added (oldest first); due dates SHALL NOT change the order. After the user has reordered the list, tasks with a manual position SHALL come first in that order, and the other tasks (for example new ones) after them, by time added. The next-step tasks SHALL be marked in the list.
 
 #### Scenario: Order
-- **WHEN** a project has open tasks A (no due date, created first), B (due 2026-10-20) and C (due 2026-10-10) and has never been reordered
-- **THEN** they are listed C, B, A
+- **WHEN** a project has open tasks A (no due date, added first), B (due 2026-10-20, added second) and C (due 2026-10-10, added last) and has never been reordered
+- **THEN** they are listed A, B, C
 
 #### Scenario: New task after a manual order
-- **WHEN** the user has put A before B and C in a project and then adds D with the due date 2026-10-01
-- **THEN** the list reads A, B, C, D
+- **WHEN** the user has put C before A and B in a project and then adds D with the due date 2026-10-01
+- **THEN** the list reads C, A, B, D
 
 ### Requirement: Edit task
 The user SHALL be able to edit a task's title, notes, due date and assignment, including clearing the due date and the assignment. A task SHALL NOT be saved without a title.
@@ -103,7 +103,7 @@ Completing a next-step task while its project has other open next steps SHALL co
 - **THEN** the task stays open, stays a next step and no log entry is created
 
 ### Requirement: Task page
-Every task SHALL have a page with its own address showing its title, notes, deadline, importance (its own, or the inherited one marked as inherited), status and assignment (the assigned project or goal, clickable to open it, or "Standalone"), marked when it is one of its project's next steps, and the log entries recorded for it, newest first. The page SHALL offer complete (with Undo), reopen, edit, delete, log work and start a focus session, and for an open task of a project "Mark as next step" or "Remove from next steps".
+Every task SHALL have a page with its own address showing its title, notes, deadline, status and assignment (the assigned project or goal, clickable to open it, or "Standalone"), marked when it is one of its project's next steps, and the log entries recorded for it, newest first. The page SHALL offer complete (with Undo), reopen, edit, delete, log work and start a focus session, and for an open task of a project "Mark as next step" or "Remove from next steps".
 
 #### Scenario: Open from Home
 - **WHEN** the user clicks a task in Home's To do
@@ -132,6 +132,14 @@ Every task SHALL have a page with its own address showing its title, notes, dead
 #### Scenario: Remove from next steps
 - **WHEN** the user chooses "Remove from next steps" on the page of a next-step task
 - **THEN** the task stays open and is no longer a next step
+
+#### Scenario: Log on a goal's task
+- **WHEN** the user logs 20 minutes on the task "Book physio", assigned to "Get fit"
+- **THEN** the entry belongs to the task and to "Get fit"
+
+#### Scenario: No importance
+- **WHEN** the page of any task is shown
+- **THEN** it shows no importance dots and its edit form has no importance field
 
 ### Requirement: Reopen task
 A done task SHALL be reopenable from its task page. Reopening SHALL set it back to open and clear its completion time; its log entries SHALL stay.
@@ -177,25 +185,10 @@ A task SHALL be standalone or assigned to exactly one project or one goal. The a
 - **WHEN** the user assigns a next-step task of a project to a goal
 - **THEN** the task belongs to the goal and no longer to the project, and it is no longer a next step
 
-### Requirement: Task importance
-A task SHALL have an optional importance from 1 to 5, set in the task form. Without its own importance a task SHALL inherit its project's importance, or 3 when it has no project; an inherited importance SHALL be shown as inherited.
-
-#### Scenario: Own importance
-- **WHEN** the user sets importance 5 on a task of a project with importance 2
-- **THEN** the task shows five of five dots, not marked as inherited
-
-#### Scenario: Inherited from the project
-- **WHEN** a task without own importance belongs to a project with importance 4
-- **THEN** the task shows four dots marked as inherited
-
-#### Scenario: Standalone default
-- **WHEN** a standalone task has no own importance
-- **THEN** its importance counts as 3, shown as inherited
-
 ### Requirement: Task popup
 A task SHALL be openable in a popup centred over the current screen, which stays in place behind it. The tab and the address SHALL NOT change.
 
-The popup SHALL show the same content as the task page (see "Task page"): title, status, notes, deadline, importance, assignment, next-step marker, the actions (Complete or Reopen, Start focus, Edit, Delete, Mark as next step) and the log with its total and "Log work". It SHALL also offer "Open page", which opens the task page.
+The popup SHALL show the same content as the task page (see "Task page"): title, status, notes, deadline, assignment, next-step marker, the actions (Complete or Reopen, Start focus, Edit, Delete, Mark as next step) and the log with its total and "Log work". It SHALL also offer "Open page", which opens the task page.
 
 Closing:
 - `Esc`, the close button and a click beside the popup SHALL close it.
@@ -253,11 +246,11 @@ The user SHALL be able to move a task of a project's open task list to another p
 - **THEN** it appears at the end of the next steps
 
 ### Requirement: Reset the task order
-The project's open task list SHALL offer "Reset order" once it has a manual order. It SHALL remove the manual positions of the project's open tasks, so the list returns to due date and creation order.
+The project's open task list SHALL offer "Reset order" once it has a manual order. It SHALL remove the manual positions of the project's open tasks, so the list returns to the order in which the tasks were added.
 
 #### Scenario: Reset
 - **WHEN** a reordered project's list is reset
-- **THEN** the tasks are listed by due date, then by creation time, and "Reset order" is no longer offered
+- **THEN** the tasks are listed by time added, oldest first, and "Reset order" is no longer offered
 
 ### Requirement: Manual position when a task moves
 A task's manual position SHALL belong to the project it is in. Assigning the task to another project, to a goal or to nothing SHALL remove it, so the task is listed after the manually ordered tasks of its new project.
@@ -265,3 +258,71 @@ A task's manual position SHALL belong to the project it is in. Assigning the tas
 #### Scenario: Move to another project
 - **WHEN** a task with a manual position is assigned to another project that has manually ordered tasks
 - **THEN** it is listed after those tasks
+
+### Requirement: Project suggestions in the new task title
+When the user creates a task, typing `#` in the title SHALL suggest the active projects whose name contains the text after the last `#` (all active projects while nothing follows it), with their colours, as the focus panel does. Picking one by click, tap, or the arrow keys and Enter or Tab SHALL set "Assigned to" to that project and leave only the text before `#` in the title. Editing an existing task SHALL NOT suggest projects.
+
+#### Scenario: Suggest projects
+- **WHEN** the user types "Draft intro # port" in the title of a new task and "Portfolio site" is active
+- **THEN** "Portfolio site" is suggested with its colour
+
+#### Scenario: Pick a project
+- **WHEN** the user picks "Portfolio site" from the suggestions for "Draft intro # port"
+- **THEN** the title reads "Draft intro" and "Assigned to" shows "Portfolio site"
+
+#### Scenario: Editing keeps the #
+- **WHEN** the user edits the task "Fix issue" and types "Fix issue #12" as its title and saves
+- **THEN** no project is suggested and the task is titled "Fix issue #12"
+
+### Requirement: Project typed in the new task title
+Saving a new task whose title contains `#` SHALL save the text before the last `#` as the title and assign the project that the text after it names: the active project with that name (ignoring case), else the only active project starting with it. This SHALL replace the choice in "Assigned to". When no project matches, the form SHALL show "No project named …" under the title and save nothing.
+
+#### Scenario: Unique prefix
+- **WHEN** the user types "Draft intro # chap" in a new task, "Chapter 4: Evaluation" is the only active project starting with "chap", and presses Enter
+- **THEN** the task "Draft intro" is created in "Chapter 4: Evaluation"
+
+#### Scenario: Unknown project
+- **WHEN** the user types "Draft intro # garden" in a new task, no active project matches "garden", and saves
+- **THEN** the form shows "No project named garden" and no task is created
+
+#### Scenario: Overrides the preselected project
+- **WHEN** the user adds a task in the detail of "Thesis" and types "Update CV # portfolio site" and saves
+- **THEN** the task "Update CV" belongs to "Portfolio site"
+
+### Requirement: Next-step prompt from the keyboard
+When the project has other open tasks, the next-step prompt SHALL open with the first of them highlighted, in the project's task order; otherwise the cursor SHALL be in the new-task field. The up and down arrows SHALL move the highlight through the tasks, and up from the first task into the new-task field and down from it back to the first task. Typing a character while a task is highlighted SHALL put it into the new-task field.
+
+#### Scenario: Highlight on open
+- **WHEN** the user completes the last next step of a project with the open tasks "Book venue" and "Send invites"
+- **THEN** the prompt opens with "Book venue" highlighted
+
+#### Scenario: Move down
+- **WHEN** "Book venue" is highlighted and the user presses the down arrow
+- **THEN** "Send invites" is highlighted
+
+#### Scenario: Type a new task
+- **WHEN** a task is highlighted and the user types "Write intro" and presses Enter
+- **THEN** "Write intro" is created as the next step and the old next step is done
+
+#### Scenario: No other tasks
+- **WHEN** the user completes the last open task of a project, which was its last next step
+- **THEN** the prompt opens with the cursor in the new-task field
+
+### Requirement: Pick a next step with one click
+In the next-step prompt, Enter on the highlighted task or a click (tap) on a task SHALL pick it, together with the tasks already selected, and complete the old next step at once. Ctrl+Enter on the highlighted task, Ctrl+click on a task or its checkbox SHALL add it to the selection or remove it, without completing. Complete SHALL pick the selected tasks.
+
+#### Scenario: Enter picks
+- **WHEN** "Send invites" is highlighted in the prompt and the user presses Enter
+- **THEN** the old next step is done, "Send invites" is the next step and the prompt is closed
+
+#### Scenario: Click picks
+- **WHEN** the user clicks "Book venue" in the prompt
+- **THEN** the old next step is done and "Book venue" is the next step
+
+#### Scenario: Select several
+- **WHEN** the user presses Ctrl+Enter on "Book venue", moves down and presses Enter on "Send invites"
+- **THEN** the old next step is done and both "Book venue" and "Send invites" are next steps
+
+#### Scenario: Ctrl+click does not complete
+- **WHEN** the user Ctrl+clicks "Book venue" in the prompt
+- **THEN** "Book venue" is selected, the prompt stays open and the old next step is still open

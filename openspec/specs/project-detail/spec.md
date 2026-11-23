@@ -18,7 +18,7 @@ Tapping a project on Home, in the Plan tab's Overview, on a goal page or in the 
 - **THEN** the same project detail is shown
 
 ### Requirement: Project information
-The project detail SHALL start with a header showing the title, a status chip, the area chip, the importance as dots and the deadline badge (marked when the effective deadline is inherited from the goal), followed by the description and the goal it serves in the goal's color. Tapping the goal SHALL open its page. Values that are not set SHALL be left out. An edit action in the top bar SHALL open the project's edit form.
+The project detail SHALL start with a header showing the title, a status chip, the area chip and the deadline badge (marked when the effective deadline is inherited from the goal), followed by the description and the goal it serves in the goal's color. Tapping the goal SHALL open its page. Values that are not set SHALL be left out. An edit action in the top bar SHALL open the project's edit form.
 
 #### Scenario: Inherited deadline
 - **WHEN** a project without own deadline serves a goal ending 2026-12-31
@@ -29,8 +29,8 @@ The project detail SHALL start with a header showing the title, a status chip, t
 - **THEN** the goal page of "Get job" opens
 
 #### Scenario: Edit
-- **WHEN** the user uses the edit action and changes the importance to 5
-- **THEN** the detail shows five of five importance dots after saving
+- **WHEN** the user uses the edit action and changes the deadline to 2026-12-01
+- **THEN** the detail shows a deadline badge for 01-12-2026 after saving
 
 ### Requirement: Next steps and open tasks in detail
 The project detail SHALL list the project's open tasks once, with its next steps marked and listed first, each group ordered as in tasks ("Open task order"). Each row SHALL have a handle for reordering (see tasks, "Reorder open tasks"), and the section SHALL offer "Reset order" while the list has a manual order. It SHALL offer adding a task, and the task rows SHALL work as defined in tasks ("Task rows"). Without open tasks the section SHALL show an empty state with "Add task".

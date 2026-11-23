@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Lets the user manage projects — bodies of work with an area, an optional goal link, an importance, a deadline, a status and a next step — and computes each project's effective deadline.
+Lets the user manage projects — bodies of work with an area, an optional goal link, a deadline, a status and a next step — and computes each project's effective deadline.
 
 ## Requirements
 
@@ -51,7 +51,7 @@ The user SHALL be able to change every field of a project. Changes SHALL be refl
 - **THEN** the form still shows that goal and saving keeps it
 
 ### Requirement: Create a project
-The user SHALL be able to create a project with a title (required), optional description, optional area, optional goal it serves, importance from 1 to 5 (default 3), optional deadline and status (`active`, `backlog`, `paused` or `completed`; default `active`). Only active goals SHALL be offered.
+The user SHALL be able to create a project with a title (required), optional description, optional area, optional goal it serves, optional deadline and status (`active`, `backlog`, `paused` or `completed`; default `active`). Only active goals SHALL be offered. The project form SHALL have no importance field.
 
 #### Scenario: Create active project for a goal
 - **WHEN** the user creates an active project serving an active goal
