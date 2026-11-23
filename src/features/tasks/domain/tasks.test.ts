@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  hasHomeOrder,
   hasManualOrder,
   nextStepOutcome,
   positionBetween,
   positionTooClose,
   sortOpenTasks,
+  sortTodo,
 } from './tasks.ts';
 
 describe('sortOpenTasks', () => {
@@ -46,6 +48,29 @@ describe('manual task order', () => {
   it('keeps next steps on top of the manual order', () => {
     const list = [{ ...a, sortOrder: 0 }, { ...b, sortOrder: 1, isNextStep: true }];
     expect(sortOpenTasks(list, { nextStepsFirst: true }).map((x) => x.name)).toEqual(['B', 'A']);
+  });
+});
+
+describe('To do order', () => {
+  const a = { name: 'A', createdAt: '1', homePosition: null as number | null };
+  const b = { name: 'B', createdAt: '2', homePosition: null as number | null };
+  const c = { name: 'C', createdAt: '3', homePosition: null as number | null };
+
+  it('lists by time added until To do is reordered', () => {
+    expect(sortTodo([c, a, b]).map((x) => x.name)).toEqual(['A', 'B', 'C']);
+    expect(hasHomeOrder([a, b, c])).toBe(false);
+  });
+
+  it('puts positioned tasks first, by position', () => {
+    const list = [{ ...a, homePosition: 2 }, { ...b, homePosition: 0 }, { ...c, homePosition: 1 }];
+    expect(sortTodo(list).map((x) => x.name)).toEqual(['B', 'C', 'A']);
+    expect(hasHomeOrder(list)).toBe(true);
+  });
+
+  it('lists a new task after the ordered ones', () => {
+    const d = { name: 'D', createdAt: '0', homePosition: null };
+    const list = [d, { ...a, homePosition: 1 }, { ...b, homePosition: 0 }];
+    expect(sortTodo(list).map((x) => x.name)).toEqual(['B', 'A', 'D']);
   });
 });
 

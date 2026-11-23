@@ -166,6 +166,8 @@ export interface TaskListProps {
    * (the next steps, or the other tasks). Rows can be dragged by their handle, or moved with `Alt+↑` / `Alt+↓` on it.
    */
   onMove?: (taskId: string, toIndex: number) => void;
+  /** Whether next steps and other tasks are separate groups for `onMove` (a project's list); false for one flat list (Home's To do). Default true. */
+  grouped?: boolean;
 }
 
 interface Drag {
@@ -177,7 +179,7 @@ interface Drag {
 }
 
 /** Open tasks as `TaskRow`s in an `AnimatedList`, so a completed task leaves with a short animation. */
-export function TaskList({ tasks, rowProps, label, onMove }: TaskListProps) {
+export function TaskList({ tasks, rowProps, label, onMove, grouped = true }: TaskListProps) {
   const container = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
   const [announcement, setAnnouncement] = useState('');
@@ -197,7 +199,7 @@ export function TaskList({ tasks, rowProps, label, onMove }: TaskListProps) {
     );
   }
 
-  const groupOf = (task: Task) => tasks.filter((t) => t.isNextStep === task.isNextStep);
+  const groupOf = (task: Task) => (grouped ? tasks.filter((t) => t.isNextStep === task.isNextStep) : tasks);
 
   function move(task: Task, to: number) {
     const group = groupOf(task);

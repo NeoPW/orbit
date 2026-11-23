@@ -26,6 +26,28 @@ export function sortOpenTasks<T extends OrderableTask>(tasks: T[], options: { ne
   });
 }
 
+export interface HomeOrderable {
+  createdAt: string;
+  /** The manual position in Home's To do list; null until To do is reordered. */
+  homePosition?: number | null;
+}
+
+/** Whether any of the tasks has a Home position, that is, the user has reordered To do. */
+export function hasHomeOrder(tasks: readonly { homePosition?: number | null }[]): boolean {
+  return tasks.some((t) => t.homePosition != null);
+}
+
+/** To do order: tasks with a Home position first, by position; then the rest by time added (oldest first). */
+export function sortTodo<T extends HomeOrderable>(tasks: T[]): T[] {
+  return [...tasks].sort((a, b) => {
+    const pa = a.homePosition ?? null;
+    const pb = b.homePosition ?? null;
+    if (pa !== null && pb !== null && pa !== pb) return pa - pb;
+    if ((pa === null) !== (pb === null)) return pa === null ? 1 : -1;
+    return a.createdAt.localeCompare(b.createdAt);
+  });
+}
+
 /** The position for a task dropped between two neighbours (null at an end of the group). */
 export function positionBetween(before: number | null, after: number | null): number {
   if (before === null && after === null) return 0;

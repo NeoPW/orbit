@@ -3,7 +3,7 @@ import type { Db } from '../../../core/db/drizzle.ts';
 import { createFields, deleteFields, newId, notDeleted, updateFields, type Clock } from '../../../core/db/records.ts';
 import { goals, logEntries, projects, tasks } from '../../../core/db/schema.ts';
 import { projectColor } from '../../../core/ui/colors.ts';
-import { hasManualOrder, positionBetween, positionTooClose, sortOpenTasks } from '../domain/tasks.ts';
+import { hasHomeOrder, hasManualOrder, positionBetween, positionTooClose, sortOpenTasks, sortTodo } from '../domain/tasks.ts';
 
 export type Task = typeof tasks.$inferSelect;
 
@@ -160,33 +160,62 @@ async function runBatch(db: Db, writes: unknown[]): Promise<void> {
   await db.batch(writes as unknown as BatchWrites);
 }
 
-/** The updates that give `ordered` the positions 0, 1, 2 …; `extra` adds fields for single tasks. Unchanged positions are skipped. */
-function positionWrites(db: Db, clock: Clock, ordered: Task[], extra: Record<string, Partial<Task>> = {}) {
+/** The position columns a list can be ordered by: a project's list, or Home's To do. */
+type PositionColumn = 'sortOrder' | 'homePosition';
+
+/** The updates that give `ordered` the positions 0, 1, 2 … in `column`; `extra` adds fields for single tasks. Unchanged positions are skipped. */
+function positionWrites(db: Db, clock: Clock, ordered: Task[], extra: Record<string, Partial<Task>> = {}, column: PositionColumn = 'sortOrder') {
   return ordered.flatMap((t, i) =>
-    t.sortOrder === i && !extra[t.id]
+    t[column] === i && !extra[t.id]
       ? []
-      : [db.update(tasks).set({ ...updateFields(clock), ...extra[t.id], sortOrder: i }).where(eq(tasks.id, t.id))],
+      : [db.update(tasks).set({ ...updateFields(clock), ...extra[t.id], [column]: i }).where(eq(tasks.id, t.id))],
   );
+}
+
+/** Home's To do tasks in To do order: next steps of active projects and open tasks outside projects. */
+export async function listTodoTasks(db: Db): Promise<Task[]> {
+  const [open, active] = await Promise.all([
+    db
+      .select()
+      .from(tasks)
+      .where(and(eq(tasks.status, 'open'), notDeleted(tasks))),
+    db
+      .select({ id: projects.id })
+      .from(projects)
+      .where(and(eq(projects.status, 'active'), notDeleted(projects))),
+  ]);
+  const activeIds = new Set(active.map((p) => p.id));
+  return sortTodo(open.filter((t) => (t.projectId ? t.isNextStep && activeIds.has(t.projectId) : true)));
 }
 
 /**
  * Marks or unmarks an open task of a project as next step; other tasks are left unchanged.
- * On a list with a manual order, the task goes to the end of its new group.
+ * On a list with a manual order, the task goes to the end of its new group. Marking a task as next step
+ * also puts it at the end of Home's To do when that has a manual order.
  */
 export async function setNextStep(db: Db, clock: Clock, id: string, isNextStep: boolean): Promise<void> {
   const task = await loadTask(db, id);
   if (!task || !task.projectId || (isNextStep && task.status !== 'open')) return;
+  const writes: unknown[] = [];
   if (task.status === 'open' && task.isNextStep !== isNextStep) {
+    const extra = { [id]: { isNextStep } };
     const list = await listOpenTasksOfProject(db, task.projectId);
     if (hasManualOrder(list)) {
       const rest = list.filter((t) => t.id !== id);
       const steps = rest.filter((t) => t.isNextStep);
       const others = rest.filter((t) => !t.isNextStep);
       const ordered = isNextStep ? [...steps, task, ...others] : [...steps, ...others, task];
-      await runBatch(db, positionWrites(db, clock, ordered, { [id]: { isNextStep } }));
-      return;
+      writes.push(...positionWrites(db, clock, ordered, extra));
+    }
+    if (isNextStep) {
+      const todo = (await listTodoTasks(db)).filter((t) => t.id !== id);
+      const [project] = await db.select({ status: projects.status }).from(projects).where(eq(projects.id, task.projectId));
+      if (hasHomeOrder(todo) && project?.status === 'active') {
+        writes.push(...positionWrites(db, clock, [...todo, task], extra, 'homePosition'));
+      }
     }
   }
+  if (writes.length) return runBatch(db, writes);
   await db
     .update(tasks)
     .set({ ...updateFields(clock), isNextStep })
@@ -344,4 +373,29 @@ export async function applyNextStepChoice(db: Db, clock: Clock, projectId: strin
       .set({ ...updateFields(clock), isNextStep: true })
       .where(and(inArray(tasks.id, choice.taskIds), eq(tasks.projectId, projectId), eq(tasks.status, 'open'), notDeleted(tasks)));
   }
+}
+
+/**
+ * Moves a task of Home's To do to index `toIndex` of the To do list. The first move gives every task of the list
+ * a Home position; later moves write only the moved task, renumbering when the positions get too close.
+ */
+export async function moveTodoTask(db: Db, clock: Clock, id: string, toIndex: number): Promise<void> {
+  const list = await listTodoTasks(db);
+  const from = list.findIndex((t) => t.id === id);
+  if (from < 0) return;
+  const to = Math.max(0, Math.min(Math.trunc(toIndex), list.length - 1));
+  if (to === from && hasHomeOrder(list)) return;
+  const task = list[from] as Task;
+  const reordered = list.filter((t) => t.id !== id);
+  reordered.splice(to, 0, task);
+  if (list.every((t) => t.homePosition != null)) {
+    const before = to > 0 ? (reordered[to - 1]?.homePosition ?? null) : null;
+    const after = to < reordered.length - 1 ? (reordered[to + 1]?.homePosition ?? null) : null;
+    const position = positionBetween(before, after);
+    if (!positionTooClose(position, before, after)) {
+      await db.update(tasks).set({ ...updateFields(clock), homePosition: position }).where(eq(tasks.id, id));
+      return;
+    }
+  }
+  await runBatch(db, positionWrites(db, clock, reordered, {}, 'homePosition'));
 }

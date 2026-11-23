@@ -28,15 +28,15 @@ Phase A removes importance and the automatic ranking (groups 1–4). Phase B add
 
 ## 5. Phase B — Home position column
 
-- [ ] 5.1 Add `homePosition: real('home_position')` (nullable, comment like `sortOrder`) to tasks in `src/core/db/schema.ts`; run `npm run db:generate` (new `drizzle/0009_*.sql` adding only the column) and `npm run db:generate:server` (new file in `server/migrations/`); verify both SQL files contain just the `ALTER TABLE`
-- [ ] 5.2 Confirm `home_position` is pushed and pulled by sync (`src/features/sync/data/push.ts` and pull); add a case to the existing sync round-trip test if columns are listed explicitly; test passes
+- [x] 5.1 Add `homePosition: real('home_position')` (nullable, comment like `sortOrder`) to tasks in `src/core/db/schema.ts`; run `npm run db:generate` (new `drizzle/0009_*.sql` adding only the column) and `npm run db:generate:server` (new file in `server/migrations/`); verify both SQL files contain just the `ALTER TABLE`
+- [x] 5.2 Confirm `home_position` is pushed and pulled by sync (`src/features/sync/data/push.ts` and pull); add a case to the existing sync round-trip test if columns are listed explicitly; test passes
 
 ## 6. Phase B — Home order logic
 
-- [ ] 6.1 `src/features/tasks/domain/tasks.ts`: add `sortTodo` (positioned by `homePosition`, then the rest by `createdAt`) and `hasHomeOrder`; tests for home "Time added" and "New task goes to the end"; `npx vitest run src/features/tasks/domain` passes
-- [ ] 6.2 `tasks-repository.ts`: generalize the position-writes helper over the column; add `moveTodoTask(db, clock, id, toIndex)` (first move positions the whole To do list in one batch, later moves write one row, renumber when too close). Tests: home "Drag a task up" (order survives reload) and "Independent of the project order"; tests pass
-- [ ] 6.3 `setNextStep`: when To do has a manual order, give the newly marked task `homePosition = max + 1` in the same batch. Test: home "New next step goes to the end"; tests pass
-- [ ] 6.4 `home-queries.ts`: list To do with `sortTodo`; adjust `home-queries.test.ts`; tests pass
+- [x] 6.1 `src/features/tasks/domain/tasks.ts`: add `sortTodo` (positioned by `homePosition`, then the rest by `createdAt`) and `hasHomeOrder`; tests for home "Time added" and "New task goes to the end"; `npx vitest run src/features/tasks/domain` passes
+- [x] 6.2 `tasks-repository.ts`: generalize the position-writes helper over the column; add `moveTodoTask(db, clock, id, toIndex)` (first move positions the whole To do list in one batch, later moves write one row, renumber when too close). Tests: home "Drag a task up" (order survives reload) and "Independent of the project order"; tests pass
+- [x] 6.3 `setNextStep`: when To do has a manual order, give the newly marked task `homePosition = max + 1` in the same batch. Test: home "New next step goes to the end"; tests pass
+- [x] 6.4 `home-queries.ts`: list To do with `sortTodo`; adjust `home-queries.test.ts`; tests pass
 
 ## 7. Phase B — Home drag UI
 
@@ -45,7 +45,7 @@ Phase A removes importance and the automatic ranking (groups 1–4). Phase B add
 
 ## 8. Verification
 
-- [ ] 8.1 `npm run check` passes
+- [x] 8.1 `npm run check` passes
 - [ ] 8.2 Verify in the desktop app (`npm run desktop`) and the browser (`npm run dev`): no importance anywhere (forms, Home, project detail, Plan, review, task popup), projects ordered by deadline then time added, project task lists by time added with Reset order, Home To do drag order kept after reload
 - [ ] 8.3 Verify sync with the local server (`npm run server:dev`): reorder To do on one client, sync the other, same order (home "Synced")
-- [ ] 8.4 Update docs/SPEC.md (§3, §4 Project/Task fields, §5 remove "Project score" and "Task rank", add the To do order, §6.1, §6.2, §6.3, §6.5, §6.7) and note that at archive the `projects` spec Purpose must drop "an importance" and the `home` spec Purpose "in order of score"
+- [x] 8.4 Update docs/SPEC.md (§3, §4 Project/Task fields, §5 remove "Project score" and "Task rank", add the To do order, §6.1, §6.2, §6.3, §6.5, §6.7) and note that at archive the `projects` spec Purpose must drop "an importance" and the `home` spec Purpose "in order of score"

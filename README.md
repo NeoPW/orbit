@@ -10,7 +10,7 @@ The Flutter version of the app is kept under the git tag `flutter-final`.
 
 ## Using Orbit
 
-- **Home:** today, the focus panel (pick a task or project, 25/50/90 minutes or open-ended), habits due today, To do ranked by importance × urgency, and the active projects with their next steps. **New task** and **Log work** sit next to the date.
+- **Home:** today, the focus panel (pick a task or project, 25/50/90 minutes or open-ended), habits due today, To do in your own drag-and-drop order, and the active projects with their next steps. **New task** and **Log work** sit next to the date.
 - **Plan:** goals with measures, projects and tasks; projects without a goal; backlog; habits; areas; archive. **New** creates a goal, project, task or habit; goals, projects and tasks open as their own pages.
 - **Review:** this week's plan and summary, the guided weekly review (look back, projects, goals, score, plan, save), history and last week.
 - **Stats:** a month, quarter, year or all time: time worked and daily average, review score, habit adherence, share on goals, trends, the work calendar and heatmap, and panels for habits, projects, tasks and goals.

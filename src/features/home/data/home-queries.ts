@@ -11,7 +11,7 @@ import { isDue, weekStartOf } from '../../habits/domain/habits.ts';
 import { listProjectsByStatus, type ProjectView } from '../../projects/data/projects-repository.ts';
 import { sortViewsForPlan } from '../../projects/domain/projects.ts';
 import { sortOpenTasks } from '../../tasks/domain/tasks.ts';
-import { toViews, type Task, type TaskView } from '../../tasks/data/tasks-repository.ts';
+import { listTodoTasks, toViews, type Task, type TaskView } from '../../tasks/data/tasks-repository.ts';
 
 export interface TodoItem {
   task: Task;
@@ -25,14 +25,10 @@ export interface TodoItem {
 
 /**
  * To do: open next steps of active projects and open tasks outside projects
- * (standalone or assigned to a goal), by time added (oldest first).
+ * (standalone or assigned to a goal), in To do order (manual positions first, then time added).
  */
 export async function listTodo(db: Db): Promise<TodoItem[]> {
-  const { open, activeIds } = await loadOpen(db);
-  const listed = open
-    .filter((t) => (t.projectId ? t.isNextStep && activeIds.has(t.projectId) : true))
-    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-  return toItems(db, listed);
+  return toItems(db, await listTodoTasks(db));
 }
 
 /**

@@ -18,7 +18,7 @@ import { EmptyState } from '../../../core/ui/components/EmptyState.tsx';
 import { PageHeader } from '../../../core/ui/components/PageHeader.tsx';
 import { Tile } from '../../../core/ui/components/Tile.tsx';
 import { checkHabit, uncheckHabit } from '../../habits/data/habits-repository.ts';
-import { reopenTask, type Task } from '../../tasks/data/tasks-repository.ts';
+import { moveTodoTask, reopenTask, type Task } from '../../tasks/data/tasks-repository.ts';
 import { LogWorkSheet } from '../../work-log/ui/LogWorkSheet.tsx';
 import { TodayTile } from '../../timeline/ui/TodayTile.tsx';
 import { TaskList } from '../../tasks/ui/TaskRow.tsx';
@@ -249,7 +249,13 @@ export function HomeScreen() {
               />
             ) : (
               <div className={styles.todoList}>
-                <TaskList tasks={todo.map((item) => item.task)} label="To do" rowProps={todoRowProps} />
+                <TaskList
+                  tasks={todo.map((item) => item.task)}
+                  label="To do"
+                  rowProps={todoRowProps}
+                  grouped={false}
+                  onMove={(taskId, toIndex) => void moveTodoTask(db, clock, taskId, toIndex)}
+                />
               </div>
             )}
             {more.length > 0 && (

@@ -88,6 +88,8 @@ export const columns = {
     completedAt: text('completed_at'),
     /** Manual position in the project's open task list; null until the list is reordered. */
     sortOrder: real('sort_order'),
+    /** Manual position in Home's To do list; null until To do is reordered. */
+    homePosition: real('home_position'),
   }),
   habits: () => ({
     ...shared(),
