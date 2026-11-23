@@ -41,6 +41,17 @@ describe('habit streak', () => {
     expect(s).toMatchObject({ current: 3, best: 10 });
   });
 
+  it('is repaired by a late check of yesterday', () => {
+    expect(habitStreak(habit(), days('04', '05', '06', '07'), today).current).toBe(4);
+  });
+
+  it("counts last week's target reached by a late check on Sunday", () => {
+    const h = habit({ scheduleType: 'times_per_week', timesPerWeek: 3 });
+    const monday = '2026-11-09';
+    expect(habitStreak(h, days('02', '03'), monday).current).toBe(0);
+    expect(habitStreak(h, days('02', '03', '08'), monday).current).toBe(1);
+  });
+
   it('is zero for a new habit', () => {
     expect(habitStreak(habit({ createdAt: '2026-11-08T09:00:00' }), [], today)).toMatchObject({ current: 0, best: 0 });
   });

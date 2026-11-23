@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createFields } from '../../../core/db/records.ts';
 import { habitChecks, logEntries, measures } from '../../../core/db/schema.ts';
 import { openTestDatabase } from '../../../core/db/testing.ts';
-import { checkHabit, createHabit, deleteHabit, listChecksSince, listHabits, uncheckHabit, type HabitInput } from './habits-repository.ts';
+import { checkHabit, createHabit, deleteHabit, isChecked, listChecksSince, listHabits, uncheckHabit, updateHabit, type HabitInput } from './habits-repository.ts';
 
 const clock = () => new Date('2026-11-05T10:00:00Z');
 const input: HabitInput = {
@@ -82,5 +82,37 @@ describe('habits repository', () => {
     expect(await listHabits(db)).toHaveLength(0);
     const [measure] = await db.select().from(measures);
     expect(measure).toMatchObject({ habitId: null, deletedAt: null });
+  });
+
+  it('stores the duration, rejects an invalid one and clears it', async () => {
+    const { db, id } = await setup({ durationMinutes: 20 });
+    expect((await listHabits(db))[0]).toMatchObject({ durationMinutes: 20 });
+    expect(await createHabit(db, clock, { ...input, durationMinutes: 0 })).toMatchObject({ ok: false, errors: { durationMinutes: expect.any(String) } });
+    expect(await createHabit(db, clock, { ...input, durationMinutes: 2.5 })).toMatchObject({ ok: false });
+    await updateHabit(db, clock, id, { ...input, durationMinutes: null });
+    expect((await listHabits(db))[0]).toMatchObject({ durationMinutes: null });
+  });
+
+  it('checks yesterday at the reminder time, or at 12:00', async () => {
+    const withReminder = await setup({ reminderTime: '07:30' });
+    await checkHabit(withReminder.db, clock, withReminder.id, '2026-11-04');
+    const { checks, entries } = await live(withReminder.db);
+    expect(checks[0]).toMatchObject({ date: '2026-11-04' });
+    expect(entries[0]).toMatchObject({ source: 'habit', occurredAt: new Date(2026, 10, 4, 7, 30).toISOString() });
+    expect(await isChecked(withReminder.db, withReminder.id, '2026-11-04')).toBe(true);
+
+    const plain = await setup();
+    await checkHabit(plain.db, clock, plain.id, '2026-11-04');
+    expect((await live(plain.db)).entries[0]).toMatchObject({ occurredAt: new Date(2026, 10, 4, 12, 0).toISOString() });
+  });
+
+  it('unchecks yesterday and does not duplicate its check', async () => {
+    const { db, id } = await setup();
+    await checkHabit(db, clock, id, '2026-11-04');
+    await checkHabit(db, clock, id, '2026-11-04');
+    expect(await live(db)).toMatchObject({ checks: [{ date: '2026-11-04' }], entries: [{ source: 'habit' }] });
+    await uncheckHabit(db, clock, id, '2026-11-04');
+    expect(await live(db)).toEqual({ checks: [], entries: [] });
+    expect(await isChecked(db, id, '2026-11-04')).toBe(false);
   });
 });

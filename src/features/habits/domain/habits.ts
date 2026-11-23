@@ -56,8 +56,15 @@ export function weekAdherence(
   return { done, expected };
 }
 
-/** "Daily", "Mon, Wed, Fri" or "3 times per week". */
-export function scheduleSummary(habit: Pick<HabitSchedule, 'scheduleType' | 'weekdays' | 'timesPerWeek'>): string {
+/** "Daily", "Mon, Wed, Fri" or "3 times per week", followed by " · 20 min" for a habit with a duration. */
+export function scheduleSummary(
+  habit: Pick<HabitSchedule, 'scheduleType' | 'weekdays' | 'timesPerWeek'> & { durationMinutes?: number | null },
+): string {
+  const schedule = baseSummary(habit);
+  return habit.durationMinutes ? `${schedule} · ${habit.durationMinutes} min` : schedule;
+}
+
+function baseSummary(habit: Pick<HabitSchedule, 'scheduleType' | 'weekdays' | 'timesPerWeek'>): string {
   if (habit.scheduleType === 'daily') return 'Daily';
   if (habit.scheduleType === 'weekdays') {
     const days = [...new Set(habit.weekdays ?? [])].sort((a, b) => a - b);
@@ -65,6 +72,40 @@ export function scheduleSummary(habit: Pick<HabitSchedule, 'scheduleType' | 'wee
   }
   const n = habit.timesPerWeek ?? 0;
   return n === 1 ? '1 time per week' : `${n} times per week`;
+}
+
+/** The longest habit duration: a whole day, like the custom time limit. */
+export const MAX_DURATION_MINUTES = 1440;
+
+/** The duration typed in the habit form: empty gives null, else a whole number of minutes from 1 to 1440, else an error. */
+export function validateDuration(text: string | number | null): { value: number | null; error?: string } {
+  const trimmed = (text === null ? '' : String(text)).trim();
+  if (trimmed === '') return { value: null };
+  const n = Number(trimmed.replace(',', '.'));
+  if (!Number.isInteger(n) || n < 1 || n > MAX_DURATION_MINUTES) return { value: null, error: 'Enter whole minutes from 1 to 1440' };
+  return { value: n };
+}
+
+/**
+ * When the log entry of a check for `date` is placed: `now` for today, else `date` at the habit's reminder time
+ * (`HH:mm`), or 12:00, local time, as an ISO UTC string.
+ */
+export function checkTime(date: string, today: string, reminderTime: string | null, now: Date): string {
+  if (date >= today) return now.toISOString();
+  const [y, m, d] = date.split('-').map(Number);
+  const [h, min] = (reminderTime && /^\d{2}:\d{2}$/.test(reminderTime) ? reminderTime : '12:00').split(':').map(Number);
+  return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1, h ?? 12, min ?? 0).toISOString();
+}
+
+/**
+ * Whether the habit's sheet offers "Done yesterday": the habit is active and scheduled on yesterday's weekday
+ * (`times_per_week` always, ignoring the weekly count), or it is already checked for yesterday.
+ */
+export function offeredYesterday(habit: HabitSchedule, yesterday: string, checkedYesterday: boolean): boolean {
+  if (checkedYesterday) return true;
+  if (!habit.active) return false;
+  if (habit.scheduleType === 'weekdays') return (habit.weekdays ?? []).includes(isoWeekday(yesterday));
+  return true;
 }
 
 export interface ScheduleInput {

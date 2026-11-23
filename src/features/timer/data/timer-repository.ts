@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import type { Db } from '../../../core/db/drizzle.ts';
 import { createFields, deleteFields, newId, TIMER_ID, updateFields, type Clock } from '../../../core/db/records.ts';
-import { logEntries, timers } from '../../../core/db/schema.ts';
+import { habits, logEntries, timers } from '../../../core/db/schema.ts';
 import { localToday } from '../../../core/dates/deadline.ts';
 import { checkHabit } from '../../habits/data/habits-repository.ts';
 import { completeTask } from '../../tasks/data/tasks-repository.ts';
@@ -49,14 +49,14 @@ async function logStretch(db: Db, clock: Clock, timer: Timer, note: string) {
   };
 }
 
-function upsertTimerQuery(db: Db, clock: Clock, target: LogTarget) {
+function upsertTimerQuery(db: Db, clock: Clock, target: LogTarget, plannedMinutes: number | null) {
   const now = clock().toISOString();
   const values = {
     projectId: 'projectId' in target ? target.projectId : null,
     taskId: 'taskId' in target ? target.taskId : null,
     habitId: 'habitId' in target ? target.habitId : null,
     startedAt: now,
-    plannedMinutes: null,
+    plannedMinutes,
     pausedAt: null,
     workedSeconds: 0,
     lastEntryId: null,
@@ -67,13 +67,21 @@ function upsertTimerQuery(db: Db, clock: Clock, target: LogTarget) {
     .onConflictDoUpdate({ target: timers.id, set: { ...values, updatedAt: now, deletedAt: null } });
 }
 
+/** The duration of a habit target in minutes; null for other targets and habits without one. */
+async function habitDuration(db: Db, target: LogTarget): Promise<number | null> {
+  if (!('habitId' in target)) return null;
+  const [habit] = await db.select({ durationMinutes: habits.durationMinutes }).from(habits).where(eq(habits.id, target.habitId));
+  return habit?.durationMinutes ?? null;
+}
+
 /**
- * Starts a session for a project, task or habit, without a time limit. The running stretch of another
+ * Starts a session for a project, task or habit, without a time limit (a habit with a duration: with that
+ * duration as its limit). The running stretch of another
  * session is logged first, in the same batch; a paused one just ends.
  */
 export async function startTimer(db: Db, clock: Clock, target: LogTarget): Promise<void> {
   const existing = await getTimer(db);
-  const start = upsertTimerQuery(db, clock, target);
+  const start = upsertTimerQuery(db, clock, target, await habitDuration(db, target));
   if (existing && existing.pausedAt === null) await db.batch([(await logStretch(db, clock, existing, '')).query, start]);
   else await start;
 }

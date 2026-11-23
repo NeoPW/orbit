@@ -3,8 +3,9 @@ import type { Db } from '../../../core/db/drizzle.ts';
 import { createFields, deleteFields, naturalId, newId, notDeleted, updateFields, type Clock } from '../../../core/db/records.ts';
 import { goals, habitChecks, habits, measures, projects, type ScheduleType } from '../../../core/db/schema.ts';
 import { deleteLogEntryQuery, insertLogEntryQuery } from '../../work-log/data/log-repository.ts';
+import { localToday } from '../../../core/dates/deadline.ts';
 import { goalColor, projectColor } from '../../../core/ui/colors.ts';
-import { validateSchedule } from '../domain/habits.ts';
+import { checkTime, validateDuration, validateSchedule } from '../domain/habits.ts';
 
 export type Habit = typeof habits.$inferSelect;
 export type HabitCheck = typeof habitChecks.$inferSelect;
@@ -20,6 +21,8 @@ export interface HabitInput {
   timesPerWeek: number | null;
   /** `HH:mm`, or null to use the default reminder time. */
   reminderTime: string | null;
+  /** Whole minutes (1-1440) as typed or a number; empty or null for none. */
+  durationMinutes?: string | number | null;
   active: boolean;
 }
 
@@ -27,14 +30,17 @@ export interface HabitErrors {
   title?: string;
   weekdays?: string;
   timesPerWeek?: string;
+  durationMinutes?: string;
 }
 
 export type HabitResult = { ok: true; id: string } | { ok: false; errors: HabitErrors };
 
 function validate(input: HabitInput): HabitErrors {
+  const duration = validateDuration(input.durationMinutes ?? null);
   return {
     ...(input.title.trim() === '' ? { title: 'Enter a title' } : {}),
     ...validateSchedule(input),
+    ...(duration.error ? { durationMinutes: duration.error } : {}),
   };
 }
 
@@ -48,6 +54,7 @@ function valuesOf(input: HabitInput) {
     weekdays: input.scheduleType === 'weekdays' ? [...new Set(input.weekdays)].sort((a, b) => a - b) : null,
     timesPerWeek: input.scheduleType === 'times_per_week' ? input.timesPerWeek : null,
     reminderTime: input.reminderTime || null,
+    durationMinutes: validateDuration(input.durationMinutes ?? null).value,
     active: input.active,
   };
 }
@@ -88,6 +95,7 @@ export async function deleteHabit(db: Db, clock: Clock, id: string): Promise<voi
 
 /**
  * Checks the habit for `date` (local `yyyy-mm-dd`): the check (natural ID) and its log entry in one batch.
+ * The entry is at the current time for today, else at the habit's reminder time (12:00 without) on `date`.
  * Checking again is a no-op. A check that was unchecked earlier is revived with a new log entry.
  */
 export async function checkHabit(db: Db, clock: Clock, habitId: string, date: string): Promise<void> {
@@ -102,6 +110,7 @@ export async function checkHabit(db: Db, clock: Clock, habitId: string, date: st
 
   const entryId = newId();
   const now = clock().toISOString();
+  const occurredAt = checkTime(date, localToday(clock()), habit.reminderTime, clock());
   await db.batch([
     insertLogEntryQuery(
       db,
@@ -111,7 +120,7 @@ export async function checkHabit(db: Db, clock: Clock, habitId: string, date: st
         goalId: habit.goalId,
         taskId: null,
         habitId: habit.id,
-        occurredAt: now,
+        occurredAt,
         durationMinutes: null,
         note: habit.title,
         source: 'habit',
@@ -143,6 +152,15 @@ export async function uncheckHabit(db: Db, clock: Clock, habitId: string, date: 
   const remove = db.update(habitChecks).set(deleteFields(clock)).where(eq(habitChecks.id, check.id));
   if (check.logEntryId) await db.batch([remove, deleteLogEntryQuery(db, clock, check.logEntryId)]);
   else await remove;
+}
+
+/** Whether the habit has a live check for `date`. */
+export async function isChecked(db: Db, habitId: string, date: string): Promise<boolean> {
+  const [check] = await db
+    .select({ id: habitChecks.id })
+    .from(habitChecks)
+    .where(and(eq(habitChecks.id, naturalId('habit_check', habitId, date)), notDeleted(habitChecks)));
+  return check !== undefined;
 }
 
 /** Checks on or after `since` (`yyyy-mm-dd`), for one habit or all habits. */
