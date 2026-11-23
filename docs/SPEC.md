@@ -38,7 +38,7 @@ A personal, local-first app for tracking work: projects, tasks, habits and the w
 
 The app must be fully usable with no sync server configured. Sync is an add-on, but it is what connects the desktop, the browser and the phone: until sync exists, each has its own local data.
 
-Desktop-only features (native SQLite, tray, global hotkey, notifications) are reached through one platform layer; the browser build works without them. Fonts and images are bundled, never loaded from the network.
+Desktop-only features (native SQLite, tray, global hotkey, notifications) are reached through one platform layer; the browser build works without them. Only one desktop Orbit runs at a time: starting it again shows the running window. Fonts and images are bundled, never loaded from the network.
 
 ## 3. Core concepts
 
